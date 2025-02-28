@@ -6,6 +6,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+signalBool = False
+
 # Plotting the heatmaps
 def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
     plt.figure(figsize=(8, 6))
@@ -27,7 +29,11 @@ def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
 ROOT.xAOD.Init()
 
 # Set up the input file directory
-fileDir = "/eos/user/m/mlarson/LargeRadiusJets/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+if signalBool:
+    fileDir = "/eos/user/m/mlarson/LargeRadiusJets/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+else: 
+    fileDir = "/eos/user/m/mlarson/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
+
 
 # Get a list of all ROOT files in the directory
 fileNames = [os.path.join(fileDir, f) for f in os.listdir(fileDir) if f.endswith(".pool.root.1")]
@@ -56,10 +62,14 @@ jfex_smallr_et_values = []
 # Heatmap bin definitions
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
 eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
-
-output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
-output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
-output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+if signalBool:
+    output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
+    output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
+    output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+else:
+    output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
+    output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
+    output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
 
 # Function to scale and digitize a value
 def digitize(value, bit_length, min_val, max_val):
@@ -91,6 +101,8 @@ with open(output_file_topo422, "w") as f_topo:
         with open(output_file_jfex, "w") as f_jfex:
             fileIt = 0
             for fileName in fileNames:
+                if fileIt > 0:
+                    break
                 print(f"Processing file: {fileName}")
 
                 # Open the file and make the "transient tree"
@@ -157,6 +169,30 @@ with open(output_file_topo422, "w") as f_topo:
                             topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         # Initialize sum of transverse energy for this event
                         topo_it += 1
+
+
+                    
+
+                        if iEvt <= 5:
+                            topo_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                            topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        # Initialize sum of transverse energy for this event
+                        topo_it += 1
+                    if iEvt <= 9:
+                        truthIt = 0
+                        for el in t.TruthParticles:
+                            #print (" truthIt: ", truthIt)
+                            if el.e() >= 10000.0:
+                                print('  PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                                (el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                            if el.pdgId() == 25 and el.status() == 22 and signalBool:
+                                print (" truthIt: ", truthIt)
+                                print(' Higgs PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                                (el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                            truthIt += 1
+                    
+                        
+
                     
                     topo_phi_values.append(topo_phi_values_by_event)
                     topo_eta_values.append(topo_eta_values_by_event)
@@ -270,15 +306,19 @@ with open(output_file_topo422, "w") as f_topo:
                     # Print the sum of transverse energy for the event
                     #print(f"  Event {iEvt}: Sum of transverse energy (ΣEt) = {sum_et/1000:.2f} GeV")
                     # Save the heatmaps
+                    if signalBool:
+                        plotsDir = "signalEventPlots"
+                    else: 
+                        plotsDir = "backgroundEventPlots"
                     if iEvt <= 5:
-                        plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', f'eventPlots/topo_heatmap_event{iEvt}.png')
-                        plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', f'eventPlots/topo_422_heatmap_event{iEvt}.png')
-                        plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', f'eventPlots/gfex_heatmap_event{iEvt}.png')
-                        plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', f'eventPlots/jfex_heatmap_event{iEvt}.png')
-                        plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', f'eventPlots/topo_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', f'eventPlots/topo_422_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', f'eventPlots/gfex_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', f'eventPlots/jfex_log_heatmap_event{iEvt}.png', True)
+                        plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.png')
+                        plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.png')
+                        plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.png')
+                        plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.png')
+                        plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.png', True)
+                        plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.png', True)
+                        plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.png', True)
+                        plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.png', True)
 
                 # Clean up the transient tree for the current file
                 ROOT.xAOD.ClearTransientTrees()
