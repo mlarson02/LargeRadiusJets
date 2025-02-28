@@ -6,7 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-signalBool = False
+signalBool = True
 
 # Plotting the heatmaps
 def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
@@ -59,6 +59,8 @@ jfex_smallr_phi_values = []
 jfex_smallr_eta_values = []
 jfex_smallr_et_values = []
 
+higgs_pt_values = []  # List to store pt values
+
 # Heatmap bin definitions
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
 eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
@@ -101,8 +103,8 @@ with open(output_file_topo422, "w") as f_topo:
         with open(output_file_jfex, "w") as f_jfex:
             fileIt = 0
             for fileName in fileNames:
-                if fileIt > 0:
-                    break
+                #if fileIt > 0:
+                #    break
                 print(f"Processing file: {fileName}")
 
                 # Open the file and make the "transient tree"
@@ -178,18 +180,21 @@ with open(output_file_topo422, "w") as f_topo:
                             topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         # Initialize sum of transverse energy for this event
                         topo_it += 1
-                    if iEvt <= 9:
-                        truthIt = 0
-                        for el in t.TruthParticles:
+                    
+                    #if iEvt <= 9:
+                    truthIt = 0
+                    for el in t.TruthParticles:
+                        if el.pdgId() == 25 and el.status() == 22:
+                            higgs_pt_values.append(el.pt()/1000)
+                        #print (" truthIt: ", truthIt)
+                        #if el.e() >= 10000.0:
+                            #print('  PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                            #(el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                        #if el.pdgId() == 25 and el.status() == 22 and signalBool:
                             #print (" truthIt: ", truthIt)
-                            if el.e() >= 10000.0:
-                                print('  PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
-                                (el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
-                            if el.pdgId() == 25 and el.status() == 22 and signalBool:
-                                print (" truthIt: ", truthIt)
-                                print(' Higgs PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
-                                (el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
-                            truthIt += 1
+                            #print(' Higgs PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                            #(el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                        truthIt += 1
                     
                         
 
@@ -323,6 +328,16 @@ with open(output_file_topo422, "w") as f_topo:
                 # Clean up the transient tree for the current file
                 ROOT.xAOD.ClearTransientTrees()
                 fileIt += 1
+
+# After the loop (once you've collected all values):
+plt.hist(higgs_pt_values, bins=50, range=(0, 500), histtype='step', label='Higgs pt')
+plt.xlabel(r"$p_T$ [GeV]")
+plt.ylabel('Events')
+plt.title(r"Higgs $p_T$ Distribution")
+plt.legend()
+
+# Save the histogram as an image
+plt.savefig('signalEventPlots/higgs_pt_distribution.png')
 
 # Calculate and print min and max for phi, eta, and Et
 if topo_phi_values and any(topo_phi_values):

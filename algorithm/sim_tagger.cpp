@@ -220,93 +220,57 @@ void process_file(const std::string& fileName){ // FIXME use event loop outside 
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
         outFile << "Event : " << iEvt << std::endl;
         std::cout << "processing iEvt: " << iEvt << "\n";
-        if (iterative_){
-            if (sortSeeds_){
-                // perform sorting by Et here
+            // perform sorting by Et here
+            if (iEvt < gFexValues.size()) {
+                // Sort the vector of arrays for the specific event (iEvt)
                 std::sort(gFexValues[iEvt].begin(), gFexValues[iEvt].end(),
-                    [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
-                        return a[0] > b[0]; // Descending order
-                    });
-                for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
-                    for (unsigned int iTopo = 0; iTopo < maxObjectsConsidered_; ++iTopo){
-                        
-                    }
-                }
+                            [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
+                                return a[0] > b[0]; // Sort by highest Et (first element of the array)
+                            });
+            } else {
+                std::cerr << "Error: iEvt out of bounds. iEvt = " << iEvt << ", gFexValues.size() = " << gFexValues.size() << std::endl;
             }
-            else {
-                for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
-                    for (unsigned int iTopo = 0; iTopo < maxObjectsConsidered_; ++iTopo){
-                        
-                    }
-                }
-            }
-        }
-        else {
             
-            if (sortSeeds_){
-                // perform sorting by Et here
-                if (iEvt < gFexValues.size()) {
-                    // Sort the vector of arrays for the specific event (iEvt)
-                    std::sort(gFexValues[iEvt].begin(), gFexValues[iEvt].end(),
-                              [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
-                                  return a[0] > b[0]; // Sort by highest Et (first element of the array)
-                              });
-                } else {
-                    std::cerr << "Error: iEvt out of bounds. iEvt = " << iEvt << ", gFexValues.size() = " << gFexValues.size() << std::endl;
+            for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
+                double outputJetEt = gFexValues[iEvt][igFex][0]; // reset outputjet values for each seed, to values of seed
+                double outputJetEta = gFexValues[iEvt][igFex][1]; 
+                double outputJetPhi = gFexValues[iEvt][igFex][2]; 
+                //std::cout << "seed Et, Eta, phi: " << gFexValues[iEvt][igFex][0] << " , " << gFexValues[iEvt][igFex][1] << " , " << gFexValues[iEvt][igFex][2] << "\n";
+                for (unsigned int iTopo = 0; iTopo < topoValues[iEvt].size() && iTopo < maxObjectsConsidered_; ++iTopo){
+                    //std::cout << "topo Et, Eta, phi: " << topoValues[iEvt][iTopo][0] << " , " << topoValues[iEvt][iTopo][1] << " , " << topoValues[iEvt][iTopo][2] << "\n";
+                    double dR2 = calcDeltaR2(gFexValues[iEvt][igFex][1], gFexValues[iEvt][igFex][2], topoValues[iEvt][iTopo][1], topoValues[iEvt][iTopo][2]);
+                    //std::cout << "deltaR2: " << dR2 << "\n";
+                    if (dR2 <= r2Cut_){
+                        outputJetEt += topoValues[iEvt][iTopo][0];
+                        // Erase the element at iTopo from topoValues
+                        topoValues[iEvt].erase(topoValues[iEvt].begin() + iTopo);
+
+                        // Adjust the loop index since the vector size has decreased
+                        --iTopo;
+                    }
                 }
+                std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << gFexValues[iEvt][igFex][0] << "\n";
+                std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
+
+                // Convert to binary format (assuming fixed lengths)
+                std::pair<std::string, unsigned int> et_bin = digitize<et_bit_length_>(outputJetEt, et_min_, et_max_); // Example: 13 bits for Et
+                std::pair<std::string, unsigned int> eta_bin = digitize<eta_bit_length_>(outputJetEta, eta_min_, eta_max_); // Example: 11 bits for eta
+                std::pair<std::string, unsigned int> phi_bin = digitize<phi_bit_length_>(outputJetPhi, phi_min_, phi_max_); // Example: 8 bits for phi
+
+                std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
+
+                int combined_value = (et_bin.second << (eta_bit_length_ + phi_bit_length_)) | (eta_bin.second << phi_bit_length_) | phi_bin.second;
                 
-                for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
-                    double outputJetEt = gFexValues[iEvt][igFex][0]; // reset outputjet values for each seed, to values of seed
-                    double outputJetEta = gFexValues[iEvt][igFex][1]; 
-                    double outputJetPhi = gFexValues[iEvt][igFex][2]; 
-                    //std::cout << "seed Et, Eta, phi: " << gFexValues[iEvt][igFex][0] << " , " << gFexValues[iEvt][igFex][1] << " , " << gFexValues[iEvt][igFex][2] << "\n";
-                    for (unsigned int iTopo = 0; iTopo < topoValues[iEvt].size() && iTopo < maxObjectsConsidered_; ++iTopo){
-                        //std::cout << "topo Et, Eta, phi: " << topoValues[iEvt][iTopo][0] << " , " << topoValues[iEvt][iTopo][1] << " , " << topoValues[iEvt][iTopo][2] << "\n";
-                        double dR2 = calcDeltaR2(gFexValues[iEvt][igFex][1], gFexValues[iEvt][igFex][2], topoValues[iEvt][iTopo][1], topoValues[iEvt][iTopo][2]);
-                        //std::cout << "deltaR2: " << dR2 << "\n";
-                        if (dR2 <= r2Cut_){
-                            outputJetEt += topoValues[iEvt][iTopo][0];
-                            // Erase the element at iTopo from topoValues
-                            topoValues[iEvt].erase(topoValues[iEvt].begin() + iTopo);
+                // Convert to hexadecimal (for the last field)
+                std::stringstream hex_stream;
+                hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
+                std::string hexValue = hex_stream.str();
 
-                            // Adjust the loop index since the vector size has decreased
-                            --iTopo;
-                        }
-                    }
-                    std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << gFexValues[iEvt][igFex][0] << "\n";
-                    std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
-
-                    // Convert to binary format (assuming fixed lengths)
-                    std::pair<std::string, unsigned int> et_bin = digitize<et_bit_length_>(outputJetEt, et_min_, et_max_); // Example: 13 bits for Et
-                    std::pair<std::string, unsigned int> eta_bin = digitize<eta_bit_length_>(outputJetEta, eta_min_, eta_max_); // Example: 11 bits for eta
-                    std::pair<std::string, unsigned int> phi_bin = digitize<phi_bit_length_>(outputJetPhi, phi_min_, phi_max_); // Example: 8 bits for phi
-
-                    std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
-
-                    int combined_value = (et_bin.second << (eta_bit_length_ + phi_bit_length_)) | (eta_bin.second << phi_bit_length_) | phi_bin.second;
-                    
-                    // Convert to hexadecimal (for the last field)
-                    std::stringstream hex_stream;
-                    hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
-                    std::string hexValue = hex_stream.str();
-
-                    // Output in the required format
-                    outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << igFex
-                    << " " << et_bin.first << "|" << eta_bin.first << "|" << phi_bin.first
-                    << " 0x" << hexValue << std::endl;
-                }
+                // Output in the required format
+                outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << igFex
+                << " " << et_bin.first << "|" << eta_bin.first << "|" << phi_bin.first
+                << " 0x" << hexValue << std::endl;
             }
-            else {
-                for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
-                    for (unsigned int iTopo = 0; iTopo < maxObjectsConsidered_; ++iTopo){
-                        
-                    }
-                }
-            }
-        }
-            
-
-
     }
 
 }
