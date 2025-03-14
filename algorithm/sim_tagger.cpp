@@ -150,15 +150,15 @@ void extract_values_from_file(const std::string& fileName, std::vector<std::vect
             std::bitset<phi_bit_length_> phi_bits(phi_bin);
 
             // Convert bitsets to floating-point values
-            std::cout << "Et bits: " << et_bits
-                      << ", Phi bits: " << phi_bits
-                      << ", Eta bits: " << eta_bits << std::endl;
+            //std::cout << "Et bits: " << et_bits
+            //          << ", Phi bits: " << phi_bits
+            //          << ", Eta bits: " << eta_bits << std::endl;
             double et = undigitize_et(et_bits);
             double eta = undigitize_eta(eta_bits);
             double phi = undigitize_phi(phi_bits);
-            std::cout << "Et: " << et
-                      << ", Phi: " << phi
-                      << ", Eta: " << eta << std::endl;
+            //std::cout << "Et: " << et
+            //          << ", Phi: " << phi
+            //          << ", Eta: " << eta << std::endl;
 
             // Store in vector
             valuesForEachEvent.push_back({et, eta, phi});
@@ -202,7 +202,7 @@ void process_file(const std::string& fileName){ // FIXME use event loop outside 
     const std::string gFexFile = eosPath + "gFex/" + fileName + "_gfex_smallrj.dat";
     const std::string topoFile = eosPath + "CaloTopo_422/" + fileName + "_topo422.dat";
     const std::string outputJetsFile = eosPath + "largeRJets/" + fileName + "_largeR.dat";
-    std::cout << "gFex File: " << gFexFile << " and topo file: " << topoFile << "\n";
+    //std::cout << "gFex File: " << gFexFile << " and topo file: " << topoFile << "\n";
 
     std::ofstream outFile(outputJetsFile);
     if (!outFile) {
@@ -218,7 +218,7 @@ void process_file(const std::string& fileName){ // FIXME use event loop outside 
     extract_values_from_file(topoFile, topoValues);
 
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        outFile << "Event : " << iEvt << std::endl;
+        outFile << "Event : " << std::dec << iEvt << std::endl;
         std::cout << "processing iEvt: " << iEvt << "\n";
             // perform sorting by Et here
             if (iEvt < gFexValues.size()) {
@@ -249,15 +249,15 @@ void process_file(const std::string& fileName){ // FIXME use event loop outside 
                         --iTopo;
                     }
                 }
-                std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << gFexValues[iEvt][igFex][0] << "\n";
-                std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
+                //std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << gFexValues[iEvt][igFex][0] << "\n";
+                //std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
 
                 // Convert to binary format (assuming fixed lengths)
                 std::pair<std::string, unsigned int> et_bin = digitize<et_bit_length_>(outputJetEt, et_min_, et_max_); // Example: 13 bits for Et
                 std::pair<std::string, unsigned int> eta_bin = digitize<eta_bit_length_>(outputJetEta, eta_min_, eta_max_); // Example: 11 bits for eta
                 std::pair<std::string, unsigned int> phi_bin = digitize<phi_bit_length_>(outputJetPhi, phi_min_, phi_max_); // Example: 8 bits for phi
 
-                std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
+                //std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
 
                 int combined_value = (et_bin.second << (eta_bit_length_ + phi_bit_length_)) | (eta_bin.second << phi_bit_length_) | phi_bin.second;
                 

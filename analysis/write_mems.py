@@ -6,7 +6,15 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-signalBool = True
+signalBool = False
+
+higgsPtCut = False
+
+def reset_event_counter(eventCounter): # reset event counter to keep track of kept event number after higgs cuts
+    if eventCounter == 0:
+        eventCounter = 0
+    else: 
+        eventCounter -= 1
 
 # Plotting the heatmaps
 def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
@@ -60,6 +68,8 @@ jfex_smallr_eta_values = []
 jfex_smallr_et_values = []
 
 higgs_pt_values = []  # List to store pt values
+jet_pt_values = []
+higgs_pt_values_after_cut = []
 
 # Heatmap bin definitions
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
@@ -97,11 +107,14 @@ et_granularity = 0.25  # GeV per bit
 
 events_per_file = 100
 
+fileIt = 0
+eventCounter = -1
+
 # Process each file
 with open(output_file_topo422, "w") as f_topo:
     with open(output_file_gfex, "w") as f_gfex:
         with open(output_file_jfex, "w") as f_jfex:
-            fileIt = 0
+            
             for fileName in fileNames:
                 #if fileIt > 0:
                 #    break
@@ -113,12 +126,14 @@ with open(output_file_topo422, "w") as f_topo:
 
                 # Print the number of events in the file
                 print('  Number of input events: %s' % t.GetEntries())
-
                 # Loop through all events in the file
                 for entry in range(t.GetEntries()):
+                    eventCounter += 1
+                    higgs_pt_values_by_event = []  # List to store pt values
+                    higgs_passes_cut = False
                     t.GetEntry(entry)
-                    iEvt = entry + fileIt * events_per_file # 100 events per file
-                    print("entry, fileIt, iEvt:", entry, fileIt, iEvt)
+                    iEvt = eventCounter # 100 events per file
+                    print("entry, fileIt, iEvt:", eventCounter, fileIt, iEvt)
 
                     topo_phi_values_by_event = []
                     topo_eta_values_by_event = []
@@ -159,6 +174,38 @@ with open(output_file_topo422, "w") as f_topo:
                     sum_et = 0.0
 
                     topo_it = 0
+
+                    #if iEvt <= 9:
+                    truthIt = 0
+                    for el in t.InTimeAntiKt4TruthJets:
+                        print("truth jet pt:", el.pt() / 1000)
+                        jet_pt_values.append(el.pt() / 1000)
+                    for el in t.TruthParticles:
+                        if el.pdgId() == 25 and el.status() == 22:
+                            higgs_pt_values.append(el.pt()/1000)
+                            higgs_pt_values_by_event.append(el.pt()/1000)
+                        #print (" truthIt: ", truthIt)
+                        #if el.e() >= 10000.0:
+                            #print('  PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                            #(el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                        if el.pdgId() == 25 and el.status() == 22 and signalBool:
+                            print (" truthIt: ", truthIt)
+                            print(' Higgs PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
+                            (el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
+                        truthIt += 1
+
+                    if higgsPtCut and signalBool:
+                        if any(higgs_pt > 150 and higgs_pt < 350 for higgs_pt in higgs_pt_values_by_event):
+                            higgs_pt_values_after_cut += higgs_pt_values_by_event
+                            higgs_passes_cut = True
+                    
+                        if not higgs_passes_cut:
+                            eventCounter -= 1
+                            continue
+                    
+
+                    
+
                     # Loop over the CaloCalTopoClusters collection
                     for el in t.CaloCalTopoClusters:
                         #print('  topo eta = %g, phi = %g, Et = %g' %  (el.eta(), el.phi(), el.et()))
@@ -180,21 +227,6 @@ with open(output_file_topo422, "w") as f_topo:
                             topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         # Initialize sum of transverse energy for this event
                         topo_it += 1
-                    
-                    #if iEvt <= 9:
-                    truthIt = 0
-                    for el in t.TruthParticles:
-                        if el.pdgId() == 25 and el.status() == 22:
-                            higgs_pt_values.append(el.pt()/1000)
-                        #print (" truthIt: ", truthIt)
-                        #if el.e() >= 10000.0:
-                            #print('  PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
-                            #(el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
-                        #if el.pdgId() == 25 and el.status() == 22 and signalBool:
-                            #print (" truthIt: ", truthIt)
-                            #print(' Higgs PDG ID = %d, Eta = %g, Phi = %g, energy [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
-                            #(el.pdgId(), el.eta(), el.phi(), el.e()/1000.0, el.pt()/1000, iEvt, el.status()))
-                        truthIt += 1
                     
                         
 
@@ -328,16 +360,36 @@ with open(output_file_topo422, "w") as f_topo:
                 # Clean up the transient tree for the current file
                 ROOT.xAOD.ClearTransientTrees()
                 fileIt += 1
+if signalBool:
+
+    # After the loop (once you've collected all values):
+    plt.hist(higgs_pt_values, bins=50, range=(0, 500), histtype='step', label='Higgs pt')
+    plt.xlabel(r"$p_T$ [GeV]")
+    plt.ylabel('# Higgs')
+    plt.title(r"Higgs $p_T$ Distribution")
+    plt.legend()
+
+    # Save the histogram as an image
+    plt.savefig('signalEventPlots/higgs_pt_distribution.png')
+
+    if higgsPtCut:
+        plt.hist(higgs_pt_values_after_cut, bins=50, range=(0, 500), histtype='step', label='Higgs pt')
+        plt.xlabel(r"$p_T$ [GeV]")
+        plt.ylabel('# Higgs')
+        plt.title(r"Higgs $p_T$ Distribution (after cut requiring at least 1 $p_T$ > 150, < 350 GeV Higgs per event)")
+        plt.legend()
+
+        # Save the histogram as an image
+        plt.savefig('signalEventPlots/higgs_pt_distribution_after_cut.png')
 
 # After the loop (once you've collected all values):
-plt.hist(higgs_pt_values, bins=50, range=(0, 500), histtype='step', label='Higgs pt')
+plt.hist(jet_pt_values, bins=50, range=(0, 100), histtype='step', label='Jet pt')
 plt.xlabel(r"$p_T$ [GeV]")
-plt.ylabel('Events')
-plt.title(r"Higgs $p_T$ Distribution")
+plt.ylabel('# Jets')
+plt.title(r"Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
 plt.legend()
-
 # Save the histogram as an image
-plt.savefig('signalEventPlots/higgs_pt_distribution.png')
+plt.savefig('backgroundEventPlots/truth_jet_pt_distribution.png')
 
 # Calculate and print min and max for phi, eta, and Et
 if topo_phi_values and any(topo_phi_values):
@@ -435,7 +487,8 @@ if jfex_smallr_et_values and any(jfex_smallr_et_values):
     ))
 else:
     print("jFex Et: No data available.")
-
+if signalBool and higgsPtCut:
+    print("percent of files passing pt cut:", eventCounter/ (fileIt * events_per_file))
 
 
 
