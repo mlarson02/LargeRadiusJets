@@ -227,7 +227,7 @@ void process_event(const std::string& fileName, unsigned int eventToProcess, std
     //std::cout << "processing iEvt: " << eventToProcess << "\n";
     // perform sorting by Et here
     // Sort the vector of arrays for the specific event (iEvt)
-    /*std::sort(seedValues.begin(), seedValues.end(), // FIXME possibly replace with insertion sort (note: O(n^2)) - consider instead looping through and only considering input objects with minimum energy
+    /*std::sort(seedValues.begin(), seedValues.end(), // FIXME possibly replace with insertion sort (note: this is O(n^2)) - consider instead looping through and only considering input objects with minimum energy
                 [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
                     return a[0] > b[0]; // Sort by highest Et (first element of the array)
                 });*/
