@@ -96,7 +96,7 @@ void extract_values_from_file(const std::string& fileName, unsigned int event, s
 }
 */
 // new version for all events
-void extract_values_from_file(const std::string& fileName, std::vector<std::vector<std::array<double, 3> > >& values) {
+void extract_values_from_file(const std::string& fileName, std::vector<std::array<double, 3> >& values, unsigned int eventToProcess) {
 
     std::ifstream inFile(fileName);
     if (!inFile.is_open()) {
@@ -109,62 +109,77 @@ void extract_values_from_file(const std::string& fileName, std::vector<std::vect
     //unsigned int lineIt = -1;
 
     std::string line;
-    std::vector<std::array<double, 3> > valuesForEachEvent; 
+    std::vector<std::array<double, 3> > valuesForEvent; 
     while (std::getline(inFile, line)) {
         //lineIt++; 
-
+        int eventNumber;
+        
         // Skip event header lines
         if (line.find("Event") != std::string::npos) {
-            if (iEvt >= 0){
-                values.push_back(valuesForEachEvent);
-                valuesForEachEvent.clear();
+            std::stringstream ss0(line);
+            std::string temp;
+            
+            
+            ss0 >> temp >> temp >> eventNumber;  // "Event :" is skipped, eventNumber is read
+            std::cout << "Event found: " << eventNumber << "and eventToProcess: " << eventToProcess << std::endl;
+            if (iEvt >= 0 && iEvt == eventToProcess){
+                std::cout << "iEvt: " << iEvt << "\n";
+                std::cout << "event being processed: " << iEvt << "\n";
+                values = valuesForEvent;
             }
             iEvt++;
+            valuesForEvent.clear();
             continue;
         }
-        if (iEvt > maxEvent_) break;
+        if (iEvt > eventToProcess) break;
+        if (eventNumber == eventToProcess){
+            std::stringstream ss(line);
+            std::string index, bin, hex_word;
+            ss >> index >> bin >> hex_word;
+
+            //std::cout << "index: " << index << " binary : " << bin << " hex_word: " << hex_word << "\n";
+
+            // Validate line format
+            size_t first_pipe = bin.find('|');
+            size_t second_pipe = bin.rfind('|');
+            if (first_pipe == std::string::npos || second_pipe == std::string::npos || first_pipe == second_pipe) {
+                std::cerr << "Error: Malformed line -> " << line << std::endl;
+                continue;
+            }
+
+            // Extract binary substrings
+            std::string et_bin = bin.substr(0, first_pipe);
+            std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
+            std::string phi_bin = bin.substr(second_pipe + 1);
+
+            try {
+                // Convert binary to bitsets
+                std::bitset<et_bit_length_> et_bits(et_bin);
+                std::bitset<eta_bit_length_> eta_bits(eta_bin);
+                std::bitset<phi_bit_length_> phi_bits(phi_bin);
+
+                // Convert bitsets to floating-point values
+                //std::cout << "Et bits: " << et_bits
+                //          << ", Phi bits: " << phi_bits
+                //          << ", Eta bits: " << eta_bits << std::endl;
+                double et = undigitize_et(et_bits);
+                double eta = undigitize_eta(eta_bits);
+                double phi = undigitize_phi(phi_bits);
+                //std::cout << "Et: " << et
+                //          << ", Phi: " << phi
+                //          << ", Eta: " << eta << std::endl;
+
+                // Store in vector
+                std::cout << "et " << et << "\n";
+                valuesForEvent.push_back({et, eta, phi});
+            } catch (const std::exception& e) {
+                std::cerr << "Error processing line: " << line << " -> " << e.what() << std::endl;
+            }
+        }
         
-        std::stringstream ss(line);
-        std::string index, bin, hex_word;
-        ss >> index >> bin >> hex_word;
-
-        //std::cout << "index: " << index << " binary : " << bin << " hex_word: " << hex_word << "\n";
-
-        // Validate line format
-        size_t first_pipe = bin.find('|');
-        size_t second_pipe = bin.rfind('|');
-        if (first_pipe == std::string::npos || second_pipe == std::string::npos || first_pipe == second_pipe) {
-            std::cerr << "Error: Malformed line -> " << line << std::endl;
-            continue;
-        }
-
-        // Extract binary substrings
-        std::string et_bin = bin.substr(0, first_pipe);
-        std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
-        std::string phi_bin = bin.substr(second_pipe + 1);
-
-        try {
-            // Convert binary to bitsets
-            std::bitset<et_bit_length_> et_bits(et_bin);
-            std::bitset<eta_bit_length_> eta_bits(eta_bin);
-            std::bitset<phi_bit_length_> phi_bits(phi_bin);
-
-            // Convert bitsets to floating-point values
-            //std::cout << "Et bits: " << et_bits
-            //          << ", Phi bits: " << phi_bits
-            //          << ", Eta bits: " << eta_bits << std::endl;
-            double et = undigitize_et(et_bits);
-            double eta = undigitize_eta(eta_bits);
-            double phi = undigitize_phi(phi_bits);
-            //std::cout << "Et: " << et
-            //          << ", Phi: " << phi
-            //          << ", Eta: " << eta << std::endl;
-
-            // Store in vector
-            valuesForEachEvent.push_back({et, eta, phi});
-        } catch (const std::exception& e) {
-            std::cerr << "Error processing line: " << line << " -> " << e.what() << std::endl;
-        }
+    }
+    if (maxEvent_ == 1000){
+        values = valuesForEvent;
     }
 
     inFile.close();
@@ -196,89 +211,92 @@ template<unsigned int event>
 */
 
 // Main functon
-void process_file(const std::string& fileName){ // FIXME use event loop outside of this, that way function is called each event 
+void process_event(const std::string& fileName, unsigned int eventToProcess, std::ofstream& outFile){ // FIXME use event loop outside of this, that way function is called each event 
     // Open input file
-    const std::string eosPath = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/";
-    const std::string gFexFile = eosPath + "gFex/" + fileName + "_gfex_smallrj.dat";
-    const std::string topoFile = eosPath + "CaloTopo_422/" + fileName + "_topo422.dat";
-    const std::string outputJetsFile = eosPath + "largeRJets/" + fileName + "_largeR.dat";
+    const std::string gFexFile = eosPath_ + "gFex/" + fileName + "_gfex_smallrj.dat";
+    const std::string topoFile = eosPath_ + "CaloTopo_422/" + fileName + "_topo422.dat";
+    
     //std::cout << "gFex File: " << gFexFile << " and topo file: " << topoFile << "\n";
 
-    std::ofstream outFile(outputJetsFile);
-    if (!outFile) {
-        std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
-        return;
-    }
+    std::vector<std::array<double, 3> > seedValues;
+    std::vector<std::array<double, 3> > inputObjectValues;
+    std::vector<std::array<double, 3> > outputJetValues;
 
-    std::vector<std::vector<std::array<double, 3> > > gFexValues;
-    std::vector<std::vector<std::array<double, 3> > > topoValues;
-    std::vector<std::vector<std::array<double, 3> > > outputJetValues;
+    extract_values_from_file(gFexFile, seedValues, eventToProcess);
+    extract_values_from_file(topoFile, inputObjectValues, eventToProcess);
 
-    extract_values_from_file(gFexFile, gFexValues);
-    extract_values_from_file(topoFile, topoValues);
+    outFile << "Event : " << std::dec << eventToProcess << std::endl;
+    std::cout << "processing iEvt: " << eventToProcess << "\n";
+    // perform sorting by Et here
+    // Sort the vector of arrays for the specific event (iEvt)
+    std::sort(seedValues.begin(), seedValues.end(),
+                [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
+                    return a[0] > b[0]; // Sort by highest Et (first element of the array)
+                });
 
-    for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        outFile << "Event : " << std::dec << iEvt << std::endl;
-        std::cout << "processing iEvt: " << iEvt << "\n";
-            // perform sorting by Et here
-            if (iEvt < gFexValues.size()) {
-                // Sort the vector of arrays for the specific event (iEvt)
-                std::sort(gFexValues[iEvt].begin(), gFexValues[iEvt].end(),
-                            [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
-                                return a[0] > b[0]; // Sort by highest Et (first element of the array)
-                            });
-            } else {
-                std::cerr << "Error: iEvt out of bounds. iEvt = " << iEvt << ", gFexValues.size() = " << gFexValues.size() << std::endl;
-            }
-            
-            for (unsigned int igFex = 0; igFex < nSeeds_; ++igFex){
-                double outputJetEt = gFexValues[iEvt][igFex][0]; // reset outputjet values for each seed, to values of seed
-                double outputJetEta = gFexValues[iEvt][igFex][1]; 
-                double outputJetPhi = gFexValues[iEvt][igFex][2]; 
-                //std::cout << "seed Et, Eta, phi: " << gFexValues[iEvt][igFex][0] << " , " << gFexValues[iEvt][igFex][1] << " , " << gFexValues[iEvt][igFex][2] << "\n";
-                for (unsigned int iTopo = 0; iTopo < topoValues[iEvt].size() && iTopo < maxObjectsConsidered_; ++iTopo){
-                    //std::cout << "topo Et, Eta, phi: " << topoValues[iEvt][iTopo][0] << " , " << topoValues[iEvt][iTopo][1] << " , " << topoValues[iEvt][iTopo][2] << "\n";
-                    double dR2 = calcDeltaR2(gFexValues[iEvt][igFex][1], gFexValues[iEvt][igFex][2], topoValues[iEvt][iTopo][1], topoValues[iEvt][iTopo][2]);
-                    //std::cout << "deltaR2: " << dR2 << "\n";
-                    if (dR2 <= r2Cut_){
-                        outputJetEt += topoValues[iEvt][iTopo][0];
-                        // Erase the element at iTopo from topoValues
-                        topoValues[iEvt].erase(topoValues[iEvt].begin() + iTopo);
-
-                        // Adjust the loop index since the vector size has decreased
-                        --iTopo;
-                    }
-                }
-                //std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << gFexValues[iEvt][igFex][0] << "\n";
-                //std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
-
-                // Convert to binary format (assuming fixed lengths)
-                std::pair<std::string, unsigned int> et_bin = digitize<et_bit_length_>(outputJetEt, et_min_, et_max_); // Example: 13 bits for Et
-                std::pair<std::string, unsigned int> eta_bin = digitize<eta_bit_length_>(outputJetEta, eta_min_, eta_max_); // Example: 11 bits for eta
-                std::pair<std::string, unsigned int> phi_bin = digitize<phi_bit_length_>(outputJetPhi, phi_min_, phi_max_); // Example: 8 bits for phi
-
-                //std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
-
-                int combined_value = (et_bin.second << (eta_bit_length_ + phi_bit_length_)) | (eta_bin.second << phi_bit_length_) | phi_bin.second;
+    
+    for (unsigned int iSeed = 0; iSeed < nSeeds_; ++iSeed){
+        std::cout << "size of seed values: " << seedValues[iSeed].size() << "\n";
+        double outputJetEt = seedValues[iSeed][0]; // reset outputjet values for each seed, to values of seed
+        double outputJetEta = seedValues[iSeed][1]; 
+        double outputJetPhi = seedValues[iSeed][2]; 
+        //std::cout << "outputJetEt: " << outputJetEt << " and outputJetEta: " << outputJetEta << " and outputJetPhi: " << outputJetPhi << "\n";
+        std::cout << "seed Et, Eta, phi: " << seedValues[iSeed][0] << " , " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
+        //std::cout << "inputObjectValues.size(): " << inputObjectValues.size() << "\n";
+        for (unsigned int iInput = 0; iInput < inputObjectValues.size() && iInput < maxObjectsConsidered_; ++iInput){
+            std::cout << "topo Et, Eta, phi: " << inputObjectValues[iInput][0] << " , " << inputObjectValues[iInput][1] << " , " << inputObjectValues[iInput][2] << "\n";
+            double dR2 = calcDeltaR2(seedValues[iSeed][1], seedValues[iSeed][2], inputObjectValues[iInput][1], inputObjectValues[iInput][2]);
+            //std::cout << "deltaR2: " << dR2 << "\n";
+            if (dR2 <= r2Cut_){
+                //std::cout << "iInput: "<< iInput << "and inputObjectValues.size(): " <<  inputObjectValues.size() << "\n";
+                outputJetEt += inputObjectValues[iInput][0];
+                // Erase the element at iInput from inputObjectValues
+                //std::cout << "iINput: " << iInput << " and inputObjectValues.begin() + iInput: " << inputObjectValues.begin() + iInput << " and inputObjectValues.size(): " <<inputObjectValues.size() << "\n";
                 
-                // Convert to hexadecimal (for the last field)
-                std::stringstream hex_stream;
-                hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
-                std::string hexValue = hex_stream.str();
+                inputObjectValues.erase(inputObjectValues.begin() + iInput);
 
-                // Output in the required format
-                outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << igFex
-                << " " << et_bin.first << "|" << eta_bin.first << "|" << phi_bin.first
-                << " 0x" << hexValue << std::endl;
+                // Adjust the loop index since the vector size has decreased
+                --iInput;
             }
+        }
+        //std::cout << "outputjetEt : " << outputJetEt << " original seed Et: " << seedValues[iSeed][0] << "\n";
+        //std::cout << "outputJetEta: " << outputJetEta << " outputJetPhi: " << outputJetPhi << "\n";
+        //std::cout << "outputJetEt: " << outputJetEt << " outputJetEta: " << outputJetEta << "outputJetPhi: " << outputJetPhi << "\n";
+        // Convert to binary format (assuming fixed lengths)
+        std::pair<std::string, unsigned int> et_bin = digitize<et_bit_length_>(outputJetEt, et_min_, et_max_); // Example: 13 bits for Et
+        std::pair<std::string, unsigned int> eta_bin = digitize<eta_bit_length_>(outputJetEta, eta_min_, eta_max_); // Example: 11 bits for eta
+        std::pair<std::string, unsigned int> phi_bin = digitize<phi_bit_length_>(outputJetPhi, phi_min_, phi_max_); // Example: 8 bits for phi
+
+        //std::cout << "et_int: " << et_bin.second << " eta_int: " << eta_bin.second << " phi_int: " << phi_bin.second << "\n";
+        int combined_value = (et_bin.second << (eta_bit_length_ + phi_bit_length_)) | (eta_bin.second << phi_bit_length_) | phi_bin.second;
+        // Convert to hexadecimal (for the last field)
+        std::stringstream hex_stream;
+        hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
+        std::string hexValue = hex_stream.str();
+        // Output in the required format
+        outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << iSeed
+        << " " << et_bin.first << "|" << eta_bin.first << "|" << phi_bin.first
+        << " 0x" << hexValue << std::endl;
     }
+    //seedValues.clear();
+    //inputObjectValues.clear();
+    //outputJetValues.clear();
 
 }
 
 // Calls main function with global fileName_ variable 
 void callEventLoop(const std::string& fileName = fileName_){
-    redirect_output_to_file();
-    process_file(fileName);
-    fclose(stdout);
+    //redirect_output_to_file();
+    const std::string outputJetsFile = eosPath_ + "largeRJets/" + fileName + "_largeR.dat";
+    std::ofstream outFile(outputJetsFile);
+    if (!outFile) {
+        std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
+        return;
+    }
+    for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
+        if (iEvt < 990) continue;
+        process_event(fileName, iEvt, outFile);
+    }   
+    //fclose(stdout);
     return;
 }

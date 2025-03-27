@@ -12,7 +12,8 @@
 #include <TMath.h>
 
 // Customizable parameters / global variables
-const unsigned int maxEvent_ = 999;
+const std::string eosPath_ = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/";
+const unsigned int maxEvent_ = 1000;
 //const std::string fileName_ = "mc21_14TeV_hh_bbbb_vbf_novhh"; 
 const bool sortSeeds_ = true;
 const bool iterative_ = false;

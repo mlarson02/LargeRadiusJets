@@ -196,12 +196,12 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
 
     h_deltaR_jet1->Scale(1.0 / h_deltaR_jet1->Integral());
     h_deltaR_jet1->SetXTitle("#Delta R");   // X-axis title
-    h_deltaR_jet1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    h_deltaR_jet1->SetYTitle("Normalized Num. of Topo422 Clusters / 0.2");  // Y-axis title
     h_deltaR_jet1->Draw();
     c.SaveAs(outputFileDir + "deltaR_jet1.pdf");
     h_deltaR_jet2->Scale(1.0 / h_deltaR_jet2->Integral());
     h_deltaR_jet2->SetXTitle("#Delta R");   // X-axis title
-    h_deltaR_jet2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    h_deltaR_jet2->SetYTitle("Normalized Num. of Topo422 Clusters / 0.2");  // Y-axis title
     h_deltaR_jet2->Draw();
     c.SaveAs(outputFileDir + "deltaR_jet2.pdf");
 
@@ -507,8 +507,8 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
     sig_h_topo_multiplicity->SetLineColor(kRed);
     back_h_topo_multiplicity->SetLineColor(kBlue);
-    back_h_topo_multiplicity->Draw();
-    sig_h_topo_multiplicity->Draw("SAME");
+    sig_h_topo_multiplicity->Draw();
+    back_h_topo_multiplicity->Draw("SAME");
     leg->Draw();
     c.SaveAs(outputFileDir + "topo_multiplicity.pdf");
 
@@ -573,13 +573,15 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     c.SaveAs(outputFileDir + "deltaR_jet2.pdf");
 
     TCanvas cLog;
-    cLog.SetLogx();
+    //cLog.SetLogx();
     cLog.SetLogy();
 
     sig_h_topo_Et->SetLineColor(kRed);
     back_h_topo_Et->SetLineColor(kBlue);
-    back_h_topo_Et->Draw();
-    sig_h_topo_Et->Draw("SAME");
+    sig_h_topo_Et->Scale(1.0 / sig_h_topo_Et->Integral());
+    back_h_topo_Et->Scale(1.0 / back_h_topo_Et->Integral());
+    back_h_topo_Et->Draw("HIST");
+    sig_h_topo_Et->Draw("HIST SAME");
     leg->Draw();
     cLog.SaveAs(outputFileDir + "log_topo_Et.pdf");
 
