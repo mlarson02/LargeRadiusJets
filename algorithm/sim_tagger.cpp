@@ -8,13 +8,10 @@
 #include <fstream>
 #include <iomanip>
 #include <array>
-#include "TH1F.h"
-#include "TCanvas.h"
-#include "TFile.h"
 #include <cmath>
-#include <TMath.h>
-
+#include "sim_tagger.h"
 #include "helperFunctions.h"
+#include <ap_int.h>
 
 /* // old version for each event
 void extract_values_from_file(const std::string& fileName, unsigned int event, std::vector<std::array<double, 3>>& values) {
@@ -121,10 +118,10 @@ void extract_values_from_file(const std::string& fileName, std::vector<std::arra
             
             
             ss0 >> temp >> temp >> eventNumber;  // "Event :" is skipped, eventNumber is read
-            std::cout << "Event found: " << eventNumber << "and eventToProcess: " << eventToProcess << std::endl;
+            //std::cout << "Event found: " << eventNumber << "and eventToProcess: " << eventToProcess << std::endl;
             if (iEvt >= 0 && iEvt == eventToProcess){
-                std::cout << "iEvt: " << iEvt << "\n";
-                std::cout << "event being processed: " << iEvt << "\n";
+                //std::cout << "iEvt: " << iEvt << "\n";
+                //std::cout << "event being processed: " << iEvt << "\n";
                 values = valuesForEvent;
             }
             iEvt++;
@@ -152,29 +149,30 @@ void extract_values_from_file(const std::string& fileName, std::vector<std::arra
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
 
-            try {
-                // Convert binary to bitsets
-                std::bitset<et_bit_length_> et_bits(et_bin);
-                std::bitset<eta_bit_length_> eta_bits(eta_bin);
-                std::bitset<phi_bit_length_> phi_bits(phi_bin);
+            //try {
+            // Convert binary to bitsets
+            std::bitset<et_bit_length_> et_bits(et_bin);
+            std::bitset<eta_bit_length_> eta_bits(eta_bin);
+            std::bitset<phi_bit_length_> phi_bits(phi_bin);
 
-                // Convert bitsets to floating-point values
-                //std::cout << "Et bits: " << et_bits
-                //          << ", Phi bits: " << phi_bits
-                //          << ", Eta bits: " << eta_bits << std::endl;
-                double et = undigitize_et(et_bits);
-                double eta = undigitize_eta(eta_bits);
-                double phi = undigitize_phi(phi_bits);
-                //std::cout << "Et: " << et
-                //          << ", Phi: " << phi
-                //          << ", Eta: " << eta << std::endl;
+            // Convert bitsets to floating-point values
+            //std::cout << "Et bits: " << et_bits
+            //          << ", Phi bits: " << phi_bits
+            //          << ", Eta bits: " << eta_bits << std::endl;
+            double et = undigitize_et(et_bits);
+            double eta = undigitize_eta(eta_bits); // FIXME use digitized values in calculations, don't convert to double
+            double phi = undigitize_phi(phi_bits);
+            //std::cout << "Et: " << et
+            //          << ", Phi: " << phi
+            //          << ", Eta: " << eta << std::endl;
 
-                // Store in vector
-                std::cout << "et " << et << "\n";
-                valuesForEvent.push_back({et, eta, phi});
-            } catch (const std::exception& e) {
+            // Store in vector
+            //std::cout << "et " << et << "\n";
+            valuesForEvent.push_back({et, eta, phi});
+            //} 
+            /*catch (const std::exception& e) {
                 std::cerr << "Error processing line: " << line << " -> " << e.what() << std::endl;
-            }
+            }*/
         }
         
     }
@@ -213,8 +211,8 @@ template<unsigned int event>
 // Main functon
 void process_event(const std::string& fileName, unsigned int eventToProcess, std::ofstream& outFile){ // FIXME use event loop outside of this, that way function is called each event 
     // Open input file
-    const std::string gFexFile = eosPath_ + "gFex/" + fileName + "_gfex_smallrj.dat";
-    const std::string topoFile = eosPath_ + "CaloTopo_422/" + fileName + "_topo422.dat";
+    const std::string gFexFile = memPrintsPath_ + "gFex/" + fileName + "_gfex_smallrj.dat";
+    const std::string topoFile = memPrintsPath_ + "CaloTopo_422/" + fileName + "_topo422.dat";
     
     //std::cout << "gFex File: " << gFexFile << " and topo file: " << topoFile << "\n";
 
@@ -226,25 +224,25 @@ void process_event(const std::string& fileName, unsigned int eventToProcess, std
     extract_values_from_file(topoFile, inputObjectValues, eventToProcess);
 
     outFile << "Event : " << std::dec << eventToProcess << std::endl;
-    std::cout << "processing iEvt: " << eventToProcess << "\n";
+    //std::cout << "processing iEvt: " << eventToProcess << "\n";
     // perform sorting by Et here
     // Sort the vector of arrays for the specific event (iEvt)
-    std::sort(seedValues.begin(), seedValues.end(),
+    /*std::sort(seedValues.begin(), seedValues.end(), // FIXME possibly replace with insertion sort (note: O(n^2)) - consider instead looping through and only considering input objects with minimum energy
                 [](const std::array<double, 3>& a, const std::array<double, 3>& b) {
                     return a[0] > b[0]; // Sort by highest Et (first element of the array)
-                });
+                });*/
 
     
     for (unsigned int iSeed = 0; iSeed < nSeeds_; ++iSeed){
-        std::cout << "size of seed values: " << seedValues[iSeed].size() << "\n";
+        //std::cout << "size of seed values: " << seedValues[iSeed].size() << "\n";
         double outputJetEt = seedValues[iSeed][0]; // reset outputjet values for each seed, to values of seed
         double outputJetEta = seedValues[iSeed][1]; 
         double outputJetPhi = seedValues[iSeed][2]; 
         //std::cout << "outputJetEt: " << outputJetEt << " and outputJetEta: " << outputJetEta << " and outputJetPhi: " << outputJetPhi << "\n";
-        std::cout << "seed Et, Eta, phi: " << seedValues[iSeed][0] << " , " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
+        //std::cout << "seed Et, Eta, phi: " << seedValues[iSeed][0] << " , " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
         //std::cout << "inputObjectValues.size(): " << inputObjectValues.size() << "\n";
         for (unsigned int iInput = 0; iInput < inputObjectValues.size() && iInput < maxObjectsConsidered_; ++iInput){
-            std::cout << "topo Et, Eta, phi: " << inputObjectValues[iInput][0] << " , " << inputObjectValues[iInput][1] << " , " << inputObjectValues[iInput][2] << "\n";
+            //std::cout << "topo Et, Eta, phi: " << inputObjectValues[iInput][0] << " , " << inputObjectValues[iInput][1] << " , " << inputObjectValues[iInput][2] << "\n";
             double dR2 = calcDeltaR2(seedValues[iSeed][1], seedValues[iSeed][2], inputObjectValues[iInput][1], inputObjectValues[iInput][2]);
             //std::cout << "deltaR2: " << dR2 << "\n";
             if (dR2 <= r2Cut_){
@@ -276,7 +274,16 @@ void process_event(const std::string& fileName, unsigned int eventToProcess, std
         // Output in the required format
         outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << iSeed
         << " " << et_bin.first << "|" << eta_bin.first << "|" << phi_bin.first
-        << " 0x" << hexValue << std::endl;
+        << " 0x" << hexValue << std::endl; // FIXME can't use in hls
+        //char formattedString[64];  // Allocate enough space
+        //ap_uint<et_bit_length_ > et_value = et_bin.first - '0';
+        //ap_uint<et_bit_length_ > et_value = (int)strtol(et_bin.first, NULL, 2);
+        //ap_uint<eta_bit_length_ > eta_value = eta_bin.first - '0';
+        //ap_uint<eta_bit_length_ > eta_value = (int)strtol(eta_bin.first, NULL, 2);
+        //ap_uint<phi_bit_length_ > phi_value = phi_bin.first - '0';
+        //ap_uint<phi_bit_length_ > phi_value = (int)strtol(phi_bin.first, NULL, 2);
+        //format_output(formattedString, sizeof(formattedString), iSeed, et_value, eta_value, phi_value, hexValue);
+        //outFile << formattedString << std::endl; // FIXME don't write out file for actual implementation, only C sim, use precompiler directive
     }
     //seedValues.clear();
     //inputObjectValues.clear();
@@ -285,16 +292,15 @@ void process_event(const std::string& fileName, unsigned int eventToProcess, std
 }
 
 // Calls main function with global fileName_ variable 
-void callEventLoop(const std::string& fileName = fileName_){
+void callEventLoop(const char* fileName){
     //redirect_output_to_file();
-    const std::string outputJetsFile = eosPath_ + "largeRJets/" + fileName + "_largeR.dat";
+    const std::string outputJetsFile = memPrintsPath_ + "largeRJets/" + fileName + "_largeR.dat";
     std::ofstream outFile(outputJetsFile);
     if (!outFile) {
         std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
         return;
     }
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        if (iEvt < 990) continue;
         process_event(fileName, iEvt, outFile);
     }   
     //fclose(stdout);

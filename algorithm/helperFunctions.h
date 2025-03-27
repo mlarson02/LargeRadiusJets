@@ -5,14 +5,12 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include "TH1F.h"
-#include "TCanvas.h"
-#include "TFile.h"
 #include <cmath>
-#include <TMath.h>
+#include <cstdio>  // For sprintf()
 
 // Customizable parameters / global variables
-const std::string eosPath_ = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/";
+//const std::string memPrintsPath_ = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/"; // FIXME define pre-compile statement if running on lxplus or millerlabml01
+const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const unsigned int maxEvent_ = 1000;
 //const std::string fileName_ = "mc21_14TeV_hh_bbbb_vbf_novhh"; 
 const bool sortSeeds_ = true;
@@ -42,6 +40,12 @@ const int et_max_ = 2048.0;
 
 const bool useMax_ = false;
 
+void format_output(char* buffer, int buffer_size, int iSeed, int et_bin, int eta_bin, int phi_bin, int hexValue) {
+    snprintf(buffer, buffer_size, 
+             "0x%02X %d|%d|%d 0x%X", 
+             iSeed, et_bin, eta_bin, phi_bin, hexValue);
+}
+
 
 // Helper functions
 double undigitize_phi(const std::bitset<8>& phi_bits) {
@@ -61,7 +65,7 @@ template <int bit_length>
 std::pair<std::string, unsigned int> digitize(double value, double min_val, double max_val) {
     // Ensure the value is within range
     if (value < min_val || value > max_val) {
-        throw std::out_of_range("Value is out of range");
+        std::cerr << "Value is out of range" << "\n";
     }
     //std::cout << "value : " << value << "\n";
 
@@ -84,11 +88,11 @@ std::pair<std::string, unsigned int> digitize(double value, double min_val, doub
 double calcDeltaR2(double eta1, double phi1, double eta2, double phi2) {
     //std::cout << "eta1: " << eta1 << " eta2: " << eta2 << " phi1: " << phi1 << " phi2: " << phi2 << "\n";
     double dEta = eta1 - eta2;
-    double dPhi = TMath::Abs(phi1 - phi2);
+    double dPhi = std::abs(phi1 - phi2);
     
     // Ensure Δφ is within [-π, π] range
-    if (dPhi > TMath::Pi()) {
-        dPhi = 2 * TMath::Pi() - dPhi;
+    if (dPhi > M_PI) {
+        dPhi = 2 * M_PI - dPhi;
     }
     //std::cout << "dr2: " << dEta * dEta + dPhi * dPhi << "\n";
     return dEta * dEta + dPhi * dPhi;
@@ -106,7 +110,7 @@ bool energyMax(double et, double et_cutoff){
 bool energyMin(double et, double et_cutoff){
     return et >= et_cutoff;
 }
-
+/* FIXME use compilation flag 
 void SetPlotStyle();
 void mySmallText(Double_t x, Double_t y, Color_t color, char* text);
 
@@ -179,3 +183,4 @@ void mySmallText(Double_t x, Double_t y, Color_t color, char* text) {
     l.SetTextColor(color);
     l.DrawLatex(x, y, text);
 }
+    */
