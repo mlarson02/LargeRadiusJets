@@ -2,17 +2,20 @@
 open_project -reset jet_tagger
 
 # Add design files
-add_files ../algorithm/sim_tagger.cpp
+add_files ../algorithm/jet_tagger_top.h
+add_files ../algorithm/jet_tagger_top.cc
+add_files ../algorithm/process_event.h
+add_files ../algorithm/process_event.cc
 add_files ../algorithm/helperFunctions.h
 # Add test bench & data files
-add_files -tb ../algorithm/testbench/sim_tagger_testbench.cpp
+add_files -tb ../algorithm/testbench/jet_tagger_testbench.cpp
 add_files -tb /home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat
 add_files -tb /home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat
 add_files -tb /home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat
 add_files -tb /home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat
 
 # Set the top-level function
-set_top callEventLoop
+set_top jet_tagger_top
 
 # ########################################################
 # Create a solution
@@ -27,7 +30,11 @@ set hls_exec 2
 
 csim_design
 # Set any optimization directives
-set_directive_interface -mode m_axi pointer_basic d -depth 1
+#set_directive_interface -mode m_axi sim_tagger_top seedValues -depth 1
+#set_directive_interface -mode m_axi sim_tagger_top inputObjectValues -depth 1
+#set_directive_interface -mode m_axi sim_tagger_top outputJetEtValues -depth 1
+#set_directive_interface -mode m_axi sim_tagger_top outputJetEtaValues -depth 1
+#set_directive_interface -mode m_axi sim_tagger_top outputJetPhiValues -depth 1
 # End of directives
 
 # cosim_design option -trace_level all is used to create a VCD waveform file

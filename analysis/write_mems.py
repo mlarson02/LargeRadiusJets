@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 signalBool = False
 
-higgsPtCut = False
+higgsPtCut = True
 
 def reset_event_counter(eventCounter): # reset event counter to keep track of kept event number after higgs cuts
     if eventCounter == 0:
@@ -17,7 +17,7 @@ def reset_event_counter(eventCounter): # reset event counter to keep track of ke
         eventCounter -= 1
 
 # Plotting the heatmaps
-def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
+def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False, Higgs1Pt = 0, Higgs2Pt = 0, Higgs1Eta = 0, Higgs2Eta = 0, Higgs1Phi = 0, Higgs2Phi = 0, signalBool = False):
     plt.figure(figsize=(8, 6))
     plt.imshow(data.T, origin='lower', aspect='auto',
                extent=[eta_bins[0], eta_bins[-1], phi_bins[0], phi_bins[-1]],
@@ -30,17 +30,24 @@ def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False):
     plt.xlabel('Eta')
     plt.ylabel('Phi')
     plt.title(title)
+    if signalBool:
+        # Create a legend box outside the plot
+        legend_text = (f"Higgs 1: pT={Higgs1Pt:.2f} GeV, Eta={Higgs1Eta:.2f}, Phi={Higgs1Phi:.2f}\n"
+                    f"Higgs 2: pT={Higgs2Pt:.2f} GeV, Eta={Higgs2Eta:.2f}, Phi={Higgs2Phi:.2f}")
+        
+        plt.figtext(1.02, 0.5, legend_text, ha="left", va="center", fontsize=10, bbox=dict(facecolor='white', edgecolor='black'))
     plt.savefig(filename)
     plt.close()
 
 # Initialize the xAOD infrastructure
-ROOT.xAOD.Init()
+#ROOT.gSystem.Load("libxAODRootAccess")
+#ROOT.xAOD.Init()
 
 # Set up the input file directory
 if signalBool:
-    fileDir = "/eos/user/m/mlarson/LargeRadiusJets/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+    fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
 else: 
-    fileDir = "/eos/user/m/mlarson/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
+    fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
 
 
 # Get a list of all ROOT files in the directory
@@ -75,13 +82,13 @@ higgs_pt_values_after_cut = []
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
 eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
 if signalBool:
-    output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
-    output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
-    output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+    output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
+    output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
+    output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
 else:
-    output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
-    output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
-    output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
+    output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
+    output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
+    output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
 
 # Function to scale and digitize a value
 def digitize(value, bit_length, min_val, max_val):
@@ -107,6 +114,9 @@ et_granularity = 0.25  # GeV per bit
 
 events_per_file = 100
 
+higgs_min_pt = 100
+higgs_max_pt = 200
+
 fileIt = 0
 eventCounter = -1
 
@@ -128,6 +138,14 @@ with open(output_file_topo422, "w") as f_topo:
                 print('  Number of input events: %s' % t.GetEntries())
                 # Loop through all events in the file
                 for entry in range(t.GetEntries()):
+                    higgs_1_pt = 0
+                    higgs_2_pt = 0
+                    higgs_1_eta = 0
+                    higgs_2_eta = 0
+                    higgs_1_phi = 0
+                    higgs_2_phi = 0
+                    higgs_counter = 0
+                    higgs_average_pt = 0
                     eventCounter += 1
                     higgs_pt_values_by_event = []  # List to store pt values
                     higgs_passes_cut = False
@@ -182,6 +200,16 @@ with open(output_file_topo422, "w") as f_topo:
                         jet_pt_values.append(el.pt() / 1000)
                     for el in t.TruthParticles:
                         if el.pdgId() == 25 and el.status() == 22:
+                            higgs_counter += 1
+                            if higgs_counter == 1:
+                                higgs_1_pt = el.pt()/1000
+                                higgs_1_eta = el.eta()
+                                higgs_1_phi = el.phi()
+                            if higgs_counter == 2:
+                                higgs_2_pt = el.pt()/1000
+                                higgs_2_eta = el.eta()
+                                higgs_2_phi = el.phi()
+                            higgs_average_pt = (higgs_1_pt + higgs_2_pt) / 2.0
                             higgs_pt_values.append(el.pt()/1000)
                             higgs_pt_values_by_event.append(el.pt()/1000)
                         #print (" truthIt: ", truthIt)
@@ -195,7 +223,7 @@ with open(output_file_topo422, "w") as f_topo:
                         truthIt += 1
 
                     if higgsPtCut and signalBool:
-                        if any(higgs_pt > 150 and higgs_pt < 350 for higgs_pt in higgs_pt_values_by_event):
+                        if any(higgs_pt > higgs_min_pt and higgs_pt < higgs_max_pt for higgs_pt in higgs_pt_values_by_event):
                             higgs_pt_values_after_cut += higgs_pt_values_by_event
                             higgs_passes_cut = True
                     
@@ -213,18 +241,16 @@ with open(output_file_topo422, "w") as f_topo:
                         topo_eta_values_by_event.append(el.eta())
                         topo_et_values_by_event.append(el.et())
 
-                        if iEvt <= 5:
-                            topo_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
-                            topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        topo_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                        topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         # Initialize sum of transverse energy for this event
                         topo_it += 1
 
 
                     
 
-                        if iEvt <= 5:
-                            topo_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
-                            topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        topo_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                        topo_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         # Initialize sum of transverse energy for this event
                         topo_it += 1
                     
@@ -261,9 +287,8 @@ with open(output_file_topo422, "w") as f_topo:
                                 f_topo.write(f"Event : {iEvt}\n")
                             f_topo.write(f"0x{topo422_it:02x} {binary_word} 0x{hex_word}\n")
 
-                        if iEvt <= 5:
-                            topo_422_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
-                            topo_422_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        topo_422_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                        topo_422_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         sum_et += el.et()  # Add transverse energy of each cluster
                         topo422_it += 1
                         # Initialize sum of transverse energy for this event
@@ -297,9 +322,8 @@ with open(output_file_topo422, "w") as f_topo:
                                 f_gfex.write(f"Event : {iEvt}\n")
                             f_gfex.write(f"0x{gfex_it:02x} {binary_word} 0x{hex_word}\n")
 
-                        if iEvt <= 5:
-                            gfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
-                            gfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        gfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                        gfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         gfex_it += 1
 
                     gfex_smallr_phi_values.append(gfex_smallr_phi_values_by_event)
@@ -331,9 +355,8 @@ with open(output_file_topo422, "w") as f_topo:
                                 f_jfex.write(f"Event : {iEvt}\n")
                             f_jfex.write(f"0x{jfex_it:02x} {binary_word} 0x{hex_word}\n")
 
-                        if iEvt <= 5:
-                            jfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
-                            jfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
+                        jfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
+                        jfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                         jfex_it += 1
                     
                     jfex_smallr_phi_values.append(jfex_smallr_phi_values_by_event)
@@ -347,15 +370,27 @@ with open(output_file_topo422, "w") as f_topo:
                         plotsDir = "signalEventPlots"
                     else: 
                         plotsDir = "backgroundEventPlots"
-                    if iEvt <= 5:
-                        plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.png')
-                        plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.png')
-                        plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.png')
-                        plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.png')
-                        plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.png', True)
-                        plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.png', True)
+                    if higgsAveragePt > higgs_min_pt:
+                        if signalBool:
+                            plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.png', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.png', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.png', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.png', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.png', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.png', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.png', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                            plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.png', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True)
+                        else: 
+                            plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.png')
+                            plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.png')
+                            plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.png')
+                            plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.png')
+                            plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.png', True)
+                            plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.png', True)
+                            plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.png', True) # FIXME add two leading jets pt here
+                            plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.png', True)
+                            
+                        
 
                 # Clean up the transient tree for the current file
                 ROOT.xAOD.ClearTransientTrees()
@@ -376,7 +411,7 @@ if signalBool:
         plt.hist(higgs_pt_values_after_cut, bins=50, range=(0, 500), histtype='step', label='Higgs pt')
         plt.xlabel(r"$p_T$ [GeV]")
         plt.ylabel('# Higgs')
-        plt.title(r"Higgs $p_T$ Distribution (after cut requiring at least 1 $p_T$ > 150, < 350 GeV Higgs per event)")
+        plt.title(r"Higgs $p_T$ Distribution (after cut requiring at least 1 $p_T$ > 100, < 200 GeV Higgs per event)")
         plt.legend()
 
         # Save the histogram as an image
