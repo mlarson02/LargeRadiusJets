@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 signalBool = False
-
+lxplusBool = False
 higgsPtCut = True
 
 def reset_event_counter(eventCounter): # reset event counter to keep track of kept event number after higgs cuts
@@ -40,14 +40,22 @@ def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False, Higgs1P
     plt.close()
 
 # Initialize the xAOD infrastructure
-#ROOT.gSystem.Load("libxAODRootAccess")
-#ROOT.xAOD.Init()
+ROOT.gSystem.Load("libxAODRootAccess")
+ROOT.xAOD.Init()
 
 # Set up the input file directory
 if signalBool:
-    fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+    if lxplusBool:
+        fileDir = "/eos/user/m/mlarson/LargeRadiusJets/data/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+    else:
+        fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Signal_HHbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+    
 else: 
-    fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
+    if lxplusBool:
+        fileDir = "/eos/user/m/mlarson/LargeRadiusJets/data/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
+    else:
+        fileDir = "/home/larsonma/LargeRadiusJets/data/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
+    
 
 
 # Get a list of all ROOT files in the directory
@@ -82,13 +90,25 @@ higgs_pt_values_after_cut = []
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
 eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
 if signalBool:
-    output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
-    output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
-    output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+    if lxplusBool:
+        output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
+        output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
+        output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+    else:
+        output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
+        output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
+        output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+    
 else:
-    output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
-    output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
-    output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
+    if lxplusBool:
+        output_file_topo422 = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
+        output_file_gfex = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
+        output_file_jfex = "/eos/user/m/mlarson/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
+    else:
+        output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
+        output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
+        output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
+    
 
 # Function to scale and digitize a value
 def digitize(value, bit_length, min_val, max_val):
