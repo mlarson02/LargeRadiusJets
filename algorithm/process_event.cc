@@ -21,6 +21,8 @@ void process_event(std::array<std::array<double, 3>, nTotalSeeds_ >& seedValues,
         //std::cout << "seed Et, Eta, phi: " << seedValues[iSeed][0] << " , " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
         //std::cout << "inputObjectValues.size(): " << inputObjectValues.size() << "\n";
         for (unsigned int iInput = 0; iInput < inputObjectValues.size() && iInput < maxObjectsConsidered_; ++iInput){
+            #pragma HLS unroll skip_exit_check factor=4
+            #pragma HLS pipeline II=1
             //std::cout << "processing iInput: " << iInput << std::endl;
             //std::cout << "topo Et, Eta, phi: " << inputObjectValues[iInput][0] << " , " << inputObjectValues[iInput][1] << " , " << inputObjectValues[iInput][2] << "\n";
             double dR2 = calcDeltaR2(seedValues[iSeed][1], seedValues[iSeed][2], inputObjectValues[iInput][1], inputObjectValues[iInput][2]);

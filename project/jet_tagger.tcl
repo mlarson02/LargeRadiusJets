@@ -1,3 +1,4 @@
+# to run: vitis-run --mode hls --tcl jet_tagger.tcl
 # Create project
 open_project -reset jet_tagger
 
@@ -19,7 +20,7 @@ set_top jet_tagger_top
 
 # ########################################################
 # Create a solution
-open_solution -reset solution1 -flow_target vivado
+open_solution -reset solution2 -flow_target vivado
 # Define technology and clock rate
 set_part  {XC7Z020-CLG484-1}
 create_clock -period 4

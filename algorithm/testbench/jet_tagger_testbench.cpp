@@ -6,7 +6,7 @@
 #include <vector>
 
 int main() {
-    std::cout << "Starting test bench..." << std::endl;
+    //std::cout << "Starting test bench..." << std::endl;
     std::array<std::array<double, 3>, nTotalSeeds_ > seedValues; // 3 is # of datatypes (Et, eta, phi)
     std::array<std::array<double, 3>, maxObjectsConsidered_ > inputObjectValues;
    // std::vector<std::array<double, 3> > seedValues;
@@ -36,11 +36,17 @@ int main() {
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
         outFile << "Event : " << std::dec << iEvt << std::endl;
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
-        std::cout << "after extract 1" << std::endl;
+        //std::cout << "after extract 1" << std::endl;
         extract_values_from_file<maxObjectsConsidered_ >(inputObjectFile, inputObjectValues, iEvt);
-        std::cout << "after extract 2" << std::endl;
+        //std::cout << "after extract 2" << std::endl;
+        /*for (int i = 0; i < seedValues.size(); i++){
+            std::cout << "seedValue Et: " << seedValues[i][0] << " seedValue Eta: " << seedValues[i][1] << " seedValue Phi: " << seedValues[i][2] << "\n";
+        }
+        for (int i = 0; i < inputObjectValues.size(); i++){
+            std::cout << "inputObject Et: " << inputObjectValues[i][0] << " inputObject Eta: " << inputObjectValues[i][1] << " inputObject Phi: " << inputObjectValues[i][2] << "\n";
+        }*/
         jet_tagger_top(seedValues, inputObjectValues, outputJetEtValues, outputJetEtaValues, outputJetPhiValues);
-        std::cout << "after extract sim_tagger_top_function" << std::endl;
+        //std::cout << "after extract sim_tagger_top_function" << std::endl;
         for (unsigned int iOutput = 0; iOutput < outputJetEtValues.size(); iOutput++){
             //ap_uint<et_bit_length_> et_apuint(outputJetEtValues[iOutput].to_string());
             //ap_uint<eta_bit_length_> eta_apuint(outputJetEtaValues[iOutput].to_string());
@@ -67,6 +73,6 @@ int main() {
     }   
     
     
-    std::cout << "Test bench completed." << std::endl;
+    //std::cout << "Test bench completed." << std::endl;
     return 0;
 }
