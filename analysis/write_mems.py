@@ -8,11 +8,13 @@ import matplotlib.pyplot as plt
 import math
 import subprocess
 import heapq
+import matplotlib.patches as patches
 
 # Configuration booleans
 signalBool = True
 lxplusBool = True
 higgsPtCut = True
+jFexPlotsBool = False
 
 # Clear plots
 subprocess.run("rm -rf signalEventPlots/*", shell=True, check=True)
@@ -63,29 +65,87 @@ def reset_event_counter(eventCounter): # reset event counter to keep track of ke
         eventCounter -= 1
 
 # Plotting the heatmaps
-def plot_heatmap(data, eta_bins, phi_bins, title, filename, log = False, Higgs1Pt = 0, Higgs2Pt = 0, Higgs1Eta = 0, Higgs2Eta = 0, Higgs1Phi = 0, Higgs2Phi = 0, signalBool = False, b1_list = [], b2_list = [], dr1 = 0, dr2 = 0):
+def plot_heatmap(data, eta_bins, phi_bins, title, filename, log=False,
+                 Higgs1Pt=0, Higgs2Pt=0, Higgs1Eta=0, Higgs2Eta=0,
+                 Higgs1Phi=0, Higgs2Phi=0, signalBool=False,
+                 b1_list=[], b2_list=[], dr1=0, dr2=0):
+
     plt.figure(figsize=(8, 6))
     plt.imshow(data.T, origin='lower', aspect='auto',
                extent=[eta_bins[0], eta_bins[-1], phi_bins[0], phi_bins[-1]],
                cmap='viridis')
-    
-    if log: 
-        plt.colorbar(label='Log_10(Sum of $E_T$)')
-    else: 
+    plt.subplots_adjust(top=0.77)
+
+    if log:
+        plt.colorbar(label='Log₁₀(Sum of $E_T$)')
+    else:
         plt.colorbar(label='Sum of $E_T$ [GeV]')
+
     plt.xlabel('Eta')
     plt.ylabel('Phi')
     plt.title(title)
+
     if signalBool:
-        # Create a legend box outside the plot
+        b_colors = ['red', 'blue', 'green', 'orange']
+        higgs_colors = ['magenta', 'cyan']  # Color for Higgs circles and legend
+
+        # Unpack b quark info
         (b1_Et_1, b1_eta_1, b1_phi_1) = b1_list[0]
         (b2_Et_1, b2_eta_1, b2_phi_1) = b1_list[1]
         (b1_Et_2, b1_eta_2, b1_phi_2) = b2_list[0]
         (b2_Et_2, b2_eta_2, b2_phi_2) = b2_list[1]
-        legend_text = (f"Higgs 1: pT={Higgs1Pt:.2f} GeV, Eta={Higgs1Eta:.2f}, Phi={Higgs1Phi:.2f}, 1st b: Et={b1_Et_1:.2f} GeV, Eta={b1_eta_1:.2f}, Phi={b1_phi_1:.2f}, 2nd b: Et={b2_Et_1:.2f} GeV, Eta={b2_eta_1:.2f}, Phi={b2_phi_1:.2f}, dr={dr1:.2f}\n"
-                    f"Higgs 2: pT={Higgs2Pt:.2f} GeV, Eta={Higgs2Eta:.2f}, Phi={Higgs2Phi:.2f}, 1st b: Et={b1_Et_2:.2f} GeV, Eta={b1_eta_2:.2f}, Phi={b1_phi_2:.2f}, 2nd b: Et={b2_Et_2:.2f} GeV, Eta={b2_eta_2:.2f}, Phi={b2_phi_2:.2f}, dr={dr2:.2f}")
-        
-        plt.figtext(0.01, 0.96, legend_text, ha="left", va="center", fontsize=7.5, bbox=dict(facecolor='white', edgecolor='black'))
+
+        # Draw b-quark circles
+        b_positions = [
+            ((b1_eta_1, b1_phi_1), b_colors[0]),
+            ((b2_eta_1, b2_phi_1), b_colors[1]),
+            ((b1_eta_2, b1_phi_2), b_colors[2]),
+            ((b2_eta_2, b2_phi_2), b_colors[3])
+        ]
+        for (eta, phi), color in b_positions:
+            circle = patches.Circle((eta, phi), radius=1, edgecolor=color,
+                                    facecolor='none', lw=1.5, linestyle='--')
+            plt.gca().add_patch(circle)
+
+        # Draw Higgs centers
+        higgs_positions = [
+            (Higgs1Eta, Higgs1Phi, higgs_colors[0]),
+            (Higgs2Eta, Higgs2Phi, higgs_colors[1])
+        ]
+        for eta, phi, color in higgs_positions:
+            circle = patches.Circle((eta, phi), radius=0.1, edgecolor=color,
+                                    facecolor='none', lw=1.5, linestyle='-')
+            plt.gca().add_patch(circle)
+
+        # Create legend text with color coding
+        higgs1_lines = [
+            f"  Higgs 1: pT={Higgs1Pt:.2f} GeV, Eta={Higgs1Eta:.2f}, Phi={Higgs1Phi:.2f}",
+            f"  1st b: Et={b1_Et_1:.2f}, Eta={b1_eta_1:.2f}, Phi={b1_phi_1:.2f}",
+            f"  2nd b: Et={b2_Et_1:.2f}, Eta={b2_eta_1:.2f}, Phi={b2_phi_1:.2f}",
+            f"  dr (b's)={dr1:.2f}"
+        ]
+        higgs1_colors = [higgs_colors[0], b_colors[0], b_colors[1], None]
+
+        higgs2_lines = [
+            f"  Higgs 2: pT={Higgs2Pt:.2f} GeV, Eta={Higgs2Eta:.2f}, Phi={Higgs2Phi:.2f}",
+            f"  1st b: Et={b1_Et_2:.2f}, Eta={b1_eta_2:.2f}, Phi={b1_phi_2:.2f}",
+            f"  2nd b: Et={b2_Et_2:.2f}, Eta={b2_eta_2:.2f}, Phi={b2_phi_2:.2f}",
+            f"  dr (b's)={dr2:.2f}"
+        ]
+        higgs2_colors = [higgs_colors[1], b_colors[2], b_colors[3], None]
+
+        # Place text annotations on figure
+        y_start = 0.96
+        y_step = 0.045
+
+        for i, (line, color) in enumerate(zip(higgs1_lines, higgs1_colors)):
+            plt.figtext(0.01, y_start - i * y_step, line, ha="left", fontsize=7.5,
+                        color=color if color else "black")
+
+        for i, (line, color) in enumerate(zip(higgs2_lines, higgs2_colors)):
+            plt.figtext(0.51, y_start - i * y_step, line, ha="left", fontsize=7.5,
+                        color=color if color else "black")
+
     plt.savefig(filename)
     plt.close()
 
@@ -136,7 +196,18 @@ higgs_pt_values = []  # List to store plotted values
 deltaR_values = []
 higgs_pt_values_for_dr = []
 jet_pt_values = []
+jet_log_pt_values = []
 higgs_pt_values_after_cut = []
+
+highestEt_b_closest_gfex_deltar_list = []
+second_highestEt_b_closest_gfex_deltar_list = []
+third_highestEt_b_closest_gfex_deltar_list = []
+fourth_highestEt_b_closest_gfex_deltar_list = []
+
+highestEt_b_closest_offlinejet_deltar_list = []
+second_highestEt_b_closest_offlinejet_deltar_list = []
+third_highestEt_b_closest_offlinejet_deltar_list = []
+fourth_highestEt_b_closest_offlinejet_deltar_list = []
 
 b11_list = []
 b21_list = []
@@ -192,7 +263,7 @@ et_granularity = 0.25  # GeV per bit
 events_per_file = 100
 
 higgs_min_pt = 100
-higgs_max_pt = 200
+higgs_max_pt = -1 # remove max pt
 
 higgs_min_average_pt = 200
 
@@ -236,6 +307,8 @@ with open(output_file_topo422, "w") as f_topo:
                     dR_2 = 0
                     b1_list = [] # list for bbbar from 1st higgs
                     b2_list = [] # list for bbbar from 2nd higgs
+                    allb_list = []
+                    sorted_b_list = []
                     
                     eventCounter += 1
                     higgs_pt_values_by_event = []  # List to store pt values
@@ -265,11 +338,13 @@ with open(output_file_topo422, "w") as f_topo:
                     topo_422_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     gfex_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     jfex_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
+                    offlineInTimeJets_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
 
                     topo_log_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     topo_422_log_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     gfex_log_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     jfex_log_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
+                    offlineInTimeJets_log_heatmap = np.zeros((len(eta_bins) - 1, len(phi_bins) - 1))
                     
                     if iEvt == 0: 
                         # Loop over all collections in the transient tree (only for the first event of the first file)
@@ -287,8 +362,14 @@ with open(output_file_topo422, "w") as f_topo:
                     #if iEvt <= 9:
                     truthIt = 0
                     for el in t.InTimeAntiKt4TruthJets:
-                        print("truth jet pt:", el.pt() / 1000)
+                        #print("truth jet pt:", el.pt() / 1000)
                         jet_pt_values.append(el.pt() / 1000)
+                        jet_log_pt_values.append(np.log10(el.pt() / 1000))
+                        offline_jet_total_p = el.pt() * math.cosh(el.eta())
+                        offline_jet_ptoverp = el.pt() / offline_jet_total_p
+                        offline_jet_Et = (el.e() * offline_jet_ptoverp )/1000.0
+                        offlineInTimeJets_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[offline_jet_Et])[0]
+                        offlineInTimeJets_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(offline_jet_Et)])[0]
                     for el in t.TruthParticles: ### FIXME add check to ensure the b's are actually b's
                         if el.pdgId() == 25 and el.status() == 22:
                             higgs_counter += 1
@@ -322,6 +403,7 @@ with open(output_file_topo422, "w") as f_topo:
                                 higgs_2_eta = el.eta()
                                 higgs_2_phi = el.phi()
                                 b2_list = find_non_higgs_daughters(el)
+                                print("len(b2_list):", len(b2_list))
                                 (b1_Et_2, b1_eta_2, b1_phi_2) = b2_list[0]
                                 b12_list.append([b1_eta_2, b1_phi_2])
                                 (b2_Et_2, b2_eta_2, b2_phi_2) = b2_list[1]
@@ -332,12 +414,48 @@ with open(output_file_topo422, "w") as f_topo:
                                     print("dr:", dR_2)
                                 deltaR_values.append(dR_2)
                                 higgs_pt_values_for_dr.append(el.pt() / 1000)
+                            
 
                             higgs_average_pt = (higgs_1_pt + higgs_2_pt) / 2.0
                             higgs_pt_values.append(el.pt()/1000)
                             higgs_pt_values_by_event.append(el.pt()/1000)
                         truthIt += 1
+                        
+                    if len(b1_list) > 1:
+                        allb_list.append(b1_list[0])
+                        allb_list.append(b1_list[1])
+                    if len(b2_list) > 1:
+                        allb_list.append(b2_list[0])
+                        allb_list.append(b2_list[1])
 
+                    sorted_b_list = sorted(allb_list, key=lambda x: x[0], reverse=True)
+
+                    b_iterator = 0
+                    for (b_Et, b_eta, b_phi) in sorted_b_list:
+                        deltaR_gFex_smallR_jets = []
+                        deltaR_offline_jets = []
+                        for el in t.InTimeAntiKt4TruthJets:
+                            deltaR_offline_jets.append(delta_R(b_eta, b_phi, el.eta(), el.phi()))
+                        for el in t.L1_gFexSRJetRoI:
+                            deltaR_gFex_smallR_jets.append(delta_R(b_eta, b_phi, el.eta(), el.phi()))
+                        sorted_deltaR_offline_jets = sorted(deltaR_offline_jets)#, reverse=True)
+                        sorted_deltaR_gFex_smallR_jets = sorted(deltaR_gFex_smallR_jets)#, reverse=True)
+                        
+
+
+                        if b_iterator == 0:
+                            highestEt_b_closest_gfex_deltar_list.append(sorted_deltaR_gFex_smallR_jets[0])
+                            highestEt_b_closest_offlinejet_deltar_list.append(sorted_deltaR_offline_jets[0])
+                        if b_iterator == 1:
+                            second_highestEt_b_closest_gfex_deltar_list.append(sorted_deltaR_gFex_smallR_jets[0])
+                            second_highestEt_b_closest_offlinejet_deltar_list.append(sorted_deltaR_offline_jets[0])
+                        if b_iterator == 2:
+                            third_highestEt_b_closest_gfex_deltar_list.append(sorted_deltaR_gFex_smallR_jets[0])
+                            third_highestEt_b_closest_offlinejet_deltar_list.append(sorted_deltaR_offline_jets[0])
+                        if b_iterator == 3:
+                            fourth_highestEt_b_closest_gfex_deltar_list.append(sorted_deltaR_gFex_smallR_jets[0])
+                            fourth_highestEt_b_closest_offlinejet_deltar_list.append(sorted_deltaR_offline_jets[0])
+                        b_iterator += 1
                     if higgsPtCut and signalBool:
                         if any(higgs_pt > higgs_min_pt and higgs_pt < higgs_max_pt for higgs_pt in higgs_pt_values_by_event):
                             higgs_pt_values_after_cut += higgs_pt_values_by_event
@@ -489,23 +607,31 @@ with open(output_file_topo422, "w") as f_topo:
                     if signalBool:
                         if higgs_average_pt > higgs_min_average_pt and higgsPlotCounter < 20:
                             higgsPlotCounter += 1
-                            plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            #plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
                             plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
-                            plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
-                            plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
-                            plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex SmallR Jets: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            if jFexPlotsBool:
+                                plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            plot_heatmap(offlineInTimeJets_heatmap, eta_bins, phi_bins, 'InTimeAntiKt4TruthJets: $E_T$ in Eta-Phi Plane', plotsDir + f'/offline_jets_heatmap_event{iEvt}.pdf', False, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            #plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
                             plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
-                            plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
-                            plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex SmallR Jets: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            if jFexPlotsBool:
+                                plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
+                            plot_heatmap(offlineInTimeJets_log_heatmap, eta_bins, phi_bins, 'InTimeAntiKt4TruthJets: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/offline_jets_log_heatmap_event{iEvt}.pdf', True, higgs_1_pt, higgs_2_pt, higgs_1_eta, higgs_2_eta, higgs_1_phi, higgs_2_phi, True, b1_list, b2_list, dR_1, dR_2)
                     else: 
-                        plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.pdf')
+                        #plot_heatmap(topo_heatmap, eta_bins, phi_bins, 'TopoClusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_heatmap_event{iEvt}.pdf')
                         plot_heatmap(topo_422_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $E_T$ in Eta-Phi Plane', plotsDir + f'/topo_422_heatmap_event{iEvt}.pdf')
-                        plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.pdf')
-                        plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.pdf')
-                        plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.pdf', True)
+                        plot_heatmap(gfex_heatmap, eta_bins, phi_bins, 'gFex SmallR Jets: $E_T$ in Eta-Phi Plane', plotsDir + f'/gfex_heatmap_event{iEvt}.pdf')
+                        if jFexPlotsBool:
+                            plot_heatmap(jfex_heatmap, eta_bins, phi_bins, 'jFex: $E_T$ in Eta-Phi Plane', plotsDir + f'/jfex_heatmap_event{iEvt}.pdf')
+                        #plot_heatmap(topo_log_heatmap, eta_bins, phi_bins, 'TopoClusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_log_heatmap_event{iEvt}.pdf', True)
                         plot_heatmap(topo_422_log_heatmap, eta_bins, phi_bins, 'Topo422Clusters: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/topo_422_log_heatmap_event{iEvt}.pdf', True)
-                        plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.pdf', True) # FIXME add two leading jets pt here
-                        plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.pdf', True)
+                        plot_heatmap(gfex_log_heatmap, eta_bins, phi_bins, 'gFex SmallR Jets: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/gfex_log_heatmap_event{iEvt}.pdf', True) # FIXME add two leading jets pt here
+                        if jFexPlotsBool:
+                            plot_heatmap(jfex_log_heatmap, eta_bins, phi_bins, 'jFex: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/jfex_log_heatmap_event{iEvt}.pdf', True)
+                        plot_heatmap(offlineInTimeJets_heatmap, eta_bins, phi_bins, 'InTimeAntiKt4TruthJets: $E_T$ in Eta-Phi Plane', plotsDir + f'/offline_jets_heatmap_event{iEvt}.pdf')
+                        plot_heatmap(offlineInTimeJets_log_heatmap, eta_bins, phi_bins, 'InTimeAntiKt4TruthJets: $Log(E_T)$ in Eta-Phi Plane', plotsDir + f'/offline_jets_log_heatmap_event{iEvt}.pdf', True)
                             
                         
 
@@ -611,23 +737,133 @@ if signalBool:
 
 
     # After the loop (once you've collected all values):
-    plt.hist(b_gfex_deltar_list, bins=25, range=(0, 5), histtype='step', label='Jet pt', density=True)
+    counts, bins = np.histogram(b_gfex_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
     plt.xlabel(r"ΔR (b's and 2 highest Et gFex small R Jets)")
-    plt.ylabel('# b, gFex small R combinations')
+    plt.ylabel('# b, gFex small R combinations / 0.2')
     plt.title(r"ΔR Distribution (b's and 2 highest Et gFex small R Jets)")
     # Save the histogram as an image
     plt.savefig('signalTruthPlots/deltaRb_gFex_smallR_distribution.pdf')
     plt.clf()
 
-# After the loop (once you've collected all values):
-plt.hist(jet_pt_values, bins=50, range=(0, 100), histtype='step', label='Jet pt')
-plt.xlabel(r"$p_T$ [GeV]")
-plt.ylabel('# Jets')
-plt.title(r"Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
-plt.legend()
-# Save the histogram as an image
-plt.savefig('backgroundTruthPlots/truth_jet_pt_distribution.pdf')
-plt.clf()
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(highestEt_b_closest_gfex_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (highest Et b and closest gFex small R Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (highest Et b and closest gFex small R Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(second_highestEt_b_closest_gfex_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (2nd highest Et b and closest gFex small R Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (2nd highest Et b and closest gFex small R Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_2nd_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(third_highestEt_b_closest_gfex_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (3rd highest Et b and closest gFex small R Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (3rd highest Et b and closest gFex small R Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_3rd_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(fourth_highestEt_b_closest_gfex_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (4th highest Et b and closest gFex small R Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (4th highest Et b and closest gFex small R Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_4th_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(highestEt_b_closest_offlinejet_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (highest Et b and closest in time offline Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (highest Et b and closest in time offline Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_highestEt_b_closest_offline_jet_distribution.pdf')
+    plt.clf()
+
+    counts, bins = np.histogram(second_highestEt_b_closest_offlinejet_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (2nd highest Et b and closest in time offline Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (2nd highest Et b and closest in time offline Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_2nd_highestEt_b_closest_offline_jet_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(third_highestEt_b_closest_offlinejet_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (3rd highest Et b and closest in time offline Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (3rd highest Et b and closest in time offline Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_3rd_highestEt_b_closest_offline_jet_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    counts, bins = np.histogram(fourth_highestEt_b_closest_offlinejet_deltar_list, bins=25, range=(0, 5))
+    counts = counts / np.sum(counts)  # normalize to sum = 1
+    plt.plot(bins[:-1], counts, drawstyle='steps-post')
+    plt.xlabel(r"ΔR (4th highest Et b and closest in time offline Jet)")
+    plt.ylabel('normalized # events / 0.2')
+    plt.title(r"ΔR Distribution (4th highest Et b and closest in time offline Jet)")
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/deltaR_4th_highestEt_b_closest_offline_jet_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    plt.hist(jet_pt_values, bins=50, range=(0, 100), histtype='step', label='Jet pt')
+    plt.xlabel(r"$p_T$ [GeV]")
+    plt.ylabel('# Jets')
+    plt.title(r"Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
+    plt.legend()
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/truth_jet_pt_distribution.pdf')
+    plt.clf()
+
+    # After the loop (once you've collected all values):
+    plt.hist(jet_pt_values, bins=50, range=(0, 400), histtype='step', label='Jet pt')
+    plt.xlabel(r"$p_T$ [GeV]")
+    plt.ylabel('# Jets')
+    plt.yscale('log')
+    plt.title(r"Truth InTimeAntiKt4TruthJets $Log_(10)(p_T)$ Distribution")
+    plt.legend()
+    # Save the histogram as an image
+    plt.savefig('signalTruthPlots/truth_jet_pt_log_distribution.pdf')
+    plt.clf()
+else:
+    # After the loop (once you've collected all values):
+    plt.hist(jet_pt_values, bins=50, range=(0, 100), histtype='step', label='Jet pt')
+    plt.xlabel(r"$p_T$ [GeV]")
+    plt.ylabel('# Jets')
+    plt.title(r"Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
+    plt.legend()
+    # Save the histogram as an image
+    plt.savefig('backgroundTruthPlots/truth_jet_pt_distribution.pdf')
+    plt.clf()
 
 
 # Calculate and print min and max for phi, eta, and Et
