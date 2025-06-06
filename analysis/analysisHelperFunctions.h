@@ -1,11 +1,9 @@
-#ifndef HELPER_FUNCTIONS_H  // Check if the macro is defined
-#define HELPER_FUNCTIONS_H  // Define the macro
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <bitset>
 #include <array>
-#include <ap_int.h>
+//#include <ap_int.h>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -16,15 +14,29 @@
 #include <cmath>
 #include <TMath.h>
 
-inline double undigitize_phi(const std::bitset<8>& phi_bits) {
-    return phi_min_ + phi_bits.to_ulong() * (6.4 / 256.0);
+constexpr double et_granularity_ = 0.25;
+constexpr unsigned int et_bit_length_ = 13;
+constexpr unsigned int eta_bit_length_ = 8;
+constexpr unsigned int phi_bit_length_ = 6;
+constexpr double phi_min_ = -3.2;
+constexpr double phi_max_ = 3.2;
+constexpr double eta_min_ = -5.0;
+constexpr double eta_max_ = 5.0;
+constexpr double eta_granularity_ = 0.0390625;
+constexpr double phi_granularity_ = 0.1;
+constexpr unsigned int et_min_ = 0;
+constexpr unsigned int et_max_ = 2048;
+const bool useMax_ = false;
+
+inline double undigitize_phi(const std::bitset<phi_bit_length_>& phi_bits) {
+    return phi_min_ + phi_bits.to_ulong() * (6.4 / 64.0);
 }
 
-inline double undigitize_eta(const std::bitset<11>& eta_bits) {
-    return eta_min_ + eta_bits.to_ulong() * (10.0 / 2048.0);
+inline double undigitize_eta(const std::bitset<eta_bit_length_>& eta_bits) {
+    return eta_min_ + eta_bits.to_ulong() * (10.0 / 256.0);
 }
 
-inline double undigitize_et(const std::bitset<13>& et_bits) {
+inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * et_granularity_;
 }
 

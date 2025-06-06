@@ -1,4 +1,3 @@
-
 #ifndef FILE_READ_H  // Check if the macro is defined
 #define FILE_READ_H  // Define the macro
 #include <iostream>
@@ -13,18 +12,17 @@
 #include <cmath>
 
 // Define constants used by testbench
-
-//const std::string memPrintsPath_ = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/"; // FIXME define pre-compile statement if running on lxplus or millerlabml01
-//const std::string fileName_ = "mc21_14TeV_hh_bbbb_vbf_novhh"; 
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
-const unsigned int maxEvent_ = 1000;
-const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
+const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
+const std::string kFileSuffix = "nSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4";
 constexpr bool signalBool_ = false;
 
+const unsigned int maxEvent_ = signalBool_ ? 659 : 1000;
+const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 // read values from .dat files for a provided event
 template <unsigned int arraySize >
-inline void extract_values_from_file(const std::string& fileName, std::array<std::array<double, 3>, arraySize >& values, unsigned int eventToProcess) {
+inline void extract_values_from_file(const std::string& fileName, input (&values)[arraySize], unsigned int eventToProcess) {
 
     std::ifstream inFile(fileName);
     if (!inFile.is_open()) {
@@ -32,40 +30,28 @@ inline void extract_values_from_file(const std::string& fileName, std::array<std
         return;
     }
 
-    // Event iteration used for indexing
     int iEvt = -1; 
-    //unsigned int lineIt = -1;
     std::string line;
-    std::array<std::array<double, 3>, arraySize> valuesForEvent; 
+    input valuesForEvent[arraySize]; 
     int lastEvent = 0; 
     int objectIt = -1;
+    int eventNumber = -1;
     while (std::getline(inFile, line)) {
-        //lineIt++; 
-        int eventNumber;
-
-        
-        // Skip event header lines
         if (line.find("Event") != std::string::npos) {
             std::stringstream ss0(line);
             std::string temp;
-            
-            ss0 >> temp >> temp >> eventNumber;  // "Event :" is skipped, eventNumber is read
-            //std::cout << "Event found: " << eventNumber << "and eventToProcess: " << eventToProcess << std::endl;
+            ss0 >> temp >> temp >> eventNumber;
             if (iEvt >= 0 && iEvt == eventToProcess){
-                //std::cout << "iEvt: " << iEvt << "\n";
-                //std::cout << "event being processed: " << iEvt << "\n";
-                values = valuesForEvent;
-                /*for (int i = 0; i < values.size(); i++){
-                    std::cout << "values Et: " << values[i][0] << " values Eta: " << values[i][1] << " values Phi: " << values[i][2] << "\n";
-                }*/
+                for (unsigned int i = 0; i < arraySize; ++i) {
+                    values[i] = valuesForEvent[i];
+                }
             }
             iEvt++;
-            std::array<double, 3> zeroArray = {0.0, 0.0, 0.0};
-            std::fill(std::begin(valuesForEvent), std::end(valuesForEvent), zeroArray);
+            input zero = 0;
+            std::fill(std::begin(valuesForEvent), std::end(valuesForEvent), zero);
             continue;
         }
         if (iEvt > eventToProcess) break;
-        //std::cout << "eventNumber: " << eventNumber << " and eventToProcess: " << eventToProcess << "\n";
         if (eventNumber == eventToProcess){
             if (lastEvent != eventToProcess) objectIt = -1;
             lastEvent = eventToProcess;
@@ -75,9 +61,6 @@ inline void extract_values_from_file(const std::string& fileName, std::array<std
             std::string index, bin, hex_word;
             ss >> index >> bin >> hex_word;
 
-            //std::cout << "index: " << index << " binary : " << bin << " hex_word: " << hex_word << "\n";
-
-            // Validate line format
             size_t first_pipe = bin.find('|');
             size_t second_pipe = bin.rfind('|');
             if (first_pipe == std::string::npos || second_pipe == std::string::npos || first_pipe == second_pipe) {
@@ -85,43 +68,29 @@ inline void extract_values_from_file(const std::string& fileName, std::array<std
                 continue;
             }
 
-            // Extract binary substrings
             std::string et_bin = bin.substr(0, first_pipe);
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
 
-            //try {
-            // Convert binary to bitsets
-            std::bitset<et_bit_length_> et_bits(et_bin);
-            std::bitset<eta_bit_length_> eta_bits(eta_bin);
-            std::bitset<phi_bit_length_> phi_bits(phi_bin);
+            std::string full_bin = phi_bin + eta_bin + et_bin;  // Concatenate in MSB to LSB order
 
-            // Convert bitsets to floating-point values
-            //std::cout << "Et bits: " << et_bits
-            //          << ", Phi bits: " << phi_bits
-            //          << ", Eta bits: " << eta_bits << std::endl;
-            double et = undigitize_et(et_bits);
-            double eta = undigitize_eta(eta_bits); // FIXME use digitized values in calculations, don't convert to double
-            double phi = undigitize_phi(phi_bits);
-            /*std::cout << "Et: " << et
-                      << ", Phi: " << phi
-                      << ", Eta: " << eta << std::endl;*/
+            //ap_uint<et_bit_length_> et_bits = std::stoul(et_bin, nullptr, 2);
+            //ap_uint<eta_bit_length_> eta_bits = std::stoul(eta_bin, nullptr, 2);
+            //ap_uint<phi_bit_length_> phi_bits = std::stoul(phi_bin, nullptr, 2);
+            input fullInput = ap_uint<input::width>(std::stoull(full_bin, nullptr, 2));
 
-            // Store in vector
-            //std::cout << "et " << et << "\n";
-            valuesForEvent[objectIt]  = {et, eta, phi};
-            //} 
-            /*catch (const std::exception& e) {
-                std::cerr << "Error processing line: " << line << " -> " << e.what() << std::endl;
-            }*/
+            if (objectIt >= arraySize) continue;
+            valuesForEvent[objectIt]  = fullInput;
         }
-        
     }
     if (eventToProcess == maxEvent_){
-        values = valuesForEvent;
+        for (unsigned int i = 0; i < arraySize; ++i) {
+            values[i] = valuesForEvent[i];
+        }
     }
 
     inFile.close();
     return;
 }
+
 #endif

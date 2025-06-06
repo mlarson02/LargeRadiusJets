@@ -1,35 +1,51 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+// Constants used by SW & FW implementation
 
-#ifndef CONSTANTS_H  // Check if the macro is defined
-#define CONSTANTS_H  // Define the macro
-// Constants used by SW & FW implementation 
-// Customizable parameters / global variables
-constexpr bool sortSeeds_ = true;
-constexpr bool iterative_ = false;
+#define UNROLLFACTOR 16
+#define PIPELINEII 3
+
+#define sortSeeds_ false
+#define iterative_ false
 constexpr unsigned int nTotalSeeds_ = 12;
 constexpr unsigned int nSeeds_ = 2;
-constexpr unsigned int maxObjectsConsidered_ = 1024; // -1 for no limit 
-constexpr unsigned int inputEnergyCut_ = 1; // in GeV (only consider merging to seed if > this)
-constexpr float et_granularity_ = 0.25;
-constexpr float r2Cut_ = 1.0;
+constexpr unsigned int maxObjectsConsidered_ = 128;
+constexpr unsigned int inputEnergyCut_ = 1;
+#define useInputEnergyCut_ false
+constexpr double et_granularity_ = 0.25;
+constexpr double r2Cut_ = 0.64;
+constexpr unsigned int et_bit_length_ = 13;
+constexpr unsigned int eta_bit_length_ = 8;
+constexpr unsigned int phi_bit_length_ = 6;
+constexpr double phi_min_ = -3.2;
+constexpr double phi_max_ = 3.2;
+constexpr double eta_min_ = -5.0;
+constexpr double eta_max_ = 5.0;
+constexpr double eta_granularity_ = 0.0390625;
+constexpr double phi_granularity_ = 0.1;
+constexpr unsigned int et_min_ = 0;
+constexpr unsigned int et_max_ = 2048;
+#define useMax_ false
+constexpr unsigned int max_lut_size_ = 1282;
+constexpr double phi_range_ = 6.4;
 
-constexpr unsigned int et_bit_length_ = 13; 
-constexpr unsigned int eta_bit_length_ = 11; 
-constexpr unsigned int phi_bit_length_ = 8; 
 
-constexpr float phi_min_ = -3.2;
-constexpr float phi_max_ = 3.2;
 
-constexpr float eta_min_ = -5.0;
-constexpr float eta_max_ = 5.0;
+const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
+#if !WRITE_LUT
 
-constexpr int et_min_ = 0.0;
-constexpr int et_max_ = 2048.0;
+typedef ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_> input;
+constexpr unsigned int total_bits = et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 
-constexpr float phi_range_ = phi_max_ - phi_min_;
-constexpr float phi_granularity_ = phi_range_ / (1 << phi_bit_length_);
+static const bool lut_[max_lut_size_] =
+#include "../data/LUTs/deltaR2Cut.h"
+;
 
-constexpr float eta_range_ = eta_max_ - eta_min_; 
-constexpr float eta_granularity_ = eta_range_ / (1 << eta_bit_length_);  
-
-constexpr bool useMax_ = false;
+/*struct etEtaPhi {
+ap_uint<et_bit_length_> et;
+ap_uint<eta_bit_length_> eta;
+ap_uint<phi_bit_length_> phi;
+};*/
 #endif
+        
+#endif // CONSTANTS_H
