@@ -17,6 +17,8 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
     // AXI4-Lite interface only for control signals (function arguments, etc.)
     #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
 
+    #pragma HLS array_partition variable=inputObjectValues type=cyclic factor=4
+
     //int nMergedInput = 0;
     for (unsigned int iSeed = 0; iSeed < nSeeds_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
         #pragma HLS unroll
@@ -26,8 +28,8 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
         //ap_uint<phi_bit_length_ > outputJetPhi = seedValues[iSeed].phi; 
         for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             //#pragma HLS loop_tripcount min=512 max=1024
-            #pragma HLS unroll skip_exit_check factor=UNROLLFACTOR // pragma to unroll input object loop by pre-defined unroll factor
-            #pragma HLS pipeline II=PIPELINEII // pragma to pipeline innermost loop by pre-defined iteration interval, needs optimization! 
+            #pragma HLS unroll // pragma to unroll input object loop completely
+            // let auto-pipelining do the work
             #if useInputEnergyCut_
             if (inputObjectValues[iInput].range(et_bit_length_-1, 0) >= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
