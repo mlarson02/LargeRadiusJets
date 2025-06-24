@@ -307,8 +307,8 @@ with open(output_file_topo422, "w") as f_topo:
         with open(output_file_jfex, "w") as f_jfex:
             
             for fileName in fileNames:
-                #if fileIt > 0:
-                #    break
+                if fileIt > 9:
+                    break
                 print(f"Processing file: {fileName}")
 
                 # Open the file and make the "transient tree"
@@ -576,9 +576,9 @@ with open(output_file_topo422, "w") as f_topo:
                             hex_word = f"{(et_bin << (eta_bit_length + phi_bit_length)) | (eta_bin << phi_bit_length) | phi_bin:08x}"
 
                             # Write to file
-                            #if topo422_it == 0:
-                            #    f_topo.write(f"Event : {iEvt}\n")
-                            #f_topo.write(f"0x{topo422_it:02x} {binary_word} 0x{hex_word}\n")
+                            if topo422_it == 0:
+                                f_topo.write(f"Event : {iEvt}\n")
+                            f_topo.write(f"0x{topo422_it:02x} {binary_word} 0x{hex_word}\n")
 
                         topo_422_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                         topo_422_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
@@ -611,9 +611,9 @@ with open(output_file_topo422, "w") as f_topo:
                             hex_word = f"{(et_bin << (eta_bit_length + phi_bit_length)) | (eta_bin << phi_bit_length) | phi_bin:08x}"
 
                             # Write to file
-                            #if gfex_it == 0: 
-                            #    f_gfex.write(f"Event : {iEvt}\n")
-                            #f_gfex.write(f"0x{gfex_it:02x} {binary_word} 0x{hex_word}\n")
+                            if gfex_it == 0: 
+                                f_gfex.write(f"Event : {iEvt}\n")
+                            f_gfex.write(f"0x{gfex_it:02x} {binary_word} 0x{hex_word}\n")
 
                         gfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                         gfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
@@ -644,9 +644,9 @@ with open(output_file_topo422, "w") as f_topo:
                             hex_word = f"{(et_bin << (eta_bit_length + phi_bit_length)) | (eta_bin << phi_bit_length) | phi_bin:08x}"
 
                             # Write to file
-                            #if jfex_it == 0:
-                            #    f_jfex.write(f"Event : {iEvt}\n")
-                            #f_jfex.write(f"0x{jfex_it:02x} {binary_word} 0x{hex_word}\n")
+                            if jfex_it == 0:
+                                f_jfex.write(f"Event : {iEvt}\n")
+                            f_jfex.write(f"0x{jfex_it:02x} {binary_word} 0x{hex_word}\n")
 
                         jfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                         jfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]

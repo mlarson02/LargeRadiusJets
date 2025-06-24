@@ -5,7 +5,7 @@
 #include "TH1F.h"
 #include "TCanvas.h"
 #include "TStyle.h"
-#include "../algorithm/helperFunctions.h"
+#include "analysisHelperFunctions.h"
 
 template <bool signalBackgroundOverlay> 
 void analyze_existing_histograms(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool);
@@ -223,6 +223,10 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
 
 template <>
 void analyze_existing_histograms<true>(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool) {
+    unsigned int nTopo = 0;
+    unsigned int nTopoGreater1GeV = 0;
+    double totalTopoEnergy = 0.0;
+    double topoEnergyClustersGreater1GeV = 0.0;
     SetPlotStyle();
     // Open input ROOT file
     TFile* signalInputFile = TFile::Open(signalInputFileName.c_str(), "READ");
@@ -361,6 +365,12 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
         std::cout << "sigTopoEtValues->size(): " << sigTopoEtValues->size() << "\n";
         sig_h_topo_multiplicity->Fill(sigTopoEtValues->size());
         for (size_t k = 0; k < sigTopoEtValues->size(); k++) {
+            nTopo += 1;
+            totalTopoEnergy += sigTopoEtValues->at(k);
+            if (sigTopoEtValues->at(k) > 1.0){
+                nTopoGreater1GeV += 1;
+                topoEnergyClustersGreater1GeV += sigTopoEtValues->at(k);
+            } 
             sig_h_topo_Et->Fill(sigTopoEtValues->at(k));
             sig_h_topo_eta->Fill(sigTopoEtaValues->at(k)); // FIXME rename all GFex, Topo variables to something like input object, seed
             sig_h_topo_phi->Fill(sigTopoPhiValues->at(k));
@@ -442,8 +452,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
     sig_h_gFex_Et->SetLineColor(kRed);
     back_h_gFex_Et->SetLineColor(kBlue);
-    back_h_gFex_Et->Draw();
-    sig_h_gFex_Et->Draw("SAME");
+    sig_h_gFex_Et->Scale(1.0 / sig_h_gFex_Et->Integral());
+    back_h_gFex_Et->Scale(1.0 / back_h_gFex_Et->Integral());
+    back_h_gFex_Et->Draw("HIST");
+    sig_h_gFex_Et->Draw("HIST SAME");
     leg->Draw();
     c.SaveAs(outputFileDir + "gFex_Et.pdf");
 
@@ -507,8 +519,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
     sig_h_topo_multiplicity->SetLineColor(kRed);
     back_h_topo_multiplicity->SetLineColor(kBlue);
-    sig_h_topo_multiplicity->Draw();
-    back_h_topo_multiplicity->Draw("SAME");
+    sig_h_topo_multiplicity->Scale(1.0 / sig_h_topo_multiplicity->Integral());
+    back_h_topo_multiplicity->Scale(1.0 / back_h_topo_multiplicity->Integral());
+    sig_h_topo_multiplicity->Draw("HIST");
+    back_h_topo_multiplicity->Draw("HIST SAME");
     leg->Draw();
     c.SaveAs(outputFileDir + "topo_multiplicity.pdf");
 
@@ -587,8 +601,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
     sig_h_gFex_Et->SetLineColor(kRed);
     back_h_gFex_Et->SetLineColor(kBlue);
-    back_h_gFex_Et->Draw();
-    sig_h_gFex_Et->Draw("SAME");
+    sig_h_gFex_Et->Scale(1.0 / sig_h_gFex_Et->Integral());
+    back_h_gFex_Et->Scale(1.0 / back_h_gFex_Et->Integral());
+    back_h_gFex_Et->Draw("HIST");
+    sig_h_gFex_Et->Draw("HIST SAME");
     
     leg->Draw();
     cLog.SaveAs(outputFileDir + "log_gFex_Et.pdf");
@@ -600,8 +616,12 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     leg->Draw();
     cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
 
+    std::cout << "nTopo: " << nTopo << " and nTopoGreater1GeV: " << nTopoGreater1GeV << "\n";
+    std::cout << "totalTopoEnergy: "  << totalTopoEnergy << " and topoEnergyClustersGreater1GeV: " << topoEnergyClustersGreater1GeV << "\n";
+
     signalInputFile->Close();
     backgroundInputFile->Close();
+    
 }
 
 template<bool overlayBool>

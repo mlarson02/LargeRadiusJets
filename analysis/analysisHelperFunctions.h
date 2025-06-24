@@ -13,6 +13,7 @@
 #include "TFile.h"
 #include <cmath>
 #include <TMath.h>
+#include "../algorithm/constants.h"
 
 constexpr double et_granularity_ = 0.25;
 constexpr unsigned int et_bit_length_ = 13;
