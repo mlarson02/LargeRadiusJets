@@ -48,10 +48,12 @@ std::map<std::string, std::string> legendMap = {
 
 void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<std::string > signalFileNames) {
     SetPlotStyle();
+    TH1F* sig_h_LRJ_nmio = new TH1F("sig_h_LRJ_nmio", "Num. Merged Input Objects;Normalized # of Large R Jets / 2 IOs", 20, 0, 40);
     TH1F* sig_h_LRJ_Et = new TH1F("sig_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];Normalized # of Large R Jets / 10 GeV", 50, 0, 500);
     TH1F* sig_h_LRJ_eta = new TH1F("sig_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
     TH1F* sig_h_LRJ_phi = new TH1F("sig_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
 
+    TH1F* back_h_LRJ_nmio = new TH1F("back_h_LRJ_nmio", "Num. Merged Input Objects;Normalized # of Large R Jets / 2 IOs", 20, 0, 40);
     TH1F* back_h_LRJ_Et = new TH1F("back_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];Normalized # of Large R Jets / 10 GeV", 50, 0, 500);
     TH1F* back_h_LRJ_eta = new TH1F("back_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
     TH1F* back_h_LRJ_phi = new TH1F("back_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
@@ -140,23 +142,30 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
             std::string sig_index, sig_binary, sig_hex_word;
             sig_ss >> sig_index >> sig_binary >> sig_hex_word;
 
-            // Split binary into Et, Phi, and Eta
-            size_t sig_first_pipe = sig_binary.find('|');
-            size_t sig_second_pipe = sig_binary.rfind('|');
+            // Find positions of pipe separators
+            size_t first_pipe = sig_binary.find('|');
+            size_t second_pipe = sig_binary.find('|', first_pipe + 1);
+            size_t third_pipe = sig_binary.find('|', second_pipe + 1);
 
-            std::string sig_et_bin = sig_binary.substr(0, sig_first_pipe);
-            std::string sig_eta_bin = sig_binary.substr(sig_first_pipe + 1, sig_second_pipe - sig_first_pipe - 1);
-            std::string sig_phi_bin = sig_binary.substr(sig_second_pipe + 1);
+            // Extract binary substrings
+            std::string nmio_bin = sig_binary.substr(0, first_pipe);
+            std::string et_bin   = sig_binary.substr(first_pipe + 1, second_pipe - first_pipe - 1);
+            std::string eta_bin  = sig_binary.substr(second_pipe + 1, third_pipe - second_pipe - 1);
+            std::string phi_bin  = sig_binary.substr(third_pipe + 1);
 
             // Convert to bitsets
-            std::bitset<et_bit_length_> sig_et_bits(sig_et_bin);
-            std::bitset<phi_bit_length_> sig_phi_bits(sig_phi_bin);
-            std::bitset<eta_bit_length_> sig_eta_bits(sig_eta_bin);
+            std::bitset<io_bit_length_>   nmio_bits(nmio_bin);
+            std::bitset<et_bit_length_>   et_bits(et_bin);
+            std::bitset<eta_bit_length_>  eta_bits(eta_bin);
+            std::bitset<phi_bit_length_>  phi_bits(phi_bin);
 
-            // Undigitize the values
-            double sig_undigitized_et = undigitize_et(sig_et_bits);
-            double sig_undigitized_phi = undigitize_phi(sig_phi_bits);
-            double sig_undigitized_eta = undigitize_eta(sig_eta_bits);
+            // Undigitize values
+            double undigitized_nmio = undigitize_nmio(nmio_bits);
+            double undigitized_et   = undigitize_et(et_bits);
+            double undigitized_eta  = undigitize_eta(eta_bits);
+            double undigitized_phi  = undigitize_phi(phi_bits);
+
+            sig_h_LRJ_nmio->Fill(undigitized_nmio);
             sig_h_LRJ_Et->Fill(sig_undigitized_et);
             //std::cout << "current_event: " << current_event << "\n";
             sig_LRJ_Et[current_event].push_back(sig_undigitized_et);

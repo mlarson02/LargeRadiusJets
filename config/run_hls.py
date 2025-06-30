@@ -21,6 +21,7 @@ base_constants = {
     "et_bit_length_": 13,
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
+    "io_bit_length_": 5, 
     "phi_min_": -3.2,
     "phi_max_": 3.2,
     "eta_min_": -5.0,
@@ -119,6 +120,21 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
 const unsigned int maxEvent_ = signalBool_ ? 659 : 1000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
+
+void sortByEt(input seedValues[nTotalSeeds_]) {
+    for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+        for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
+            ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
+            ap_uint<et_bit_length_> et2 = seedValues[j + 1].range(et_high_, et_low_);
+            if (et1 < et2) { // Descending sort
+                input temp = seedValues[j];
+                seedValues[j] = seedValues[j + 1];
+                seedValues[j + 1] = temp;
+            }
+        }
+    }
+}
+
 // read values from .dat files for a provided event
 template <unsigned int arraySize >
 inline void extract_values_from_file(const std::string& fileName, input (&values)[arraySize], unsigned int eventToProcess) {
@@ -167,16 +183,20 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
                 continue;
             }
 
-            std::string et_bin = bin.substr(0, first_pipe);
+            std::string et_bin  = bin.substr(0, first_pipe);
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
 
-            std::string full_bin = phi_bin + eta_bin + et_bin;  // Concatenate in MSB to LSB order
+            // Prepend 5 zero bits (as MSB) to represent num_io = 0
+            std::string num_io_bin = "00000";
 
-            //ap_uint<et_bit_length_> et_bits = std::stoul(et_bin, nullptr, 2);
-            //ap_uint<eta_bit_length_> eta_bits = std::stoul(eta_bin, nullptr, 2);
-            //ap_uint<phi_bit_length_> phi_bits = std::stoul(phi_bin, nullptr, 2);
+            // Final bitstring in MSB to LSB order: num_io | et | eta | phi
+            std::string full_bin = phi_bin + eta_bin + et_bin + num_io_bin;
+
+            //std::cout << "full_bin: " << full_bin << std::endl;
+
             input fullInput = ap_uint<input::width>(std::stoull(full_bin, nullptr, 2));
+
 
             if (objectIt >= arraySize) continue;
             valuesForEvent[objectIt]  = fullInput;
@@ -240,18 +260,22 @@ def write_constants_h(constants: dict, output_file: str, unroll: int, ii: int):
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
 
-typedef ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_> input;
-constexpr unsigned int total_bits = et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_ = io_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+typedef ap_uint<total_bits_> input;
+
+constexpr unsigned int io_low_ = 0; 
+constexpr unsigned int io_high_ = io_bit_length_ - 1; 
+constexpr unsigned int et_low_ = io_high_ + 1;
+constexpr unsigned int et_high_ = et_low_ + et_bit_length_ - 1; 
+constexpr unsigned int eta_low_ = et_high_ + 1; 
+constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1; 
+constexpr unsigned int phi_low_ = eta_high_ + 1; 
+constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1; 
 
 static const bool lut_[max_lut_size_] =
 #include "../data/LUTs/deltaR2Cut.h"
 ;
 
-/*struct etEtaPhi {
-ap_uint<et_bit_length_> et;
-ap_uint<eta_bit_length_> eta;
-ap_uint<phi_bit_length_> phi;
-};*/
 #endif
         ''')
 
@@ -270,7 +294,7 @@ if __name__ == "__main__":
     maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
     sortSeeds_options = [False]
-    signalBool_options = [True, False]
+    signalBool_options = [False]
     inputEnergyCut_options = [False]
     #inputEnergyCut_options = [False, True]
     #inputEnergyCutValues_options = [0.5, 1.0, 1.5, 2.0] # only use these if inputEnergyCutOption is true
@@ -345,7 +369,7 @@ if __name__ == "__main__":
                                 print(f" Wrote {constsFilename}")
                                 run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT.cc")
                                 print(f"Launching HLS with project name: {file_suffix}")
-                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "0"], check=True)
+                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "1"], check=True)
                                 xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
                                 print("xml_report_path,", xml_report_path)
                                 #resources, latency = extract_hls_report(xml_report_path)

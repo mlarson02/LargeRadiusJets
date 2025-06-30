@@ -20,6 +20,21 @@ constexpr bool signalBool_ = false;
 const unsigned int maxEvent_ = signalBool_ ? 659 : 1000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
+
+void sortByEt(input seedValues[nTotalSeeds_]) {
+    for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+        for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
+            ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
+            ap_uint<et_bit_length_> et2 = seedValues[j + 1].range(et_high_, et_low_);
+            if (et1 < et2) { // Descending sort
+                input temp = seedValues[j];
+                seedValues[j] = seedValues[j + 1];
+                seedValues[j + 1] = temp;
+            }
+        }
+    }
+}
+
 // read values from .dat files for a provided event
 template <unsigned int arraySize >
 inline void extract_values_from_file(const std::string& fileName, input (&values)[arraySize], unsigned int eventToProcess) {
@@ -68,16 +83,20 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
                 continue;
             }
 
-            std::string et_bin = bin.substr(0, first_pipe);
+            std::string et_bin  = bin.substr(0, first_pipe);
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
 
-            std::string full_bin = phi_bin + eta_bin + et_bin;  // Concatenate in MSB to LSB order
+            // Prepend 5 zero bits (as MSB) to represent num_io = 0
+            std::string num_io_bin = "00000";
 
-            //ap_uint<et_bit_length_> et_bits = std::stoul(et_bin, nullptr, 2);
-            //ap_uint<eta_bit_length_> eta_bits = std::stoul(eta_bin, nullptr, 2);
-            //ap_uint<phi_bit_length_> phi_bits = std::stoul(phi_bin, nullptr, 2);
+            // Final bitstring in MSB to LSB order: num_io | et | eta | phi
+            std::string full_bin = phi_bin + eta_bin + et_bin + num_io_bin;
+
+            //std::cout << "full_bin: " << full_bin << std::endl;
+
             input fullInput = ap_uint<input::width>(std::stoull(full_bin, nullptr, 2));
+
 
             if (objectIt >= arraySize) continue;
             valuesForEvent[objectIt]  = fullInput;

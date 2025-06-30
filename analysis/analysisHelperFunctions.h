@@ -40,6 +40,10 @@ inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * et_granularity_;
 }
 
+inline double undigitize_nmio(const std::bitset<io_bit_length_>& nmio_bits) {
+    return nmio_bits.to_ulong() * 2;
+}
+
 // Function to scale and digitize a value, returning the result as a binary string
 template <int bit_length>
 inline std::bitset<bit_length > digitize(double value, double min_val, double max_val) {

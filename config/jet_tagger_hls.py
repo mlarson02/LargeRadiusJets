@@ -6,7 +6,7 @@ import shutil
 import sys
 
 project_name = sys.argv[1]
-hls_exec = int(sys.argv[2]) if len(sys.argv) > 2 else 1  # default to 1 if not specified
+hls_exec = int(sys.argv[2]) if len(sys.argv) > 1 else 1  # default to 1 if not specified
 
 cwd = os.getcwd() + '/'
 
@@ -32,7 +32,7 @@ cfg_path = f'./w/{comp_name}/hls_config.cfg'
 cfg = client.get_config_file(path=cfg_path)
 
 cfg.set_value(key='part', value='xcvp1802-lsvc4072-2MP-e-S')
-cfg.set_value(section='hls', key='clock', value='10')  # 250 MHz
+cfg.set_value(section='hls', key='clock', value='4')  # 250 MHz
 cfg.set_value(section='hls', key='flow_target', value='vivado')
 
 #cfg.set_value(key='package.output.format', value='')
@@ -49,6 +49,7 @@ cfg.set_values(section='hls', key='syn.file', values=[
     '/home/larsonma/LargeRadiusJets/algorithm/process_event.h',
     '/home/larsonma/LargeRadiusJets/algorithm/process_event.cc',
     '/home/larsonma/LargeRadiusJets/algorithm/helperFunctions.h',
+    '/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.h',
     '/home/larsonma/LargeRadiusJets/algorithm/constants.h'
 ])
 
@@ -56,7 +57,6 @@ cfg.set_values(section='hls', key='syn.file', values=[
 cfg.set_values(section='hls', key='tb.file', values=[
     '/home/larsonma/LargeRadiusJets/algorithm/testbench/jet_tagger_testbench.cpp',
     '/home/larsonma/LargeRadiusJets/algorithm/fileRead.h',
-    '/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.h',
     '/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat',
     '/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat',
     '/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat',

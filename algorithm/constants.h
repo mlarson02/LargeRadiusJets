@@ -17,6 +17,7 @@ constexpr double r2Cut_ = 0.64;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
+constexpr unsigned int io_bit_length_ = 5;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
 constexpr double eta_min_ = -5.0;
@@ -34,18 +35,22 @@ constexpr double phi_range_ = 6.4;
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
 
-typedef ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_> input;
-constexpr unsigned int total_bits = et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_ = io_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+typedef ap_uint<total_bits_> input;
+
+constexpr unsigned int io_low_ = 0; 
+constexpr unsigned int io_high_ = io_bit_length_ - 1; 
+constexpr unsigned int et_low_ = io_high_ + 1;
+constexpr unsigned int et_high_ = et_low_ + et_bit_length_ - 1; 
+constexpr unsigned int eta_low_ = et_high_ + 1; 
+constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1; 
+constexpr unsigned int phi_low_ = eta_high_ + 1; 
+constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1; 
 
 static const bool lut_[max_lut_size_] =
 #include "../data/LUTs/deltaR2Cut.h"
 ;
 
-/*struct etEtaPhi {
-ap_uint<et_bit_length_> et;
-ap_uint<eta_bit_length_> eta;
-ap_uint<phi_bit_length_> phi;
-};*/
 #endif
         
 #endif // CONSTANTS_H
