@@ -7,6 +7,8 @@
 #include "TStyle.h"
 #include "analysisHelperFunctions.h"
 
+#define WRITE_LUT false // for disabling firmware (ap_uint), LUT declarations
+
 template <bool signalBackgroundOverlay> 
 void analyze_existing_histograms(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool);
 
@@ -84,6 +86,15 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
     TH1F* h_gFex_eta = new TH1F("h_gFex_eta", "gFex Eta Distribution;Eta;Counts", 50, -5, 5);
     TH1F* h_jFex_eta = new TH1F("h_jFex_eta", "jFex Eta Distribution;Eta;Counts", 50, -5, 5);
 
+    TH1F* h_gFex_leading_Et = new TH1F("h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+    TH1F* h_gFex_subleading_Et = new TH1F("h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+
+    TH1F* h_gFex_leading_eta = new TH1F("h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    TH1F* h_gFex_subleading_eta = new TH1F("h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+
+    TH1F* h_gFex_leading_phi = new TH1F("h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    TH1F* h_gFex_subleading_phi = new TH1F("h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+
     TH1F* h_topo_phi = new TH1F("h_topo_phi", "Topo Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
     TH1F* h_gFex_phi = new TH1F("h_gFex_phi", "gFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
     TH1F* h_jFex_phi = new TH1F("h_jFex_phi", "jFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
@@ -112,6 +123,7 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
     jFexTree->SetBranchAddress("Phi", &jFexPhiValues);
 
     int nEntries = gFexTree->GetEntries();
+    std::cout << "gfex nentries : " << nEntries << "\n";
     for (int i = 0; i < nEntries; i++) {
         gFexTree->GetEntry(i);
         h_gFex_multiplicity->Fill(gFexEtValues->size());
@@ -124,8 +136,18 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
         // Find two highest Et jets
         auto [idx1, idx2] = getTwoHighestIndices(*gFexEtValues);
 
+        // Leading jet
+        h_gFex_leading_Et->Fill(gFexEtValues->at(idx1));
+        h_gFex_leading_eta->Fill(gFexEtaValues->at(idx1));
+        h_gFex_leading_phi->Fill(gFexPhiValues->at(idx1));
+
+        // Sub-leading jet
+        h_gFex_subleading_Et->Fill(gFexEtValues->at(idx2));
+        h_gFex_subleading_eta->Fill(gFexEtaValues->at(idx2));
+        h_gFex_subleading_phi->Fill(gFexPhiValues->at(idx2));
+
         topoTree->GetEntry(i);
-        std::cout << "topoEtValues->size(): " << topoEtValues->size() << "\n";
+        //std::cout << "topoEtValues->size(): " << topoEtValues->size() << "\n";
         h_topo_multiplicity->Fill(topoEtValues->size());
         for (size_t k = 0; k < topoEtValues->size(); k++) {
             h_topo_Et->Fill(topoEtValues->at(k));
@@ -143,7 +165,7 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
 
     for (int i = 0; i < jFexTree->GetEntries(); i++) {
         jFexTree->GetEntry(i);
-        std::cout << "jFexEtValues->size(): " << jFexEtValues->size() << "\n";
+        //std::cout << "jFexEtValues->size(): " << jFexEtValues->size() << "\n";
         h_jFex_multiplicity->Fill(jFexEtValues->size());
         for (float et : *jFexEtValues) h_jFex_Et->Fill(et);
         for (float eta : *jFexEtaValues) h_jFex_eta->Fill(eta);
@@ -174,6 +196,20 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
     c.SaveAs(outputFileDir + "gFex_phi.pdf");
     h_jFex_phi->Draw();
     c.SaveAs(outputFileDir + "jFex_phi.pdf");
+    
+    h_gFex_leading_Et->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_Et.pdf");    
+    h_gFex_leading_eta->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_eta.pdf");   
+    h_gFex_leading_phi->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_phi.pdf");   
+
+    h_gFex_subleading_Et->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_Et.pdf");   
+    h_gFex_subleading_eta->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_eta.pdf");   
+    h_gFex_subleading_phi->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_phi.pdf");   
 
     h_gFex_multiplicity->Draw();
     c.SaveAs(outputFileDir + "gFex_multiplicity.pdf");
@@ -218,6 +254,12 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
     h_jFex_Et->Draw();
     cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
 
+    h_gFex_leading_Et->Draw();
+    c.SaveAs(outputFileDir + "log_gFex_leading_Et.pdf");    
+
+    h_gFex_subleading_Et->Draw();
+    c.SaveAs(outputFileDir + "log_gFex_subleading_Et.pdf"); 
+
     inputFile->Close();
 }
 
@@ -257,6 +299,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     std::vector<double>* sigTopoEtaValues = nullptr;
     std::vector<double>* sigTopoPhiValues = nullptr;
 
+    std::vector<double> sigTopoEtValues_top128;
+    std::vector<double> sigTopoEtaValues_top128;
+    std::vector<double> sigTopoPhiValues_top128;
+
     std::vector<double>* sigGFexEtValues = nullptr;
     std::vector<double>* sigGFexEtaValues = nullptr;
     std::vector<double>* sigGFexPhiValues = nullptr;
@@ -268,6 +314,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     std::vector<double>* backTopoEtValues = nullptr;
     std::vector<double>* backTopoEtaValues = nullptr;
     std::vector<double>* backTopoPhiValues = nullptr;
+
+    std::vector<double> backTopoEtValues_top128;
+    std::vector<double> backTopoEtaValues_top128;
+    std::vector<double> backTopoPhiValues_top128;
 
     std::vector<double>* backGFexEtValues = nullptr;
     std::vector<double>* backGFexEtaValues = nullptr;
@@ -294,11 +344,29 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     TH1F* sig_h_topo_multiplicity = new TH1F("sig_h_topo_multiplicity", "Topo422 Cluster Multiplicity;Number of Topo422 Clusters;Counts", 60, 400, 1000);
     TH1F* sig_h_jFex_multiplicity = new TH1F("sig_h_jFex_multiplicity", "jFex SmallR Jet Multiplicity;Number of jFex SmallR Jets;Counts", 50, 0, 100);
 
+    TH1F* sig_h_gFex_leading_Et = new TH1F("sig_h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+    TH1F* sig_h_gFex_subleading_Et = new TH1F("sig_h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+
+    TH1F* sig_h_gFex_leading_eta = new TH1F("sig_h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    TH1F* sig_h_gFex_subleading_eta = new TH1F("sig_h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+
+    TH1F* sig_h_gFex_leading_phi = new TH1F("sig_h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    TH1F* sig_h_gFex_subleading_phi = new TH1F("sig_h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+
+    TH1F* sig_h_topo_Et_top128  = new TH1F("sig_h_topo_Et_top128", "128 Highest Et Topo Cluster Et;Et (GeV);Counts", 100, 0, 200);
+    TH1F* sig_h_topo_eta_top128 = new TH1F("sig_h_topo_eta_top128", "128 Highest Et Topo Cluster Eta;#eta;Counts", 50, -5, 5);
+    TH1F* sig_h_topo_phi_top128 = new TH1F("sig_h_topo_phi_top128", "128 Highest Et Topo Cluster Phi;#phi;Counts", 64, -3.2, 3.2);
+
     // gFex jet deltaR^2 histogram
     TH1F* sig_h_deltaR2_jet1 = new TH1F("sig_h_deltaR2_jet1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 25, 0, 10);
     TH1F* sig_h_deltaR2_jet2 = new TH1F("sig_h_deltaR2_jet2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
     TH1F* sig_h_deltaR_jet1 = new TH1F("sig_h_deltaR_jet1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
     TH1F* sig_h_deltaR_jet2 = new TH1F("sig_h_deltaR_jet2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+
+    TH1F* sig_h_deltaR2_jet1_top128 = new TH1F("sig_h_deltaR2_jet1_top128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
+    TH1F* sig_h_deltaR2_jet2_top128 = new TH1F("sig_h_deltaR2_jet2_top128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
+    TH1F* sig_h_deltaR_jet1_top128 = new TH1F("sig_h_deltaR_jet1_top128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    TH1F* sig_h_deltaR_jet2_top128 = new TH1F("sig_h_deltaR_jet2_top128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
 
     TH1F* back_h_topo_Et = new TH1F("h_topo_Et", "Topo Et Distribution;Et (GeV);Counts", 50, 0, 400);
     TH1F* back_h_gFex_Et = new TH1F("h_gFex_Et", "gFex Et Distribution;Et (GeV);Counts", 30, 0, 300);
@@ -316,11 +384,29 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     TH1F* back_h_topo_multiplicity = new TH1F("h_topo_multiplicity", "Topo422 Cluster Multiplicity;Number of Topo422 Clusters;Counts", 60, 400, 1000);
     TH1F* back_h_jFex_multiplicity = new TH1F("h_jFex_multiplicity", "jFex SmallR Jet Multiplicity;Number of jFex SmallR Jets;Counts", 50, 0, 100);
 
+    TH1F* back_h_gFex_leading_Et = new TH1F("back_h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+    TH1F* back_h_gFex_subleading_Et = new TH1F("back_h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+
+    TH1F* back_h_gFex_leading_eta = new TH1F("back_h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    TH1F* back_h_gFex_subleading_eta = new TH1F("back_h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+
+    TH1F* back_h_gFex_leading_phi = new TH1F("back_h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    TH1F* back_h_gFex_subleading_phi = new TH1F("back_h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+
+    TH1F* back_h_topo_Et_top128  = new TH1F("back_h_topo_Et_top128", "128 Highest Et Topo Cluster Et;Et (GeV);Counts", 100, 0, 200);
+    TH1F* back_h_topo_eta_top128 = new TH1F("back_h_topo_eta_top128", "128 Highest Et Topo Cluster Eta;#eta;Counts", 50, -5, 5);
+    TH1F* back_h_topo_phi_top128 = new TH1F("back_h_topo_phi_top128", "128 Highest Et Topo Cluster Phi;#phi;Counts", 64, -3.2, 3.2);
+
     // gFex jet deltaR^2 histogram
     TH1F* back_h_deltaR2_jet1 = new TH1F("h_deltaR2_jet1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 25, 0, 10);
     TH1F* back_h_deltaR2_jet2 = new TH1F("h_deltaR2_jet2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
     TH1F* back_h_deltaR_jet1 = new TH1F("h_deltaR_jet1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
     TH1F* back_h_deltaR_jet2 = new TH1F("h_deltaR_jet2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+
+    TH1F* back_h_deltaR2_jet1_top128 = new TH1F("h_deltaR2_jet1_topo128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
+    TH1F* back_h_deltaR2_jet2_top128 = new TH1F("h_deltaR2_jet2_topo128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
+    TH1F* back_h_deltaR_jet1_top128 = new TH1F("h_deltaR_jet1_topo128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    TH1F* back_h_deltaR_jet2_top128 = new TH1F("h_deltaR_jet2_topo128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
 
     // Process trees
     sigTopoTree->SetBranchAddress("Et", &sigTopoEtValues);
@@ -349,6 +435,7 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
 
     int sigNEntries = sigGFexTree->GetEntries();
+    std::cout << " sigNEntries : "<< sigNEntries << "\n";
     for (int i = 0; i < sigNEntries; i++) {
         sigGFexTree->GetEntry(i);
         sig_h_gFex_multiplicity->Fill(sigGFexEtValues->size());
@@ -361,8 +448,18 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
         // Find two highest Et jets
         auto [idx1, idx2] = getTwoHighestIndices(*sigGFexEtValues);
 
+        // Leading jet
+        sig_h_gFex_leading_Et->Fill(sigGFexEtValues->at(idx1));
+        sig_h_gFex_leading_eta->Fill(sigGFexEtaValues->at(idx1));
+        sig_h_gFex_leading_phi->Fill(sigGFexPhiValues->at(idx1));
+
+        // Sub-leading jet
+        sig_h_gFex_subleading_Et->Fill(sigGFexEtValues->at(idx2));
+        sig_h_gFex_subleading_eta->Fill(sigGFexEtaValues->at(idx2));
+        sig_h_gFex_subleading_phi->Fill(sigGFexPhiValues->at(idx2));
+
         sigTopoTree->GetEntry(i);
-        std::cout << "sigTopoEtValues->size(): " << sigTopoEtValues->size() << "\n";
+        //std::cout << "sigTopoEtValues->size(): " << sigTopoEtValues->size() << "\n";
         sig_h_topo_multiplicity->Fill(sigTopoEtValues->size());
         for (size_t k = 0; k < sigTopoEtValues->size(); k++) {
             nTopo += 1;
@@ -381,12 +478,50 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
             sig_h_deltaR2_jet2->Fill(dr2_2);
             sig_h_deltaR_jet2->Fill(sqrt(dr2_2));
         }
+
+        if (sigTopoEtValues->size() > 0) {
+            // Create index vector for sorting
+            std::vector<size_t> sig_topo_indices(sigTopoEtValues->size());
+            std::iota(sig_topo_indices.begin(), sig_topo_indices.end(), 0);
+
+            // Sort indices by descending topo Et
+            std::sort(sig_topo_indices.begin(), sig_topo_indices.end(), [&](size_t i1, size_t i2) {
+                return sigTopoEtValues->at(i1) > sigTopoEtValues->at(i2);
+            });
+
+            // Fill histograms for the top 128 clusters (or all, if fewer)
+            size_t nSigTop = std::min<size_t>(128, sig_topo_indices.size());
+            for (size_t i = 0; i < nSigTop; ++i) {
+                //std::cout << "i: " << i << "\n";
+                size_t idx = sig_topo_indices[i];
+                sig_h_topo_Et_top128->Fill(sigTopoEtValues->at(idx));
+                sig_h_topo_eta_top128->Fill(sigTopoEtaValues->at(idx));
+                sig_h_topo_phi_top128->Fill(sigTopoPhiValues->at(idx));
+                sigTopoEtValues_top128.push_back(sigTopoEtValues->at(idx));
+                sigTopoEtaValues_top128.push_back(sigTopoEtaValues->at(idx));
+                sigTopoPhiValues_top128.push_back(sigTopoPhiValues->at(idx));
+            }
+        }
+
+
+        for (size_t k = 0; k < sigTopoEtValues_top128.size(); k++) {
+            double dr2_1 = ((sigGFexEtaValues->at(idx1)) - sigTopoEtaValues_top128.at(k))*((sigGFexEtaValues->at(idx1)) - sigTopoEtaValues_top128.at(k)) + deltaPhi(sigGFexPhiValues->at(idx1), sigTopoPhiValues_top128.at(k))*deltaPhi(sigGFexPhiValues->at(idx1), sigTopoPhiValues_top128.at(k));
+            //std::cout << "sigGFexEtaValues->at(idx1)): " << sigGFexEtaValues->at(idx1) << " sigTopoEtaValues_top128.at(k): " << sigTopoEtaValues_top128.at(k) << "\n";
+            //std::cout << "sigGFexPhiValues->at(idx1) : " << sigGFexPhiValues->at(idx1) << " sigTopoPhiValues_top128: " << sigTopoPhiValues_top128.at(k) << "\n";
+            //std::cout << "top128 dr2_1: " << dr2_1 << "\n";
+            sig_h_deltaR2_jet1_top128->Fill(dr2_1);
+            sig_h_deltaR_jet1_top128->Fill(sqrt(dr2_1));
+            double dr2_2 = ((sigGFexEtaValues->at(idx2)) - sigTopoEtaValues_top128.at(k))*((sigGFexEtaValues->at(idx2)) - sigTopoEtaValues_top128.at(k)) + deltaPhi(sigGFexPhiValues->at(idx2), sigTopoPhiValues_top128.at(k))*deltaPhi(sigGFexPhiValues->at(idx2), sigTopoPhiValues_top128.at(k));
+            sig_h_deltaR2_jet2_top128->Fill(dr2_2);
+            sig_h_deltaR_jet2_top128->Fill(sqrt(dr2_2));
+        }
+        
             
     }
 
     for (int i = 0; i < sigJFexTree->GetEntries(); i++) {
         sigJFexTree->GetEntry(i);
-        std::cout << "sigJFexEtValues->size(): " << sigJFexEtValues->size() << "\n";
+        //std::cout << "sigJFexEtValues->size(): " << sigJFexEtValues->size() << "\n";
         sig_h_jFex_multiplicity->Fill(sigJFexEtValues->size());
         for (float et : *sigJFexEtValues) sig_h_jFex_Et->Fill(et);
         for (float eta : *sigJFexEtaValues) sig_h_jFex_eta->Fill(eta);
@@ -395,6 +530,7 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
 
     int backNEntries = backGFexTree->GetEntries();
+    std::cout << " backNEntries: " << backNEntries << "\n";
     for (int i = 0; i < backNEntries; i++) {
         backGFexTree->GetEntry(i);
         back_h_gFex_multiplicity->Fill(backGFexEtValues->size());
@@ -407,27 +543,71 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
         // Find two highest Et jets
         auto [idx1, idx2] = getTwoHighestIndices(*backGFexEtValues);
 
+        // Leading jet
+        back_h_gFex_leading_Et->Fill(backGFexEtValues->at(idx1));
+        back_h_gFex_leading_eta->Fill(backGFexEtaValues->at(idx1));
+        back_h_gFex_leading_phi->Fill(backGFexPhiValues->at(idx1));
+
+        // Sub-leading jet
+        back_h_gFex_subleading_Et->Fill(backGFexEtValues->at(idx2));
+        back_h_gFex_subleading_eta->Fill(backGFexEtaValues->at(idx2));
+        back_h_gFex_subleading_phi->Fill(backGFexPhiValues->at(idx2));
+
         backTopoTree->GetEntry(i);
-        std::cout << "topoEtValues->size(): " << backTopoEtValues->size() << "\n";
+        //std::cout << "topoEtValues->size(): " << backTopoEtValues->size() << "\n";
         back_h_topo_multiplicity->Fill(backTopoEtValues->size());
         for (size_t k = 0; k < backTopoEtValues->size(); k++) {
             back_h_topo_Et->Fill(backTopoEtValues->at(k));
             back_h_topo_eta->Fill(backTopoEtaValues->at(k));
             back_h_topo_phi->Fill(backTopoPhiValues->at(k));
             double dr2_1 = ((backGFexEtaValues->at(idx1)) - backTopoEtaValues->at(k))*((backGFexEtaValues->at(idx1)) - backTopoEtaValues->at(k)) + deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues->at(k))*deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues->at(k));
-            std::cout << "background dr2_1: " << dr2_1 << " and dr: " << sqrt(dr2_1) << "\n";
+            //std::cout << "background dr2_1: " << dr2_1 << " and dr: " << sqrt(dr2_1) << "\n";
             back_h_deltaR2_jet1->Fill(dr2_1);
             back_h_deltaR_jet1->Fill(sqrt(dr2_1));
             double dr2_2 = ((backGFexEtaValues->at(idx2)) - backTopoEtaValues->at(k))*((backGFexEtaValues->at(idx2)) - backTopoEtaValues->at(k)) + deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues->at(k))*deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues->at(k));
             back_h_deltaR2_jet2->Fill(dr2_2);
             back_h_deltaR_jet2->Fill(sqrt(dr2_2));
         }
-            
+
+        if (backTopoEtValues->size() > 0) {
+            // Create index vector for sorting
+            std::vector<size_t> topo_indices(backTopoEtValues->size());
+            std::iota(topo_indices.begin(), topo_indices.end(), 0);
+
+            // Sort indices by descending topo Et
+            std::sort(topo_indices.begin(), topo_indices.end(), [&](size_t i1, size_t i2) {
+                return backTopoEtValues->at(i1) > backTopoEtValues->at(i2);
+            });
+
+            // Fill histograms for the top 128 clusters (or all, if fewer)
+            size_t nTop = std::min<size_t>(128, topo_indices.size());
+            for (size_t i = 0; i < nTop; ++i) {
+                size_t idx = topo_indices[i];
+                back_h_topo_Et_top128->Fill(backTopoEtValues->at(idx));
+                back_h_topo_eta_top128->Fill(backTopoEtaValues->at(idx));
+                back_h_topo_phi_top128->Fill(backTopoPhiValues->at(idx));
+                backTopoEtValues_top128.push_back(backTopoEtValues->at(idx));
+                backTopoEtaValues_top128.push_back(backTopoEtaValues->at(idx));
+                backTopoPhiValues_top128.push_back(backTopoPhiValues->at(idx));
+            }
+
+            for (size_t k = 0; k < backTopoEtValues_top128.size(); k++) {
+                double dr2_1 = ((backGFexEtaValues->at(idx1)) - backTopoEtaValues_top128.at(k))*((backGFexEtaValues->at(idx1)) - backTopoEtaValues_top128.at(k)) + deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues_top128.at(k))*deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues_top128.at(k));
+                //std::cout << "sigGFexEtaValues->at(idx1)): " << sigGFexEtaValues->at(idx1) << " sigTopoEtaValues_top128.at(k): " << backTopoEtaValues_top128.at(k) << "\n";
+                //std::cout << "sigGFexPhiValues->at(idx1) : " << sigGFexPhiValues->at(idx1) << " sigTopoPhiValues_top128: " << sigTopoPhiValues_top128.at(k) << "\n";
+                //std::cout << "top128 background dr2_1: " << dr2_1 << "\n";
+                back_h_deltaR2_jet1_top128->Fill(dr2_1);
+                back_h_deltaR_jet1_top128->Fill(sqrt(dr2_1));
+                double dr2_2 = ((backGFexEtaValues->at(idx2)) - backTopoEtaValues_top128.at(k))*((backGFexEtaValues->at(idx2)) - backTopoEtaValues_top128.at(k)) + deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues_top128.at(k))*deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues_top128.at(k));
+                back_h_deltaR2_jet2_top128->Fill(dr2_2);
+                back_h_deltaR_jet2_top128->Fill(sqrt(dr2_2));
+            }
+        }
     }
 
     for (int i = 0; i < backJFexTree->GetEntries(); i++) {
         backJFexTree->GetEntry(i);
-        std::cout << "backJFexEtValues->size(): " << backJFexEtValues->size() << "\n";
+        //std::cout << "backJFexEtValues->size(): " << backJFexEtValues->size() << "\n";
         back_h_jFex_multiplicity->Fill(backJFexEtValues->size());
         for (float et : *backJFexEtValues) back_h_jFex_Et->Fill(et);
         for (float eta : *backJFexEtaValues) back_h_jFex_eta->Fill(eta);
@@ -449,6 +629,32 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     leg->AddEntry(back_h_topo_Et, "Background", "l");
     leg->Draw();
     c.SaveAs(outputFileDir + "topo_Et.pdf");
+
+    sig_h_topo_Et_top128->SetLineColor(kRed);
+    back_h_topo_Et_top128->SetLineColor(kBlue);
+    sig_h_topo_Et_top128->Scale(1.0 / sig_h_topo_Et_top128->Integral());
+    back_h_topo_Et_top128->Scale(1.0 / back_h_topo_Et_top128->Integral());
+    back_h_topo_Et_top128->Draw("HIST");
+    sig_h_topo_Et_top128->Draw("HIST SAME");
+    c.SaveAs(outputFileDir + "topo_Et_top128.pdf");
+
+    sig_h_gFex_leading_Et->SetLineColor(kRed);
+    back_h_gFex_leading_Et->SetLineColor(kBlue);
+    sig_h_gFex_leading_Et->Scale(1.0 / sig_h_gFex_leading_Et->Integral());
+    back_h_gFex_leading_Et->Scale(1.0 / back_h_gFex_leading_Et->Integral());
+    sig_h_gFex_leading_Et->Draw("HIST");
+    back_h_gFex_leading_Et->Draw("HIST SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_Et.pdf");
+
+    sig_h_gFex_subleading_Et->SetLineColor(kRed);
+    back_h_gFex_subleading_Et->SetLineColor(kBlue);
+    sig_h_gFex_subleading_Et->Scale(1.0 / sig_h_gFex_subleading_Et->Integral());
+    back_h_gFex_subleading_Et->Scale(1.0 / back_h_gFex_subleading_Et->Integral());
+    sig_h_gFex_subleading_Et->Draw("HIST");
+    back_h_gFex_subleading_Et->Draw("HIST SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_Et.pdf");
 
     sig_h_gFex_Et->SetLineColor(kRed);
     back_h_gFex_Et->SetLineColor(kBlue);
@@ -474,12 +680,33 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     leg->Draw();
     c.SaveAs(outputFileDir + "topo_eta.pdf");
 
+    sig_h_topo_eta_top128->SetLineColor(kRed);
+    back_h_topo_eta_top128->SetLineColor(kBlue);
+    back_h_topo_eta_top128->Draw();
+    sig_h_topo_eta_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "topo_eta_top128.pdf");
+
     sig_h_gFex_eta->SetLineColor(kRed);
     back_h_gFex_eta->SetLineColor(kBlue);
     back_h_gFex_eta->Draw();
     sig_h_gFex_eta->Draw("SAME");
     leg->Draw();
     c.SaveAs(outputFileDir + "gFex_eta.pdf");
+
+    sig_h_gFex_leading_eta->SetLineColor(kRed);
+    back_h_gFex_leading_eta->SetLineColor(kBlue);
+    back_h_gFex_leading_eta->Draw();
+    sig_h_gFex_leading_eta->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_eta.pdf");
+
+    sig_h_gFex_subleading_eta->SetLineColor(kRed);
+    back_h_gFex_subleading_eta->SetLineColor(kBlue);
+    back_h_gFex_subleading_eta->Draw();
+    sig_h_gFex_subleading_eta->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_eta.pdf");
 
     sig_h_jFex_eta->SetLineColor(kRed);
     back_h_jFex_eta->SetLineColor(kBlue);
@@ -496,12 +723,33 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     leg->Draw();
     c.SaveAs(outputFileDir + "topo_phi.pdf");
 
+    sig_h_topo_phi_top128->SetLineColor(kRed);
+    back_h_topo_phi_top128->SetLineColor(kBlue);
+    back_h_topo_phi_top128->Draw();
+    sig_h_topo_phi_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "topo_phi_top128.pdf");
+
     sig_h_gFex_phi->SetLineColor(kRed);
     back_h_gFex_phi->SetLineColor(kBlue);
     back_h_gFex_phi->Draw();
     sig_h_gFex_phi->Draw("SAME");
     leg->Draw();
     c.SaveAs(outputFileDir + "gFex_phi.pdf");
+
+    sig_h_gFex_leading_phi->SetLineColor(kRed);
+    back_h_gFex_leading_phi->SetLineColor(kBlue);
+    back_h_gFex_leading_phi->Draw();
+    sig_h_gFex_leading_phi->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_leading_phi.pdf");
+
+    sig_h_gFex_leading_phi->SetLineColor(kRed);
+    back_h_gFex_leading_phi->SetLineColor(kBlue);
+    back_h_gFex_leading_phi->Draw();
+    sig_h_gFex_leading_phi->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "gFex_subleading_phi.pdf");
 
     sig_h_jFex_phi->SetLineColor(kRed);
     back_h_jFex_phi->SetLineColor(kBlue);
@@ -586,6 +834,61 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     leg->Draw();
     c.SaveAs(outputFileDir + "deltaR_jet2.pdf");
 
+
+
+
+    back_h_deltaR2_jet1_top128->Scale(1.0 / back_h_deltaR2_jet1_top128->Integral());
+    back_h_deltaR2_jet1_top128->SetMarkerSize(0.5);
+    back_h_deltaR2_jet1_top128->SetXTitle("#Delta R^{2}");   // X-axis title
+    back_h_deltaR2_jet1_top128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    sig_h_deltaR2_jet1_top128->SetLineColor(kRed);
+    back_h_deltaR2_jet1_top128->SetLineColor(kBlue);
+    sig_h_deltaR2_jet1_top128->SetMarkerSize(0.5);
+    back_h_deltaR2_jet1_top128->Draw();
+    sig_h_deltaR2_jet1_top128->Scale(1.0 / sig_h_deltaR2_jet1_top128->Integral());
+    sig_h_deltaR2_jet1_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "deltaR2_jet1_top128.pdf");
+
+    back_h_deltaR2_jet2_top128->Scale(1.0 / back_h_deltaR2_jet2_top128->Integral());
+    back_h_deltaR2_jet2_top128->SetXTitle("#Delta R^{2}");   // X-axis title
+    back_h_deltaR2_jet2_top128->SetMarkerSize(0.5);
+    back_h_deltaR2_jet2_top128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    sig_h_deltaR2_jet2_top128->SetLineColor(kRed);
+    back_h_deltaR2_jet2_top128->SetLineColor(kBlue);
+    back_h_deltaR2_jet2_top128->Draw();
+    sig_h_deltaR2_jet2_top128->SetMarkerSize(0.5);
+    sig_h_deltaR2_jet2_top128->Scale(1.0 / sig_h_deltaR2_jet2_top128->Integral());
+    sig_h_deltaR2_jet2_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "deltaR2_jet2_top128.pdf");
+
+    back_h_deltaR_jet1_top128->Scale(1.0 / back_h_deltaR_jet1_top128->Integral());
+    back_h_deltaR_jet1_top128->SetXTitle("#Delta R");   // X-axis title
+    back_h_deltaR_jet1_top128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    back_h_deltaR_jet1_top128->SetMarkerSize(0.5);
+    sig_h_deltaR_jet1_top128->SetLineColor(kRed);
+    back_h_deltaR_jet1_top128->SetLineColor(kBlue);
+    back_h_deltaR_jet1_top128->Draw();
+    sig_h_deltaR_jet1_top128->Scale(1.0 / sig_h_deltaR_jet1_top128->Integral());
+    sig_h_deltaR_jet1_top128->SetMarkerSize(0.5);
+    sig_h_deltaR_jet1_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "deltaR_jet1_top128.pdf");
+
+    back_h_deltaR_jet2_top128->Scale(1.0 / back_h_deltaR_jet2_top128->Integral());
+    back_h_deltaR_jet2_top128->SetXTitle("#Delta R");   // X-axis title
+    back_h_deltaR_jet2_top128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
+    back_h_deltaR_jet2_top128->SetMarkerSize(0.5);
+    sig_h_deltaR_jet2_top128->SetLineColor(kRed);
+    back_h_deltaR_jet2_top128->SetLineColor(kBlue);
+    back_h_deltaR_jet2_top128->Draw();
+    sig_h_deltaR_jet2_top128->Scale(1.0 / sig_h_deltaR_jet2_top128->Integral());
+    sig_h_deltaR_jet2_top128->SetMarkerSize(0.5);
+    sig_h_deltaR_jet2_top128->Draw("SAME");
+    leg->Draw();
+    c.SaveAs(outputFileDir + "deltaR_jet2_top128.pdf");
+
     TCanvas cLog;
     //cLog.SetLogx();
     cLog.SetLogy();
@@ -615,6 +918,14 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     sig_h_jFex_Et->Draw("SAME");
     leg->Draw();
     cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
+
+    sig_h_topo_Et_top128->SetLineColor(kRed);
+    back_h_topo_Et_top128->SetLineColor(kBlue);
+    sig_h_topo_Et_top128->Scale(1.0 / sig_h_topo_Et_top128->Integral());
+    back_h_topo_Et_top128->Scale(1.0 / back_h_topo_Et_top128->Integral());
+    back_h_topo_Et_top128->Draw("HIST");
+    sig_h_topo_Et_top128->Draw("HIST SAME");
+    cLog.SaveAs(outputFileDir + "log_topo_Et_top128.pdf");
 
     std::cout << "nTopo: " << nTopo << " and nTopoGreater1GeV: " << nTopoGreater1GeV << "\n";
     std::cout << "totalTopoEnergy: "  << totalTopoEnergy << " and topoEnergyClustersGreater1GeV: " << topoEnergyClustersGreater1GeV << "\n";

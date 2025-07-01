@@ -7,19 +7,20 @@
 #include "TH1F.h"
 #include "TCanvas.h"
 #include "TFile.h"
-
+#include "analysisHelperFunctions.h"
+/*
 double undigitize_phi(const std::bitset<8>& phi_bits) {
     return -3.2 + phi_bits.to_ulong() * (6.4 / 256.0);
 }
 
-double undigitize_eta(const std::bitset<11>& eta_bits) {
+double undigitize_eta(const std::bitset<eta_bit_length_>& eta_bits) {
     return -5.0 + eta_bits.to_ulong() * (10.0 / 2048.0);
 }
 
-double undigitize_et(const std::bitset<13>& et_bits) {
+double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * 0.25;
 }
-
+*/
 void analyze_file(const std::vector<std::string> fileNames, const bool signalBool) {
     
     TString outputFileName; 
@@ -125,9 +126,9 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
             std::string phi_bin = binary.substr(second_pipe + 1);
     
             // Convert to bitsets
-            std::bitset<13> et_bits(et_bin);
-            std::bitset<8> phi_bits(phi_bin);
-            std::bitset<11> eta_bits(eta_bin);
+            std::bitset<et_bit_length_> et_bits(et_bin);
+            std::bitset<phi_bit_length_> phi_bits(phi_bin);
+            std::bitset<eta_bit_length_> eta_bits(eta_bin);
     
             // Undigitize the values
             double undigitized_et = undigitize_et(et_bits);

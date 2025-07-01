@@ -70,10 +70,16 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, log=Fals
                  Higgs1Phi=0, Higgs2Phi=0, signalBool=False,
                  b1_list=[], b2_list=[], dr1=0, dr2=0):
 
+    # Create a modified viridis colormap with white as the lowest color
+    viridis = cm.get_cmap('viridis', 256)
+    newcolors = viridis(np.linspace(0, 1, 256))
+    newcolors[0] = [1, 1, 1, 1]  # Set lowest color to white
+    new_cmap = mcolors.ListedColormap(newcolors)
+
     plt.figure(figsize=(8, 6))
     plt.imshow(data.T, origin='lower', aspect='auto',
                extent=[eta_bins[0], eta_bins[-1], phi_bins[0], phi_bins[-1]],
-               cmap='viridis')
+               cmap=new_cmap)
     plt.subplots_adjust(top=0.77)
 
     if log:
@@ -87,13 +93,13 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, log=Fals
 
     bin_eta_centers = 0.5 * (eta_bins[:-1] + eta_bins[1:])
     bin_phi_centers = 0.5 * (phi_bins[:-1] + phi_bins[1:])
-    
+
     for i, eta in enumerate(bin_eta_centers):
         for j, phi in enumerate(bin_phi_centers):
             if objectType == "gfex_smallr":
                 if data[i][j] >= 20:
                     rect = patches.Rectangle((eta - 0.3, phi - 0.3), 0.6, 0.6,
-                                            edgecolor='white', facecolor='none', lw=1.5)
+                                             edgecolor='white', facecolor='none', lw=1.5)
                     plt.gca().add_patch(rect)
             elif objectType == "gfex_larger":
                 if data[i][j] >= 20:
@@ -169,6 +175,7 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, log=Fals
 
     plt.savefig(filename)
     plt.close()
+
 
 # Initialize the xAOD infrastructure
 ROOT.gSystem.Load("libxAODRootAccess")
@@ -307,7 +314,7 @@ with open(output_file_topo422, "w") as f_topo:
         with open(output_file_jfex, "w") as f_jfex:
             
             for fileName in fileNames:
-                if fileIt > 9:
+                if fileIt > 1:
                     break
                 print(f"Processing file: {fileName}")
 
