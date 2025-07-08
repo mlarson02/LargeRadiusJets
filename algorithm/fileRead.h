@@ -17,7 +17,7 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
 const std::string kFileSuffix = "nSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4";
 constexpr bool signalBool_ = false;
 
-const unsigned int maxEvent_ = signalBool_ ? 659 : 1000;
+const unsigned int maxEvent_ = signalBool_ ? 3900 : 5000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 

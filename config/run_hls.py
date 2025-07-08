@@ -117,7 +117,7 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
 
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 659 : 1000;
+const unsigned int maxEvent_ = signalBool_ ? 3900 : 5000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
@@ -287,16 +287,16 @@ if __name__ == "__main__":
     #nSeeds_options = [1, 2, 3, 4, 5, 6, 7, 8]
     nSeeds_options = [2]
     #r2Cut_options = [0.8, 0.9, 1.0, 1.1, 1.2]
-    #r2Cut_options = [0.64, 1.0, 1.44]
-    r2Cut_options = [0.64]
+    r2Cut_options = [0.64, 1.0, 1.44]
+    #r2Cut_options = [0.64]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    #maxObjectsConsidered_options = [128, 256, 512]
-    maxObjectsConsidered_options = [128]
+    maxObjectsConsidered_options = [128, 256, 512]
+    #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
-    sortSeeds_options = [False]
-    signalBool_options = [False]
-    inputEnergyCut_options = [False]
-    #inputEnergyCut_options = [False, True]
+    sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
+    signalBool_options = [True, False]
+    #inputEnergyCut_options = [False]
+    inputEnergyCut_options = [False, True]
     #inputEnergyCutValues_options = [0.5, 1.0, 1.5, 2.0] # only use these if inputEnergyCutOption is true
     inputEnergyCutValues_options = [4] # note 4 == 1 GeV (0.25 GeV granularity for inputobjectvalues)
     for nSeeds in nSeeds_options:

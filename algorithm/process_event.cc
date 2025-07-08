@@ -23,7 +23,7 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
         #pragma HLS unroll
         //std::cout << "iSeed: " << iSeed << "\n";
         numMergedIO = 0;
-        outputJetEt = seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
+        outputJetEt = 0; // TESTING IF DONT MERGE SEED ENERGY! //seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
         outputJetValues[iSeed] = 0;
         for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             //#pragma HLS loop_tripcount min=512 max=1024
@@ -31,7 +31,7 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
             //#pragma HLS unroll skip_exit_check factor=UNROLLFACTOR // pragma to unroll input object loop by pre-defined unroll factor
             //#pragma HLS pipeline II=PIPELINEII // pragma to pipeline innermost loop by pre-defined iteration interval, needs optimization! 
             #if useInputEnergyCut_
-            if (inputObjectValues[iInput].range(et_high_, et_low_) >= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
+            if (inputObjectValues[iInput].range(et_high_, et_low_) <= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
             /*
             std::cout << "iInput: " << iInput << "\n";
@@ -49,7 +49,10 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
             ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
             //std::cout << "uDeltaEta: " << uDeltaEta << " uDeltaPhi: " << uDeltaPhi << "\n";
             //std::cout << "deltaR^2: " << uDeltaEta * uDeltaEta * eta_granularity_ * eta_granularity_ + uDeltaPhi * uDeltaPhi * phi_granularity_ * phi_granularity_ << "\n";
-            unsigned int lut_index = uDeltaEta * (1 << phi_bit_length_) + uDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = uDeltaEta * (1 << phi_bit_length_) + uDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+            //volatile unsigned int lut_index = 
+            //bool passesCut = !(lut_index >= max_lut_size_) && lut_[lut_index];
+            //volatile bool readoutPassesCut = passesCut;
             if (!(lut_index >= max_lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False)
                 //std::cout << "merging" << "\n";
                 outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
