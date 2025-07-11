@@ -1,0 +1,4 @@
+process_event_updated.cc:60:9: warning: unknown HLS pragma ignored [-Winvalid-hls-pragmas]
+#pragma HLS PIPILINE II=1
+        ^
+1 warning generated.

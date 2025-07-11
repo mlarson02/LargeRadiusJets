@@ -1,0 +1,152 @@
+<stg><name>odd_even_sort</name>
+
+
+<trans_list>
+</trans_list>
+
+
+
+<state_list>
+
+<state id="1" st_id="1">
+
+<operation id="2" st_id="1" stage="1" lat="1">
+<core>NULL</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="3" bw="0" op_0_bw="0" op_1_bw="32" op_2_bw="32" op_3_bw="32" op_4_bw="32" op_5_bw="0">
+<![CDATA[
+entry:0 %specpipeline_ln13 = specpipeline void @_ssdm_op_SpecPipeline, i32 1, i32 0, i32 0, i32 0, void @empty_0
+
+]]></Node>
+<StgValue><ssdm name="specpipeline_ln13"/></StgValue>
+</operation>
+
+<operation id="3" st_id="1" stage="1" lat="1">
+<core>NULL</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="4" bw="13" op_0_bw="13" op_1_bw="13">
+<![CDATA[
+entry:1 %data_1_read_1 = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %data_1_read
+
+]]></Node>
+<StgValue><ssdm name="data_1_read_1"/></StgValue>
+</operation>
+
+<operation id="4" st_id="1" stage="1" lat="1">
+<core>NULL</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="5" bw="13" op_0_bw="13" op_1_bw="13">
+<![CDATA[
+entry:2 %p_read_1 = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %p_read
+
+]]></Node>
+<StgValue><ssdm name="p_read_1"/></StgValue>
+</operation>
+
+<operation id="5" st_id="1" stage="1" lat="1">
+<core>Cmp</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="6" bw="1" op_0_bw="13" op_1_bw="13">
+<![CDATA[
+entry:3 %icmp_ln19 = icmp_ugt  i13 %p_read_1, i13 %data_1_read_1
+
+]]></Node>
+<StgValue><ssdm name="icmp_ln19"/></StgValue>
+</operation>
+
+<operation id="6" st_id="1" stage="1" lat="1">
+<core>Sel</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="7" bw="13" op_0_bw="1" op_1_bw="13" op_2_bw="13">
+<![CDATA[
+entry:4 %select_ln19 = select i1 %icmp_ln19, i13 %data_1_read_1, i13 %p_read_1
+
+]]></Node>
+<StgValue><ssdm name="select_ln19"/></StgValue>
+</operation>
+
+<operation id="7" st_id="1" stage="1" lat="1">
+<core>NULL</core>
+<MemPortIdVec></MemPortIdVec>
+<condition id="-1">
+<or_exp><and_exp></and_exp></or_exp>
+</condition>
+
+<Node id="8" bw="0" op_0_bw="13">
+<![CDATA[
+entry:5 %ret_ln19 = ret i13 %select_ln19
+
+]]></Node>
+<StgValue><ssdm name="ret_ln19"/></StgValue>
+</operation>
+</state>
+</state_list>
+
+
+<ports>
+<port id="9" name="p_read" dir="0" iftype="0">
+<core>NULL</core><StgValue><ssdm name="p_read"/></StgValue>
+</port>
+<port id="10" name="data_1_read" dir="0" iftype="0">
+<core>NULL</core><StgValue><ssdm name="data_1_read"/></StgValue>
+</port>
+</ports>
+
+
+<dataflows>
+<dataflow id="12" from="_ssdm_op_SpecPipeline" to="specpipeline_ln13" fromId="11" toId="2">
+</dataflow>
+<dataflow id="14" from="StgValue_13" to="specpipeline_ln13" fromId="13" toId="2">
+</dataflow>
+<dataflow id="16" from="StgValue_15" to="specpipeline_ln13" fromId="15" toId="2">
+</dataflow>
+<dataflow id="17" from="StgValue_15" to="specpipeline_ln13" fromId="15" toId="2">
+</dataflow>
+<dataflow id="18" from="StgValue_15" to="specpipeline_ln13" fromId="15" toId="2">
+</dataflow>
+<dataflow id="20" from="empty_0" to="specpipeline_ln13" fromId="19" toId="2">
+</dataflow>
+<dataflow id="22" from="_ssdm_op_Read.ap_auto.i13" to="data_1_read_1" fromId="21" toId="3">
+</dataflow>
+<dataflow id="23" from="data_1_read" to="data_1_read_1" fromId="10" toId="3">
+</dataflow>
+<dataflow id="24" from="_ssdm_op_Read.ap_auto.i13" to="p_read_1" fromId="21" toId="4">
+</dataflow>
+<dataflow id="25" from="p_read" to="p_read_1" fromId="9" toId="4">
+</dataflow>
+<dataflow id="26" from="p_read_1" to="icmp_ln19" fromId="4" toId="5">
+</dataflow>
+<dataflow id="27" from="data_1_read_1" to="icmp_ln19" fromId="3" toId="5">
+</dataflow>
+<dataflow id="28" from="icmp_ln19" to="select_ln19" fromId="5" toId="6">
+</dataflow>
+<dataflow id="29" from="data_1_read_1" to="select_ln19" fromId="3" toId="6">
+</dataflow>
+<dataflow id="30" from="p_read_1" to="select_ln19" fromId="4" toId="6">
+</dataflow>
+<dataflow id="31" from="select_ln19" to="ret_ln19" fromId="6" toId="7">
+</dataflow>
+</dataflows>
+
+
+</stg>

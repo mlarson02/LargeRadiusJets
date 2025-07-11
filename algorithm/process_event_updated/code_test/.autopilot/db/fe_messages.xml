@@ -1,0 +1,120 @@
+<xilinx:hls_fe_msgs>
+    <msg msg_groups="PRAGMA_INVALID" msg_id="207-5590" msg_severity="WARNING" msg_loc="process_event_updated.cc:60:9" msg_body="unknown HLS pragma ignored">
+        <args ClangWarningOption="invalid-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:13:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="odd_even_sort" ARG_PragmaIsValid="1" ARG_PragmaOptions="II=1" ARG_PragmaType="pipeline" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:16:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="odd_even_sort" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:18:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="odd_even_sort" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:41:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="array_sum" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:60:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="et_calculation" ARG_PragmaIsValid="0" ARG_PragmaOptions="II" ARG_PragmaType="pipiline" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:65:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="et_calculation" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:70:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="et_calculation" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:85:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="et_calculation" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/main.tcl:14:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaContext="directive" ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="name=top" ARG_PragmaType="top" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:125:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=lut_ cyclic factor=8 dim=1" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:126:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=inputObjectValues complete dim=1" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:127:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=inputObjectValues cyclic factor=4 dim=2" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:128:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=outputJetValues complete" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:129:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=seedValues complete" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:133:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:141:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:149:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="process_event_updated.cc:157:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaType="unroll" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-291" msg_severity="INFO" msg_loc="process_event_updated.cc:15:19" msg_body="Loop 'VITIS_LOOP_15_1' is marked as complete unroll implied by the pipeline pragma">
+        <args LoopName="VITIS_LOOP_15_1"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-291" msg_severity="INFO" msg_loc="process_event_updated.cc:17:19" msg_body="Loop 'VITIS_LOOP_17_2' is marked as complete unroll implied by the pipeline pragma">
+        <args LoopName="VITIS_LOOP_17_2"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Unrolling loop 'VITIS_LOOP_156_4' (process_event_updated.cc:156:23) in function 'top' completely with a factor of 2">
+        <args Factor="2" LoopLoc="process_event_updated.cc:156:23" LoopName="VITIS_LOOP_156_4"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Unrolling loop 'VITIS_LOOP_148_3' (process_event_updated.cc:148:23) in function 'top' completely with a factor of 2">
+        <args Factor="2" LoopLoc="process_event_updated.cc:148:23" LoopName="VITIS_LOOP_148_3"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Unrolling loop 'VITIS_LOOP_140_2' (process_event_updated.cc:140:23) in function 'top' completely with a factor of 2">
+        <args Factor="2" LoopLoc="process_event_updated.cc:140:23" LoopName="VITIS_LOOP_140_2"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Unrolling loop 'VITIS_LOOP_132_1' (process_event_updated.cc:132:20) in function 'top' completely with a factor of 2">
+        <args Factor="2" LoopLoc="process_event_updated.cc:132:20" LoopName="VITIS_LOOP_132_1"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:56:0" msg_body="Unrolling loop 'VITIS_LOOP_84_4' (process_event_updated.cc:84:22) in function 'et_calculation' completely with a factor of 128">
+        <args Factor="128" LoopLoc="process_event_updated.cc:84:22" LoopName="VITIS_LOOP_84_4"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:56:0" msg_body="Unrolling loop 'VITIS_LOOP_69_3' (process_event_updated.cc:69:26) in function 'et_calculation' completely with a factor of 128">
+        <args Factor="128" LoopLoc="process_event_updated.cc:69:26" LoopName="VITIS_LOOP_69_3"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:56:0" msg_body="Unrolling loop 'VITIS_LOOP_64_2' (process_event_updated.cc:64:26) in function 'et_calculation' completely with a factor of 128">
+        <args Factor="128" LoopLoc="process_event_updated.cc:64:26" LoopName="VITIS_LOOP_64_2"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:12:0" msg_body="Unrolling loop 'VITIS_LOOP_15_1' (process_event_updated.cc:15:19) in function 'odd_even_sort' completely with a factor of 2">
+        <args Factor="2" LoopLoc="process_event_updated.cc:15:19" LoopName="VITIS_LOOP_15_1"/>
+    </msg>
+    <msg msg_groups="PRAGMA_UNROLL" msg_id="214-186" msg_severity="INFO" msg_loc="process_event_updated.cc:12:0" msg_body="Unrolling loop 'VITIS_LOOP_17_2' (process_event_updated.cc:17:19) in function 'odd_even_sort' completely with a factor of 1">
+        <args Factor="1" LoopLoc="process_event_updated.cc:17:19" LoopName="VITIS_LOOP_17_2"/>
+    </msg>
+    <msg msg_groups="PRAGMA_INLINE" msg_id="214-178" msg_severity="INFO" msg_loc="process_event_updated.cc:56:0" msg_body="Inlining function 'array_sum(ap_uint&lt;13&gt;*, ap_uint&lt;13&gt;)' into 'et_calculation(bool, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*, unsigned int, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*) (.6)'">
+        <args Callee="array_sum(ap_uint&lt;13&gt;*, ap_uint&lt;13&gt;)" Callee-DebugLoc="File process_event_updated.cc Line 38 Column 0" Caller="et_calculation(bool, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*, unsigned int, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*) (.6)" Caller-DebugLoc="File process_event_updated.cc Line 56 Column 0"/>
+    </msg>
+    <msg msg_groups="PRAGMA_INLINE" msg_id="214-178" msg_severity="INFO" msg_loc="process_event_updated.cc:56:0" msg_body="Inlining function 'array_sum(ap_uint&lt;13&gt;*, ap_uint&lt;13&gt;)' into 'et_calculation(bool, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*, unsigned int, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*)'">
+        <args Callee="array_sum(ap_uint&lt;13&gt;*, ap_uint&lt;13&gt;)" Callee-DebugLoc="File process_event_updated.cc Line 38 Column 0" Caller="et_calculation(bool, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*, unsigned int, ap_uint&lt;27&gt;*, ap_uint&lt;27&gt;*)" Caller-DebugLoc="File process_event_updated.cc Line 56 Column 0"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Applying array_partition to 'seedValues': Complete partitioning on dimension 1.">
+        <args Dim="1" Mode="Complete" UOName="seedValues"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Applying array_partition to 'inputObjectValues': Complete partitioning on dimension 1. Cyclic partitioning with factor 4 on dimension 2.">
+        <args Dim="islist 1 2" Factor="4" Mode="islist Complete Cyclic" UOName="inputObjectValues"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="process_event_updated.cc:123:0" msg_body="Applying array_partition to 'outputJetValues': Complete partitioning on dimension 1.">
+        <args Dim="1" Mode="Complete" UOName="outputJetValues"/>
+    </msg>
+    <msg msg_groups="AUTOMATION PRAGMA_MISC" msg_id="214-421" msg_severity="INFO" msg_loc="process_event_updated.cc:139:29" msg_body="Automatically partitioning small array 'tempArray' completely based on array size.">
+        <args Value="tempArray"/>
+    </msg>
+    <msg msg_groups="AUTOMATION_VERBOSE_PASSED" msg_id="214-335" msg_severity="INFO" msg_loc="process_event_updated.cc:139:29" msg_body="array_partition dim=1 type=complete  variable=tempArray 1 top process_event_updated.cc:139:29 process_event_updated.cc:13:9tempArray">
+        <args PragmaFunction="top" PragmaIsAuto="1" PragmaOptions="dim=1 type=complete  variable=tempArray" PragmaSrcLoc="process_event_updated.cc:13:9" PragmaSrcLoc-DebugLoc="File process_event_updated.cc Line 13 Column 9" PragmaType="array_partition" VarName="tempArray" varLoc="process_event_updated.cc:139:29"/>
+    </msg>
+    <msg msg_groups="AUTOMATION PRAGMA_MISC" msg_id="214-270" msg_severity="INFO" msg_loc="process_event_updated.cc:13:9" msg_body="Inferring pragma 'array_partition type=complete dim=1' for array 'tempArray' due to pipeline pragma">
+        <args Dim="1" Mode="complete" Name="tempArray" PragmaType="array_partition"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="process_event_updated.cc:139:29" msg_body="Applying array_partition to 'tempArray': Complete partitioning on dimension 1.">
+        <args Dim="1" Mode="Complete" UOName="tempArray"/>
+    </msg>
+</xilinx:hls_fe_msgs>
+

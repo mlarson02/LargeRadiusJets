@@ -1,0 +1,65 @@
+{
+  "0": {
+    "basicblocks": 8,
+    "calls": "1 3 3 1 2",
+    "file": "process_event_updated.cc",
+    "fileloc": 123,
+    "instructions": 56,
+    "loads": {
+      "L": 1,
+      "T": 2
+    },
+    "name": "top",
+    "stores": {
+      "L": 6
+    },
+    "total_instructions": 26855
+  },
+  "1": {
+    "basicblocks": 645,
+    "calls": "",
+    "file": "process_event_updated.cc",
+    "fileloc": 56,
+    "instructions": 6697,
+    "loads": {
+      "G": 128,
+      "L": 513
+    },
+    "name": "et_calculation",
+    "stores": {
+      "L": 387
+    },
+    "total_instructions": 6697
+  },
+  "2": {
+    "basicblocks": 3,
+    "calls": "",
+    "file": "process_event_updated.cc",
+    "fileloc": 12,
+    "instructions": 9,
+    "loads": {
+      "L": 2
+    },
+    "name": "odd_even_sort",
+    "stores": {
+      "L": 2
+    },
+    "total_instructions": 9
+  },
+  "3": {
+    "basicblocks": 645,
+    "calls": "",
+    "file": "process_event_updated.cc",
+    "fileloc": 56,
+    "instructions": 6698,
+    "loads": {
+      "G": 128,
+      "L": 513
+    },
+    "name": "et_calculation",
+    "stores": {
+      "L": 387
+    },
+    "total_instructions": 6698
+  }
+}

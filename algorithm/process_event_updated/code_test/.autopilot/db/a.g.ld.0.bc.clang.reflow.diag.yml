@@ -1,0 +1,1270 @@
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 106, Column: 5 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - Callee:          'array_sum(ap_uint<13>*, ap_uint<13>)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 38, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 159, Column: 13 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 144, Column: 5 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'odd_even_sort(ap_uint<13>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Passed
+Pass:            reflow-infer-unroll
+Name:            ImplicitUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 15, Column: 19 }
+Function:        _Z13odd_even_sortP7ap_uintILi13EE
+Args:            
+  - String:          'Loop '''
+  - LoopName:        VITIS_LOOP_15_1
+  - String:          ''' is marked as complete unroll implied by the pipeline pragma'
+...
+--- !Passed
+Pass:            reflow-infer-unroll
+Name:            ImplicitUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 17, Column: 19 }
+Function:        _Z13odd_even_sortP7ap_uintILi13EE
+Args:            
+  - String:          'Loop '''
+  - LoopName:        VITIS_LOOP_17_2
+  - String:          ''' is marked as complete unroll implied by the pipeline pragma'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_156_4
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:156:23'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          top
+  - String:          ''' completely with a factor of '
+  - Factor:          '2'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_148_3
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:148:23'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          top
+  - String:          ''' completely with a factor of '
+  - Factor:          '2'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_140_2
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:140:23'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          top
+  - String:          ''' completely with a factor of '
+  - Factor:          '2'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_132_1
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:132:20'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          top
+  - String:          ''' completely with a factor of '
+  - Factor:          '2'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_84_4
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:84:22'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_69_3
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:69:26'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_64_2
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:64:26'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+Function:        _Z13odd_even_sortP7ap_uintILi13EE
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_15_1
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:15:19'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          odd_even_sort
+  - String:          ''' completely with a factor of '
+  - Factor:          '2'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+Function:        _Z13odd_even_sortP7ap_uintILi13EE
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_17_2
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:17:19'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          odd_even_sort
+  - String:          ''' completely with a factor of '
+  - Factor:          '1'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+Function:        _Z13odd_even_sortP7ap_uintILi13EE
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_17_2
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:17:19'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          odd_even_sort
+  - String:          ''' completely with a factor of '
+  - Factor:          '1'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_.6
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_84_4
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:84:22'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_.6
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_69_3
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:69:26'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Passed
+Pass:            reflow-pragma-loop-unroll
+Name:            PragmaFullyUnroll
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_.6
+Args:            
+  - String:          'Unrolling loop '''
+  - LoopName:        VITIS_LOOP_64_2
+  - String:          ''' ('
+  - LoopLoc:         'process_event_updated.cc:64:26'
+  - String:          ') '
+  - String:          'in function '''
+  - String:          et_calculation
+  - String:          ''' completely with a factor of '
+  - Factor:          '128'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 106, Column: 5 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_.6
+Args:            
+  - Callee:          'array_sum(ap_uint<13>*, ap_uint<13>)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 38, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*) (.6)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 106, Column: 5 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - Callee:          'array_sum(ap_uint<13>*, ap_uint<13>)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 38, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 135, Column: 9 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*) (.6)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 159, Column: 13 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 144, Column: 5 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'odd_even_sort(ap_uint<13>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+Function:        apatb_top_ir
+Args:            
+  - Callee:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          apatb_top_ir
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Passed
+Pass:            reflow-inliner
+Name:            Inline
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_.6
+Args:            
+  - String:          'Inlining function '''
+  - Callee:          'array_sum(ap_uint<13>*, ap_uint<13>)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 38, Column: 0 }
+  - String:          ''' into '''
+  - Caller:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*) (.6)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ''''
+...
+--- !Passed
+Pass:            reflow-inliner
+Name:            Inline
+DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+Function:        _Z14et_calculationbP7ap_uintILi27EES1_jS1_S1_
+Args:            
+  - String:          'Inlining function '''
+  - Callee:          'array_sum(ap_uint<13>*, ap_uint<13>)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 38, Column: 0 }
+  - String:          ''' into '''
+  - Caller:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ''''
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          seedValues
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          inputObjectValues
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+  - String:          ' '
+  - Mode:            Cyclic
+  - String:          ' partitioning'
+  - String:          ' with factor '
+  - Factor:          '4'
+  - String:          ' on dimension '
+  - Dim:             '2'
+  - String:          .
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          outputJetValues
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_11_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_11_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_11_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_11_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_10_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_10_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_10_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_10_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_9_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_9_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_9_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_9_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_8_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_8_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_8_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_8_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_7_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_7_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_7_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_7_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_6_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_6_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_6_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_6_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_5_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_5_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_5_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_5_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_4_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_4_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_4_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_4_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_3_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_3_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_3_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_3_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_2_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_2_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_2_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_2_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_1_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_1_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_1_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_1_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_0_3
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_0_2
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_0_1
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !Passed
+Pass:            reflow-aggr
+Name:            AggrSucc
+Function:        apatb_top_ir
+Args:            
+  - String:          'Aggregating '
+  - HwTyName:        bram
+  - String:          ' variable '''
+  - Name:            inputObjectValues_0_0
+  - String:          ''' with '
+  - AggregateTypeName: 'compact=bit'
+  - String:          ' mode in '
+  - Bitwidth:        '27'
+  - String:          '-bits'
+...
+--- !HLSReportInfo
+Pass:            auto-loop-pipeline
+Name:            AutoLoopPipeline
+Args:            
+  - String:          'automatically set the pipeline for Loop< '
+  - LoopName:        VITIS_LOOP_59_1
+  - String:          '> at '
+  - LoopLoc:         'process_event_updated.cc:59:26'
+  - String:          ' '
+...
+--- !Passed
+Pass:            reflow-auto-array-partition
+Name:            AutoSmallArrayPartition
+DebugLoc:        { File: process_event_updated.cc, Line: 139, Column: 29 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Automatically partitioning small array '''
+  - Value:           tempArray
+  - String:          ''' completely based on array size.'
+...
+--- !Passed
+Pass:            reflow-auto-array-partition
+Name:            AutoParallelPerformanceDrivenVerbosePassed
+DebugLoc:        { File: process_event_updated.cc, Line: 139, Column: 29 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - PragmaType:      array_partition
+  - String:          ' '
+  - PragmaOptions:   'dim=1 type=complete  variable=tempArray'
+  - String:          ' '
+  - PragmaIsAuto:    '1'
+  - String:          ' '
+  - PragmaFunction:  top
+  - String:          ' '
+  - varLoc:          'process_event_updated.cc:139:29'
+  - String:          ' '
+  - PragmaSrcLoc:    'process_event_updated.cc:13:9'
+    DebugLoc:        { File: process_event_updated.cc, Line: 13, Column: 9 }
+  - VarName:         tempArray
+  - String:          ' '
+...
+--- !Passed
+Pass:            reflow-auto-array-partition
+Name:            AutoArrayXform
+DebugLoc:        { File: process_event_updated.cc, Line: 13, Column: 9 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Inferring pragma '''
+  - PragmaType:      array_partition
+  - String:          ' type='
+  - Mode:            complete
+  - String:          ' dim='
+  - Dim:             '1'
+  - String:          ''' for array '''
+  - Name:            tempArray
+  - String:          ''''
+  - String:          ' due to '
+  - String:          pipeline
+  - String:          ' pragma'
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: process_event_updated.cc, Line: 139, Column: 29 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          tempArray
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 135, Column: 9 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*) (.6)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 144, Column: 5 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'odd_even_sort(ap_uint<13>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 12, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+DebugLoc:        { File: process_event_updated.cc, Line: 159, Column: 13 }
+Function:        _Z3topP7ap_uintILi27EEPA128_S0_S1_
+Args:            
+  - Callee:          'et_calculation(bool, ap_uint<27>*, ap_uint<27>*, unsigned int, ap_uint<27>*, ap_uint<27>*) (.445)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 56, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          'top(ap_uint<27>*, ap_uint<27> (*) [128], ap_uint<27>*)'
+    DebugLoc:        { File: process_event_updated.cc, Line: 123, Column: 0 }
+  - String:          ' because it should never be inlined (cost=never)'
+...

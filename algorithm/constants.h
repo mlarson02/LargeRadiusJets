@@ -25,6 +25,7 @@ constexpr double eta_granularity_ = 0.0390625;
 constexpr double phi_granularity_ = 0.1;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 2048;
+constexpr unsigned int N = 32;
 #define useMax_ false
 constexpr unsigned int max_lut_size_ = 1282;
 constexpr double phi_range_ = 6.4;

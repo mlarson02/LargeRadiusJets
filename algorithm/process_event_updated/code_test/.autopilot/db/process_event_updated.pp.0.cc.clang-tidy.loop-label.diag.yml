@@ -1,0 +1,139 @@
+---
+MainSourceFile:  /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+Diagnostics:     
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_676_1:  '
+    FileOffset:      676
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          1182354
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_676_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_690_1:  '
+    FileOffset:      690
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          1182820
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_690_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_704_1:  '
+    FileOffset:      704
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          1183287
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_704_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_1248_1:  '
+    FileOffset:      1248
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_fixed_base.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          1466960
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_1248_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_15_1:  '
+    FileOffset:      15
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2491230
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_15_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_17_2:  '
+    FileOffset:      17
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2491286
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_17_2: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_40_1:  '
+    FileOffset:      40
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2491707
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_40_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_59_1:  '
+    FileOffset:      59
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2492148
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_59_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_64_2:  '
+    FileOffset:      64
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2492271
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_64_2: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_69_3:  '
+    FileOffset:      69
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2492421
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_69_3: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_84_4:  '
+    FileOffset:      84
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2492793
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_84_4: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_132_1:  '
+    FileOffset:      132
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2494956
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_132_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_140_2:  '
+    FileOffset:      140
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2495289
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_140_2: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_148_3:  '
+    FileOffset:      148
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2495480
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_148_3: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_156_4:  '
+    FileOffset:      156
+    FilePath:        process_event_updated.cc
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc
+        Offset:          2495655
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_156_4: '
+...

@@ -1,0 +1,74 @@
+{
+  "0": {
+    "basicblocks": 33,
+    "calls": "1 3 4 4 1",
+    "file": "process_event_updated.cc",
+    "fileloc": 123,
+    "instructions": 94,
+    "loads": {
+      "L": 1,
+      "T": 4
+    },
+    "name": "top",
+    "stores": {
+      "L": 6
+    },
+    "total_instructions": 37274
+  },
+  "1": {
+    "basicblocks": 1936,
+    "calls": "2",
+    "file": "process_event_updated.cc",
+    "fileloc": 56,
+    "instructions": 9281,
+    "loads": {
+      "G": 128,
+      "L": 770
+    },
+    "name": "et_calculation",
+    "stores": {
+      "L": 389
+    },
+    "total_instructions": 9285
+  },
+  "2": {
+    "basicblocks": 4,
+    "calls": "",
+    "file": "process_event_updated.cc",
+    "fileloc": 38,
+    "instructions": 4,
+    "name": "array_sum",
+    "total_instructions": 4
+  },
+  "3": {
+    "basicblocks": 14,
+    "calls": "",
+    "file": "process_event_updated.cc",
+    "fileloc": 12,
+    "instructions": 38,
+    "loads": {
+      "L": 8
+    },
+    "name": "odd_even_sort",
+    "stores": {
+      "L": 4
+    },
+    "total_instructions": 38
+  },
+  "4": {
+    "basicblocks": 1936,
+    "calls": "2",
+    "file": "process_event_updated.cc",
+    "fileloc": 56,
+    "instructions": 9282,
+    "loads": {
+      "G": 128,
+      "L": 770
+    },
+    "name": "et_calculation",
+    "stores": {
+      "L": 389
+    },
+    "total_instructions": 9286
+  }
+}

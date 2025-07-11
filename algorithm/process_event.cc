@@ -5,54 +5,81 @@
 void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxObjectsConsidered_], input outputJetValues[nSeeds_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
     #pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=8 dim=1
-
+    #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    #pragma HLS ARRAY_PARTITION variable=seedValues complete 
+    /*
+    
     // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
     // AXI4-Master interfaces for input arrays
     #pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nTotalSeeds_
     #pragma HLS INTERFACE m_axi port=inputObjectValues bundle=gmem1 offset=slave depth=maxObjectsConsidered_
-
     // AXI4-Master interfaces for output arrays
     #pragma HLS INTERFACE m_axi port=outputJetValues   bundle=gmem2 offset=slave depth=nSeeds_
-
     // AXI4-Lite interface only for control signals (function arguments, etc.)
     #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
+    */
+    ap_uint<et_bit_length_ > outputJetEt;
+    ap_uint<io_bit_length_ > numMergedIO; 
 
-    #pragma HLS array_partition variable=inputObjectValues type=cyclic factor=4
-
-    //int nMergedInput = 0;
+    
     for (unsigned int iSeed = 0; iSeed < nSeeds_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
         #pragma HLS unroll
+        //std::cout << "iSeed: " << iSeed << "\n";
 
-        ap_uint<et_bit_length_ > outputJetEt = seedValues[iSeed].range(et_bit_length_-1, 0); // reset outputjet values for each seed, to values of seed
-        //ap_uint<eta_bit_length_ > outputJetEta = seedValues[iSeed].eta; 
-        //ap_uint<phi_bit_length_ > outputJetPhi = seedValues[iSeed].phi; 
-        for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
-            //#pragma HLS loop_tripcount min=512 max=1024
-            #pragma HLS unroll // pragma to unroll input object loop completely
-            // let auto-pipelining do the work
+        auto seed = seedValues[iSeed]; // Avoiding multiple accesses
+
+        numMergedIO = 0;
+        outputJetEt = seed.range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
+        outputJetValues[iSeed] = 0;
+
+        // ap_uint<et_bit_length_> accumulator = 0;
+
+        for (unsigned int iInput = 0; iInput < 128; ++iInput){ // loop through input objects to consider merging, put a constant 128 because something weird is going on in my system
+            #pragma HLS unroll
+
+            auto inputVal = inputObjectValues[iInput]; // Avoiding multiple accesses
+
             #if useInputEnergyCut_
-            if (inputObjectValues[iInput].range(et_bit_length_-1, 0) >= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
+            if (inputVal.range(et_high_, et_low_) >= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
-            //if (inputObjectValues[iInput].et == 0) break; // FIXME assumes that inputobjects are already sorted by Et (which seems to be the case from the loop through the topo422 aod collection)
-            // Calculate signed differences (deltaEta and deltaPhi)
-            ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_) - inputObjectValues[iInput].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_);
-            ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(total_bits - 1, total_bits - phi_bit_length_) - inputObjectValues[iInput].range(total_bits - 1, total_bits - phi_bit_length_);
-
+            /*
+            std::cout << "iInput: " << iInput << "\n";
+            std::cout << "inputObjectValues[iInput]: " << std::hex << inputObjectValues[iInput] << "\n";
+            std::cout << "input et: " << std::dec << inputObjectValues[iInput].range(et_high_, et_low_) << " eta: " << inputObjectValues[iInput].range(eta_high_, eta_low_) << " phi: " << inputObjectValues[iInput].range(phi_high_, phi_low_) << "\n";
+            std::cout << "seedValues[iSeed]: " << std::hex << seedValues[iSeed] << "\n";
+            std::cout << "seed et: " << std::dec << seedValues[iSeed].range(et_high_, et_low_) << " eta: " << seedValues[iSeed].range(eta_high_, eta_low_) << " phi: " << seedValues[iSeed].range(phi_high_, phi_low_) << "\n";
+            */
+             // Calculate signed differences (deltaEta and deltaPhi)
+            auto deltaEta = seed.range(eta_high_, eta_low_) - inputObjectValues[iInput].range(eta_high_, eta_low_);
+            auto deltaPhi = seed.range(phi_high_, phi_low_) - inputObjectValues[iInput].range(phi_high_, phi_low_);
+            //std::cout << "deltaEta: " << deltaEta << " deltaPhi: " << deltaPhi << "\n";
             // Use unsigned type for absolute values, and ensure both operands are of the same type
-            ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
-            ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
-
-            //ap_uint<eta_bit_length_ > deltaEta = (seedValues[iSeed].eta >= inputObjectValues[iInput].eta) ? seedValues[iSeed].eta - inputObjectValues[iInput].eta : inputObjectValues[iInput].eta - seedValues[iSeed].eta;
-            //ap_uint<phi_bit_length_ > deltaPhi = (seedValues[iSeed].phi >= inputObjectValues[iInput].phi) ? seedValues[iSeed].phi - inputObjectValues[iInput].phi : inputObjectValues[iInput].phi - seedValues[iSeed].phi;
+            auto uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
+            auto uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
+            //std::cout << "uDeltaEta: " << uDeltaEta << " uDeltaPhi: " << uDeltaPhi << "\n";
+            //std::cout << "deltaR^2: " << uDeltaEta * uDeltaEta * eta_granularity_ * eta_granularity_ + uDeltaPhi * uDeltaPhi * phi_granularity_ * phi_granularity_ << "\n";
             unsigned int lut_index = uDeltaEta * (1 << phi_bit_length_) + uDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
             if (!(lut_index >= max_lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False)
-                outputJetEt += inputObjectValues[iInput].range(et_bit_length_-1, 0); // add input object Et to seed Et for resultant output jet Et
+                //std::cout << "merging" << "\n";
+                outputJetEt += inputVal.range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
+                numMergedIO++; 
             }
         }
 
+        // outputJetEt += accumulator;
+
+        /*
         outputJetValues[iSeed].range(et_bit_length_ - 1, 0) = outputJetEt; // set output Et 
         outputJetValues[iSeed].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_) = seedValues[iSeed].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_); // set output eta to seed eta
-        outputJetValues[iSeed].range(total_bits - 1, total_bits - phi_bit_length_) = seedValues[iSeed].range(total_bits - 1, total_bits - phi_bit_length_); // set output phi to seed phi
+        outputJetValues[iSeed].range(total_bits_ - 1, total_bits_ - phi_bit_length_) = seedValues[iSeed].range(total_bits_ - 1, total_bits_ - phi_bit_length_); // set output phi to seed phi
+        */
+        // FOR IMPLEMENTATION ONLY
+        // outputJetValues[iSeed].range(io_high_, io_low_) = numMergedIO / 2; 
+        outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
+        outputJetValues[iSeed].range(eta_high_, eta_low_) = seed.range(eta_high_, eta_low_);
+        outputJetValues[iSeed].range(phi_high_, phi_low_) = seed.range(phi_high_, phi_low_);
 
+        //std::cout << "number of merged input objects for seed: "  << std::dec << iSeed << " is : " << std::dec << numMergedIO << "\n";
     }
+
 }

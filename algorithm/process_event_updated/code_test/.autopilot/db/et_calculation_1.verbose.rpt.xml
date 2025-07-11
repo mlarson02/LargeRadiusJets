@@ -1,0 +1,307 @@
+<profile>
+
+<section name = "Vitis HLS Report for 'et_calculation_1'" level="0">
+<item name = "Date">Thu Jul 10 19:09:14 2025
+</item>
+<item name = "Version">2024.2 (Build 5238294 on Nov  8 2024)</item>
+<item name = "Project">process_event_updated</item>
+<item name = "Solution">code_test (Vivado IP Flow Target)</item>
+<item name = "Product family">versalpremium</item>
+<item name = "Target device">xcvp1802-lsvc4072-2MP-e-S</item>
+</section>
+
+<section name = "Performance Estimates" level="0">
+<item name = "Timing">
+<section name = "" level="1">
+<item name = "Summary"><table name="" hasTotal="0">
+<keys size="4">Clock, Target, Estimated, Uncertainty</keys>
+<column name="ap_clk">4.00 ns, 2.490 ns, 1.08 ns</column>
+</table>
+</item>
+</section>
+</item>
+<item name = "Latency">
+<section name = "" level="1">
+<item name = "Summary"><table name="" hasTotal="0">
+<keys size="8">, min, max, min, max, min, max, Type</keys>
+<column name="">8834, 8834, 35.336 us, 35.336 us, 8834, 8834, no</column>
+</table>
+</item>
+<item name = "Detail">
+<section name = "" level="1">
+<item name = "Instance"><table name="" hasTotal="0">
+<keys size="9">Instance, Module, min, max, min, max, min, max, Type</keys>
+<column name="grp_et_calculation_1_Pipeline_VITIS_LOOP_59_1_fu_4306">et_calculation_1_Pipeline_VITIS_LOOP_59_1, 8194, 8194, 32.776 us, 32.776 us, 8193, 8193, loop auto-rewind stp (delay=0 clock cycles(s))</column>
+</table>
+</item>
+<item name = "Loop"><table name="" hasTotal="0">
+<keys size="8">Loop Name, min, max, Latency, achieved, target, Count, Pipelined</keys>
+</table>
+</item>
+</section>
+</item>
+</section>
+</item>
+</section>
+
+<section name = "Utilization Estimates" level="0">
+<item name = "Summary"><table name="" hasTotal="1">
+<keys size="6">Name, BRAM_18K, DSP, FF, LUT, URAM</keys>
+<column name="DSP">-, -, -, -, -</column>
+<column name="Expression">-, -, 0, 32, -</column>
+<column name="FIFO">-, -, -, -, -</column>
+<column name="Instance">-, -, 31, 56, -</column>
+<column name="Memory">4, -, 0, 4, 0</column>
+<column name="Multiplexer">-, -, 0, 5144, -</column>
+<column name="Register">-, -, 986, -, -</column>
+<specialColumn name="Available SLR">2470, 3588, 1680448, 840224, 637</specialColumn>
+<specialColumn name="Utilization SLR (%)">~0, 0, ~0, ~0, 0</specialColumn>
+<specialColumn name="Available">9882, 14352, 6721792, 3360896, 2549</specialColumn>
+<specialColumn name="Utilization (%)">~0, 0, ~0, ~0, 0</specialColumn>
+</table>
+</item>
+<item name = "Detail">
+<section name = "" level="1">
+<item name = "Instance"><table name="" hasTotal="1">
+<keys size="7">Instance, Module, BRAM_18K, DSP, FF, LUT, URAM</keys>
+<column name="grp_et_calculation_1_Pipeline_VITIS_LOOP_59_1_fu_4306">et_calculation_1_Pipeline_VITIS_LOOP_59_1, 0, 0, 31, 56, 0</column>
+</table>
+</item>
+<item name = "DSP"><table name="" hasTotal="0">
+<keys size="3">Instance, Module, Expression</keys>
+</table>
+</item>
+<item name = "Memory"><table name="" hasTotal="1">
+<keys size="10">Memory, Module, BRAM_18K, FF, LUT, URAM, Words, Bits, Banks, W*Bits*Banks</keys>
+<column name="bitmask_U">et_calculation_1_bitmask_RAM_AUTO_1R1W, 4, 0, 4, 0, 8192, 1, 1, 8192</column>
+</table>
+</item>
+<item name = "FIFO"><table name="" hasTotal="1">
+<keys size="8">Name, BRAM_18K, FF, LUT, URAM, Depth, Bits, Size:D*B</keys>
+</table>
+</item>
+<item name = "Expression"><table name="" hasTotal="1">
+<keys size="7">Variable Name, Operation, DSP, FF, LUT, Bitwidth P0, Bitwidth P1</keys>
+<column name="tmp_1_fu_8077_p4">1003, 0, 0, 2, 1, 2049</column>
+<column name="tmp_3_fu_8095_p4">1003, 0, 0, 2, 27, 11</column>
+<column name="tmp_5_fu_8113_p4">1003, 0, 0, 2, 27, 7</column>
+<column name="bitmask_we0">or, 0, 0, 2, 1, 1</column>
+<column name="seed_fu_8064_p3">select, 0, 0, 24, 1, 27</column>
+</table>
+</item>
+<item name = "Multiplexer"><table name="" hasTotal="1">
+<keys size="5">Name, LUT, Input Size, Bits, Total Bits</keys>
+<column name="ap_NS_fsm">341, 642, 1, 642</column>
+<column name="bitmask_address0">16, 2, 13, 26</column>
+<column name="bitmask_address0_local">2736, 257, 13, 3341</column>
+<column name="bitmask_ce0">1, 2, 1, 2</column>
+<column name="bitmask_d0">1, 2, 1, 2</column>
+<column name="bitmask_we0">1, 2, 1, 2</column>
+<column name="inputObjectValues_0_0_address0_local">344, 65, 5, 325</column>
+<column name="inputObjectValues_0_1_address0_local">344, 65, 5, 325</column>
+<column name="inputObjectValues_0_2_address0_local">344, 65, 5, 325</column>
+<column name="inputObjectValues_0_3_address0_local">344, 65, 5, 325</column>
+<column name="inputObjectValues_1_0_address0_local">168, 33, 5, 165</column>
+<column name="inputObjectValues_1_1_address0_local">168, 33, 5, 165</column>
+<column name="inputObjectValues_1_2_address0_local">168, 33, 5, 165</column>
+<column name="inputObjectValues_1_3_address0_local">168, 33, 5, 165</column>
+</table>
+</item>
+<item name = "Register"><table name="" hasTotal="1">
+<keys size="5">Name, FF, LUT, Bits, Const Bits</keys>
+<column name="ap_CS_fsm">641, 0, 641, 0</column>
+<column name="bitmask_load_100_reg_10291">1, 0, 1, 0</column>
+<column name="bitmask_load_101_reg_10306">1, 0, 1, 0</column>
+<column name="bitmask_load_102_reg_10321">1, 0, 1, 0</column>
+<column name="bitmask_load_103_reg_10336">1, 0, 1, 0</column>
+<column name="bitmask_load_104_reg_10351">1, 0, 1, 0</column>
+<column name="bitmask_load_105_reg_10366">1, 0, 1, 0</column>
+<column name="bitmask_load_106_reg_10381">1, 0, 1, 0</column>
+<column name="bitmask_load_107_reg_10396">1, 0, 1, 0</column>
+<column name="bitmask_load_108_reg_10411">1, 0, 1, 0</column>
+<column name="bitmask_load_109_reg_10426">1, 0, 1, 0</column>
+<column name="bitmask_load_10_reg_8941">1, 0, 1, 0</column>
+<column name="bitmask_load_110_reg_10441">1, 0, 1, 0</column>
+<column name="bitmask_load_111_reg_10456">1, 0, 1, 0</column>
+<column name="bitmask_load_112_reg_10471">1, 0, 1, 0</column>
+<column name="bitmask_load_113_reg_10486">1, 0, 1, 0</column>
+<column name="bitmask_load_114_reg_10501">1, 0, 1, 0</column>
+<column name="bitmask_load_115_reg_10516">1, 0, 1, 0</column>
+<column name="bitmask_load_116_reg_10531">1, 0, 1, 0</column>
+<column name="bitmask_load_117_reg_10546">1, 0, 1, 0</column>
+<column name="bitmask_load_118_reg_10561">1, 0, 1, 0</column>
+<column name="bitmask_load_119_reg_10576">1, 0, 1, 0</column>
+<column name="bitmask_load_11_reg_8956">1, 0, 1, 0</column>
+<column name="bitmask_load_120_reg_10591">1, 0, 1, 0</column>
+<column name="bitmask_load_121_reg_10606">1, 0, 1, 0</column>
+<column name="bitmask_load_122_reg_10621">1, 0, 1, 0</column>
+<column name="bitmask_load_123_reg_10636">1, 0, 1, 0</column>
+<column name="bitmask_load_124_reg_10651">1, 0, 1, 0</column>
+<column name="bitmask_load_125_reg_10666">1, 0, 1, 0</column>
+<column name="bitmask_load_126_reg_10681">1, 0, 1, 0</column>
+<column name="bitmask_load_127_reg_10696">1, 0, 1, 0</column>
+<column name="bitmask_load_12_reg_8971">1, 0, 1, 0</column>
+<column name="bitmask_load_13_reg_8986">1, 0, 1, 0</column>
+<column name="bitmask_load_14_reg_9001">1, 0, 1, 0</column>
+<column name="bitmask_load_15_reg_9016">1, 0, 1, 0</column>
+<column name="bitmask_load_16_reg_9031">1, 0, 1, 0</column>
+<column name="bitmask_load_17_reg_9046">1, 0, 1, 0</column>
+<column name="bitmask_load_18_reg_9061">1, 0, 1, 0</column>
+<column name="bitmask_load_19_reg_9076">1, 0, 1, 0</column>
+<column name="bitmask_load_1_reg_8806">1, 0, 1, 0</column>
+<column name="bitmask_load_20_reg_9091">1, 0, 1, 0</column>
+<column name="bitmask_load_21_reg_9106">1, 0, 1, 0</column>
+<column name="bitmask_load_22_reg_9121">1, 0, 1, 0</column>
+<column name="bitmask_load_23_reg_9136">1, 0, 1, 0</column>
+<column name="bitmask_load_24_reg_9151">1, 0, 1, 0</column>
+<column name="bitmask_load_25_reg_9166">1, 0, 1, 0</column>
+<column name="bitmask_load_26_reg_9181">1, 0, 1, 0</column>
+<column name="bitmask_load_27_reg_9196">1, 0, 1, 0</column>
+<column name="bitmask_load_28_reg_9211">1, 0, 1, 0</column>
+<column name="bitmask_load_29_reg_9226">1, 0, 1, 0</column>
+<column name="bitmask_load_2_reg_8821">1, 0, 1, 0</column>
+<column name="bitmask_load_30_reg_9241">1, 0, 1, 0</column>
+<column name="bitmask_load_31_reg_9256">1, 0, 1, 0</column>
+<column name="bitmask_load_32_reg_9271">1, 0, 1, 0</column>
+<column name="bitmask_load_33_reg_9286">1, 0, 1, 0</column>
+<column name="bitmask_load_34_reg_9301">1, 0, 1, 0</column>
+<column name="bitmask_load_35_reg_9316">1, 0, 1, 0</column>
+<column name="bitmask_load_36_reg_9331">1, 0, 1, 0</column>
+<column name="bitmask_load_37_reg_9346">1, 0, 1, 0</column>
+<column name="bitmask_load_38_reg_9361">1, 0, 1, 0</column>
+<column name="bitmask_load_39_reg_9376">1, 0, 1, 0</column>
+<column name="bitmask_load_3_reg_8836">1, 0, 1, 0</column>
+<column name="bitmask_load_40_reg_9391">1, 0, 1, 0</column>
+<column name="bitmask_load_41_reg_9406">1, 0, 1, 0</column>
+<column name="bitmask_load_42_reg_9421">1, 0, 1, 0</column>
+<column name="bitmask_load_43_reg_9436">1, 0, 1, 0</column>
+<column name="bitmask_load_44_reg_9451">1, 0, 1, 0</column>
+<column name="bitmask_load_45_reg_9466">1, 0, 1, 0</column>
+<column name="bitmask_load_46_reg_9481">1, 0, 1, 0</column>
+<column name="bitmask_load_47_reg_9496">1, 0, 1, 0</column>
+<column name="bitmask_load_48_reg_9511">1, 0, 1, 0</column>
+<column name="bitmask_load_49_reg_9526">1, 0, 1, 0</column>
+<column name="bitmask_load_4_reg_8851">1, 0, 1, 0</column>
+<column name="bitmask_load_50_reg_9541">1, 0, 1, 0</column>
+<column name="bitmask_load_51_reg_9556">1, 0, 1, 0</column>
+<column name="bitmask_load_52_reg_9571">1, 0, 1, 0</column>
+<column name="bitmask_load_53_reg_9586">1, 0, 1, 0</column>
+<column name="bitmask_load_54_reg_9601">1, 0, 1, 0</column>
+<column name="bitmask_load_55_reg_9616">1, 0, 1, 0</column>
+<column name="bitmask_load_56_reg_9631">1, 0, 1, 0</column>
+<column name="bitmask_load_57_reg_9646">1, 0, 1, 0</column>
+<column name="bitmask_load_58_reg_9661">1, 0, 1, 0</column>
+<column name="bitmask_load_59_reg_9676">1, 0, 1, 0</column>
+<column name="bitmask_load_5_reg_8866">1, 0, 1, 0</column>
+<column name="bitmask_load_60_reg_9691">1, 0, 1, 0</column>
+<column name="bitmask_load_61_reg_9706">1, 0, 1, 0</column>
+<column name="bitmask_load_62_reg_9721">1, 0, 1, 0</column>
+<column name="bitmask_load_63_reg_9736">1, 0, 1, 0</column>
+<column name="bitmask_load_64_reg_9751">1, 0, 1, 0</column>
+<column name="bitmask_load_65_reg_9766">1, 0, 1, 0</column>
+<column name="bitmask_load_66_reg_9781">1, 0, 1, 0</column>
+<column name="bitmask_load_67_reg_9796">1, 0, 1, 0</column>
+<column name="bitmask_load_68_reg_9811">1, 0, 1, 0</column>
+<column name="bitmask_load_69_reg_9826">1, 0, 1, 0</column>
+<column name="bitmask_load_6_reg_8881">1, 0, 1, 0</column>
+<column name="bitmask_load_70_reg_9841">1, 0, 1, 0</column>
+<column name="bitmask_load_71_reg_9856">1, 0, 1, 0</column>
+<column name="bitmask_load_72_reg_9871">1, 0, 1, 0</column>
+<column name="bitmask_load_73_reg_9886">1, 0, 1, 0</column>
+<column name="bitmask_load_74_reg_9901">1, 0, 1, 0</column>
+<column name="bitmask_load_75_reg_9916">1, 0, 1, 0</column>
+<column name="bitmask_load_76_reg_9931">1, 0, 1, 0</column>
+<column name="bitmask_load_77_reg_9946">1, 0, 1, 0</column>
+<column name="bitmask_load_78_reg_9961">1, 0, 1, 0</column>
+<column name="bitmask_load_79_reg_9976">1, 0, 1, 0</column>
+<column name="bitmask_load_7_reg_8896">1, 0, 1, 0</column>
+<column name="bitmask_load_80_reg_9991">1, 0, 1, 0</column>
+<column name="bitmask_load_81_reg_10006">1, 0, 1, 0</column>
+<column name="bitmask_load_82_reg_10021">1, 0, 1, 0</column>
+<column name="bitmask_load_83_reg_10036">1, 0, 1, 0</column>
+<column name="bitmask_load_84_reg_10051">1, 0, 1, 0</column>
+<column name="bitmask_load_85_reg_10066">1, 0, 1, 0</column>
+<column name="bitmask_load_86_reg_10081">1, 0, 1, 0</column>
+<column name="bitmask_load_87_reg_10096">1, 0, 1, 0</column>
+<column name="bitmask_load_88_reg_10111">1, 0, 1, 0</column>
+<column name="bitmask_load_89_reg_10126">1, 0, 1, 0</column>
+<column name="bitmask_load_8_reg_8911">1, 0, 1, 0</column>
+<column name="bitmask_load_90_reg_10141">1, 0, 1, 0</column>
+<column name="bitmask_load_91_reg_10156">1, 0, 1, 0</column>
+<column name="bitmask_load_92_reg_10171">1, 0, 1, 0</column>
+<column name="bitmask_load_93_reg_10186">1, 0, 1, 0</column>
+<column name="bitmask_load_94_reg_10201">1, 0, 1, 0</column>
+<column name="bitmask_load_95_reg_10216">1, 0, 1, 0</column>
+<column name="bitmask_load_96_reg_10231">1, 0, 1, 0</column>
+<column name="bitmask_load_97_reg_10246">1, 0, 1, 0</column>
+<column name="bitmask_load_98_reg_10261">1, 0, 1, 0</column>
+<column name="bitmask_load_99_reg_10276">1, 0, 1, 0</column>
+<column name="bitmask_load_9_reg_8926">1, 0, 1, 0</column>
+<column name="bitmask_load_reg_8776">1, 0, 1, 0</column>
+<column name="grp_et_calculation_1_Pipeline_VITIS_LOOP_59_1_fu_4306_ap_start_reg">1, 0, 1, 0</column>
+<column name="reg_4320">27, 0, 27, 0</column>
+<column name="reg_4324">27, 0, 27, 0</column>
+<column name="reg_4328">27, 0, 27, 0</column>
+<column name="reg_4332">27, 0, 27, 0</column>
+<column name="reg_4336">27, 0, 27, 0</column>
+<column name="reg_4340">27, 0, 27, 0</column>
+<column name="reg_4344">27, 0, 27, 0</column>
+<column name="reg_4348">27, 0, 27, 0</column>
+</table>
+</item>
+</section>
+</item>
+</section>
+
+<section name = "Interface" level="0">
+<item name = "Summary"><table name="" hasTotal="0">
+<keys size="6">RTL Ports, Dir, Bits, Protocol, Source Object, C Type</keys>
+<column name="ap_clk">in, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="ap_rst">in, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="ap_start">in, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="ap_done">out, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="ap_idle">out, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="ap_ready">out, 1, ap_ctrl_hs, et_calculation.1, return value</column>
+<column name="inputObjectValues_1_0_address0">out, 5, ap_memory, inputObjectValues_1_0, array</column>
+<column name="inputObjectValues_1_0_ce0">out, 1, ap_memory, inputObjectValues_1_0, array</column>
+<column name="inputObjectValues_1_0_q0">in, 27, ap_memory, inputObjectValues_1_0, array</column>
+<column name="inputObjectValues_1_1_address0">out, 5, ap_memory, inputObjectValues_1_1, array</column>
+<column name="inputObjectValues_1_1_ce0">out, 1, ap_memory, inputObjectValues_1_1, array</column>
+<column name="inputObjectValues_1_1_q0">in, 27, ap_memory, inputObjectValues_1_1, array</column>
+<column name="inputObjectValues_1_2_address0">out, 5, ap_memory, inputObjectValues_1_2, array</column>
+<column name="inputObjectValues_1_2_ce0">out, 1, ap_memory, inputObjectValues_1_2, array</column>
+<column name="inputObjectValues_1_2_q0">in, 27, ap_memory, inputObjectValues_1_2, array</column>
+<column name="inputObjectValues_1_3_address0">out, 5, ap_memory, inputObjectValues_1_3, array</column>
+<column name="inputObjectValues_1_3_ce0">out, 1, ap_memory, inputObjectValues_1_3, array</column>
+<column name="inputObjectValues_1_3_q0">in, 27, ap_memory, inputObjectValues_1_3, array</column>
+<column name="inputObjectValues_0_0_address0">out, 5, ap_memory, inputObjectValues_0_0, array</column>
+<column name="inputObjectValues_0_0_ce0">out, 1, ap_memory, inputObjectValues_0_0, array</column>
+<column name="inputObjectValues_0_0_we0">out, 1, ap_memory, inputObjectValues_0_0, array</column>
+<column name="inputObjectValues_0_0_d0">out, 27, ap_memory, inputObjectValues_0_0, array</column>
+<column name="inputObjectValues_0_0_q0">in, 27, ap_memory, inputObjectValues_0_0, array</column>
+<column name="inputObjectValues_0_1_address0">out, 5, ap_memory, inputObjectValues_0_1, array</column>
+<column name="inputObjectValues_0_1_ce0">out, 1, ap_memory, inputObjectValues_0_1, array</column>
+<column name="inputObjectValues_0_1_we0">out, 1, ap_memory, inputObjectValues_0_1, array</column>
+<column name="inputObjectValues_0_1_d0">out, 27, ap_memory, inputObjectValues_0_1, array</column>
+<column name="inputObjectValues_0_1_q0">in, 27, ap_memory, inputObjectValues_0_1, array</column>
+<column name="inputObjectValues_0_2_address0">out, 5, ap_memory, inputObjectValues_0_2, array</column>
+<column name="inputObjectValues_0_2_ce0">out, 1, ap_memory, inputObjectValues_0_2, array</column>
+<column name="inputObjectValues_0_2_we0">out, 1, ap_memory, inputObjectValues_0_2, array</column>
+<column name="inputObjectValues_0_2_d0">out, 27, ap_memory, inputObjectValues_0_2, array</column>
+<column name="inputObjectValues_0_2_q0">in, 27, ap_memory, inputObjectValues_0_2, array</column>
+<column name="inputObjectValues_0_3_address0">out, 5, ap_memory, inputObjectValues_0_3, array</column>
+<column name="inputObjectValues_0_3_ce0">out, 1, ap_memory, inputObjectValues_0_3, array</column>
+<column name="inputObjectValues_0_3_we0">out, 1, ap_memory, inputObjectValues_0_3, array</column>
+<column name="inputObjectValues_0_3_d0">out, 27, ap_memory, inputObjectValues_0_3, array</column>
+<column name="inputObjectValues_0_3_q0">in, 27, ap_memory, inputObjectValues_0_3, array</column>
+<column name="numSeed">in, 1, ap_none, numSeed, scalar</column>
+<column name="seedValues_0_val">in, 27, ap_none, seedValues_0_val, scalar</column>
+<column name="seedValues_1_val">in, 27, ap_none, seedValues_1_val, scalar</column>
+<column name="outputJetValues_0">out, 27, ap_vld, outputJetValues_0, pointer</column>
+<column name="outputJetValues_0_ap_vld">out, 1, ap_vld, outputJetValues_0, pointer</column>
+<column name="outputJetValues_1">out, 27, ap_vld, outputJetValues_1, pointer</column>
+<column name="outputJetValues_1_ap_vld">out, 1, ap_vld, outputJetValues_1, pointer</column>
+</table>
+</item>
+</section>
+</profile>

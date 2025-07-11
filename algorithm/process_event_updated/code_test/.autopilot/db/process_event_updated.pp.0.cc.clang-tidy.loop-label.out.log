@@ -1,0 +1,75 @@
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35542:5: warning: Added loop label VITIS_LOOP_676_1:   [xilinx-label-all-loops]
+    for (unsigned i = low; i != high+1; ++i) {
+    ^~~
+    VITIS_LOOP_676_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35542:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35556:5: warning: Added loop label VITIS_LOOP_690_1:   [xilinx-label-all-loops]
+    for (unsigned i = low; i != high+1; ++i) {
+    ^~~
+    VITIS_LOOP_690_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35556:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35570:5: warning: Added loop label VITIS_LOOP_704_1:   [xilinx-label-all-loops]
+    for (unsigned i = low; i != high+1; ++i) {
+    ^~~
+    VITIS_LOOP_704_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:35570:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:37204:7: warning: Added loop label VITIS_LOOP_1248_1:   [xilinx-label-all-loops]
+      for (i = 0; i < __N - 1; ++i) {
+      ^~~
+      VITIS_LOOP_1248_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:37204:7: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60823:2: warning: Added loop label VITIS_LOOP_15_1:   [xilinx-label-all-loops]
+ for (int i = 0; i < nSeeds_; i++) {
+ ^~~
+ VITIS_LOOP_15_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60823:2: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60825:2: warning: Added loop label VITIS_LOOP_17_2:   [xilinx-label-all-loops]
+ for (int j = (i % 2); j < nSeeds_ - 1; j += 2) {
+ ^~~
+ VITIS_LOOP_17_2: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60825:2: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60840:5: warning: Added loop label VITIS_LOOP_40_1:   [xilinx-label-all-loops]
+    for (unsigned int i = 0; i < maxObjectsConsidered_; i++) {
+    ^~~
+    VITIS_LOOP_40_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60840:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60851:9: warning: Added loop label VITIS_LOOP_59_1:   [xilinx-label-all-loops]
+        for (unsigned int i = 0; i < 1 << et_bit_length_; i++) {
+        ^~~
+        VITIS_LOOP_59_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60851:9: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60856:9: warning: Added loop label VITIS_LOOP_64_2:   [xilinx-label-all-loops]
+        for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; iInput++) {
+        ^~~
+        VITIS_LOOP_64_2: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60856:9: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60861:9: warning: Added loop label VITIS_LOOP_69_3:   [xilinx-label-all-loops]
+        for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; iInput++) {
+        ^~~
+        VITIS_LOOP_69_3: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60861:9: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60876:5: warning: Added loop label VITIS_LOOP_84_4:   [xilinx-label-all-loops]
+    for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; iInput++) {
+    ^~~
+    VITIS_LOOP_84_4: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60876:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60920:2: warning: Added loop label VITIS_LOOP_132_1:   [xilinx-label-all-loops]
+ for (unsigned int iSeed = 0; iSeed < nSeeds_; iSeed++) {
+ ^~~
+ VITIS_LOOP_132_1: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60920:2: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60928:5: warning: Added loop label VITIS_LOOP_140_2:   [xilinx-label-all-loops]
+    for (int i = 0; i < nSeeds_; i++) {
+    ^~~
+    VITIS_LOOP_140_2: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60928:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60936:5: warning: Added loop label VITIS_LOOP_148_3:   [xilinx-label-all-loops]
+    for (unsigned int iSeed = 0; iSeed < nSeeds_; iSeed++) {
+    ^~~
+    VITIS_LOOP_148_3: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60936:5: note: FIX-IT applied suggested code changes
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60944:5: warning: Added loop label VITIS_LOOP_156_4:   [xilinx-label-all-loops]
+    for (unsigned int iSeed = 0; iSeed < nSeeds_; iSeed++) {
+    ^~~
+    VITIS_LOOP_156_4: 
+/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc:60944:5: note: FIX-IT applied suggested code changes

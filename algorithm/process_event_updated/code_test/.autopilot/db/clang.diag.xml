@@ -1,0 +1,23 @@
+<dict>
+  <key>main-file</key>
+  <string>/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/process_event_updated/code_test/.autopilot/db/process_event_updated.pp.0.cc</string>
+  <key>diagnostics</key>
+  <array>
+    <dict>
+      <key>level</key>
+      <string>warning</string>
+      <key>filename</key>
+      <string>process_event_updated.cc</string>
+      <key>line</key>
+      <integer>60</integer>
+      <key>column</key>
+      <integer>9</integer>
+      <key>message</key>
+      <string>unknown HLS pragma ignored</string>
+      <key>ID</key>
+      <integer>5590</integer>
+      <key>WarningOption</key>
+      <string>invalid-hls-pragmas</string>
+    </dict>
+  </array>
+</dict>
