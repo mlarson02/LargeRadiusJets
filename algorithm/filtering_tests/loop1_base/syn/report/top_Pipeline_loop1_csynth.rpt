@@ -1,0 +1,291 @@
+
+
+================================================================
+== Vitis HLS Report for 'top_Pipeline_loop1'
+================================================================
+* Date:           Tue Jul 15 11:40:30 2025
+
+* Version:        2024.2 (Build 5238294 on Nov  8 2024)
+* Project:        filtering_tests
+* Solution:       loop1_base (Vivado IP Flow Target)
+* Product family: versalpremium
+* Target device:  xcvp1802-lsvc4072-2MP-e-S
+
+
+================================================================
+== Performance Estimates
+================================================================
++ Timing: 
+    * Summary: 
+    +--------+---------+----------+------------+
+    |  Clock |  Target | Estimated| Uncertainty|
+    +--------+---------+----------+------------+
+    |ap_clk  |  4.00 ns|  2.884 ns|     1.08 ns|
+    +--------+---------+----------+------------+
+
++ Latency: 
+    * Summary: 
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+    |  Latency (cycles) |  Latency (absolute) |  Interval |                    Pipeline                    |
+    |   min   |   max   |    min   |    max   | min | max |                      Type                      |
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+    |      130|      130|  0.520 us|  0.520 us|  129|  129|  loop auto-rewind stp (delay=0 clock cycles(s))|
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+
+    + Detail: 
+        * Instance: 
+        N/A
+
+        * Loop: 
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+        |          |  Latency (cycles) | Iteration|  Initiation Interval  | Trip |          |
+        | Loop Name|   min   |   max   |  Latency |  achieved |   target  | Count| Pipelined|
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+        |- loop1   |      128|      128|         2|          1|          1|   128|       yes|
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+
+
+
+================================================================
+== Utilization Estimates
+================================================================
+* Summary: 
++---------------------+---------+-------+---------+---------+------+
+|         Name        | BRAM_18K|  DSP  |    FF   |   LUT   | URAM |
++---------------------+---------+-------+---------+---------+------+
+|DSP                  |        -|      -|        -|        -|     -|
+|Expression           |        -|      -|   151812|    83271|     -|
+|FIFO                 |        -|      -|        -|        -|     -|
+|Instance             |        -|      -|        0|      688|     -|
+|Memory               |        -|      -|        -|        -|     -|
+|Multiplexer          |        -|      -|        0|      254|     -|
+|Register             |        -|      -|    12313|        -|     -|
++---------------------+---------+-------+---------+---------+------+
+|Total                |        0|      0|   164125|    84213|     0|
++---------------------+---------+-------+---------+---------+------+
+|Available SLR        |     2470|   3588|  1680448|   840224|   637|
++---------------------+---------+-------+---------+---------+------+
+|Utilization SLR (%)  |        0|      0|        9|       10|     0|
++---------------------+---------+-------+---------+---------+------+
+|Available            |     9882|  14352|  6721792|  3360896|  2549|
++---------------------+---------+-------+---------+---------+------+
+|Utilization (%)      |        0|      0|        2|        2|     0|
++---------------------+---------+-------+---------+---------+------+
+
++ Detail: 
+    * Instance: 
+    +---------------------------+------------------------+---------+----+---+-----+-----+
+    |          Instance         |         Module         | BRAM_18K| DSP| FF| LUT | URAM|
+    +---------------------------+------------------------+---------+----+---+-----+-----+
+    |sparsemux_257_7_13_1_1_U1  |sparsemux_257_7_13_1_1  |        0|   0|  0|  688|    0|
+    +---------------------------+------------------------+---------+----+---+-----+-----+
+    |Total                      |                        |        0|   0|  0|  688|    0|
+    +---------------------------+------------------------+---------+----+---+-----+-----+
+
+    * DSP: 
+    N/A
+
+    * Memory: 
+    N/A
+
+    * FIFO: 
+    N/A
+
+    * Expression: 
+    +-----------------------+----------+----+-------+-------+------------+------------+
+    |     Variable Name     | Operation| DSP|   FF  |  LUT  | Bitwidth P0| Bitwidth P1|
+    +-----------------------+----------+----+-------+-------+------------+------------+
+    |add_ln12_fu_1376_p2    |         +|   0|      0|      8|           8|           1|
+    |icmp_ln12_fu_1382_p2   |      icmp|   0|      0|      3|           8|           9|
+    |bitmask1_1_fu_1999_p2  |        or|   0|      0|   3478|        4096|        4096|
+    |bitmask2_1_fu_1986_p2  |        or|   0|      0|   3478|        4096|        4096|
+    |bitmask1_2_fu_1992_p3  |    select|   0|      0|   4059|           1|           1|
+    |bitmask2_2_fu_1980_p3  |    select|   0|      0|   4059|           1|        4096|
+    |shl_ln15_fu_1974_p2    |       shl|   0|  75906|  34091|           1|        4096|
+    |shl_ln17_fu_1954_p2    |       shl|   0|  75906|  34091|           1|        4096|
+    |ap_enable_pp0          |       xor|   0|      0|      2|           1|           2|
+    |xor_ln17_fu_1928_p2    |       xor|   0|      0|      2|           1|           2|
+    +-----------------------+----------+----+-------+-------+------------+------------+
+    |Total                  |          |   0| 151812|  83271|        8214|       20495|
+    +-----------------------+----------+----+-------+-------+------------+------------+
+
+    * Multiplexer: 
+    +---------------------------+-----+-----------+------+-----------+
+    |            Name           | LUT | Input Size| Bits | Total Bits|
+    +---------------------------+-----+-----------+------+-----------+
+    |ap_done_int                |    1|          2|     1|          2|
+    |ap_enable_reg_pp0_iter1    |    1|          2|     1|          2|
+    |ap_sig_allocacmp_iInput_2  |    8|          2|     8|         16|
+    |bitmask1_fu_568            |  118|          2|  4096|       8192|
+    |bitmask2_fu_564            |  118|          2|  4096|       8192|
+    |iInput_fu_572              |    8|          2|     8|         16|
+    +---------------------------+-----+-----------+------+-----------+
+    |Total                      |  254|         12|  8210|      16420|
+    +---------------------------+-----+-----------+------+-----------+
+
+    * Register: 
+    +-------------------------+------+----+------+-----------+
+    |           Name          |  FF  | LUT| Bits | Const Bits|
+    +-------------------------+------+----+------+-----------+
+    |ap_CS_fsm                |     1|   0|     1|          0|
+    |ap_done_reg              |     1|   0|     1|          0|
+    |ap_enable_reg_pp0_iter1  |     1|   0|     1|          0|
+    |bitmask1_fu_568          |  4096|   0|  4096|          0|
+    |bitmask2_fu_564          |  4096|   0|  4096|          0|
+    |iInput_fu_572            |     8|   0|     8|          0|
+    |shl_ln17_reg_2060        |  4096|   0|  4096|          0|
+    |temp_reg_2049            |    13|   0|    13|          0|
+    |tmp_reg_2054             |     1|   0|     1|          0|
+    +-------------------------+------+----+------+-----------+
+    |Total                    | 12313|   0| 12313|          0|
+    +-------------------------+------+----+------+-----------+
+
+
+
+================================================================
+== Interface
+================================================================
+* Summary: 
++-----------------------+-----+------+------------+----------------------+--------------+
+|       RTL Ports       | Dir | Bits |  Protocol  |     Source Object    |    C Type    |
++-----------------------+-----+------+------------+----------------------+--------------+
+|ap_clk                 |   in|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|ap_rst                 |   in|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|ap_start               |   in|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|ap_done                |  out|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|ap_idle                |  out|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|ap_ready               |  out|     1|  ap_ctrl_hs|    top_Pipeline_loop1|  return value|
+|filterArray_0_load     |   in|    13|     ap_none|    filterArray_0_load|        scalar|
+|filterArray_1_load     |   in|    13|     ap_none|    filterArray_1_load|        scalar|
+|filterArray_2_load     |   in|    13|     ap_none|    filterArray_2_load|        scalar|
+|filterArray_3_load     |   in|    13|     ap_none|    filterArray_3_load|        scalar|
+|filterArray_4_load     |   in|    13|     ap_none|    filterArray_4_load|        scalar|
+|filterArray_5_load     |   in|    13|     ap_none|    filterArray_5_load|        scalar|
+|filterArray_6_load     |   in|    13|     ap_none|    filterArray_6_load|        scalar|
+|filterArray_7_load     |   in|    13|     ap_none|    filterArray_7_load|        scalar|
+|filterArray_8_load     |   in|    13|     ap_none|    filterArray_8_load|        scalar|
+|filterArray_9_load     |   in|    13|     ap_none|    filterArray_9_load|        scalar|
+|filterArray_10_load    |   in|    13|     ap_none|   filterArray_10_load|        scalar|
+|filterArray_11_load    |   in|    13|     ap_none|   filterArray_11_load|        scalar|
+|filterArray_12_load    |   in|    13|     ap_none|   filterArray_12_load|        scalar|
+|filterArray_13_load    |   in|    13|     ap_none|   filterArray_13_load|        scalar|
+|filterArray_14_load    |   in|    13|     ap_none|   filterArray_14_load|        scalar|
+|filterArray_15_load    |   in|    13|     ap_none|   filterArray_15_load|        scalar|
+|filterArray_16_load    |   in|    13|     ap_none|   filterArray_16_load|        scalar|
+|filterArray_17_load    |   in|    13|     ap_none|   filterArray_17_load|        scalar|
+|filterArray_18_load    |   in|    13|     ap_none|   filterArray_18_load|        scalar|
+|filterArray_19_load    |   in|    13|     ap_none|   filterArray_19_load|        scalar|
+|filterArray_20_load    |   in|    13|     ap_none|   filterArray_20_load|        scalar|
+|filterArray_21_load    |   in|    13|     ap_none|   filterArray_21_load|        scalar|
+|filterArray_22_load    |   in|    13|     ap_none|   filterArray_22_load|        scalar|
+|filterArray_23_load    |   in|    13|     ap_none|   filterArray_23_load|        scalar|
+|filterArray_24_load    |   in|    13|     ap_none|   filterArray_24_load|        scalar|
+|filterArray_25_load    |   in|    13|     ap_none|   filterArray_25_load|        scalar|
+|filterArray_26_load    |   in|    13|     ap_none|   filterArray_26_load|        scalar|
+|filterArray_27_load    |   in|    13|     ap_none|   filterArray_27_load|        scalar|
+|filterArray_28_load    |   in|    13|     ap_none|   filterArray_28_load|        scalar|
+|filterArray_29_load    |   in|    13|     ap_none|   filterArray_29_load|        scalar|
+|filterArray_30_load    |   in|    13|     ap_none|   filterArray_30_load|        scalar|
+|filterArray_31_load    |   in|    13|     ap_none|   filterArray_31_load|        scalar|
+|filterArray_32_load    |   in|    13|     ap_none|   filterArray_32_load|        scalar|
+|filterArray_33_load    |   in|    13|     ap_none|   filterArray_33_load|        scalar|
+|filterArray_34_load    |   in|    13|     ap_none|   filterArray_34_load|        scalar|
+|filterArray_35_load    |   in|    13|     ap_none|   filterArray_35_load|        scalar|
+|filterArray_36_load    |   in|    13|     ap_none|   filterArray_36_load|        scalar|
+|filterArray_37_load    |   in|    13|     ap_none|   filterArray_37_load|        scalar|
+|filterArray_38_load    |   in|    13|     ap_none|   filterArray_38_load|        scalar|
+|filterArray_39_load    |   in|    13|     ap_none|   filterArray_39_load|        scalar|
+|filterArray_40_load    |   in|    13|     ap_none|   filterArray_40_load|        scalar|
+|filterArray_41_load    |   in|    13|     ap_none|   filterArray_41_load|        scalar|
+|filterArray_42_load    |   in|    13|     ap_none|   filterArray_42_load|        scalar|
+|filterArray_43_load    |   in|    13|     ap_none|   filterArray_43_load|        scalar|
+|filterArray_44_load    |   in|    13|     ap_none|   filterArray_44_load|        scalar|
+|filterArray_45_load    |   in|    13|     ap_none|   filterArray_45_load|        scalar|
+|filterArray_46_load    |   in|    13|     ap_none|   filterArray_46_load|        scalar|
+|filterArray_47_load    |   in|    13|     ap_none|   filterArray_47_load|        scalar|
+|filterArray_48_load    |   in|    13|     ap_none|   filterArray_48_load|        scalar|
+|filterArray_49_load    |   in|    13|     ap_none|   filterArray_49_load|        scalar|
+|filterArray_50_load    |   in|    13|     ap_none|   filterArray_50_load|        scalar|
+|filterArray_51_load    |   in|    13|     ap_none|   filterArray_51_load|        scalar|
+|filterArray_52_load    |   in|    13|     ap_none|   filterArray_52_load|        scalar|
+|filterArray_53_load    |   in|    13|     ap_none|   filterArray_53_load|        scalar|
+|filterArray_54_load    |   in|    13|     ap_none|   filterArray_54_load|        scalar|
+|filterArray_55_load    |   in|    13|     ap_none|   filterArray_55_load|        scalar|
+|filterArray_56_load    |   in|    13|     ap_none|   filterArray_56_load|        scalar|
+|filterArray_57_load    |   in|    13|     ap_none|   filterArray_57_load|        scalar|
+|filterArray_58_load    |   in|    13|     ap_none|   filterArray_58_load|        scalar|
+|filterArray_59_load    |   in|    13|     ap_none|   filterArray_59_load|        scalar|
+|filterArray_60_load    |   in|    13|     ap_none|   filterArray_60_load|        scalar|
+|filterArray_61_load    |   in|    13|     ap_none|   filterArray_61_load|        scalar|
+|filterArray_62_load    |   in|    13|     ap_none|   filterArray_62_load|        scalar|
+|filterArray_63_load    |   in|    13|     ap_none|   filterArray_63_load|        scalar|
+|filterArray_64_load    |   in|    13|     ap_none|   filterArray_64_load|        scalar|
+|filterArray_65_load    |   in|    13|     ap_none|   filterArray_65_load|        scalar|
+|filterArray_66_load    |   in|    13|     ap_none|   filterArray_66_load|        scalar|
+|filterArray_67_load    |   in|    13|     ap_none|   filterArray_67_load|        scalar|
+|filterArray_68_load    |   in|    13|     ap_none|   filterArray_68_load|        scalar|
+|filterArray_69_load    |   in|    13|     ap_none|   filterArray_69_load|        scalar|
+|filterArray_70_load    |   in|    13|     ap_none|   filterArray_70_load|        scalar|
+|filterArray_71_load    |   in|    13|     ap_none|   filterArray_71_load|        scalar|
+|filterArray_72_load    |   in|    13|     ap_none|   filterArray_72_load|        scalar|
+|filterArray_73_load    |   in|    13|     ap_none|   filterArray_73_load|        scalar|
+|filterArray_74_load    |   in|    13|     ap_none|   filterArray_74_load|        scalar|
+|filterArray_75_load    |   in|    13|     ap_none|   filterArray_75_load|        scalar|
+|filterArray_76_load    |   in|    13|     ap_none|   filterArray_76_load|        scalar|
+|filterArray_77_load    |   in|    13|     ap_none|   filterArray_77_load|        scalar|
+|filterArray_78_load    |   in|    13|     ap_none|   filterArray_78_load|        scalar|
+|filterArray_79_load    |   in|    13|     ap_none|   filterArray_79_load|        scalar|
+|filterArray_80_load    |   in|    13|     ap_none|   filterArray_80_load|        scalar|
+|filterArray_81_load    |   in|    13|     ap_none|   filterArray_81_load|        scalar|
+|filterArray_82_load    |   in|    13|     ap_none|   filterArray_82_load|        scalar|
+|filterArray_83_load    |   in|    13|     ap_none|   filterArray_83_load|        scalar|
+|filterArray_84_load    |   in|    13|     ap_none|   filterArray_84_load|        scalar|
+|filterArray_85_load    |   in|    13|     ap_none|   filterArray_85_load|        scalar|
+|filterArray_86_load    |   in|    13|     ap_none|   filterArray_86_load|        scalar|
+|filterArray_87_load    |   in|    13|     ap_none|   filterArray_87_load|        scalar|
+|filterArray_88_load    |   in|    13|     ap_none|   filterArray_88_load|        scalar|
+|filterArray_89_load    |   in|    13|     ap_none|   filterArray_89_load|        scalar|
+|filterArray_90_load    |   in|    13|     ap_none|   filterArray_90_load|        scalar|
+|filterArray_91_load    |   in|    13|     ap_none|   filterArray_91_load|        scalar|
+|filterArray_92_load    |   in|    13|     ap_none|   filterArray_92_load|        scalar|
+|filterArray_93_load    |   in|    13|     ap_none|   filterArray_93_load|        scalar|
+|filterArray_94_load    |   in|    13|     ap_none|   filterArray_94_load|        scalar|
+|filterArray_95_load    |   in|    13|     ap_none|   filterArray_95_load|        scalar|
+|filterArray_96_load    |   in|    13|     ap_none|   filterArray_96_load|        scalar|
+|filterArray_97_load    |   in|    13|     ap_none|   filterArray_97_load|        scalar|
+|filterArray_98_load    |   in|    13|     ap_none|   filterArray_98_load|        scalar|
+|filterArray_99_load    |   in|    13|     ap_none|   filterArray_99_load|        scalar|
+|filterArray_100_load   |   in|    13|     ap_none|  filterArray_100_load|        scalar|
+|filterArray_101_load   |   in|    13|     ap_none|  filterArray_101_load|        scalar|
+|filterArray_102_load   |   in|    13|     ap_none|  filterArray_102_load|        scalar|
+|filterArray_103_load   |   in|    13|     ap_none|  filterArray_103_load|        scalar|
+|filterArray_104_load   |   in|    13|     ap_none|  filterArray_104_load|        scalar|
+|filterArray_105_load   |   in|    13|     ap_none|  filterArray_105_load|        scalar|
+|filterArray_106_load   |   in|    13|     ap_none|  filterArray_106_load|        scalar|
+|filterArray_107_load   |   in|    13|     ap_none|  filterArray_107_load|        scalar|
+|filterArray_108_load   |   in|    13|     ap_none|  filterArray_108_load|        scalar|
+|filterArray_109_load   |   in|    13|     ap_none|  filterArray_109_load|        scalar|
+|filterArray_110_load   |   in|    13|     ap_none|  filterArray_110_load|        scalar|
+|filterArray_111_load   |   in|    13|     ap_none|  filterArray_111_load|        scalar|
+|filterArray_112_load   |   in|    13|     ap_none|  filterArray_112_load|        scalar|
+|filterArray_113_load   |   in|    13|     ap_none|  filterArray_113_load|        scalar|
+|filterArray_114_load   |   in|    13|     ap_none|  filterArray_114_load|        scalar|
+|filterArray_115_load   |   in|    13|     ap_none|  filterArray_115_load|        scalar|
+|filterArray_116_load   |   in|    13|     ap_none|  filterArray_116_load|        scalar|
+|filterArray_117_load   |   in|    13|     ap_none|  filterArray_117_load|        scalar|
+|filterArray_118_load   |   in|    13|     ap_none|  filterArray_118_load|        scalar|
+|filterArray_119_load   |   in|    13|     ap_none|  filterArray_119_load|        scalar|
+|filterArray_120_load   |   in|    13|     ap_none|  filterArray_120_load|        scalar|
+|filterArray_121_load   |   in|    13|     ap_none|  filterArray_121_load|        scalar|
+|filterArray_122_load   |   in|    13|     ap_none|  filterArray_122_load|        scalar|
+|filterArray_123_load   |   in|    13|     ap_none|  filterArray_123_load|        scalar|
+|filterArray_124_load   |   in|    13|     ap_none|  filterArray_124_load|        scalar|
+|filterArray_125_load   |   in|    13|     ap_none|  filterArray_125_load|        scalar|
+|filterArray_126_load   |   in|    13|     ap_none|  filterArray_126_load|        scalar|
+|filterArray_127_load   |   in|    13|     ap_none|  filterArray_127_load|        scalar|
+|bitmask1_1_out         |  out|  4096|      ap_vld|        bitmask1_1_out|       pointer|
+|bitmask1_1_out_ap_vld  |  out|     1|      ap_vld|        bitmask1_1_out|       pointer|
+|bitmask2_1_out         |  out|  4096|      ap_vld|        bitmask2_1_out|       pointer|
+|bitmask2_1_out_ap_vld  |  out|     1|      ap_vld|        bitmask2_1_out|       pointer|
++-----------------------+-----+------+------------+----------------------+--------------+
+

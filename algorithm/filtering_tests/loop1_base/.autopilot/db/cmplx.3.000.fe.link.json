@@ -1,0 +1,18 @@
+{
+  "0": {
+    "basicblocks": 23,
+    "calls": "",
+    "file": "filtering.cc",
+    "fileloc": 3,
+    "instructions": 121,
+    "loads": {
+      "L": 4
+    },
+    "name": "top",
+    "stores": {
+      "L": 4,
+      "T": 2
+    },
+    "total_instructions": 349
+  }
+}

@@ -1,0 +1,1012 @@
+
+
+================================================================
+== Synthesis Summary Report of 'top'
+================================================================
++ General Information: 
+    * Date:           Tue Jul 15 11:40:46 2025
+    * Version:        2024.2 (Build 5238294 on Nov  8 2024)
+    * Project:        filtering_tests
+    * Solution:       loop1_base (Vivado IP Flow Target)
+    * Product family: versalpremium
+    * Target device:  xcvp1802-lsvc4072-2MP-e-S
+    
+
++ Performance & Resource Estimates: 
+    
+    PS: '+' for module; 'o' for loop; '*' for dataflow
+    +-----------------------+------+------+---------+-----------+----------+---------+------+----------+------+----+-------------+------------+-----+
+    |        Modules        | Issue|      | Latency |  Latency  | Iteration|         | Trip |          |      |    |             |            |     |
+    |        & Loops        | Type | Slack| (cycles)|    (ns)   |  Latency | Interval| Count| Pipelined| BRAM | DSP|      FF     |     LUT    | URAM|
+    +-----------------------+------+------+---------+-----------+----------+---------+------+----------+------+----+-------------+------------+-----+
+    |+ top                  |     -|  0.04|      263|  1.052e+03|         -|      264|     -|        no|     -|   -|  167503 (2%)|  91761 (2%)|    -|
+    | + top_Pipeline_loop1  |     -|  0.04|      130|    520.000|         -|      130|     -|        no|     -|   -|  164125 (2%)|  84213 (2%)|    -|
+    |  o loop1              |     -|  2.92|      128|    512.000|         2|        1|   128|       yes|     -|   -|            -|           -|    -|
+    | + top_Pipeline_loop2  |     -|  0.55|      130|    520.000|         -|      130|     -|        no|     -|   -|     44 (~0%)|  5497 (~0%)|    -|
+    |  o loop2              |     -|  2.92|      128|    512.000|         2|        1|   128|       yes|     -|   -|            -|           -|    -|
+    +-----------------------+------+------+---------+-----------+----------+---------+------+----------+------+----+-------------+------------+-----+
+
+
+================================================================
+== HW Interfaces
+================================================================
+* Other Ports
++------------------+---------+-----------+----------+
+| Port             | Mode    | Direction | Bitwidth |
++------------------+---------+-----------+----------+
+| bitmask1         | ap_none | in        | 4096     |
+| bitmask2         | ap_none | in        | 4096     |
+| filterArray_0    | ap_none | in        | 13       |
+| filterArray_1    | ap_none | in        | 13       |
+| filterArray_10   | ap_none | in        | 13       |
+| filterArray_100  | ap_none | in        | 13       |
+| filterArray_101  | ap_none | in        | 13       |
+| filterArray_102  | ap_none | in        | 13       |
+| filterArray_103  | ap_none | in        | 13       |
+| filterArray_104  | ap_none | in        | 13       |
+| filterArray_105  | ap_none | in        | 13       |
+| filterArray_106  | ap_none | in        | 13       |
+| filterArray_107  | ap_none | in        | 13       |
+| filterArray_108  | ap_none | in        | 13       |
+| filterArray_109  | ap_none | in        | 13       |
+| filterArray_11   | ap_none | in        | 13       |
+| filterArray_110  | ap_none | in        | 13       |
+| filterArray_111  | ap_none | in        | 13       |
+| filterArray_112  | ap_none | in        | 13       |
+| filterArray_113  | ap_none | in        | 13       |
+| filterArray_114  | ap_none | in        | 13       |
+| filterArray_115  | ap_none | in        | 13       |
+| filterArray_116  | ap_none | in        | 13       |
+| filterArray_117  | ap_none | in        | 13       |
+| filterArray_118  | ap_none | in        | 13       |
+| filterArray_119  | ap_none | in        | 13       |
+| filterArray_12   | ap_none | in        | 13       |
+| filterArray_120  | ap_none | in        | 13       |
+| filterArray_121  | ap_none | in        | 13       |
+| filterArray_122  | ap_none | in        | 13       |
+| filterArray_123  | ap_none | in        | 13       |
+| filterArray_124  | ap_none | in        | 13       |
+| filterArray_125  | ap_none | in        | 13       |
+| filterArray_126  | ap_none | in        | 13       |
+| filterArray_127  | ap_none | in        | 13       |
+| filterArray_13   | ap_none | in        | 13       |
+| filterArray_14   | ap_none | in        | 13       |
+| filterArray_15   | ap_none | in        | 13       |
+| filterArray_16   | ap_none | in        | 13       |
+| filterArray_17   | ap_none | in        | 13       |
+| filterArray_18   | ap_none | in        | 13       |
+| filterArray_19   | ap_none | in        | 13       |
+| filterArray_2    | ap_none | in        | 13       |
+| filterArray_20   | ap_none | in        | 13       |
+| filterArray_21   | ap_none | in        | 13       |
+| filterArray_22   | ap_none | in        | 13       |
+| filterArray_23   | ap_none | in        | 13       |
+| filterArray_24   | ap_none | in        | 13       |
+| filterArray_25   | ap_none | in        | 13       |
+| filterArray_26   | ap_none | in        | 13       |
+| filterArray_27   | ap_none | in        | 13       |
+| filterArray_28   | ap_none | in        | 13       |
+| filterArray_29   | ap_none | in        | 13       |
+| filterArray_3    | ap_none | in        | 13       |
+| filterArray_30   | ap_none | in        | 13       |
+| filterArray_31   | ap_none | in        | 13       |
+| filterArray_32   | ap_none | in        | 13       |
+| filterArray_33   | ap_none | in        | 13       |
+| filterArray_34   | ap_none | in        | 13       |
+| filterArray_35   | ap_none | in        | 13       |
+| filterArray_36   | ap_none | in        | 13       |
+| filterArray_37   | ap_none | in        | 13       |
+| filterArray_38   | ap_none | in        | 13       |
+| filterArray_39   | ap_none | in        | 13       |
+| filterArray_4    | ap_none | in        | 13       |
+| filterArray_40   | ap_none | in        | 13       |
+| filterArray_41   | ap_none | in        | 13       |
+| filterArray_42   | ap_none | in        | 13       |
+| filterArray_43   | ap_none | in        | 13       |
+| filterArray_44   | ap_none | in        | 13       |
+| filterArray_45   | ap_none | in        | 13       |
+| filterArray_46   | ap_none | in        | 13       |
+| filterArray_47   | ap_none | in        | 13       |
+| filterArray_48   | ap_none | in        | 13       |
+| filterArray_49   | ap_none | in        | 13       |
+| filterArray_5    | ap_none | in        | 13       |
+| filterArray_50   | ap_none | in        | 13       |
+| filterArray_51   | ap_none | in        | 13       |
+| filterArray_52   | ap_none | in        | 13       |
+| filterArray_53   | ap_none | in        | 13       |
+| filterArray_54   | ap_none | in        | 13       |
+| filterArray_55   | ap_none | in        | 13       |
+| filterArray_56   | ap_none | in        | 13       |
+| filterArray_57   | ap_none | in        | 13       |
+| filterArray_58   | ap_none | in        | 13       |
+| filterArray_59   | ap_none | in        | 13       |
+| filterArray_6    | ap_none | in        | 13       |
+| filterArray_60   | ap_none | in        | 13       |
+| filterArray_61   | ap_none | in        | 13       |
+| filterArray_62   | ap_none | in        | 13       |
+| filterArray_63   | ap_none | in        | 13       |
+| filterArray_64   | ap_none | in        | 13       |
+| filterArray_65   | ap_none | in        | 13       |
+| filterArray_66   | ap_none | in        | 13       |
+| filterArray_67   | ap_none | in        | 13       |
+| filterArray_68   | ap_none | in        | 13       |
+| filterArray_69   | ap_none | in        | 13       |
+| filterArray_7    | ap_none | in        | 13       |
+| filterArray_70   | ap_none | in        | 13       |
+| filterArray_71   | ap_none | in        | 13       |
+| filterArray_72   | ap_none | in        | 13       |
+| filterArray_73   | ap_none | in        | 13       |
+| filterArray_74   | ap_none | in        | 13       |
+| filterArray_75   | ap_none | in        | 13       |
+| filterArray_76   | ap_none | in        | 13       |
+| filterArray_77   | ap_none | in        | 13       |
+| filterArray_78   | ap_none | in        | 13       |
+| filterArray_79   | ap_none | in        | 13       |
+| filterArray_8    | ap_none | in        | 13       |
+| filterArray_80   | ap_none | in        | 13       |
+| filterArray_81   | ap_none | in        | 13       |
+| filterArray_82   | ap_none | in        | 13       |
+| filterArray_83   | ap_none | in        | 13       |
+| filterArray_84   | ap_none | in        | 13       |
+| filterArray_85   | ap_none | in        | 13       |
+| filterArray_86   | ap_none | in        | 13       |
+| filterArray_87   | ap_none | in        | 13       |
+| filterArray_88   | ap_none | in        | 13       |
+| filterArray_89   | ap_none | in        | 13       |
+| filterArray_9    | ap_none | in        | 13       |
+| filterArray_90   | ap_none | in        | 13       |
+| filterArray_91   | ap_none | in        | 13       |
+| filterArray_92   | ap_none | in        | 13       |
+| filterArray_93   | ap_none | in        | 13       |
+| filterArray_94   | ap_none | in        | 13       |
+| filterArray_95   | ap_none | in        | 13       |
+| filterArray_96   | ap_none | in        | 13       |
+| filterArray_97   | ap_none | in        | 13       |
+| filterArray_98   | ap_none | in        | 13       |
+| filterArray_99   | ap_none | in        | 13       |
+| inputArray_0_i   | ap_ovld | in        | 13       |
+| inputArray_0_o   | ap_ovld | out       | 13       |
+| inputArray_100_i | ap_ovld | in        | 13       |
+| inputArray_100_o | ap_ovld | out       | 13       |
+| inputArray_101_i | ap_ovld | in        | 13       |
+| inputArray_101_o | ap_ovld | out       | 13       |
+| inputArray_102_i | ap_ovld | in        | 13       |
+| inputArray_102_o | ap_ovld | out       | 13       |
+| inputArray_103_i | ap_ovld | in        | 13       |
+| inputArray_103_o | ap_ovld | out       | 13       |
+| inputArray_104_i | ap_ovld | in        | 13       |
+| inputArray_104_o | ap_ovld | out       | 13       |
+| inputArray_105_i | ap_ovld | in        | 13       |
+| inputArray_105_o | ap_ovld | out       | 13       |
+| inputArray_106_i | ap_ovld | in        | 13       |
+| inputArray_106_o | ap_ovld | out       | 13       |
+| inputArray_107_i | ap_ovld | in        | 13       |
+| inputArray_107_o | ap_ovld | out       | 13       |
+| inputArray_108_i | ap_ovld | in        | 13       |
+| inputArray_108_o | ap_ovld | out       | 13       |
+| inputArray_109_i | ap_ovld | in        | 13       |
+| inputArray_109_o | ap_ovld | out       | 13       |
+| inputArray_10_i  | ap_ovld | in        | 13       |
+| inputArray_10_o  | ap_ovld | out       | 13       |
+| inputArray_110_i | ap_ovld | in        | 13       |
+| inputArray_110_o | ap_ovld | out       | 13       |
+| inputArray_111_i | ap_ovld | in        | 13       |
+| inputArray_111_o | ap_ovld | out       | 13       |
+| inputArray_112_i | ap_ovld | in        | 13       |
+| inputArray_112_o | ap_ovld | out       | 13       |
+| inputArray_113_i | ap_ovld | in        | 13       |
+| inputArray_113_o | ap_ovld | out       | 13       |
+| inputArray_114_i | ap_ovld | in        | 13       |
+| inputArray_114_o | ap_ovld | out       | 13       |
+| inputArray_115_i | ap_ovld | in        | 13       |
+| inputArray_115_o | ap_ovld | out       | 13       |
+| inputArray_116_i | ap_ovld | in        | 13       |
+| inputArray_116_o | ap_ovld | out       | 13       |
+| inputArray_117_i | ap_ovld | in        | 13       |
+| inputArray_117_o | ap_ovld | out       | 13       |
+| inputArray_118_i | ap_ovld | in        | 13       |
+| inputArray_118_o | ap_ovld | out       | 13       |
+| inputArray_119_i | ap_ovld | in        | 13       |
+| inputArray_119_o | ap_ovld | out       | 13       |
+| inputArray_11_i  | ap_ovld | in        | 13       |
+| inputArray_11_o  | ap_ovld | out       | 13       |
+| inputArray_120_i | ap_ovld | in        | 13       |
+| inputArray_120_o | ap_ovld | out       | 13       |
+| inputArray_121_i | ap_ovld | in        | 13       |
+| inputArray_121_o | ap_ovld | out       | 13       |
+| inputArray_122_i | ap_ovld | in        | 13       |
+| inputArray_122_o | ap_ovld | out       | 13       |
+| inputArray_123_i | ap_ovld | in        | 13       |
+| inputArray_123_o | ap_ovld | out       | 13       |
+| inputArray_124_i | ap_ovld | in        | 13       |
+| inputArray_124_o | ap_ovld | out       | 13       |
+| inputArray_125_i | ap_ovld | in        | 13       |
+| inputArray_125_o | ap_ovld | out       | 13       |
+| inputArray_126_i | ap_ovld | in        | 13       |
+| inputArray_126_o | ap_ovld | out       | 13       |
+| inputArray_127_i | ap_ovld | in        | 13       |
+| inputArray_127_o | ap_ovld | out       | 13       |
+| inputArray_12_i  | ap_ovld | in        | 13       |
+| inputArray_12_o  | ap_ovld | out       | 13       |
+| inputArray_13_i  | ap_ovld | in        | 13       |
+| inputArray_13_o  | ap_ovld | out       | 13       |
+| inputArray_14_i  | ap_ovld | in        | 13       |
+| inputArray_14_o  | ap_ovld | out       | 13       |
+| inputArray_15_i  | ap_ovld | in        | 13       |
+| inputArray_15_o  | ap_ovld | out       | 13       |
+| inputArray_16_i  | ap_ovld | in        | 13       |
+| inputArray_16_o  | ap_ovld | out       | 13       |
+| inputArray_17_i  | ap_ovld | in        | 13       |
+| inputArray_17_o  | ap_ovld | out       | 13       |
+| inputArray_18_i  | ap_ovld | in        | 13       |
+| inputArray_18_o  | ap_ovld | out       | 13       |
+| inputArray_19_i  | ap_ovld | in        | 13       |
+| inputArray_19_o  | ap_ovld | out       | 13       |
+| inputArray_1_i   | ap_ovld | in        | 13       |
+| inputArray_1_o   | ap_ovld | out       | 13       |
+| inputArray_20_i  | ap_ovld | in        | 13       |
+| inputArray_20_o  | ap_ovld | out       | 13       |
+| inputArray_21_i  | ap_ovld | in        | 13       |
+| inputArray_21_o  | ap_ovld | out       | 13       |
+| inputArray_22_i  | ap_ovld | in        | 13       |
+| inputArray_22_o  | ap_ovld | out       | 13       |
+| inputArray_23_i  | ap_ovld | in        | 13       |
+| inputArray_23_o  | ap_ovld | out       | 13       |
+| inputArray_24_i  | ap_ovld | in        | 13       |
+| inputArray_24_o  | ap_ovld | out       | 13       |
+| inputArray_25_i  | ap_ovld | in        | 13       |
+| inputArray_25_o  | ap_ovld | out       | 13       |
+| inputArray_26_i  | ap_ovld | in        | 13       |
+| inputArray_26_o  | ap_ovld | out       | 13       |
+| inputArray_27_i  | ap_ovld | in        | 13       |
+| inputArray_27_o  | ap_ovld | out       | 13       |
+| inputArray_28_i  | ap_ovld | in        | 13       |
+| inputArray_28_o  | ap_ovld | out       | 13       |
+| inputArray_29_i  | ap_ovld | in        | 13       |
+| inputArray_29_o  | ap_ovld | out       | 13       |
+| inputArray_2_i   | ap_ovld | in        | 13       |
+| inputArray_2_o   | ap_ovld | out       | 13       |
+| inputArray_30_i  | ap_ovld | in        | 13       |
+| inputArray_30_o  | ap_ovld | out       | 13       |
+| inputArray_31_i  | ap_ovld | in        | 13       |
+| inputArray_31_o  | ap_ovld | out       | 13       |
+| inputArray_32_i  | ap_ovld | in        | 13       |
+| inputArray_32_o  | ap_ovld | out       | 13       |
+| inputArray_33_i  | ap_ovld | in        | 13       |
+| inputArray_33_o  | ap_ovld | out       | 13       |
+| inputArray_34_i  | ap_ovld | in        | 13       |
+| inputArray_34_o  | ap_ovld | out       | 13       |
+| inputArray_35_i  | ap_ovld | in        | 13       |
+| inputArray_35_o  | ap_ovld | out       | 13       |
+| inputArray_36_i  | ap_ovld | in        | 13       |
+| inputArray_36_o  | ap_ovld | out       | 13       |
+| inputArray_37_i  | ap_ovld | in        | 13       |
+| inputArray_37_o  | ap_ovld | out       | 13       |
+| inputArray_38_i  | ap_ovld | in        | 13       |
+| inputArray_38_o  | ap_ovld | out       | 13       |
+| inputArray_39_i  | ap_ovld | in        | 13       |
+| inputArray_39_o  | ap_ovld | out       | 13       |
+| inputArray_3_i   | ap_ovld | in        | 13       |
+| inputArray_3_o   | ap_ovld | out       | 13       |
+| inputArray_40_i  | ap_ovld | in        | 13       |
+| inputArray_40_o  | ap_ovld | out       | 13       |
+| inputArray_41_i  | ap_ovld | in        | 13       |
+| inputArray_41_o  | ap_ovld | out       | 13       |
+| inputArray_42_i  | ap_ovld | in        | 13       |
+| inputArray_42_o  | ap_ovld | out       | 13       |
+| inputArray_43_i  | ap_ovld | in        | 13       |
+| inputArray_43_o  | ap_ovld | out       | 13       |
+| inputArray_44_i  | ap_ovld | in        | 13       |
+| inputArray_44_o  | ap_ovld | out       | 13       |
+| inputArray_45_i  | ap_ovld | in        | 13       |
+| inputArray_45_o  | ap_ovld | out       | 13       |
+| inputArray_46_i  | ap_ovld | in        | 13       |
+| inputArray_46_o  | ap_ovld | out       | 13       |
+| inputArray_47_i  | ap_ovld | in        | 13       |
+| inputArray_47_o  | ap_ovld | out       | 13       |
+| inputArray_48_i  | ap_ovld | in        | 13       |
+| inputArray_48_o  | ap_ovld | out       | 13       |
+| inputArray_49_i  | ap_ovld | in        | 13       |
+| inputArray_49_o  | ap_ovld | out       | 13       |
+| inputArray_4_i   | ap_ovld | in        | 13       |
+| inputArray_4_o   | ap_ovld | out       | 13       |
+| inputArray_50_i  | ap_ovld | in        | 13       |
+| inputArray_50_o  | ap_ovld | out       | 13       |
+| inputArray_51_i  | ap_ovld | in        | 13       |
+| inputArray_51_o  | ap_ovld | out       | 13       |
+| inputArray_52_i  | ap_ovld | in        | 13       |
+| inputArray_52_o  | ap_ovld | out       | 13       |
+| inputArray_53_i  | ap_ovld | in        | 13       |
+| inputArray_53_o  | ap_ovld | out       | 13       |
+| inputArray_54_i  | ap_ovld | in        | 13       |
+| inputArray_54_o  | ap_ovld | out       | 13       |
+| inputArray_55_i  | ap_ovld | in        | 13       |
+| inputArray_55_o  | ap_ovld | out       | 13       |
+| inputArray_56_i  | ap_ovld | in        | 13       |
+| inputArray_56_o  | ap_ovld | out       | 13       |
+| inputArray_57_i  | ap_ovld | in        | 13       |
+| inputArray_57_o  | ap_ovld | out       | 13       |
+| inputArray_58_i  | ap_ovld | in        | 13       |
+| inputArray_58_o  | ap_ovld | out       | 13       |
+| inputArray_59_i  | ap_ovld | in        | 13       |
+| inputArray_59_o  | ap_ovld | out       | 13       |
+| inputArray_5_i   | ap_ovld | in        | 13       |
+| inputArray_5_o   | ap_ovld | out       | 13       |
+| inputArray_60_i  | ap_ovld | in        | 13       |
+| inputArray_60_o  | ap_ovld | out       | 13       |
+| inputArray_61_i  | ap_ovld | in        | 13       |
+| inputArray_61_o  | ap_ovld | out       | 13       |
+| inputArray_62_i  | ap_ovld | in        | 13       |
+| inputArray_62_o  | ap_ovld | out       | 13       |
+| inputArray_63_i  | ap_ovld | in        | 13       |
+| inputArray_63_o  | ap_ovld | out       | 13       |
+| inputArray_64_i  | ap_ovld | in        | 13       |
+| inputArray_64_o  | ap_ovld | out       | 13       |
+| inputArray_65_i  | ap_ovld | in        | 13       |
+| inputArray_65_o  | ap_ovld | out       | 13       |
+| inputArray_66_i  | ap_ovld | in        | 13       |
+| inputArray_66_o  | ap_ovld | out       | 13       |
+| inputArray_67_i  | ap_ovld | in        | 13       |
+| inputArray_67_o  | ap_ovld | out       | 13       |
+| inputArray_68_i  | ap_ovld | in        | 13       |
+| inputArray_68_o  | ap_ovld | out       | 13       |
+| inputArray_69_i  | ap_ovld | in        | 13       |
+| inputArray_69_o  | ap_ovld | out       | 13       |
+| inputArray_6_i   | ap_ovld | in        | 13       |
+| inputArray_6_o   | ap_ovld | out       | 13       |
+| inputArray_70_i  | ap_ovld | in        | 13       |
+| inputArray_70_o  | ap_ovld | out       | 13       |
+| inputArray_71_i  | ap_ovld | in        | 13       |
+| inputArray_71_o  | ap_ovld | out       | 13       |
+| inputArray_72_i  | ap_ovld | in        | 13       |
+| inputArray_72_o  | ap_ovld | out       | 13       |
+| inputArray_73_i  | ap_ovld | in        | 13       |
+| inputArray_73_o  | ap_ovld | out       | 13       |
+| inputArray_74_i  | ap_ovld | in        | 13       |
+| inputArray_74_o  | ap_ovld | out       | 13       |
+| inputArray_75_i  | ap_ovld | in        | 13       |
+| inputArray_75_o  | ap_ovld | out       | 13       |
+| inputArray_76_i  | ap_ovld | in        | 13       |
+| inputArray_76_o  | ap_ovld | out       | 13       |
+| inputArray_77_i  | ap_ovld | in        | 13       |
+| inputArray_77_o  | ap_ovld | out       | 13       |
+| inputArray_78_i  | ap_ovld | in        | 13       |
+| inputArray_78_o  | ap_ovld | out       | 13       |
+| inputArray_79_i  | ap_ovld | in        | 13       |
+| inputArray_79_o  | ap_ovld | out       | 13       |
+| inputArray_7_i   | ap_ovld | in        | 13       |
+| inputArray_7_o   | ap_ovld | out       | 13       |
+| inputArray_80_i  | ap_ovld | in        | 13       |
+| inputArray_80_o  | ap_ovld | out       | 13       |
+| inputArray_81_i  | ap_ovld | in        | 13       |
+| inputArray_81_o  | ap_ovld | out       | 13       |
+| inputArray_82_i  | ap_ovld | in        | 13       |
+| inputArray_82_o  | ap_ovld | out       | 13       |
+| inputArray_83_i  | ap_ovld | in        | 13       |
+| inputArray_83_o  | ap_ovld | out       | 13       |
+| inputArray_84_i  | ap_ovld | in        | 13       |
+| inputArray_84_o  | ap_ovld | out       | 13       |
+| inputArray_85_i  | ap_ovld | in        | 13       |
+| inputArray_85_o  | ap_ovld | out       | 13       |
+| inputArray_86_i  | ap_ovld | in        | 13       |
+| inputArray_86_o  | ap_ovld | out       | 13       |
+| inputArray_87_i  | ap_ovld | in        | 13       |
+| inputArray_87_o  | ap_ovld | out       | 13       |
+| inputArray_88_i  | ap_ovld | in        | 13       |
+| inputArray_88_o  | ap_ovld | out       | 13       |
+| inputArray_89_i  | ap_ovld | in        | 13       |
+| inputArray_89_o  | ap_ovld | out       | 13       |
+| inputArray_8_i   | ap_ovld | in        | 13       |
+| inputArray_8_o   | ap_ovld | out       | 13       |
+| inputArray_90_i  | ap_ovld | in        | 13       |
+| inputArray_90_o  | ap_ovld | out       | 13       |
+| inputArray_91_i  | ap_ovld | in        | 13       |
+| inputArray_91_o  | ap_ovld | out       | 13       |
+| inputArray_92_i  | ap_ovld | in        | 13       |
+| inputArray_92_o  | ap_ovld | out       | 13       |
+| inputArray_93_i  | ap_ovld | in        | 13       |
+| inputArray_93_o  | ap_ovld | out       | 13       |
+| inputArray_94_i  | ap_ovld | in        | 13       |
+| inputArray_94_o  | ap_ovld | out       | 13       |
+| inputArray_95_i  | ap_ovld | in        | 13       |
+| inputArray_95_o  | ap_ovld | out       | 13       |
+| inputArray_96_i  | ap_ovld | in        | 13       |
+| inputArray_96_o  | ap_ovld | out       | 13       |
+| inputArray_97_i  | ap_ovld | in        | 13       |
+| inputArray_97_o  | ap_ovld | out       | 13       |
+| inputArray_98_i  | ap_ovld | in        | 13       |
+| inputArray_98_o  | ap_ovld | out       | 13       |
+| inputArray_99_i  | ap_ovld | in        | 13       |
+| inputArray_99_o  | ap_ovld | out       | 13       |
+| inputArray_9_i   | ap_ovld | in        | 13       |
+| inputArray_9_o   | ap_ovld | out       | 13       |
++------------------+---------+-----------+----------+
+
+* TOP LEVEL CONTROL
++-----------+------------+-----------------------------------+
+| Interface | Type       | Ports                             |
++-----------+------------+-----------------------------------+
+| ap_clk    | clock      | ap_clk                            |
+| ap_rst    | reset      | ap_rst                            |
+| ap_ctrl   | ap_ctrl_hs | ap_done ap_idle ap_ready ap_start |
++-----------+------------+-----------------------------------+
+
+
+================================================================
+== SW I/O Information
+================================================================
+* Top Function Arguments
++-------------+-----------+---------------+
+| Argument    | Direction | Datatype      |
++-------------+-----------+---------------+
+| inputArray  | inout     | ap_uint<13>*  |
+| filterArray | in        | ap_uint<13>*  |
+| bitmask1    | in        | ap_uint<4096> |
+| bitmask2    | in        | ap_uint<4096> |
++-------------+-----------+---------------+
+
+* SW-to-HW Mapping
++-------------+-------------------------+---------+
+| Argument    | HW Interface            | HW Type |
++-------------+-------------------------+---------+
+| inputArray  | inputArray_0_i          | port    |
+| inputArray  | inputArray_0_o          | port    |
+| inputArray  | inputArray_0_o_ap_vld   | port    |
+| inputArray  | inputArray_1_i          | port    |
+| inputArray  | inputArray_1_o          | port    |
+| inputArray  | inputArray_1_o_ap_vld   | port    |
+| inputArray  | inputArray_2_i          | port    |
+| inputArray  | inputArray_2_o          | port    |
+| inputArray  | inputArray_2_o_ap_vld   | port    |
+| inputArray  | inputArray_3_i          | port    |
+| inputArray  | inputArray_3_o          | port    |
+| inputArray  | inputArray_3_o_ap_vld   | port    |
+| inputArray  | inputArray_4_i          | port    |
+| inputArray  | inputArray_4_o          | port    |
+| inputArray  | inputArray_4_o_ap_vld   | port    |
+| inputArray  | inputArray_5_i          | port    |
+| inputArray  | inputArray_5_o          | port    |
+| inputArray  | inputArray_5_o_ap_vld   | port    |
+| inputArray  | inputArray_6_i          | port    |
+| inputArray  | inputArray_6_o          | port    |
+| inputArray  | inputArray_6_o_ap_vld   | port    |
+| inputArray  | inputArray_7_i          | port    |
+| inputArray  | inputArray_7_o          | port    |
+| inputArray  | inputArray_7_o_ap_vld   | port    |
+| inputArray  | inputArray_8_i          | port    |
+| inputArray  | inputArray_8_o          | port    |
+| inputArray  | inputArray_8_o_ap_vld   | port    |
+| inputArray  | inputArray_9_i          | port    |
+| inputArray  | inputArray_9_o          | port    |
+| inputArray  | inputArray_9_o_ap_vld   | port    |
+| inputArray  | inputArray_10_i         | port    |
+| inputArray  | inputArray_10_o         | port    |
+| inputArray  | inputArray_10_o_ap_vld  | port    |
+| inputArray  | inputArray_11_i         | port    |
+| inputArray  | inputArray_11_o         | port    |
+| inputArray  | inputArray_11_o_ap_vld  | port    |
+| inputArray  | inputArray_12_i         | port    |
+| inputArray  | inputArray_12_o         | port    |
+| inputArray  | inputArray_12_o_ap_vld  | port    |
+| inputArray  | inputArray_13_i         | port    |
+| inputArray  | inputArray_13_o         | port    |
+| inputArray  | inputArray_13_o_ap_vld  | port    |
+| inputArray  | inputArray_14_i         | port    |
+| inputArray  | inputArray_14_o         | port    |
+| inputArray  | inputArray_14_o_ap_vld  | port    |
+| inputArray  | inputArray_15_i         | port    |
+| inputArray  | inputArray_15_o         | port    |
+| inputArray  | inputArray_15_o_ap_vld  | port    |
+| inputArray  | inputArray_16_i         | port    |
+| inputArray  | inputArray_16_o         | port    |
+| inputArray  | inputArray_16_o_ap_vld  | port    |
+| inputArray  | inputArray_17_i         | port    |
+| inputArray  | inputArray_17_o         | port    |
+| inputArray  | inputArray_17_o_ap_vld  | port    |
+| inputArray  | inputArray_18_i         | port    |
+| inputArray  | inputArray_18_o         | port    |
+| inputArray  | inputArray_18_o_ap_vld  | port    |
+| inputArray  | inputArray_19_i         | port    |
+| inputArray  | inputArray_19_o         | port    |
+| inputArray  | inputArray_19_o_ap_vld  | port    |
+| inputArray  | inputArray_20_i         | port    |
+| inputArray  | inputArray_20_o         | port    |
+| inputArray  | inputArray_20_o_ap_vld  | port    |
+| inputArray  | inputArray_21_i         | port    |
+| inputArray  | inputArray_21_o         | port    |
+| inputArray  | inputArray_21_o_ap_vld  | port    |
+| inputArray  | inputArray_22_i         | port    |
+| inputArray  | inputArray_22_o         | port    |
+| inputArray  | inputArray_22_o_ap_vld  | port    |
+| inputArray  | inputArray_23_i         | port    |
+| inputArray  | inputArray_23_o         | port    |
+| inputArray  | inputArray_23_o_ap_vld  | port    |
+| inputArray  | inputArray_24_i         | port    |
+| inputArray  | inputArray_24_o         | port    |
+| inputArray  | inputArray_24_o_ap_vld  | port    |
+| inputArray  | inputArray_25_i         | port    |
+| inputArray  | inputArray_25_o         | port    |
+| inputArray  | inputArray_25_o_ap_vld  | port    |
+| inputArray  | inputArray_26_i         | port    |
+| inputArray  | inputArray_26_o         | port    |
+| inputArray  | inputArray_26_o_ap_vld  | port    |
+| inputArray  | inputArray_27_i         | port    |
+| inputArray  | inputArray_27_o         | port    |
+| inputArray  | inputArray_27_o_ap_vld  | port    |
+| inputArray  | inputArray_28_i         | port    |
+| inputArray  | inputArray_28_o         | port    |
+| inputArray  | inputArray_28_o_ap_vld  | port    |
+| inputArray  | inputArray_29_i         | port    |
+| inputArray  | inputArray_29_o         | port    |
+| inputArray  | inputArray_29_o_ap_vld  | port    |
+| inputArray  | inputArray_30_i         | port    |
+| inputArray  | inputArray_30_o         | port    |
+| inputArray  | inputArray_30_o_ap_vld  | port    |
+| inputArray  | inputArray_31_i         | port    |
+| inputArray  | inputArray_31_o         | port    |
+| inputArray  | inputArray_31_o_ap_vld  | port    |
+| inputArray  | inputArray_32_i         | port    |
+| inputArray  | inputArray_32_o         | port    |
+| inputArray  | inputArray_32_o_ap_vld  | port    |
+| inputArray  | inputArray_33_i         | port    |
+| inputArray  | inputArray_33_o         | port    |
+| inputArray  | inputArray_33_o_ap_vld  | port    |
+| inputArray  | inputArray_34_i         | port    |
+| inputArray  | inputArray_34_o         | port    |
+| inputArray  | inputArray_34_o_ap_vld  | port    |
+| inputArray  | inputArray_35_i         | port    |
+| inputArray  | inputArray_35_o         | port    |
+| inputArray  | inputArray_35_o_ap_vld  | port    |
+| inputArray  | inputArray_36_i         | port    |
+| inputArray  | inputArray_36_o         | port    |
+| inputArray  | inputArray_36_o_ap_vld  | port    |
+| inputArray  | inputArray_37_i         | port    |
+| inputArray  | inputArray_37_o         | port    |
+| inputArray  | inputArray_37_o_ap_vld  | port    |
+| inputArray  | inputArray_38_i         | port    |
+| inputArray  | inputArray_38_o         | port    |
+| inputArray  | inputArray_38_o_ap_vld  | port    |
+| inputArray  | inputArray_39_i         | port    |
+| inputArray  | inputArray_39_o         | port    |
+| inputArray  | inputArray_39_o_ap_vld  | port    |
+| inputArray  | inputArray_40_i         | port    |
+| inputArray  | inputArray_40_o         | port    |
+| inputArray  | inputArray_40_o_ap_vld  | port    |
+| inputArray  | inputArray_41_i         | port    |
+| inputArray  | inputArray_41_o         | port    |
+| inputArray  | inputArray_41_o_ap_vld  | port    |
+| inputArray  | inputArray_42_i         | port    |
+| inputArray  | inputArray_42_o         | port    |
+| inputArray  | inputArray_42_o_ap_vld  | port    |
+| inputArray  | inputArray_43_i         | port    |
+| inputArray  | inputArray_43_o         | port    |
+| inputArray  | inputArray_43_o_ap_vld  | port    |
+| inputArray  | inputArray_44_i         | port    |
+| inputArray  | inputArray_44_o         | port    |
+| inputArray  | inputArray_44_o_ap_vld  | port    |
+| inputArray  | inputArray_45_i         | port    |
+| inputArray  | inputArray_45_o         | port    |
+| inputArray  | inputArray_45_o_ap_vld  | port    |
+| inputArray  | inputArray_46_i         | port    |
+| inputArray  | inputArray_46_o         | port    |
+| inputArray  | inputArray_46_o_ap_vld  | port    |
+| inputArray  | inputArray_47_i         | port    |
+| inputArray  | inputArray_47_o         | port    |
+| inputArray  | inputArray_47_o_ap_vld  | port    |
+| inputArray  | inputArray_48_i         | port    |
+| inputArray  | inputArray_48_o         | port    |
+| inputArray  | inputArray_48_o_ap_vld  | port    |
+| inputArray  | inputArray_49_i         | port    |
+| inputArray  | inputArray_49_o         | port    |
+| inputArray  | inputArray_49_o_ap_vld  | port    |
+| inputArray  | inputArray_50_i         | port    |
+| inputArray  | inputArray_50_o         | port    |
+| inputArray  | inputArray_50_o_ap_vld  | port    |
+| inputArray  | inputArray_51_i         | port    |
+| inputArray  | inputArray_51_o         | port    |
+| inputArray  | inputArray_51_o_ap_vld  | port    |
+| inputArray  | inputArray_52_i         | port    |
+| inputArray  | inputArray_52_o         | port    |
+| inputArray  | inputArray_52_o_ap_vld  | port    |
+| inputArray  | inputArray_53_i         | port    |
+| inputArray  | inputArray_53_o         | port    |
+| inputArray  | inputArray_53_o_ap_vld  | port    |
+| inputArray  | inputArray_54_i         | port    |
+| inputArray  | inputArray_54_o         | port    |
+| inputArray  | inputArray_54_o_ap_vld  | port    |
+| inputArray  | inputArray_55_i         | port    |
+| inputArray  | inputArray_55_o         | port    |
+| inputArray  | inputArray_55_o_ap_vld  | port    |
+| inputArray  | inputArray_56_i         | port    |
+| inputArray  | inputArray_56_o         | port    |
+| inputArray  | inputArray_56_o_ap_vld  | port    |
+| inputArray  | inputArray_57_i         | port    |
+| inputArray  | inputArray_57_o         | port    |
+| inputArray  | inputArray_57_o_ap_vld  | port    |
+| inputArray  | inputArray_58_i         | port    |
+| inputArray  | inputArray_58_o         | port    |
+| inputArray  | inputArray_58_o_ap_vld  | port    |
+| inputArray  | inputArray_59_i         | port    |
+| inputArray  | inputArray_59_o         | port    |
+| inputArray  | inputArray_59_o_ap_vld  | port    |
+| inputArray  | inputArray_60_i         | port    |
+| inputArray  | inputArray_60_o         | port    |
+| inputArray  | inputArray_60_o_ap_vld  | port    |
+| inputArray  | inputArray_61_i         | port    |
+| inputArray  | inputArray_61_o         | port    |
+| inputArray  | inputArray_61_o_ap_vld  | port    |
+| inputArray  | inputArray_62_i         | port    |
+| inputArray  | inputArray_62_o         | port    |
+| inputArray  | inputArray_62_o_ap_vld  | port    |
+| inputArray  | inputArray_63_i         | port    |
+| inputArray  | inputArray_63_o         | port    |
+| inputArray  | inputArray_63_o_ap_vld  | port    |
+| inputArray  | inputArray_64_i         | port    |
+| inputArray  | inputArray_64_o         | port    |
+| inputArray  | inputArray_64_o_ap_vld  | port    |
+| inputArray  | inputArray_65_i         | port    |
+| inputArray  | inputArray_65_o         | port    |
+| inputArray  | inputArray_65_o_ap_vld  | port    |
+| inputArray  | inputArray_66_i         | port    |
+| inputArray  | inputArray_66_o         | port    |
+| inputArray  | inputArray_66_o_ap_vld  | port    |
+| inputArray  | inputArray_67_i         | port    |
+| inputArray  | inputArray_67_o         | port    |
+| inputArray  | inputArray_67_o_ap_vld  | port    |
+| inputArray  | inputArray_68_i         | port    |
+| inputArray  | inputArray_68_o         | port    |
+| inputArray  | inputArray_68_o_ap_vld  | port    |
+| inputArray  | inputArray_69_i         | port    |
+| inputArray  | inputArray_69_o         | port    |
+| inputArray  | inputArray_69_o_ap_vld  | port    |
+| inputArray  | inputArray_70_i         | port    |
+| inputArray  | inputArray_70_o         | port    |
+| inputArray  | inputArray_70_o_ap_vld  | port    |
+| inputArray  | inputArray_71_i         | port    |
+| inputArray  | inputArray_71_o         | port    |
+| inputArray  | inputArray_71_o_ap_vld  | port    |
+| inputArray  | inputArray_72_i         | port    |
+| inputArray  | inputArray_72_o         | port    |
+| inputArray  | inputArray_72_o_ap_vld  | port    |
+| inputArray  | inputArray_73_i         | port    |
+| inputArray  | inputArray_73_o         | port    |
+| inputArray  | inputArray_73_o_ap_vld  | port    |
+| inputArray  | inputArray_74_i         | port    |
+| inputArray  | inputArray_74_o         | port    |
+| inputArray  | inputArray_74_o_ap_vld  | port    |
+| inputArray  | inputArray_75_i         | port    |
+| inputArray  | inputArray_75_o         | port    |
+| inputArray  | inputArray_75_o_ap_vld  | port    |
+| inputArray  | inputArray_76_i         | port    |
+| inputArray  | inputArray_76_o         | port    |
+| inputArray  | inputArray_76_o_ap_vld  | port    |
+| inputArray  | inputArray_77_i         | port    |
+| inputArray  | inputArray_77_o         | port    |
+| inputArray  | inputArray_77_o_ap_vld  | port    |
+| inputArray  | inputArray_78_i         | port    |
+| inputArray  | inputArray_78_o         | port    |
+| inputArray  | inputArray_78_o_ap_vld  | port    |
+| inputArray  | inputArray_79_i         | port    |
+| inputArray  | inputArray_79_o         | port    |
+| inputArray  | inputArray_79_o_ap_vld  | port    |
+| inputArray  | inputArray_80_i         | port    |
+| inputArray  | inputArray_80_o         | port    |
+| inputArray  | inputArray_80_o_ap_vld  | port    |
+| inputArray  | inputArray_81_i         | port    |
+| inputArray  | inputArray_81_o         | port    |
+| inputArray  | inputArray_81_o_ap_vld  | port    |
+| inputArray  | inputArray_82_i         | port    |
+| inputArray  | inputArray_82_o         | port    |
+| inputArray  | inputArray_82_o_ap_vld  | port    |
+| inputArray  | inputArray_83_i         | port    |
+| inputArray  | inputArray_83_o         | port    |
+| inputArray  | inputArray_83_o_ap_vld  | port    |
+| inputArray  | inputArray_84_i         | port    |
+| inputArray  | inputArray_84_o         | port    |
+| inputArray  | inputArray_84_o_ap_vld  | port    |
+| inputArray  | inputArray_85_i         | port    |
+| inputArray  | inputArray_85_o         | port    |
+| inputArray  | inputArray_85_o_ap_vld  | port    |
+| inputArray  | inputArray_86_i         | port    |
+| inputArray  | inputArray_86_o         | port    |
+| inputArray  | inputArray_86_o_ap_vld  | port    |
+| inputArray  | inputArray_87_i         | port    |
+| inputArray  | inputArray_87_o         | port    |
+| inputArray  | inputArray_87_o_ap_vld  | port    |
+| inputArray  | inputArray_88_i         | port    |
+| inputArray  | inputArray_88_o         | port    |
+| inputArray  | inputArray_88_o_ap_vld  | port    |
+| inputArray  | inputArray_89_i         | port    |
+| inputArray  | inputArray_89_o         | port    |
+| inputArray  | inputArray_89_o_ap_vld  | port    |
+| inputArray  | inputArray_90_i         | port    |
+| inputArray  | inputArray_90_o         | port    |
+| inputArray  | inputArray_90_o_ap_vld  | port    |
+| inputArray  | inputArray_91_i         | port    |
+| inputArray  | inputArray_91_o         | port    |
+| inputArray  | inputArray_91_o_ap_vld  | port    |
+| inputArray  | inputArray_92_i         | port    |
+| inputArray  | inputArray_92_o         | port    |
+| inputArray  | inputArray_92_o_ap_vld  | port    |
+| inputArray  | inputArray_93_i         | port    |
+| inputArray  | inputArray_93_o         | port    |
+| inputArray  | inputArray_93_o_ap_vld  | port    |
+| inputArray  | inputArray_94_i         | port    |
+| inputArray  | inputArray_94_o         | port    |
+| inputArray  | inputArray_94_o_ap_vld  | port    |
+| inputArray  | inputArray_95_i         | port    |
+| inputArray  | inputArray_95_o         | port    |
+| inputArray  | inputArray_95_o_ap_vld  | port    |
+| inputArray  | inputArray_96_i         | port    |
+| inputArray  | inputArray_96_o         | port    |
+| inputArray  | inputArray_96_o_ap_vld  | port    |
+| inputArray  | inputArray_97_i         | port    |
+| inputArray  | inputArray_97_o         | port    |
+| inputArray  | inputArray_97_o_ap_vld  | port    |
+| inputArray  | inputArray_98_i         | port    |
+| inputArray  | inputArray_98_o         | port    |
+| inputArray  | inputArray_98_o_ap_vld  | port    |
+| inputArray  | inputArray_99_i         | port    |
+| inputArray  | inputArray_99_o         | port    |
+| inputArray  | inputArray_99_o_ap_vld  | port    |
+| inputArray  | inputArray_100_i        | port    |
+| inputArray  | inputArray_100_o        | port    |
+| inputArray  | inputArray_100_o_ap_vld | port    |
+| inputArray  | inputArray_101_i        | port    |
+| inputArray  | inputArray_101_o        | port    |
+| inputArray  | inputArray_101_o_ap_vld | port    |
+| inputArray  | inputArray_102_i        | port    |
+| inputArray  | inputArray_102_o        | port    |
+| inputArray  | inputArray_102_o_ap_vld | port    |
+| inputArray  | inputArray_103_i        | port    |
+| inputArray  | inputArray_103_o        | port    |
+| inputArray  | inputArray_103_o_ap_vld | port    |
+| inputArray  | inputArray_104_i        | port    |
+| inputArray  | inputArray_104_o        | port    |
+| inputArray  | inputArray_104_o_ap_vld | port    |
+| inputArray  | inputArray_105_i        | port    |
+| inputArray  | inputArray_105_o        | port    |
+| inputArray  | inputArray_105_o_ap_vld | port    |
+| inputArray  | inputArray_106_i        | port    |
+| inputArray  | inputArray_106_o        | port    |
+| inputArray  | inputArray_106_o_ap_vld | port    |
+| inputArray  | inputArray_107_i        | port    |
+| inputArray  | inputArray_107_o        | port    |
+| inputArray  | inputArray_107_o_ap_vld | port    |
+| inputArray  | inputArray_108_i        | port    |
+| inputArray  | inputArray_108_o        | port    |
+| inputArray  | inputArray_108_o_ap_vld | port    |
+| inputArray  | inputArray_109_i        | port    |
+| inputArray  | inputArray_109_o        | port    |
+| inputArray  | inputArray_109_o_ap_vld | port    |
+| inputArray  | inputArray_110_i        | port    |
+| inputArray  | inputArray_110_o        | port    |
+| inputArray  | inputArray_110_o_ap_vld | port    |
+| inputArray  | inputArray_111_i        | port    |
+| inputArray  | inputArray_111_o        | port    |
+| inputArray  | inputArray_111_o_ap_vld | port    |
+| inputArray  | inputArray_112_i        | port    |
+| inputArray  | inputArray_112_o        | port    |
+| inputArray  | inputArray_112_o_ap_vld | port    |
+| inputArray  | inputArray_113_i        | port    |
+| inputArray  | inputArray_113_o        | port    |
+| inputArray  | inputArray_113_o_ap_vld | port    |
+| inputArray  | inputArray_114_i        | port    |
+| inputArray  | inputArray_114_o        | port    |
+| inputArray  | inputArray_114_o_ap_vld | port    |
+| inputArray  | inputArray_115_i        | port    |
+| inputArray  | inputArray_115_o        | port    |
+| inputArray  | inputArray_115_o_ap_vld | port    |
+| inputArray  | inputArray_116_i        | port    |
+| inputArray  | inputArray_116_o        | port    |
+| inputArray  | inputArray_116_o_ap_vld | port    |
+| inputArray  | inputArray_117_i        | port    |
+| inputArray  | inputArray_117_o        | port    |
+| inputArray  | inputArray_117_o_ap_vld | port    |
+| inputArray  | inputArray_118_i        | port    |
+| inputArray  | inputArray_118_o        | port    |
+| inputArray  | inputArray_118_o_ap_vld | port    |
+| inputArray  | inputArray_119_i        | port    |
+| inputArray  | inputArray_119_o        | port    |
+| inputArray  | inputArray_119_o_ap_vld | port    |
+| inputArray  | inputArray_120_i        | port    |
+| inputArray  | inputArray_120_o        | port    |
+| inputArray  | inputArray_120_o_ap_vld | port    |
+| inputArray  | inputArray_121_i        | port    |
+| inputArray  | inputArray_121_o        | port    |
+| inputArray  | inputArray_121_o_ap_vld | port    |
+| inputArray  | inputArray_122_i        | port    |
+| inputArray  | inputArray_122_o        | port    |
+| inputArray  | inputArray_122_o_ap_vld | port    |
+| inputArray  | inputArray_123_i        | port    |
+| inputArray  | inputArray_123_o        | port    |
+| inputArray  | inputArray_123_o_ap_vld | port    |
+| inputArray  | inputArray_124_i        | port    |
+| inputArray  | inputArray_124_o        | port    |
+| inputArray  | inputArray_124_o_ap_vld | port    |
+| inputArray  | inputArray_125_i        | port    |
+| inputArray  | inputArray_125_o        | port    |
+| inputArray  | inputArray_125_o_ap_vld | port    |
+| inputArray  | inputArray_126_i        | port    |
+| inputArray  | inputArray_126_o        | port    |
+| inputArray  | inputArray_126_o_ap_vld | port    |
+| inputArray  | inputArray_127_i        | port    |
+| inputArray  | inputArray_127_o        | port    |
+| inputArray  | inputArray_127_o_ap_vld | port    |
+| filterArray | filterArray_0           | port    |
+| filterArray | filterArray_1           | port    |
+| filterArray | filterArray_2           | port    |
+| filterArray | filterArray_3           | port    |
+| filterArray | filterArray_4           | port    |
+| filterArray | filterArray_5           | port    |
+| filterArray | filterArray_6           | port    |
+| filterArray | filterArray_7           | port    |
+| filterArray | filterArray_8           | port    |
+| filterArray | filterArray_9           | port    |
+| filterArray | filterArray_10          | port    |
+| filterArray | filterArray_11          | port    |
+| filterArray | filterArray_12          | port    |
+| filterArray | filterArray_13          | port    |
+| filterArray | filterArray_14          | port    |
+| filterArray | filterArray_15          | port    |
+| filterArray | filterArray_16          | port    |
+| filterArray | filterArray_17          | port    |
+| filterArray | filterArray_18          | port    |
+| filterArray | filterArray_19          | port    |
+| filterArray | filterArray_20          | port    |
+| filterArray | filterArray_21          | port    |
+| filterArray | filterArray_22          | port    |
+| filterArray | filterArray_23          | port    |
+| filterArray | filterArray_24          | port    |
+| filterArray | filterArray_25          | port    |
+| filterArray | filterArray_26          | port    |
+| filterArray | filterArray_27          | port    |
+| filterArray | filterArray_28          | port    |
+| filterArray | filterArray_29          | port    |
+| filterArray | filterArray_30          | port    |
+| filterArray | filterArray_31          | port    |
+| filterArray | filterArray_32          | port    |
+| filterArray | filterArray_33          | port    |
+| filterArray | filterArray_34          | port    |
+| filterArray | filterArray_35          | port    |
+| filterArray | filterArray_36          | port    |
+| filterArray | filterArray_37          | port    |
+| filterArray | filterArray_38          | port    |
+| filterArray | filterArray_39          | port    |
+| filterArray | filterArray_40          | port    |
+| filterArray | filterArray_41          | port    |
+| filterArray | filterArray_42          | port    |
+| filterArray | filterArray_43          | port    |
+| filterArray | filterArray_44          | port    |
+| filterArray | filterArray_45          | port    |
+| filterArray | filterArray_46          | port    |
+| filterArray | filterArray_47          | port    |
+| filterArray | filterArray_48          | port    |
+| filterArray | filterArray_49          | port    |
+| filterArray | filterArray_50          | port    |
+| filterArray | filterArray_51          | port    |
+| filterArray | filterArray_52          | port    |
+| filterArray | filterArray_53          | port    |
+| filterArray | filterArray_54          | port    |
+| filterArray | filterArray_55          | port    |
+| filterArray | filterArray_56          | port    |
+| filterArray | filterArray_57          | port    |
+| filterArray | filterArray_58          | port    |
+| filterArray | filterArray_59          | port    |
+| filterArray | filterArray_60          | port    |
+| filterArray | filterArray_61          | port    |
+| filterArray | filterArray_62          | port    |
+| filterArray | filterArray_63          | port    |
+| filterArray | filterArray_64          | port    |
+| filterArray | filterArray_65          | port    |
+| filterArray | filterArray_66          | port    |
+| filterArray | filterArray_67          | port    |
+| filterArray | filterArray_68          | port    |
+| filterArray | filterArray_69          | port    |
+| filterArray | filterArray_70          | port    |
+| filterArray | filterArray_71          | port    |
+| filterArray | filterArray_72          | port    |
+| filterArray | filterArray_73          | port    |
+| filterArray | filterArray_74          | port    |
+| filterArray | filterArray_75          | port    |
+| filterArray | filterArray_76          | port    |
+| filterArray | filterArray_77          | port    |
+| filterArray | filterArray_78          | port    |
+| filterArray | filterArray_79          | port    |
+| filterArray | filterArray_80          | port    |
+| filterArray | filterArray_81          | port    |
+| filterArray | filterArray_82          | port    |
+| filterArray | filterArray_83          | port    |
+| filterArray | filterArray_84          | port    |
+| filterArray | filterArray_85          | port    |
+| filterArray | filterArray_86          | port    |
+| filterArray | filterArray_87          | port    |
+| filterArray | filterArray_88          | port    |
+| filterArray | filterArray_89          | port    |
+| filterArray | filterArray_90          | port    |
+| filterArray | filterArray_91          | port    |
+| filterArray | filterArray_92          | port    |
+| filterArray | filterArray_93          | port    |
+| filterArray | filterArray_94          | port    |
+| filterArray | filterArray_95          | port    |
+| filterArray | filterArray_96          | port    |
+| filterArray | filterArray_97          | port    |
+| filterArray | filterArray_98          | port    |
+| filterArray | filterArray_99          | port    |
+| filterArray | filterArray_100         | port    |
+| filterArray | filterArray_101         | port    |
+| filterArray | filterArray_102         | port    |
+| filterArray | filterArray_103         | port    |
+| filterArray | filterArray_104         | port    |
+| filterArray | filterArray_105         | port    |
+| filterArray | filterArray_106         | port    |
+| filterArray | filterArray_107         | port    |
+| filterArray | filterArray_108         | port    |
+| filterArray | filterArray_109         | port    |
+| filterArray | filterArray_110         | port    |
+| filterArray | filterArray_111         | port    |
+| filterArray | filterArray_112         | port    |
+| filterArray | filterArray_113         | port    |
+| filterArray | filterArray_114         | port    |
+| filterArray | filterArray_115         | port    |
+| filterArray | filterArray_116         | port    |
+| filterArray | filterArray_117         | port    |
+| filterArray | filterArray_118         | port    |
+| filterArray | filterArray_119         | port    |
+| filterArray | filterArray_120         | port    |
+| filterArray | filterArray_121         | port    |
+| filterArray | filterArray_122         | port    |
+| filterArray | filterArray_123         | port    |
+| filterArray | filterArray_124         | port    |
+| filterArray | filterArray_125         | port    |
+| filterArray | filterArray_126         | port    |
+| filterArray | filterArray_127         | port    |
+| bitmask1    | bitmask1                | port    |
+| bitmask2    | bitmask2                | port    |
++-------------+-------------------------+---------+
+
+
+================================================================
+== Bind Op Report
+================================================================
++-----------------------------------------+-----+--------+------------+-----------+--------------------------+---------+
+| Name                                    | DSP | Pragma | Variable   | Op        | Impl                     | Latency |
++-----------------------------------------+-----+--------+------------+-----------+--------------------------+---------+
+| + top                                   | 0   |        |            |           |                          |         |
+|  + top_Pipeline_loop1                   | 0   |        |            |           |                          |         |
+|    add_ln12_fu_1376_p2                  |     |        | add_ln12   | add       | fabric                   | 0       |
+|    icmp_ln12_fu_1382_p2                 |     |        | icmp_ln12  | seteq     | auto                     | 0       |
+|    sparsemux_257_7_13_1_1_U1            |     |        | temp       | sparsemux | compactencoding_dontcare | 0       |
+|    shl_ln15_fu_1974_p2                  |     |        | shl_ln15   | shl       | auto_pipe                | 1       |
+|    xor_ln17_fu_1928_p2                  |     |        | xor_ln17   | xor       | auto                     | 0       |
+|    shl_ln17_fu_1954_p2                  |     |        | shl_ln17   | shl       | auto_pipe                | 1       |
+|    bitmask2_2_fu_1980_p3                |     |        | bitmask2_2 | select    | auto_sel                 | 0       |
+|    bitmask2_1_fu_1986_p2                |     |        | bitmask2_1 | or        | auto                     | 0       |
+|    bitmask1_2_fu_1992_p3                |     |        | bitmask1_2 | select    | auto_sel                 | 0       |
+|    bitmask1_1_fu_1999_p2                |     |        | bitmask1_1 | or        | auto                     | 0       |
+|  + top_Pipeline_loop2                   | 0   |        |            |           |                          |         |
+|    add_ln22_fu_2374_p2                  |     |        | add_ln22   | add       | fabric                   | 0       |
+|    icmp_ln22_fu_2380_p2                 |     |        | icmp_ln22  | seteq     | auto                     | 0       |
+|    sparsemux_257_7_13_1_1_U133          |     |        | temp       | sparsemux | compactencoding_dontcare | 0       |
+|    bitselect_1ns_4096ns_32ns_1_1_1_U134 |     |        | tmp_2      | bitselect | auto                     | 0       |
+|    bitselect_1ns_4096ns_32ns_1_1_1_U135 |     |        | tmp_1      | bitselect | auto                     | 0       |
++-----------------------------------------+-----+--------+------------+-----------+--------------------------+---------+
+
+
+================================================================
+== Storage Report
+================================================================
+  No bind storage info in design
+
+================================================================
+== Pragma Report
+================================================================
+* Valid Pragma Syntax
++-----------------+-------------------------------+------------------------------------+
+| Type            | Options                       | Location                           |
++-----------------+-------------------------------+------------------------------------+
+| array_partition | variable=inputArray complete  | filtering.cc:4 in top, inputArray  |
+| array_partition | variable=filterArray complete | filtering.cc:5 in top, filterArray |
++-----------------+-------------------------------+------------------------------------+
+
+

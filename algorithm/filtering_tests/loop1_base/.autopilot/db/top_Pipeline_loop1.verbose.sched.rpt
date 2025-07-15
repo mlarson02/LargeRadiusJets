@@ -1,0 +1,297 @@
+
+
+================================================================
+== Vitis HLS Report for 'top_Pipeline_loop1'
+================================================================
+* Date:           Tue Jul 15 11:40:03 2025
+
+* Version:        2024.2 (Build 5238294 on Nov  8 2024)
+* Project:        filtering_tests
+* Solution:       loop1_base (Vivado IP Flow Target)
+* Product family: versalpremium
+* Target device:  xcvp1802-lsvc4072-2MP-e-S
+
+
+================================================================
+== Performance Estimates
+================================================================
++ Timing: 
+    * Summary: 
+    +--------+---------+----------+------------+
+    |  Clock |  Target | Estimated| Uncertainty|
+    +--------+---------+----------+------------+
+    |ap_clk  |  4.00 ns|  2.884 ns|     1.08 ns|
+    +--------+---------+----------+------------+
+
++ Latency: 
+    * Summary: 
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+    |  Latency (cycles) |  Latency (absolute) |  Interval |                    Pipeline                    |
+    |   min   |   max   |    min   |    max   | min | max |                      Type                      |
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+    |      130|      130|  0.520 us|  0.520 us|  129|  129|  loop auto-rewind stp (delay=0 clock cycles(s))|
+    +---------+---------+----------+----------+-----+-----+------------------------------------------------+
+
+    + Detail: 
+        * Instance: 
+        N/A
+
+        * Loop: 
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+        |          |  Latency (cycles) | Iteration|  Initiation Interval  | Trip |          |
+        | Loop Name|   min   |   max   |  Latency |  achieved |   target  | Count| Pipelined|
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+        |- loop1   |      128|      128|         2|          1|          1|   128|       yes|
+        +----------+---------+---------+----------+-----------+-----------+------+----------+
+
+============================================================
++ Verbose Summary: Synthesis Manager
+============================================================
+InlineROM: 1
+ExposeGlobal: 0
+============================================================
++ Verbose Summary: CDFG Model
+============================================================
+IsTopModel: 0
+ResetActiveHigh: 1
+IsCombinational: 0
+IsDatapathOnly: 0
+HasWiredReturn: 1
+HasMFsm: 2
+HasVarLatency: 1
+IsPipeline: 0
+IsRtlPipelined: 0
+IsInstanceOverlapped: 0
+IsDontTouch: 0
+HasImplIP: 0
+IsGatedGlobalClock: 0
+
++ Individual pipeline summary: 
+  * Pipeline-0: initiation interval (II) = 1, depth = 2
+
+
+============================================================
++ Verbose Summary: Schedule
+============================================================
+* Number of FSM states : 2
+* Pipeline : 1
+  Pipeline-0 : II = 1, D = 2, States = { 1 2 }
+* Dataflow Pipeline: 0
+
+* FSM state transitions: 
+1 --> 2 
+2 --> 
+
+* FSM state operations: 
+
+State 1 <SV = 0> <Delay = 2.88>
+ST_1 : Operation 5 [1/1] (0.00ns)   --->   "%bitmask2 = alloca i32 1" [filtering.cc:3]   --->   Operation 5 'alloca' 'bitmask2' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 6 [1/1] (0.00ns)   --->   "%bitmask1 = alloca i32 1" [filtering.cc:3]   --->   Operation 6 'alloca' 'bitmask1' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 7 [1/1] (0.00ns)   --->   "%iInput = alloca i32 1" [filtering.cc:12]   --->   Operation 7 'alloca' 'iInput' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 8 [1/1] (0.00ns)   --->   "%filterArray_127_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_127_load"   --->   Operation 8 'read' 'filterArray_127_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 9 [1/1] (0.00ns)   --->   "%filterArray_126_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_126_load"   --->   Operation 9 'read' 'filterArray_126_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 10 [1/1] (0.00ns)   --->   "%filterArray_125_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_125_load"   --->   Operation 10 'read' 'filterArray_125_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 11 [1/1] (0.00ns)   --->   "%filterArray_124_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_124_load"   --->   Operation 11 'read' 'filterArray_124_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 12 [1/1] (0.00ns)   --->   "%filterArray_123_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_123_load"   --->   Operation 12 'read' 'filterArray_123_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 13 [1/1] (0.00ns)   --->   "%filterArray_122_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_122_load"   --->   Operation 13 'read' 'filterArray_122_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 14 [1/1] (0.00ns)   --->   "%filterArray_121_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_121_load"   --->   Operation 14 'read' 'filterArray_121_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 15 [1/1] (0.00ns)   --->   "%filterArray_120_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_120_load"   --->   Operation 15 'read' 'filterArray_120_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 16 [1/1] (0.00ns)   --->   "%filterArray_119_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_119_load"   --->   Operation 16 'read' 'filterArray_119_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 17 [1/1] (0.00ns)   --->   "%filterArray_118_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_118_load"   --->   Operation 17 'read' 'filterArray_118_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 18 [1/1] (0.00ns)   --->   "%filterArray_117_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_117_load"   --->   Operation 18 'read' 'filterArray_117_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 19 [1/1] (0.00ns)   --->   "%filterArray_116_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_116_load"   --->   Operation 19 'read' 'filterArray_116_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 20 [1/1] (0.00ns)   --->   "%filterArray_115_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_115_load"   --->   Operation 20 'read' 'filterArray_115_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 21 [1/1] (0.00ns)   --->   "%filterArray_114_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_114_load"   --->   Operation 21 'read' 'filterArray_114_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 22 [1/1] (0.00ns)   --->   "%filterArray_113_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_113_load"   --->   Operation 22 'read' 'filterArray_113_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 23 [1/1] (0.00ns)   --->   "%filterArray_112_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_112_load"   --->   Operation 23 'read' 'filterArray_112_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 24 [1/1] (0.00ns)   --->   "%filterArray_111_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_111_load"   --->   Operation 24 'read' 'filterArray_111_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 25 [1/1] (0.00ns)   --->   "%filterArray_110_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_110_load"   --->   Operation 25 'read' 'filterArray_110_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 26 [1/1] (0.00ns)   --->   "%filterArray_109_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_109_load"   --->   Operation 26 'read' 'filterArray_109_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 27 [1/1] (0.00ns)   --->   "%filterArray_108_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_108_load"   --->   Operation 27 'read' 'filterArray_108_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 28 [1/1] (0.00ns)   --->   "%filterArray_107_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_107_load"   --->   Operation 28 'read' 'filterArray_107_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 29 [1/1] (0.00ns)   --->   "%filterArray_106_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_106_load"   --->   Operation 29 'read' 'filterArray_106_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 30 [1/1] (0.00ns)   --->   "%filterArray_105_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_105_load"   --->   Operation 30 'read' 'filterArray_105_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 31 [1/1] (0.00ns)   --->   "%filterArray_104_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_104_load"   --->   Operation 31 'read' 'filterArray_104_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 32 [1/1] (0.00ns)   --->   "%filterArray_103_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_103_load"   --->   Operation 32 'read' 'filterArray_103_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 33 [1/1] (0.00ns)   --->   "%filterArray_102_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_102_load"   --->   Operation 33 'read' 'filterArray_102_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 34 [1/1] (0.00ns)   --->   "%filterArray_101_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_101_load"   --->   Operation 34 'read' 'filterArray_101_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 35 [1/1] (0.00ns)   --->   "%filterArray_100_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_100_load"   --->   Operation 35 'read' 'filterArray_100_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 36 [1/1] (0.00ns)   --->   "%filterArray_99_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_99_load"   --->   Operation 36 'read' 'filterArray_99_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 37 [1/1] (0.00ns)   --->   "%filterArray_98_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_98_load"   --->   Operation 37 'read' 'filterArray_98_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 38 [1/1] (0.00ns)   --->   "%filterArray_97_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_97_load"   --->   Operation 38 'read' 'filterArray_97_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 39 [1/1] (0.00ns)   --->   "%filterArray_96_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_96_load"   --->   Operation 39 'read' 'filterArray_96_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 40 [1/1] (0.00ns)   --->   "%filterArray_95_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_95_load"   --->   Operation 40 'read' 'filterArray_95_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 41 [1/1] (0.00ns)   --->   "%filterArray_94_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_94_load"   --->   Operation 41 'read' 'filterArray_94_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 42 [1/1] (0.00ns)   --->   "%filterArray_93_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_93_load"   --->   Operation 42 'read' 'filterArray_93_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 43 [1/1] (0.00ns)   --->   "%filterArray_92_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_92_load"   --->   Operation 43 'read' 'filterArray_92_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 44 [1/1] (0.00ns)   --->   "%filterArray_91_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_91_load"   --->   Operation 44 'read' 'filterArray_91_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 45 [1/1] (0.00ns)   --->   "%filterArray_90_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_90_load"   --->   Operation 45 'read' 'filterArray_90_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 46 [1/1] (0.00ns)   --->   "%filterArray_89_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_89_load"   --->   Operation 46 'read' 'filterArray_89_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 47 [1/1] (0.00ns)   --->   "%filterArray_88_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_88_load"   --->   Operation 47 'read' 'filterArray_88_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 48 [1/1] (0.00ns)   --->   "%filterArray_87_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_87_load"   --->   Operation 48 'read' 'filterArray_87_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 49 [1/1] (0.00ns)   --->   "%filterArray_86_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_86_load"   --->   Operation 49 'read' 'filterArray_86_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 50 [1/1] (0.00ns)   --->   "%filterArray_85_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_85_load"   --->   Operation 50 'read' 'filterArray_85_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 51 [1/1] (0.00ns)   --->   "%filterArray_84_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_84_load"   --->   Operation 51 'read' 'filterArray_84_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 52 [1/1] (0.00ns)   --->   "%filterArray_83_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_83_load"   --->   Operation 52 'read' 'filterArray_83_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 53 [1/1] (0.00ns)   --->   "%filterArray_82_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_82_load"   --->   Operation 53 'read' 'filterArray_82_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 54 [1/1] (0.00ns)   --->   "%filterArray_81_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_81_load"   --->   Operation 54 'read' 'filterArray_81_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 55 [1/1] (0.00ns)   --->   "%filterArray_80_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_80_load"   --->   Operation 55 'read' 'filterArray_80_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 56 [1/1] (0.00ns)   --->   "%filterArray_79_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_79_load"   --->   Operation 56 'read' 'filterArray_79_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 57 [1/1] (0.00ns)   --->   "%filterArray_78_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_78_load"   --->   Operation 57 'read' 'filterArray_78_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 58 [1/1] (0.00ns)   --->   "%filterArray_77_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_77_load"   --->   Operation 58 'read' 'filterArray_77_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 59 [1/1] (0.00ns)   --->   "%filterArray_76_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_76_load"   --->   Operation 59 'read' 'filterArray_76_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 60 [1/1] (0.00ns)   --->   "%filterArray_75_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_75_load"   --->   Operation 60 'read' 'filterArray_75_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 61 [1/1] (0.00ns)   --->   "%filterArray_74_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_74_load"   --->   Operation 61 'read' 'filterArray_74_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 62 [1/1] (0.00ns)   --->   "%filterArray_73_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_73_load"   --->   Operation 62 'read' 'filterArray_73_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 63 [1/1] (0.00ns)   --->   "%filterArray_72_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_72_load"   --->   Operation 63 'read' 'filterArray_72_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 64 [1/1] (0.00ns)   --->   "%filterArray_71_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_71_load"   --->   Operation 64 'read' 'filterArray_71_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 65 [1/1] (0.00ns)   --->   "%filterArray_70_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_70_load"   --->   Operation 65 'read' 'filterArray_70_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 66 [1/1] (0.00ns)   --->   "%filterArray_69_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_69_load"   --->   Operation 66 'read' 'filterArray_69_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 67 [1/1] (0.00ns)   --->   "%filterArray_68_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_68_load"   --->   Operation 67 'read' 'filterArray_68_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 68 [1/1] (0.00ns)   --->   "%filterArray_67_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_67_load"   --->   Operation 68 'read' 'filterArray_67_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 69 [1/1] (0.00ns)   --->   "%filterArray_66_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_66_load"   --->   Operation 69 'read' 'filterArray_66_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 70 [1/1] (0.00ns)   --->   "%filterArray_65_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_65_load"   --->   Operation 70 'read' 'filterArray_65_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 71 [1/1] (0.00ns)   --->   "%filterArray_64_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_64_load"   --->   Operation 71 'read' 'filterArray_64_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 72 [1/1] (0.00ns)   --->   "%filterArray_63_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_63_load"   --->   Operation 72 'read' 'filterArray_63_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 73 [1/1] (0.00ns)   --->   "%filterArray_62_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_62_load"   --->   Operation 73 'read' 'filterArray_62_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 74 [1/1] (0.00ns)   --->   "%filterArray_61_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_61_load"   --->   Operation 74 'read' 'filterArray_61_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 75 [1/1] (0.00ns)   --->   "%filterArray_60_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_60_load"   --->   Operation 75 'read' 'filterArray_60_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 76 [1/1] (0.00ns)   --->   "%filterArray_59_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_59_load"   --->   Operation 76 'read' 'filterArray_59_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 77 [1/1] (0.00ns)   --->   "%filterArray_58_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_58_load"   --->   Operation 77 'read' 'filterArray_58_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 78 [1/1] (0.00ns)   --->   "%filterArray_57_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_57_load"   --->   Operation 78 'read' 'filterArray_57_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 79 [1/1] (0.00ns)   --->   "%filterArray_56_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_56_load"   --->   Operation 79 'read' 'filterArray_56_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 80 [1/1] (0.00ns)   --->   "%filterArray_55_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_55_load"   --->   Operation 80 'read' 'filterArray_55_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 81 [1/1] (0.00ns)   --->   "%filterArray_54_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_54_load"   --->   Operation 81 'read' 'filterArray_54_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 82 [1/1] (0.00ns)   --->   "%filterArray_53_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_53_load"   --->   Operation 82 'read' 'filterArray_53_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 83 [1/1] (0.00ns)   --->   "%filterArray_52_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_52_load"   --->   Operation 83 'read' 'filterArray_52_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 84 [1/1] (0.00ns)   --->   "%filterArray_51_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_51_load"   --->   Operation 84 'read' 'filterArray_51_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 85 [1/1] (0.00ns)   --->   "%filterArray_50_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_50_load"   --->   Operation 85 'read' 'filterArray_50_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 86 [1/1] (0.00ns)   --->   "%filterArray_49_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_49_load"   --->   Operation 86 'read' 'filterArray_49_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 87 [1/1] (0.00ns)   --->   "%filterArray_48_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_48_load"   --->   Operation 87 'read' 'filterArray_48_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 88 [1/1] (0.00ns)   --->   "%filterArray_47_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_47_load"   --->   Operation 88 'read' 'filterArray_47_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 89 [1/1] (0.00ns)   --->   "%filterArray_46_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_46_load"   --->   Operation 89 'read' 'filterArray_46_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 90 [1/1] (0.00ns)   --->   "%filterArray_45_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_45_load"   --->   Operation 90 'read' 'filterArray_45_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 91 [1/1] (0.00ns)   --->   "%filterArray_44_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_44_load"   --->   Operation 91 'read' 'filterArray_44_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 92 [1/1] (0.00ns)   --->   "%filterArray_43_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_43_load"   --->   Operation 92 'read' 'filterArray_43_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 93 [1/1] (0.00ns)   --->   "%filterArray_42_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_42_load"   --->   Operation 93 'read' 'filterArray_42_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 94 [1/1] (0.00ns)   --->   "%filterArray_41_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_41_load"   --->   Operation 94 'read' 'filterArray_41_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 95 [1/1] (0.00ns)   --->   "%filterArray_40_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_40_load"   --->   Operation 95 'read' 'filterArray_40_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 96 [1/1] (0.00ns)   --->   "%filterArray_39_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_39_load"   --->   Operation 96 'read' 'filterArray_39_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 97 [1/1] (0.00ns)   --->   "%filterArray_38_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_38_load"   --->   Operation 97 'read' 'filterArray_38_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 98 [1/1] (0.00ns)   --->   "%filterArray_37_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_37_load"   --->   Operation 98 'read' 'filterArray_37_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 99 [1/1] (0.00ns)   --->   "%filterArray_36_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_36_load"   --->   Operation 99 'read' 'filterArray_36_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 100 [1/1] (0.00ns)   --->   "%filterArray_35_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_35_load"   --->   Operation 100 'read' 'filterArray_35_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 101 [1/1] (0.00ns)   --->   "%filterArray_34_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_34_load"   --->   Operation 101 'read' 'filterArray_34_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 102 [1/1] (0.00ns)   --->   "%filterArray_33_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_33_load"   --->   Operation 102 'read' 'filterArray_33_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 103 [1/1] (0.00ns)   --->   "%filterArray_32_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_32_load"   --->   Operation 103 'read' 'filterArray_32_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 104 [1/1] (0.00ns)   --->   "%filterArray_31_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_31_load"   --->   Operation 104 'read' 'filterArray_31_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 105 [1/1] (0.00ns)   --->   "%filterArray_30_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_30_load"   --->   Operation 105 'read' 'filterArray_30_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 106 [1/1] (0.00ns)   --->   "%filterArray_29_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_29_load"   --->   Operation 106 'read' 'filterArray_29_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 107 [1/1] (0.00ns)   --->   "%filterArray_28_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_28_load"   --->   Operation 107 'read' 'filterArray_28_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 108 [1/1] (0.00ns)   --->   "%filterArray_27_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_27_load"   --->   Operation 108 'read' 'filterArray_27_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 109 [1/1] (0.00ns)   --->   "%filterArray_26_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_26_load"   --->   Operation 109 'read' 'filterArray_26_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 110 [1/1] (0.00ns)   --->   "%filterArray_25_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_25_load"   --->   Operation 110 'read' 'filterArray_25_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 111 [1/1] (0.00ns)   --->   "%filterArray_24_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_24_load"   --->   Operation 111 'read' 'filterArray_24_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 112 [1/1] (0.00ns)   --->   "%filterArray_23_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_23_load"   --->   Operation 112 'read' 'filterArray_23_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 113 [1/1] (0.00ns)   --->   "%filterArray_22_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_22_load"   --->   Operation 113 'read' 'filterArray_22_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 114 [1/1] (0.00ns)   --->   "%filterArray_21_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_21_load"   --->   Operation 114 'read' 'filterArray_21_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 115 [1/1] (0.00ns)   --->   "%filterArray_20_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_20_load"   --->   Operation 115 'read' 'filterArray_20_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 116 [1/1] (0.00ns)   --->   "%filterArray_19_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_19_load"   --->   Operation 116 'read' 'filterArray_19_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 117 [1/1] (0.00ns)   --->   "%filterArray_18_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_18_load"   --->   Operation 117 'read' 'filterArray_18_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 118 [1/1] (0.00ns)   --->   "%filterArray_17_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_17_load"   --->   Operation 118 'read' 'filterArray_17_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 119 [1/1] (0.00ns)   --->   "%filterArray_16_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_16_load"   --->   Operation 119 'read' 'filterArray_16_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 120 [1/1] (0.00ns)   --->   "%filterArray_15_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_15_load"   --->   Operation 120 'read' 'filterArray_15_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 121 [1/1] (0.00ns)   --->   "%filterArray_14_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_14_load"   --->   Operation 121 'read' 'filterArray_14_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 122 [1/1] (0.00ns)   --->   "%filterArray_13_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_13_load"   --->   Operation 122 'read' 'filterArray_13_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 123 [1/1] (0.00ns)   --->   "%filterArray_12_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_12_load"   --->   Operation 123 'read' 'filterArray_12_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 124 [1/1] (0.00ns)   --->   "%filterArray_11_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_11_load"   --->   Operation 124 'read' 'filterArray_11_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 125 [1/1] (0.00ns)   --->   "%filterArray_10_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_10_load"   --->   Operation 125 'read' 'filterArray_10_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 126 [1/1] (0.00ns)   --->   "%filterArray_9_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_9_load"   --->   Operation 126 'read' 'filterArray_9_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 127 [1/1] (0.00ns)   --->   "%filterArray_8_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_8_load"   --->   Operation 127 'read' 'filterArray_8_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 128 [1/1] (0.00ns)   --->   "%filterArray_7_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_7_load"   --->   Operation 128 'read' 'filterArray_7_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 129 [1/1] (0.00ns)   --->   "%filterArray_6_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_6_load"   --->   Operation 129 'read' 'filterArray_6_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 130 [1/1] (0.00ns)   --->   "%filterArray_5_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_5_load"   --->   Operation 130 'read' 'filterArray_5_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 131 [1/1] (0.00ns)   --->   "%filterArray_4_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_4_load"   --->   Operation 131 'read' 'filterArray_4_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 132 [1/1] (0.00ns)   --->   "%filterArray_3_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_3_load"   --->   Operation 132 'read' 'filterArray_3_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 133 [1/1] (0.00ns)   --->   "%filterArray_2_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_2_load"   --->   Operation 133 'read' 'filterArray_2_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 134 [1/1] (0.00ns)   --->   "%filterArray_1_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_1_load"   --->   Operation 134 'read' 'filterArray_1_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 135 [1/1] (0.00ns)   --->   "%filterArray_0_load_read = read i13 @_ssdm_op_Read.ap_auto.i13, i13 %filterArray_0_load"   --->   Operation 135 'read' 'filterArray_0_load_read' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 136 [1/1] (0.36ns)   --->   "%store_ln12 = store i8 0, i8 %iInput" [filtering.cc:12]   --->   Operation 136 'store' 'store_ln12' <Predicate = true> <Delay = 0.36>
+ST_1 : Operation 137 [1/1] (0.46ns)   --->   "%store_ln3 = store i4096 0, i4096 %bitmask1" [filtering.cc:3]   --->   Operation 137 'store' 'store_ln3' <Predicate = true> <Delay = 0.46>
+ST_1 : Operation 138 [1/1] (0.46ns)   --->   "%store_ln3 = store i4096 0, i4096 %bitmask2" [filtering.cc:3]   --->   Operation 138 'store' 'store_ln3' <Predicate = true> <Delay = 0.46>
+ST_1 : Operation 139 [1/1] (0.00ns)   --->   "%br_ln0 = br void %for.body"   --->   Operation 139 'br' 'br_ln0' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 140 [1/1] (0.00ns)   --->   "%iInput_2 = load i8 %iInput" [filtering.cc:12]   --->   Operation 140 'load' 'iInput_2' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 141 [1/1] (0.67ns)   --->   "%add_ln12 = add i8 %iInput_2, i8 1" [filtering.cc:12]   --->   Operation 141 'add' 'add_ln12' <Predicate = true> <Delay = 0.67> <CoreInst = "Adder">   --->   Core 1 'Adder' <Latency = 0> <II = 1> <Delay = 0.67> <FuncUnit> <Opcode : 'add' 'sub'> <InPorts = 2> <OutPorts = 1>
+ST_1 : Operation 142 [1/1] (0.55ns)   --->   "%icmp_ln12 = icmp_eq  i8 %iInput_2, i8 128" [filtering.cc:12]   --->   Operation 142 'icmp' 'icmp_ln12' <Predicate = true> <Delay = 0.55> <CoreInst = "ICmp_EQ">   --->   Core 156 'ICmp_EQ' <Latency = 0> <II = 1> <Delay = 0.55> <FuncUnit> <Opcode : 'seteq' 'setne'> <InPorts = 2> <OutPorts = 1>
+ST_1 : Operation 143 [1/1] (0.00ns)   --->   "%br_ln12 = br i1 %icmp_ln12, void %for.body.split_ifconv, void %for.body15.preheader.exitStub" [filtering.cc:12]   --->   Operation 143 'br' 'br_ln12' <Predicate = true> <Delay = 0.00>
+ST_1 : Operation 144 [1/1] (0.00ns)   --->   "%trunc_ln12 = trunc i8 %iInput_2" [filtering.cc:12]   --->   Operation 144 'trunc' 'trunc_ln12' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 145 [1/1] (1.45ns)   --->   "%temp = sparsemux i13 @_ssdm_op_SparseMux.ap_auto.128i13.i13.i7, i7 0, i13 %filterArray_0_load_read, i7 1, i13 %filterArray_1_load_read, i7 2, i13 %filterArray_2_load_read, i7 3, i13 %filterArray_3_load_read, i7 4, i13 %filterArray_4_load_read, i7 5, i13 %filterArray_5_load_read, i7 6, i13 %filterArray_6_load_read, i7 7, i13 %filterArray_7_load_read, i7 8, i13 %filterArray_8_load_read, i7 9, i13 %filterArray_9_load_read, i7 10, i13 %filterArray_10_load_read, i7 11, i13 %filterArray_11_load_read, i7 12, i13 %filterArray_12_load_read, i7 13, i13 %filterArray_13_load_read, i7 14, i13 %filterArray_14_load_read, i7 15, i13 %filterArray_15_load_read, i7 16, i13 %filterArray_16_load_read, i7 17, i13 %filterArray_17_load_read, i7 18, i13 %filterArray_18_load_read, i7 19, i13 %filterArray_19_load_read, i7 20, i13 %filterArray_20_load_read, i7 21, i13 %filterArray_21_load_read, i7 22, i13 %filterArray_22_load_read, i7 23, i13 %filterArray_23_load_read, i7 24, i13 %filterArray_24_load_read, i7 25, i13 %filterArray_25_load_read, i7 26, i13 %filterArray_26_load_read, i7 27, i13 %filterArray_27_load_read, i7 28, i13 %filterArray_28_load_read, i7 29, i13 %filterArray_29_load_read, i7 30, i13 %filterArray_30_load_read, i7 31, i13 %filterArray_31_load_read, i7 32, i13 %filterArray_32_load_read, i7 33, i13 %filterArray_33_load_read, i7 34, i13 %filterArray_34_load_read, i7 35, i13 %filterArray_35_load_read, i7 36, i13 %filterArray_36_load_read, i7 37, i13 %filterArray_37_load_read, i7 38, i13 %filterArray_38_load_read, i7 39, i13 %filterArray_39_load_read, i7 40, i13 %filterArray_40_load_read, i7 41, i13 %filterArray_41_load_read, i7 42, i13 %filterArray_42_load_read, i7 43, i13 %filterArray_43_load_read, i7 44, i13 %filterArray_44_load_read, i7 45, i13 %filterArray_45_load_read, i7 46, i13 %filterArray_46_load_read, i7 47, i13 %filterArray_47_load_read, i7 48, i13 %filterArray_48_load_read, i7 49, i13 %filterArray_49_load_read, i7 50, i13 %filterArray_50_load_read, i7 51, i13 %filterArray_51_load_read, i7 52, i13 %filterArray_52_load_read, i7 53, i13 %filterArray_53_load_read, i7 54, i13 %filterArray_54_load_read, i7 55, i13 %filterArray_55_load_read, i7 56, i13 %filterArray_56_load_read, i7 57, i13 %filterArray_57_load_read, i7 58, i13 %filterArray_58_load_read, i7 59, i13 %filterArray_59_load_read, i7 60, i13 %filterArray_60_load_read, i7 61, i13 %filterArray_61_load_read, i7 62, i13 %filterArray_62_load_read, i7 63, i13 %filterArray_63_load_read, i7 64, i13 %filterArray_64_load_read, i7 65, i13 %filterArray_65_load_read, i7 66, i13 %filterArray_66_load_read, i7 67, i13 %filterArray_67_load_read, i7 68, i13 %filterArray_68_load_read, i7 69, i13 %filterArray_69_load_read, i7 70, i13 %filterArray_70_load_read, i7 71, i13 %filterArray_71_load_read, i7 72, i13 %filterArray_72_load_read, i7 73, i13 %filterArray_73_load_read, i7 74, i13 %filterArray_74_load_read, i7 75, i13 %filterArray_75_load_read, i7 76, i13 %filterArray_76_load_read, i7 77, i13 %filterArray_77_load_read, i7 78, i13 %filterArray_78_load_read, i7 79, i13 %filterArray_79_load_read, i7 80, i13 %filterArray_80_load_read, i7 81, i13 %filterArray_81_load_read, i7 82, i13 %filterArray_82_load_read, i7 83, i13 %filterArray_83_load_read, i7 84, i13 %filterArray_84_load_read, i7 85, i13 %filterArray_85_load_read, i7 86, i13 %filterArray_86_load_read, i7 87, i13 %filterArray_87_load_read, i7 88, i13 %filterArray_88_load_read, i7 89, i13 %filterArray_89_load_read, i7 90, i13 %filterArray_90_load_read, i7 91, i13 %filterArray_91_load_read, i7 92, i13 %filterArray_92_load_read, i7 93, i13 %filterArray_93_load_read, i7 94, i13 %filterArray_94_load_read, i7 95, i13 %filterArray_95_load_read, i7 96, i13 %filterArray_96_load_read, i7 97, i13 %filterArray_97_load_read, i7 98, i13 %filterArray_98_load_read, i7 99, i13 %filterArray_99_load_read, i7 100, i13 %filterArray_100_load_read, i7 101, i13 %filterArray_101_load_read, i7 102, i13 %filterArray_102_load_read, i7 103, i13 %filterArray_103_load_read, i7 104, i13 %filterArray_104_load_read, i7 105, i13 %filterArray_105_load_read, i7 106, i13 %filterArray_106_load_read, i7 107, i13 %filterArray_107_load_read, i7 108, i13 %filterArray_108_load_read, i7 109, i13 %filterArray_109_load_read, i7 110, i13 %filterArray_110_load_read, i7 111, i13 %filterArray_111_load_read, i7 112, i13 %filterArray_112_load_read, i7 113, i13 %filterArray_113_load_read, i7 114, i13 %filterArray_114_load_read, i7 115, i13 %filterArray_115_load_read, i7 116, i13 %filterArray_116_load_read, i7 117, i13 %filterArray_117_load_read, i7 118, i13 %filterArray_118_load_read, i7 119, i13 %filterArray_119_load_read, i7 120, i13 %filterArray_120_load_read, i7 121, i13 %filterArray_121_load_read, i7 122, i13 %filterArray_122_load_read, i7 123, i13 %filterArray_123_load_read, i7 124, i13 %filterArray_124_load_read, i7 125, i13 %filterArray_125_load_read, i7 126, i13 %filterArray_126_load_read, i7 127, i13 %filterArray_127_load_read, i13 0, i7 %trunc_ln12" [filtering.cc:13]   --->   Operation 145 'sparsemux' 'temp' <Predicate = (!icmp_ln12)> <Delay = 1.45> <CoreInst = "BinarySparseMux_DontCare">   --->   Core 150 'BinarySparseMux_DontCare' <Latency = 0> <II = 1> <Delay = 1.45> <FuncUnit> <Opcode : 'sparsemux'> <InPorts = 0> <OutPorts = 1>
+ST_1 : Operation 146 [1/1] (0.00ns)   --->   "%tmp = bitselect i1 @_ssdm_op_BitSelect.i1.i13.i32, i13 %temp, i32 12" [filtering.cc:14]   --->   Operation 146 'bitselect' 'tmp' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 147 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%bit_sel = bitselect i1 @_ssdm_op_BitSelect.i1.i13.i13, i13 %temp, i13 12" [filtering.cc:17]   --->   Operation 147 'bitselect' 'bit_sel' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 148 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%xor_ln17 = xor i1 %bit_sel, i1 1" [filtering.cc:17]   --->   Operation 148 'xor' 'xor_ln17' <Predicate = (!icmp_ln12)> <Delay = 0.00> <CoreInst = "LogicGate">   --->   Core 78 'LogicGate' <Latency = 0> <II = 1> <Delay = 0.25> <FuncUnit> <Opcode : 'and' 'or' 'xor'> <InPorts = 2> <OutPorts = 1>
+ST_1 : Operation 149 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%trunc_ln17 = trunc i13 %temp" [filtering.cc:17]   --->   Operation 149 'trunc' 'trunc_ln17' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 150 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%xor_ln = bitconcatenate i13 @_ssdm_op_BitConcatenate.i13.i1.i12, i1 %xor_ln17, i12 %trunc_ln17" [filtering.cc:17]   --->   Operation 150 'bitconcatenate' 'xor_ln' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 151 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%sext_ln17 = sext i13 %xor_ln" [filtering.cc:17]   --->   Operation 151 'sext' 'sext_ln17' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 152 [1/1] (0.00ns) (grouped into LUT with out node shl_ln17)   --->   "%zext_ln17 = zext i32 %sext_ln17" [filtering.cc:17]   --->   Operation 152 'zext' 'zext_ln17' <Predicate = (!icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 153 [1/1] (1.06ns) (out node of the LUT)   --->   "%shl_ln17 = shl i4096 1, i4096 %zext_ln17" [filtering.cc:17]   --->   Operation 153 'shl' 'shl_ln17' <Predicate = (!icmp_ln12)> <Delay = 1.06> <CoreInst = "Shifter">   --->   Core 79 'Shifter' <Latency = 0> <II = 1> <Delay = 1.06> <FuncUnit> <Opcode : 'shl' 'lshr' 'ashr'> <InPorts = 2> <OutPorts = 1>
+ST_1 : Operation 154 [1/1] (0.36ns)   --->   "%store_ln12 = store i8 %add_ln12, i8 %iInput" [filtering.cc:12]   --->   Operation 154 'store' 'store_ln12' <Predicate = (!icmp_ln12)> <Delay = 0.36>
+ST_1 : Operation 169 [1/1] (0.00ns)   --->   "%bitmask2_load = load i4096 %bitmask2"   --->   Operation 169 'load' 'bitmask2_load' <Predicate = (icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 170 [1/1] (0.00ns)   --->   "%bitmask1_load = load i4096 %bitmask1"   --->   Operation 170 'load' 'bitmask1_load' <Predicate = (icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 171 [1/1] (0.00ns)   --->   "%write_ln0 = write void @_ssdm_op_Write.ap_auto.i4096P0A, i4096 %bitmask1_1_out, i4096 %bitmask1_load"   --->   Operation 171 'write' 'write_ln0' <Predicate = (icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 172 [1/1] (0.00ns)   --->   "%write_ln0 = write void @_ssdm_op_Write.ap_auto.i4096P0A, i4096 %bitmask2_1_out, i4096 %bitmask2_load"   --->   Operation 172 'write' 'write_ln0' <Predicate = (icmp_ln12)> <Delay = 0.00>
+ST_1 : Operation 173 [1/1] (0.28ns)   --->   "%ret_ln0 = ret"   --->   Operation 173 'ret' 'ret_ln0' <Predicate = (icmp_ln12)> <Delay = 0.28>
+
+State 2 <SV = 1> <Delay = 2.04>
+ST_2 : Operation 155 [1/1] (0.00ns)   --->   "%bitmask2_load_1 = load i4096 %bitmask2"   --->   Operation 155 'load' 'bitmask2_load_1' <Predicate = true> <Delay = 0.00>
+ST_2 : Operation 156 [1/1] (0.00ns)   --->   "%bitmask1_load_1 = load i4096 %bitmask1"   --->   Operation 156 'load' 'bitmask1_load_1' <Predicate = true> <Delay = 0.00>
+ST_2 : Operation 157 [1/1] (0.00ns)   --->   "%specpipeline_ln3 = specpipeline void @_ssdm_op_SpecPipeline, i32 4294967295, i32 0, i32 0, i32 0, void @empty_0" [filtering.cc:3]   --->   Operation 157 'specpipeline' 'specpipeline_ln3' <Predicate = true> <Delay = 0.00>
+ST_2 : Operation 158 [1/1] (0.00ns)   --->   "%speclooptripcount_ln3 = speclooptripcount void @_ssdm_op_SpecLoopTripCount, i64 128, i64 128, i64 128" [filtering.cc:3]   --->   Operation 158 'speclooptripcount' 'speclooptripcount_ln3' <Predicate = true> <Delay = 0.00>
+ST_2 : Operation 159 [1/1] (0.00ns)   --->   "%specloopname_ln12 = specloopname void @_ssdm_op_SpecLoopName, void @empty_3" [filtering.cc:12]   --->   Operation 159 'specloopname' 'specloopname_ln12' <Predicate = true> <Delay = 0.00>
+ST_2 : Operation 160 [1/1] (0.00ns)   --->   "%zext_ln15 = zext i13 %temp" [filtering.cc:15]   --->   Operation 160 'zext' 'zext_ln15' <Predicate = (!tmp)> <Delay = 0.00>
+ST_2 : Operation 161 [1/1] (0.70ns)   --->   "%shl_ln15 = shl i4096 1, i4096 %zext_ln15" [filtering.cc:15]   --->   Operation 161 'shl' 'shl_ln15' <Predicate = (!tmp)> <Delay = 0.70> <CoreInst = "Shifter">   --->   Core 79 'Shifter' <Latency = 0> <II = 1> <Delay = 0.70> <FuncUnit> <Opcode : 'shl' 'lshr' 'ashr'> <InPorts = 2> <OutPorts = 1>
+ST_2 : Operation 162 [1/1] (0.00ns) (grouped into LUT with out node bitmask2_1)   --->   "%bitmask2_2 = select i1 %tmp, i4096 %shl_ln17, i4096 0" [filtering.cc:14]   --->   Operation 162 'select' 'bitmask2_2' <Predicate = true> <Delay = 0.00> <CoreInst = "Sel">   --->   Core 77 'Sel' <Latency = 0> <II = 1> <Delay = 0.87> <FuncUnit> <Opcode : 'select'> <InPorts = 3> <OutPorts = 1>
+ST_2 : Operation 163 [1/1] (0.87ns) (out node of the LUT)   --->   "%bitmask2_1 = or i4096 %bitmask2_load_1, i4096 %bitmask2_2" [filtering.cc:14]   --->   Operation 163 'or' 'bitmask2_1' <Predicate = true> <Delay = 0.87> <CoreInst = "LogicGate">   --->   Core 78 'LogicGate' <Latency = 0> <II = 1> <Delay = 0.47> <FuncUnit> <Opcode : 'and' 'or' 'xor'> <InPorts = 2> <OutPorts = 1>
+ST_2 : Operation 164 [1/1] (0.00ns) (grouped into LUT with out node bitmask1_1)   --->   "%bitmask1_2 = select i1 %tmp, i4096 0, i4096 %shl_ln15" [filtering.cc:14]   --->   Operation 164 'select' 'bitmask1_2' <Predicate = true> <Delay = 0.00> <CoreInst = "Sel">   --->   Core 77 'Sel' <Latency = 0> <II = 1> <Delay = 0.87> <FuncUnit> <Opcode : 'select'> <InPorts = 3> <OutPorts = 1>
+ST_2 : Operation 165 [1/1] (0.87ns) (out node of the LUT)   --->   "%bitmask1_1 = or i4096 %bitmask1_load_1, i4096 %bitmask1_2" [filtering.cc:14]   --->   Operation 165 'or' 'bitmask1_1' <Predicate = true> <Delay = 0.87> <CoreInst = "LogicGate">   --->   Core 78 'LogicGate' <Latency = 0> <II = 1> <Delay = 0.47> <FuncUnit> <Opcode : 'and' 'or' 'xor'> <InPorts = 2> <OutPorts = 1>
+ST_2 : Operation 166 [1/1] (0.46ns)   --->   "%store_ln3 = store i4096 %bitmask1_1, i4096 %bitmask1" [filtering.cc:3]   --->   Operation 166 'store' 'store_ln3' <Predicate = true> <Delay = 0.46>
+ST_2 : Operation 167 [1/1] (0.46ns)   --->   "%store_ln3 = store i4096 %bitmask2_1, i4096 %bitmask2" [filtering.cc:3]   --->   Operation 167 'store' 'store_ln3' <Predicate = true> <Delay = 0.46>
+ST_2 : Operation 168 [1/1] (0.00ns)   --->   "%br_ln12 = br void %for.body" [filtering.cc:12]   --->   Operation 168 'br' 'br_ln12' <Predicate = true> <Delay = 0.00>
+
+
+============================================================
++ Verbose Summary: Timing violations
+============================================================
+Target clock period: 4.000ns, clock uncertainty: 1.080ns.
+
+ <State 1>: 2.884ns
+The critical path consists of the following:
+	'store' operation 0 bit ('store_ln12', filtering.cc:12) of constant 0 on local variable 'iInput', filtering.cc:12 [262]  (0.360 ns)
+	'load' operation 8 bit ('iInput', filtering.cc:12) on local variable 'iInput', filtering.cc:12 [267]  (0.000 ns)
+	'sparsemux' operation 13 bit ('temp', filtering.cc:13) [278]  (1.457 ns)
+	'xor' operation 1 bit ('xor_ln17', filtering.cc:17) [283]  (0.000 ns)
+	'shl' operation 4096 bit ('shl_ln17', filtering.cc:17) [288]  (1.067 ns)
+
+ <State 2>: 2.046ns
+The critical path consists of the following:
+	'shl' operation 4096 bit ('shl_ln15', filtering.cc:15) [281]  (0.705 ns)
+	'select' operation 4096 bit ('bitmask1_2', filtering.cc:14) [291]  (0.000 ns)
+	'or' operation 4096 bit ('bitmask1', filtering.cc:14) [292]  (0.875 ns)
+	'store' operation 0 bit ('store_ln3', filtering.cc:3) of variable 'bitmask1', filtering.cc:14 on local variable 'bitmask1', filtering.cc:3 [294]  (0.467 ns)
+
+
+============================================================
++ Verbose Summary: Binding
+============================================================
+N/A
+* FSMD analyzer results:
+  - Output states:
+ - Input state : 
+  - Chain level:
+	State 1
+	State 2
+
+
+============================================================
++ Verbose Summary: Datapath Resource usage 
+============================================================
+N/A

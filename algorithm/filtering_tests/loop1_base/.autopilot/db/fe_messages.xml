@@ -1,0 +1,18 @@
+<xilinx:hls_fe_msgs>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="/home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/main.tcl:15:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaContext="directive" ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="name=top" ARG_PragmaType="top" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="filtering.cc:4:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=inputArray complete" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="filtering.cc:5:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="top" ARG_PragmaIsValid="1" ARG_PragmaOptions="variable=filterArray complete" ARG_PragmaType="array_partition" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="filtering.cc:3:0" msg_body="Applying array_partition to 'inputArray': Complete partitioning on dimension 1.">
+        <args Dim="1" Mode="Complete" UOName="inputArray"/>
+    </msg>
+    <msg msg_groups="PRAGMA_MISC" msg_id="214-248" msg_severity="INFO" msg_loc="filtering.cc:3:0" msg_body="Applying array_partition to 'filterArray': Complete partitioning on dimension 1.">
+        <args Dim="1" Mode="Complete" UOName="filterArray"/>
+    </msg>
+</xilinx:hls_fe_msgs>
+

@@ -1,0 +1,67 @@
+--- !Missed
+Pass:            inline
+Name:            NeverInline
+Function:        apatb_top_ir
+Args:            
+  - Callee:          'top(ap_uint<13>*, ap_uint<13>*, ap_uint<4096>, ap_uint<4096>)'
+    DebugLoc:        { File: filtering.cc, Line: 3, Column: 0 }
+  - String:          ' not inlined into '
+  - Caller:          apatb_top_ir
+  - String:          ' because it should never be inlined (cost=never)'
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: filtering.cc, Line: 3, Column: 0 }
+Function:        _Z3topP7ap_uintILi13EES1_S_ILi4096EES2_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          inputArray
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+...
+--- !Passed
+Pass:            reflow-array-partition
+Name:            ArrayXform
+DebugLoc:        { File: filtering.cc, Line: 3, Column: 0 }
+Function:        _Z3topP7ap_uintILi13EES1_S_ILi4096EES2_
+Args:            
+  - String:          'Applying '
+  - String:          array_partition
+  - String:          ' to '''
+  - UOName:          filterArray
+  - String:          ''':'
+  - String:          ' '
+  - Mode:            Complete
+  - String:          ' partitioning'
+  - String:          ' on dimension '
+  - Dim:             '1'
+  - String:          .
+...
+--- !HLSReportInfo
+Pass:            auto-loop-pipeline
+Name:            AutoLoopPipeline
+Args:            
+  - String:          'automatically set the pipeline for Loop< '
+  - LoopName:        loop1
+  - String:          '> at '
+  - LoopLoc:         'filtering.cc:12:12'
+  - String:          ' '
+...
+--- !HLSReportInfo
+Pass:            auto-loop-pipeline
+Name:            AutoLoopPipeline
+Args:            
+  - String:          'automatically set the pipeline for Loop< '
+  - LoopName:        loop2
+  - String:          '> at '
+  - LoopLoc:         'filtering.cc:22:12'
+  - String:          ' '
+...

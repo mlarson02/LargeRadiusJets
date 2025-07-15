@@ -1,0 +1,50 @@
+{
+    "0": {
+        "name": "top",
+        "file": "filtering.cc",
+        "fileloc": "3",
+        "instructions": "652",
+        "total_instructions": "1493",
+        "calls": "1 2",
+        "basicblocks": "1",
+        "loads": {
+            "L": "2"
+        }
+    },
+    "1": {
+        "name": "top_Pipeline_loop1",
+        "file": "filtering.cc",
+        "fileloc": "3",
+        "instructions": "169",
+        "total_instructions": "169",
+        "calls": "",
+        "basicblocks": "4",
+        "loads": {
+            "L": "5"
+        },
+        "stores": {
+            "L": "6"
+        },
+        "loops": {
+            "L": "1"
+        }
+    },
+    "2": {
+        "name": "top_Pipeline_loop2",
+        "file": "filtering.cc",
+        "fileloc": "22",
+        "instructions": "672",
+        "total_instructions": "672",
+        "calls": "",
+        "basicblocks": "269",
+        "loads": {
+            "L": "1"
+        },
+        "stores": {
+            "L": "2"
+        },
+        "loops": {
+            "L": "1"
+        }
+    }
+}

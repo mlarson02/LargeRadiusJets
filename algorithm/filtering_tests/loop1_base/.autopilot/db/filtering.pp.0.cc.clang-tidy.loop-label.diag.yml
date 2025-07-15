@@ -1,0 +1,40 @@
+---
+MainSourceFile:  /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/filtering_tests/loop1_base/.autopilot/db/filtering.pp.0.cc
+Diagnostics:     
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_676_1:  '
+    FileOffset:      676
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/filtering_tests/loop1_base/.autopilot/db/filtering.pp.0.cc
+        Offset:          1182330
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_676_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_690_1:  '
+    FileOffset:      690
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/filtering_tests/loop1_base/.autopilot/db/filtering.pp.0.cc
+        Offset:          1182796
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_690_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_704_1:  '
+    FileOffset:      704
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_int_ref.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/filtering_tests/loop1_base/.autopilot/db/filtering.pp.0.cc
+        Offset:          1183263
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_704_1: '
+  - DiagnosticName:  xilinx-label-all-loops
+    Message:         'Added loop label VITIS_LOOP_1248_1:  '
+    FileOffset:      1248
+    FilePath:        /local/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_fixed_base.h
+    Replacements:    
+      - FilePath:        /home/esantos04/Documents/vitis_hls/LargeRadiusJets/algorithm/filtering_tests/loop1_base/.autopilot/db/filtering.pp.0.cc
+        Offset:          1466936
+        Length:          0
+        ReplacementText: 'VITIS_LOOP_1248_1: '
+...

@@ -1,0 +1,17 @@
+<pragmas>
+<pragma file="" line="0" pragmaType="inline" parentfunction="checkOverflowBaseC" off="0" region="0" recursive="0"/>
+<pragma file="filtering.cc" line="4" pragmaType="array_partition" parentfunction="top" dim="1" factor="0" mode="complete" dynamic="0" variable="inputArray"/>
+<pragma file="filtering.cc" line="5" pragmaType="array_partition" parentfunction="top" dim="1" factor="0" mode="complete" dynamic="0" variable="filterArray"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_uint<4096>::ap_uint(int)" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_int_base<13, false>::operator unsigned long long() const" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_int_base<4096, false>::RType<4096, false>::arg1 operator<<<4096, false>(ap_int_base<4096, false> const&, int)" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="checkOverflowBaseC" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="test" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_uint<13>::ap_uint(int)" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_int_base<13, false>::ap_int_base(int)" off="0" region="0" recursive="0"/>
+<pragma file="/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_common.h" line="523" pragmaType="inline" parentfunction="_ZN8ssdm_intILi13ELb0EEC2EDq13_j" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_int_base<4096, false>::ap_int_base(int)" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_uint<4096>::ap_uint<4096, false>(ap_int_base<4096, false> const&)" off="0" region="0" recursive="0"/>
+<pragma file="/code/Xilinx_2024.2/Vitis/2024.2/common/technology/autopilot/etc/ap_common.h" line="523" pragmaType="inline" parentfunction="_ZN8ssdm_intILi4096ELb0EEC2EDq4096_j" off="0" region="0" recursive="0"/>
+<pragma file="" line="0" pragmaType="inline" parentfunction="ap_int_base<4096, false>& ap_int_base<4096, false>::operator|=<4096, false>(ap_int_base<4096, false> const&)" off="0" region="0" recursive="0"/>
+</pragmas>

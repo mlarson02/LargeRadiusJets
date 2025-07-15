@@ -1,0 +1,19 @@
+<AutoPilot:solution xmlns:AutoPilot="com.autoesl.autopilot.solution">
+    <name>
+        <value string="loop1_base"/>
+    </name>
+    <project>
+        <value string="filtering_tests"/>
+    </project>
+    <flowTarget value="vivado"/>
+    <targetInfo>
+        <TargetInfo value="xcvp1802:-lsvc4072:-2MP-e-S"/>
+    </targetInfo>
+    <libraryList>
+        <library value="xilinx/versal/versal" name="DefaultPlatform"/>
+    </libraryList>
+    <clockList>
+        <clock name="default" period="4" default="false"/>
+    </clockList>
+</AutoPilot:solution>
+
