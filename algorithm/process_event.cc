@@ -2,7 +2,7 @@
 #define WRITE_LUT 0
 
 // Main function
-void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxObjectsConsidered_], input outputJetValues[nSeeds_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+void process_event(input seedValues[nSeeds_], input inputObjectValues[maxObjectsConsidered_], input outputJetValues[nSeeds_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
     //#pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
     #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
@@ -23,7 +23,7 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
         #pragma HLS unroll
         //std::cout << "iSeed: " << iSeed << "\n";
         numMergedIO = 0;
-        outputJetEt = 0; // TESTING IF DONT MERGE SEED ENERGY! //seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
+        outputJetEt = seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
         outputJetValues[iSeed] = 0;
         for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             //#pragma HLS loop_tripcount min=512 max=1024
@@ -47,14 +47,19 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
             // Use unsigned type for absolute values, and ensure both operands are of the same type
             ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
             ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
-            //std::cout << "uDeltaEta: " << uDeltaEta << " uDeltaPhi: " << uDeltaPhi << "\n";
-            //std::cout << "deltaR^2: " << uDeltaEta * uDeltaEta * eta_granularity_ * eta_granularity_ + uDeltaPhi * uDeltaPhi * phi_granularity_ * phi_granularity_ << "\n";
-            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = uDeltaEta * (1 << phi_bit_length_) + uDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+            
+            //std::cout << "deltaPhi: " << deltaPhi << " uDeltaPhi: " << uDeltaPhi << "\n";
+            ap_uint<phi_bit_length_ - 1> corrDeltaPhi; // for fixing delta phi calculation
+            if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
+            corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
+
+            int phiLength = 1 << (phi_bit_length_);
+            //std::cout << "phiLength: " << phiLength << " and uDeltaEta * philength: " << uDeltaEta * (1 << phi_bit_length_) << "\n";
+            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
             //volatile unsigned int lut_index = 
             //bool passesCut = !(lut_index >= max_lut_size_) && lut_[lut_index];
             //volatile bool readoutPassesCut = passesCut;
             if (!(lut_index >= max_lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False)
-                //std::cout << "merging" << "\n";
                 outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
                 numMergedIO++; 
             }

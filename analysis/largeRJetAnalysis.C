@@ -23,6 +23,21 @@ std::map<std::string, std::string> legendMap = {
     {"Seeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4", 
         "R^{2}_{cut} = 0.64, N_{IO} = 128, No IO E_{cut}"},
 
+    {"Seeds2_r2Cut1p21_maxObj128_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.21, N_{IO} = 128, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.44, N_{IO} = 128, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p69_maxObj128_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.69, N_{IO} = 128, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p96_maxObj128_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.96, N_{IO} = 128, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 0.64, N_{IO} = 128, No IO E_{cut}"},
+
     {"Seeds2_r2Cut0p64_maxObj128_back_ecut_ecutVal4", 
     "R^{2}_{cut} = 0.64, N_{IO} = 128, IO E_{cut}"},
 
@@ -60,8 +75,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
     TH1F* back_h_LRJ_eta = new TH1F("back_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
     TH1F* back_h_LRJ_phi = new TH1F("back_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
 
-    gSystem->RedirectOutput("output2.log", "w");
-    const int num_processed_events = 3900;
+    //gSystem->RedirectOutput("output2.log", "w");
+    const int num_processed_events = 3300;
 
     // Variables to store data
     std::vector<double> backgroundEtValues, backgroundEtaValues, backgroundPhiValues;
@@ -302,8 +317,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
         // Save histograms
         TCanvas c;
-        TString outputFileDir = "overlayLargeRJetHistogramsNoSeedEnergy/";
-        TString modifiedOutputFileDir = "overlayLargeRJetHistogramsNoSeedEnergy_" + algorithmConfigurations[fileIt] + "/";
+        TString outputFileDir = "overlayLargeRJetHistogramsjFex/";
+        TString modifiedOutputFileDir = "overlayLargeRJetHistogramsjFex_" + algorithmConfigurations[fileIt] + "/";
         gSystem->mkdir(modifiedOutputFileDir);
         //gStyle->SetOptTitle(1); // Enable title
         TLegend *leg = new TLegend(0.8,0.8,0.95,0.95);
@@ -360,7 +375,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
     } 
 
-    TString outputFileDir = "overlayLargeRJetHistogramsNoSeedEnergy/";
+    TString outputFileDir = "overlayLargeRJetHistogramsjFex/";
 
     // Create ROC Curve Canvas with 2 pads: top (ROC) and bottom (S/B)
     TLegend* legend1 = new TLegend(0.45, 0.45, 0.95, 0.95);
@@ -481,7 +496,12 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
 
 void callAnalyzer(){
-    std::vector<std::string > signalFilenames = {"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_noecut_ecutVal4.dat",
+    std::vector<std::string > signalFilenames = {/*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p21_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p69_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p96_maxObj128_sig_noecut_ecutVal4.dat",*/
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_ecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj128_sig_noecut_ecutVal4.dat",
@@ -491,7 +511,12 @@ void callAnalyzer(){
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj512_sig_noecut_ecutVal4.dat"
                                                 };
 
-    std::vector<std::string > backgroundFilenames = {"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4.dat",
+    std::vector<std::string > backgroundFilenames = { /*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p21_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p69_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p96_maxObj128_back_noecut_ecutVal4.dat"*/
+                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_ecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4.dat",

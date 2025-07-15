@@ -17,10 +17,10 @@ int main() {
     unsigned int idx = 0;
     outfile << "{\n    ";
 
-    //std::cout << "r2Cut_: " << r2Cut_ << "\n";
+    //std::cout << "r2Cut_ for LUT: " << r2Cut_ << "\n";
 
     for (unsigned int etaIt = 0; etaIt < (1 << eta_bit_length_); ++etaIt) {
-        for (unsigned int phiIt = 0; phiIt < (1 << phi_bit_length_); ++phiIt) {
+        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_ - 1)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
             if (idx >= max_lut_size_)  // STOP when you reach max_lut_size_!
                 break;
             //std::cout << "idx: " << idx << "\n";
