@@ -178,17 +178,17 @@ void callNTupleMaker(const bool signalBool) {
     std::string fileName;
 
     
-    fileName = "/eos/user/m/mlarson/LargeRadiusJets/MemPrints/CaloTopo_422/";
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/";
     if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
     else fileName += "mc21_14TeV_jj_JZ3_topo422.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/gFex/";
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/";
     if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
     else fileName += "mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/jFex/";
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/";
     if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
     else fileName += "mc21_14TeV_jj_JZ3_jfex_smallrj.dat";
     fileNames.push_back(fileName);
