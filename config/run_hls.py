@@ -11,19 +11,22 @@ import subprocess
 base_constants = {
     "sortSeeds_": "true",
     "iterative_": "false",
-    "nTotalSeeds_": 12,
-    "nSeeds_": 2,
+    "nTotalSeeds_": 200,
+    "nSeedsInput_": 6,
+    "nSeedsOutput_": 2,
     "maxObjectsConsidered_": 1024,
     "inputEnergyCut_": 1,
     "useInputEnergyCut_": "false", 
     "et_granularity_": 0.25,
     "r2Cut_": 1.0,
+    "rMergeCut_": 2.5,
     "et_bit_length_": 13,
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
     "io_bit_length_": 5, 
     "phi_min_": -3.2,
     "phi_max_": 3.2,
+    "pi_digitized_in_phi_": 31,
     "eta_min_": -5.0,
     "eta_max_": 5.0,
     "eta_granularity_": 0.0390625,
@@ -31,24 +34,53 @@ base_constants = {
     "et_min_": 0,
     "et_max_": 2048,
     "useMax_": "false",
-    "max_lut_size_": 2048
+    "max_R2lut_size_": 2048,
+    "max_Rlut_size_": 2048
 }
 
-def calculate_lut_max_size(r2Cut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
+def calculate_lutR2_max_size(r2Cut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
     last_one_index = 0
     idx = 0
-    print("r2cut used: ", r2Cut)
+    #print("r2cut used in calculating max lut size: ", r2Cut)
     for etaIt in range(1 << eta_bit_length):
-        for phiIt in range(1 << phi_bit_length):
+        for phiIt in range(1 << (phi_bit_length - 1)):
             etaSquared = (etaIt * eta_granularity) ** 2
             phiSquared = (phiIt * phi_granularity) ** 2
+            #print("etaSquared:", etaSquared)
+            #print("phiSquared:", phiSquared)
+            
             deltaR2 = etaSquared + phiSquared
+            #print("deltaR2:", deltaR2)
 
             if deltaR2 < r2Cut:
                 last_one_index = idx
             idx += 1
-
+            print("last_one_index:", last_one_index)
     lut_max_size = last_one_index + 1
+    #print("lut_max_size:", lut_max_size)
+    return lut_max_size
+
+def calculate_lutR_max_size(rCut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
+    last_one_index = 0
+    idx = 0
+    #print("r2cut used in calculating max lut size: ", r2Cut)
+    for etaIt in range(1 << eta_bit_length):
+        for phiIt in range(1 << (phi_bit_length - 1)):
+            etaSquared = (etaIt * eta_granularity) ** 2
+            phiSquared = (phiIt * phi_granularity) ** 2
+            #print("etaSquared:", etaSquared)
+            #print("phiSquared:", phiSquared)
+            
+            deltaR = math.sqrt(etaSquared + phiSquared)
+            #print("deltaR2:", deltaR2)
+
+            if deltaR < rCut:
+                last_one_index = idx
+            idx += 1
+            #print("last_one_index:", last_one_index)
+    
+    lut_max_size = last_one_index + 1
+    #print("lut_max_size:", lut_max_size)
     return lut_max_size
 
 def compute_derived(constants):
@@ -117,11 +149,11 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
 
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 3900 : 5000;
+const unsigned int maxEvent_ = signalBool_ ? 3300 : 5000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
-void sortByEt(input seedValues[nTotalSeeds_]) {
+void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeeds_]) {
     for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
         for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
             ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
@@ -132,6 +164,9 @@ void sortByEt(input seedValues[nTotalSeeds_]) {
                 seedValues[j + 1] = temp;
             }
         }
+    }
+    for (int j = 0; j < nSeeds_; ++j){
+        sortedSeedValues[j] = seedValues[j];
     }
 }
 
@@ -272,8 +307,14 @@ constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
 constexpr unsigned int phi_low_ = eta_high_ + 1; 
 constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1; 
 
-static const bool lut_[max_lut_size_] =
+constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
+
+static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2Cut.h"
+;
+
+static const bool lutR_[max_Rlut_size_] = 
+#include "../data/LUTs/deltaR.h"
 ;
 
 #endif
@@ -287,16 +328,17 @@ if __name__ == "__main__":
     #nSeeds_options = [1, 2, 3, 4, 5, 6, 7, 8]
     nSeeds_options = [2]
     #r2Cut_options = [0.8, 0.9, 1.0, 1.1, 1.2]
-    r2Cut_options = [0.64, 1.0, 1.44]
+    r2Cut_options = [1.0, 1.21, 1.44, 1.69, 1.96]
+    #r2Cut_options = [1.69]
     #r2Cut_options = [0.64]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    maxObjectsConsidered_options = [128, 256, 512]
+    maxObjectsConsidered_options = [128, 256]
     #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
     signalBool_options = [True, False]
     #inputEnergyCut_options = [False]
-    inputEnergyCut_options = [False, True]
+    inputEnergyCut_options = [False]
     #inputEnergyCutValues_options = [0.5, 1.0, 1.5, 2.0] # only use these if inputEnergyCutOption is true
     inputEnergyCutValues_options = [4] # note 4 == 1 GeV (0.25 GeV granularity for inputobjectvalues)
     for nSeeds in nSeeds_options:
@@ -325,7 +367,7 @@ if __name__ == "__main__":
                                 eta_granularity = eta_range / (1 << base_constants["eta_bit_length_"])
                                 constants["eta_granularity_"] = eta_granularity
 
-                                lut_max_size = calculate_lut_max_size(
+                                lut_max_size = calculate_lutR2_max_size(
                                     r2Cut=constants["r2Cut_"],
                                     eta_bit_length=constants["eta_bit_length_"],
                                     phi_bit_length=constants["phi_bit_length_"],
@@ -333,7 +375,16 @@ if __name__ == "__main__":
                                     phi_granularity=phi_granularity
                                 )
 
-                                constants["max_lut_size_"] = lut_max_size  # Add it to constants.h!
+                                lutR_max_size = calculate_lutR_max_size(
+                                    rCut=constants["rMergeCut_"],
+                                    eta_bit_length=constants["eta_bit_length_"],
+                                    phi_bit_length=constants["phi_bit_length_"],
+                                    eta_granularity=eta_granularity,
+                                    phi_granularity=phi_granularity
+                                )
+
+                                constants["max_R2lut_size_"] = lut_max_size  # Add it to constants.h!
+                                constants["max_Rlut_size_"] = lutR_max_size  # Add it to constants.h!
 
                                 # Update derived values
                                 constants = compute_derived(constants)
@@ -369,7 +420,7 @@ if __name__ == "__main__":
                                 print(f" Wrote {constsFilename}")
                                 run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT.cc")
                                 print(f"Launching HLS with project name: {file_suffix}")
-                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "1"], check=True)
+                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "0"], check=True)
                                 xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
                                 print("xml_report_path,", xml_report_path)
                                 #resources, latency = extract_hls_report(xml_report_path)

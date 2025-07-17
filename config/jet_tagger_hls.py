@@ -7,7 +7,7 @@ import sys
 
 project_name = sys.argv[1]
 hls_exec = int(sys.argv[2]) if len(sys.argv) > 1 else 1  # default to 1 if not specified
-
+print("hls exec:", hls_exec)
 cwd = os.getcwd() + '/'
 
 # Component name
@@ -80,10 +80,13 @@ with open(cfg_path, 'w') as f:
     f.writelines(filtered_lines)
 
 # Run flow
+print("hls exec later:", hls_exec)
 comp = client.get_component(name=comp_name)
 if hls_exec == 0: # hls_exec determined by function input
+    print("this should be triggered")
     comp.run(operation='C_SIMULATION')
 if hls_exec == 1: # hls_exec determined by function input
+    print("why is this triggered")
     comp.run(operation='C_SIMULATION')
     comp.run(operation='SYNTHESIS')
 elif hls_exec == 2:
@@ -96,4 +99,4 @@ elif hls_exec == 3:
     comp.run(operation='CO_SIMULATION')
     comp.run(operation='IMPLEMENTATION')
 else:
-    comp.run(operation='SYNTHESIS')
+    comp.run(operation='C_SIMULATION')

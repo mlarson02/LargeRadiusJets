@@ -13,22 +13,22 @@ int main() {
     //std::cout << "eta_low_: " << eta_low_ << " eta_high_ " << eta_high_ << "\n";
     //std::cout << "phi_low_: " << phi_low_ << " phi_high_ " << phi_high_ << "\n";
     input seedValues[nTotalSeeds_]; 
-    input sortedSeedValues[nSeeds_];
+    input sortedSeedValues[nSeedsInput_];
     input inputObjectValues[maxObjectsConsidered_];
 
-    input outputJetValues[nSeeds_];
-    unsigned int totalOutputJetMergedIO[nSeeds_]; 
+    input outputJetValues[nSeedsOutput_];
+    unsigned int totalOutputJetMergedIO[nSeedsOutput_]; 
     std::vector<unsigned int > allOutputJetMergedIOLeading; 
     std::vector<unsigned int > allOutputJetMergedIOSubLeading; 
     //const bool signalBool = true;
     //const std::string fileName = signalBool ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
     //const std::string seedFile = memPrintsPath_ + "gFex/" + fileName_ + "_gfex_smallrj.dat";
-    const std::string seedFile = memPrintsPath_ + "jFex/" + fileName_ + "_jfex_smallrj.dat";
+    const std::string seedFile = memPrintsPath_ + "gFex/" + fileName_ + "_gfex_smallrj.dat";
     const std::string inputObjectFile = memPrintsPath_ + "CaloTopo_422/" + fileName_ + "_topo422.dat";
     
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsjFexSeeds/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsNoSeedEnergyMerged/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -39,14 +39,14 @@ int main() {
     }
 
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        if (iEvt > 9) break;
+        //if (iEvt > 6) break;
         //std::cout << "processing event: " << iEvt << "\n";
-        for (unsigned int i = 0; i < nSeeds_; ++i) {
+        for (unsigned int i = 0; i < nSeedsInput_; ++i) {
             outputJetValues[i] = 0;
         }
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        std::cout << " ---------------------------------- " << "\n";
-        std::cout << "event: " << iEvt << "\n";
+        //std::cout << " ---------------------------------- " << "\n";
+        //std::cout << "event: " << iEvt << "\n";
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
         //for (unsigned int i = 0; i < nTotalSeeds_; i++){
         //    std::cout << "seedValues.et: " << seedValues[i].et << " seedValues.phi: " << seedValues[i].phi << " and seedValues.eta: " << seedValues[i].eta << "\n";
@@ -57,7 +57,7 @@ int main() {
         //    std::cout << "sorted seedValues et: " << sortedSeedValues[i].range(et_high_, et_low_) << "\n";
         //}
         process_event(sortedSeedValues, inputObjectValues, outputJetValues);
-        for (unsigned int iOutput = 0; iOutput < nSeeds_; iOutput++){
+        for (unsigned int iOutput = 0; iOutput < nSeedsInput_; iOutput++){
             unsigned long long numio_value = outputJetValues[iOutput].range(io_high_, io_low_).to_uint64();
             unsigned long long et_value = outputJetValues[iOutput].range(et_high_, et_low_).to_uint64();  // Convert to unsigned long long
             unsigned long long eta_value = outputJetValues[iOutput].range(eta_high_, eta_low_).to_uint64();

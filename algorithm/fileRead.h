@@ -14,7 +14,7 @@
 // Define constants used by testbench
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
-const std::string kFileSuffix = "nSeeds2_r2Cut1p69_maxObj128_sig_noecut_ecutVal4";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4";
 constexpr bool signalBool_ = true;
 
 const unsigned int maxEvent_ = signalBool_ ? 3300 : 5000;

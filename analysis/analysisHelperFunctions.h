@@ -29,6 +29,7 @@ constexpr double phi_granularity_ = 0.1;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 2048;
 const bool useMax_ = false;
+const unsigned nSeeds_ = 2;
 
 inline double undigitize_phi(const std::bitset<phi_bit_length_>& phi_bits) {
     return phi_min_ + phi_bits.to_ulong() * (6.4 / 64.0);

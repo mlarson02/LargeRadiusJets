@@ -23,6 +23,18 @@ std::map<std::string, std::string> legendMap = {
     {"Seeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4", 
         "R^{2}_{cut} = 0.64, N_{IO} = 128, No IO E_{cut}"},
 
+    {"Seeds2_r2Cut1p21_maxObj256_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.21, N_{IO} = 256, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p44_maxObj256_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.44, N_{IO} = 256, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p69_maxObj256_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.69, N_{IO} = 256, No IO E_{cut}"},
+
+    {"Seeds2_r2Cut1p96_maxObj256_back_noecut_ecutVal4", 
+        "R^{2}_{cut} = 1.96, N_{IO} = 256, No IO E_{cut}"},
+
     {"Seeds2_r2Cut1p21_maxObj128_back_noecut_ecutVal4", 
         "R^{2}_{cut} = 1.21, N_{IO} = 128, No IO E_{cut}"},
 
@@ -55,6 +67,7 @@ std::map<std::string, std::string> legendMap = {
 
     {"Seeds2_r2Cut1p0_maxObj512_back_noecut_ecutVal4", 
         "R^{2}_{cut} = 1.0, N_{IO} = 512, No IO E_{cut}"},
+
     {"Seeds2_r2Cut1p44_maxObj512_back_noecut_ecutVal4", 
     "R^{2}_{cut} = 1.44, N_{IO} = 512, No IO E_{cut}"}
 };
@@ -65,17 +78,21 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
     SetPlotStyle();
     TH1F* sig_h_LRJ_nmio = new TH1F("sig_h_LRJ_nmio", "Merged IOs per LRJs;Num. Merged Input Objects;Normalized # of Large R Jets / 2 IOs", 20, 0, 40);
     TH1F* sig_h_LRJ_Et = new TH1F("sig_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];Normalized # of Large R Jets / 10 GeV", 75, 0, 750);
+    TH1F* sig_h_leading_LRJ_Et = new TH1F("sig_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];Normalized # of Leading Large R Jets / 10 GeV", 75, 0, 750);
+    TH1F* sig_h_subleading_LRJ_Et = new TH1F("sig_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];Normalized # of Subleading Large R Jets / 10 GeV", 75, 0, 750);
     TH1F* sig_h_LRJ_E = new TH1F("sig_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];Normalized # of Large R Jets / 10 GeV", 100, 0, 1000);
     TH1F* sig_h_LRJ_eta = new TH1F("sig_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
     TH1F* sig_h_LRJ_phi = new TH1F("sig_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
 
     TH1F* back_h_LRJ_nmio = new TH1F("back_h_LRJ_nmio", "Merged IOs per LRJs;Num. Merged Input Objects;Normalized # of Large R Jets / 2 IOs", 20, 0, 40);
     TH1F* back_h_LRJ_Et = new TH1F("back_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];Normalized # of Large R Jets / 10 GeV", 75, 0, 750);
+    TH1F* back_h_leading_LRJ_Et = new TH1F("back_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];Normalized # of Leading Large R Jets / 10 GeV", 75, 0, 750);
+    TH1F* back_h_subleading_LRJ_Et = new TH1F("back_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];Normalized # of Subleading Large R Jets / 10 GeV", 75, 0, 750);
     TH1F* back_h_LRJ_E = new TH1F("back_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];Normalized # of Large R Jets / 10 GeV", 100, 0, 1000);
     TH1F* back_h_LRJ_eta = new TH1F("back_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
     TH1F* back_h_LRJ_phi = new TH1F("back_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
 
-    //gSystem->RedirectOutput("output2.log", "w");
+    gSystem->RedirectOutput("output2.log", "w");
     const int num_processed_events = 3300;
 
     // Variables to store data
@@ -103,7 +120,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         //if (fileIt > 0) break;
         vector<vector<double> > sig_LRJ_Et(num_processed_events);
         vector<vector<double> > back_LRJ_Et(num_processed_events);
-        std::cout << "fileIt : " << fileIt << "\n";
+        //std::cout << "fileIt : " << fileIt << "\n";
         // Find position of "largeR"
         std::string key = "largeRn";
         size_t pos = backgroundFileNames[fileIt].find(key);
@@ -117,7 +134,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
             if (end != std::string::npos && end > start) {
                 algorithmConfigurations.push_back( backgroundFileNames[fileIt].substr(start, end - start));
-                std::cout << "Extracted string: " << backgroundFileNames[fileIt].substr(start, end - start) << std::endl;
+                //std::cout << "Extracted string: " << backgroundFileNames[fileIt].substr(start, end - start) << std::endl;
             } else {
                 std::cerr << ".dat not found or too early in string.\n";
             }
@@ -133,7 +150,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
     
         std::ifstream sig_infile(signalFileNames[fileIt]);
         std::ifstream back_infile(backgroundFileNames[fileIt]);
-        std::cout << "processing: " << signalFileNames[fileIt] << " and: " << backgroundFileNames[fileIt] << "\n";
+        //std::cout << "processing: " << signalFileNames[fileIt] << " and: " << backgroundFileNames[fileIt] << "\n";
         if (!sig_infile.is_open()) { 
             std::cerr << "Error: Could not open file " << signalFileNames[fileIt] << std::endl;
             return;
@@ -143,15 +160,30 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
             return;
         }
 
+        std::vector<double > sigEtValues;
+        std::vector<double > backEtValues;
         while (std::getline(sig_infile, sig_line) && std::getline(back_infile, back_line)) {
             // Skip event header lines
+            
             if (sig_line.find("Event") != std::string::npos && back_line.find("Event") != std::string::npos) {
                 current_event++;
                 // Extract the event number
                 std::stringstream ss(sig_line);
                 std::string dummy, event_label;
                 ss >> dummy >> event_label >> current_event;
-                std::cout << "Processing Event: " << current_event << std::endl;
+                if (current_event != 0){
+                    std::sort(sigEtValues.begin(), sigEtValues.end(), std::greater<double>());
+                    std::sort(backEtValues.begin(), backEtValues.end(), std::greater<double>());
+                    //std::cout << "sigEtValues[0]: " << sigEtValues[0] << " and sigEtValues[1]: " << sigEtValues[1] << "\n";
+                    back_h_leading_LRJ_Et->Fill(backEtValues[0]);
+                    sig_h_leading_LRJ_Et->Fill(sigEtValues[0]);
+                    back_h_subleading_LRJ_Et->Fill(backEtValues[1]);
+                    sig_h_subleading_LRJ_Et->Fill(sigEtValues[1]);
+                    sigEtValues.clear();
+                    backEtValues.clear();
+                }
+                
+                //std::cout << "Processing Event: " << current_event << std::endl;
                 continue;
             }
             if (current_event >= num_processed_events) break;
@@ -190,6 +222,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
             sig_h_LRJ_nmio->Fill(sig_undigitized_nmio);
             sig_h_LRJ_Et->Fill(sig_undigitized_et);
+            sigEtValues.push_back(sig_undigitized_et);
             sig_h_LRJ_E->Fill(sig_undigitized_et * cosh(sig_undigitized_eta));
             //std::cout << "current_event: " << current_event << "\n";
             sig_LRJ_Et[current_event].push_back(sig_undigitized_et);
@@ -214,20 +247,21 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
             // Convert to bitsets
             std::bitset<io_bit_length_>   back_nmio_bits(back_nmio_bin);
-            std::cout << "nmio_bits: " << back_nmio_bits << "\n";
+            //std::cout << "nmio_bits: " << back_nmio_bits << "\n";
             std::bitset<et_bit_length_>   back_et_bits(back_et_bin);
             std::bitset<eta_bit_length_>  back_eta_bits(back_eta_bin);
             std::bitset<phi_bit_length_>  back_phi_bits(back_phi_bin);
 
             // Undigitize the values
             double back_undigitized_nmio = undigitize_nmio(back_nmio_bits);
-            std::cout << "back_undigitized_nmio: " << back_undigitized_nmio << "\n";
+            //std::cout << "back_undigitized_nmio: " << back_undigitized_nmio << "\n";
             double back_undigitized_et   = undigitize_et(back_et_bits);
             //std::cout << "et_bits : " << back_et_bits << " and undigitized et : " << back_undigitized_et << "\n";
             double back_undigitized_eta  = undigitize_eta(back_eta_bits);
             double back_undigitized_phi  = undigitize_phi(back_phi_bits);
             back_h_LRJ_nmio->Fill(back_undigitized_nmio);
             back_h_LRJ_Et->Fill(back_undigitized_et);
+            backEtValues.push_back(back_undigitized_et);
             back_h_LRJ_E->Fill(back_undigitized_et * cosh(back_undigitized_eta));
             back_LRJ_Et[current_event].push_back(back_undigitized_et);
             back_h_LRJ_eta->Fill(back_undigitized_phi);
@@ -235,15 +269,26 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
         }
 
+        /*for (int i = 0; i < nSeeds_; i++){ // loop not needed for just 2 seeds considered
+            if (i == 0){
+                
+            }
+            if (i == 1){
+                
+            }
+            
+        } */
+
         double det_cutoff = 1.0;
         for (double et_cutoff = det_cutoff; et_cutoff < 500.0; et_cutoff += det_cutoff) {
             
 
 
-            std::cout << "back_LRJ_Et.size(): " << back_LRJ_Et.size() << " and sig_LRJ_Et.size(): " << sig_LRJ_Et.size() << "\n";
+            //std::cout << "back_LRJ_Et.size(): " << back_LRJ_Et.size() << " and sig_LRJ_Et.size(): " << sig_LRJ_Et.size() << "\n";
             int numTruePositive = 0;
             
             for (int i = 0; i < num_processed_events; i++) {
+                //std::cout << "i: " << i << "\n";
                 //std::cout << "i:  " << i << "\n";
                 //for (int j = 0; j < sig_LRJ_Et[current_event]; j++){
                 //   if ()
@@ -317,8 +362,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
         // Save histograms
         TCanvas c;
-        TString outputFileDir = "overlayLargeRJetHistogramsjFex/";
-        TString modifiedOutputFileDir = "overlayLargeRJetHistogramsjFex_" + algorithmConfigurations[fileIt] + "/";
+        TString outputFileDir = "overlayLargeRJetHistogramsjFexNoSeedEnergy/";
+        TString modifiedOutputFileDir = "overlayLargeRJetHistogramsjFexNoSeedEnergy_" + algorithmConfigurations[fileIt] + "/";
         gSystem->mkdir(modifiedOutputFileDir);
         //gStyle->SetOptTitle(1); // Enable title
         TLegend *leg = new TLegend(0.8,0.8,0.95,0.95);
@@ -327,6 +372,9 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         leg->AddEntry(back_h_LRJ_Et, "Background", "l");
         //std::string title = "Normalized E_{T} Distribution for " + algorithmConfigurations[fileIt];
         //back_h_LRJ_Et->SetTitle(title.c_str());
+        std::cout << "--------------------------------" << "\n";
+        std::cout << "for: " << algorithmConfigurations[fileIt] << "\n";
+        std::cout << "Signal mean: " << sig_h_LRJ_Et->GetMean() << " and background mean: " << back_h_LRJ_Et->GetMean() << "\n";
         sig_h_LRJ_Et->Scale(1.0 / sig_h_LRJ_Et->Integral());
         back_h_LRJ_Et->Scale(1.0 / back_h_LRJ_Et->Integral());
         sig_h_LRJ_Et->SetLineColor(kRed);
@@ -337,6 +385,29 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "LRJ_Et.pdf");
         //gStyle->SetOptTitle(0); // disable title
+
+        std::cout << "Leading signal mean: " << sig_h_leading_LRJ_Et->GetMean() << " and leading background mean: " << back_h_leading_LRJ_Et->GetMean() << "\n";
+        sig_h_leading_LRJ_Et->Scale(1.0 / sig_h_leading_LRJ_Et->Integral());
+        back_h_leading_LRJ_Et->Scale(1.0 / back_h_leading_LRJ_Et->Integral());
+        sig_h_leading_LRJ_Et->SetLineColor(kRed);
+        back_h_leading_LRJ_Et->SetLineColor(kBlue);
+        sig_h_leading_LRJ_Et->Draw("HIST");
+        back_h_leading_LRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_Et.pdf");
+
+        std::cout << "Subleading signal mean: " << sig_h_subleading_LRJ_Et->GetMean() << " and subleading background mean: " << back_h_subleading_LRJ_Et->GetMean() << "\n";
+        sig_h_subleading_LRJ_Et->Scale(1.0 / sig_h_subleading_LRJ_Et->Integral());
+        back_h_subleading_LRJ_Et->Scale(1.0 / back_h_subleading_LRJ_Et->Integral());
+        sig_h_subleading_LRJ_Et->SetLineColor(kRed);
+        back_h_subleading_LRJ_Et->SetLineColor(kBlue);
+        sig_h_subleading_LRJ_Et->Draw("HIST");
+        back_h_subleading_LRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "subleading_LRJ_Et.pdf");
+
 
         sig_h_LRJ_E->Scale(1.0 / sig_h_LRJ_E->Integral());
         back_h_LRJ_E->Scale(1.0 / back_h_LRJ_E->Integral());
@@ -375,7 +446,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
     } 
 
-    TString outputFileDir = "overlayLargeRJetHistogramsjFex/";
+    TString outputFileDir = "overlayLargeRJetHistogramsjFexNoSeedEnergy/";
 
     // Create ROC Curve Canvas with 2 pads: top (ROC) and bottom (S/B)
     TLegend* legend1 = new TLegend(0.45, 0.45, 0.95, 0.95);
@@ -401,13 +472,16 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         std::vector<double>& x = roc_curve_points_x[fileIt];
         std::vector<double>& y = roc_curve_points_y[fileIt];
 
+        std::vector<int> goodColors = {1, 2, 4, 6, 7, 8, 9, 28, 30, 46};  // skip 0 (white), 10, etc.
+        int colorIndex = goodColors[fileIt % goodColors.size()];
+
         // ----------------------------------------
         // ROC Curve (top pad)
         pad1->cd();
         TGraph* gr = new TGraph(x.size(), &x[0], &y[0]);
-        gr->SetTitle("ROC Curve;True Positive Rate;Background Rejection (1/FPR)");
-        gr->SetMarkerColor(fileIt + 1);
-        gr->SetLineColor(fileIt + 1);
+        gr->SetTitle("ROC Curve;Signal Efficiency;Background Rejection (1/FPR)");
+        gr->SetMarkerColor(colorIndex);
+        gr->SetLineColor(colorIndex);
         gr->GetXaxis()->SetRangeUser(0, 1);
         gr->GetYaxis()->SetRangeUser(0, 10);
         gr->SetMarkerSize(0.25);
@@ -428,7 +502,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
             sb_values.push_back(tpr / fpr);
         }
         TGraph* sbGraph = new TGraph(x.size(), &x[0], &sb_values[0]);
-        sbGraph->SetLineColor(fileIt + 1);
+        sbGraph->SetLineColor(colorIndex);
         sbGraph->SetLineStyle(1);
         sbGraphs.push_back(sbGraph);
 
@@ -438,9 +512,9 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         TGraph* gr2 = new TGraph(efficiency_curve_points_x[fileIt].size(),
             &efficiency_curve_points_x[fileIt][0],
             &efficiency_curve_points_y[fileIt][0]);
-        gr2->SetTitle("Efficiency Curve;E_{T} Minimum;True Positive Rate");
-        gr2->SetMarkerColor(fileIt + 1);
-        gr2->SetLineColor(fileIt + 1);
+        gr2->SetTitle("Efficiency Curve;E_{T} Minimum;Signal Efficiency");
+        gr2->SetMarkerColor(colorIndex);
+        gr2->SetLineColor(colorIndex);
         gr2->GetYaxis()->SetRangeUser(0.0, 1);
         gr2->SetMarkerSize(0.25);
         legend2->AddEntry(gr2, legendMap[algorithmConfigurations[fileIt]].c_str(), "l");
@@ -448,8 +522,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         if (fileIt == 0) gr2->Draw("AL");
         else             gr2->Draw("L SAME");
 
-        std::cout << "algorithmConfigurations[fileIt]: " << algorithmConfigurations[fileIt] << "\n";
-        std::cout << "legendMap[algorithmConfigurations[fileIt]].c_str(): " << legendMap[algorithmConfigurations[fileIt]].c_str() << "\n";
+        //std::cout << "algorithmConfigurations[fileIt]: " << algorithmConfigurations[fileIt] << "\n";
+        //std::cout << "legendMap[algorithmConfigurations[fileIt]].c_str(): " << legendMap[algorithmConfigurations[fileIt]].c_str() << "\n";
 
         // ----------------------------------------
         // Print max signal-to-background summary
@@ -496,34 +570,45 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
 
 void callAnalyzer(){
-    std::vector<std::string > signalFilenames = {/*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p21_maxObj128_sig_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj128_sig_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p69_maxObj128_sig_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p96_maxObj128_sig_noecut_ecutVal4.dat",*/
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_noecut_ecutVal4.dat",
+    std::vector<std::string > signalFilenames = {"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p21_maxObj128_sig_noecut_ecutVal4.dat",
+                                               "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p69_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p96_maxObj128_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p21_maxObj256_sig_noecut_ecutVal4.dat",
+                                               "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj256_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p69_maxObj256_sig_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p96_maxObj256_sig_noecut_ecutVal4.dat"
+                                                
+                                                /*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut0p64_maxObj128_sig_ecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj128_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_sig_ecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_sig_noecut_ecutVal4.dat",
                                                 "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj512_sig_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj512_sig_noecut_ecutVal4.dat"
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p44_maxObj512_sig_noecut_ecutVal4.dat"*/
                                                 };
 
-    std::vector<std::string > backgroundFilenames = { /*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_back_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p21_maxObj128_back_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p69_maxObj128_back_noecut_ecutVal4.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p96_maxObj128_back_noecut_ecutVal4.dat"*/
-                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4.dat",
+    std::vector<std::string > backgroundFilenames = { "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p21_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p69_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p96_maxObj128_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p21_maxObj256_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj256_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p69_maxObj256_back_noecut_ecutVal4.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMergedjFexSeeds/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p96_maxObj256_back_noecut_ecutVal4.dat"
+                                                    /*"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut0p64_maxObj128_back_ecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj128_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_back_ecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_back_noecut_ecutVal4.dat",
                                                     "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj512_back_noecut_ecutVal4.dat",
-                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj512_back_noecut_ecutVal4.dat"
+                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsNoSeedEnergyMerged/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p44_maxObj512_back_noecut_ecutVal4.dat"*/
                                                     };
 
     //const std::string signalLargeRJetDataFileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/largeRJets/mc21_14TeV_hh_bbbb_vbf_novhh_largeR.dat";
