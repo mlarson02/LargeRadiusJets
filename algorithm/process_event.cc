@@ -2,11 +2,15 @@
 #define WRITE_LUT 0
 
 // Main function
-void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxObjectsConsidered_], input outputJetValues[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxObjectsConsidered_], input (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
     //#pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
     #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    for (unsigned int i = 0; i < nSeedsOutput_; ++i)
+        outputJetValues[i] = 0;
+
     /*
+    
     
     // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
     // AXI4-Master interfaces for input arrays
@@ -18,10 +22,20 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
     #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
     */
 
+    //std::cout << "outputjetvalues[0] "  << outputJetValues[0] << "\n";
+    //fflush(stdout);
     // NEW PRE-PROCESSING OF SEEDS - SELECT IN BETWEEN LEADING, SUBLEADING JFEX SRJ, CLOSEST OF 3rd - 6th highest ENERGY JFEX SRJS as NEW SEEDS
-    ap_uint<8> deltaRValuesSeed[nSeedsDeltaR_][nSeedsOutput_]; // FIXME replace 8 with constant from constants.h, easy
+    ap_uint<deltaRBits_> deltaRValuesSeed[nSeedsDeltaR_][nSeedsOutput_]; // FIXME replace 8 with constant from constants.h, easy
+    bool anotherSeedWithinDeltaR2p5[nSeedsOutput_];
     for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){ // loop through and calculate deltaR between leading, subleading & 3rd - 6th highest Et JFEX SRJ
-        for (unsigned int iPreSeed = nSeedsOutput_; iPreSeed < nSeedsInput_; iPreSeed++){
+        #pragma HLS unroll
+        //std::cout << "iSeed: " << iSeed << "\n";
+        //fflush(stdout);
+        for (unsigned int iPreSeed = 0; iPreSeed < nSeedsInput_; iPreSeed++){
+            #pragma HLS unroll
+            //std::cout << "iPreSeed: " << iPreSeed << "\n";
+            //fflush(stdout);
+            deltaRValuesSeed[iPreSeed][iSeed] = (1 << deltaRBits_) - 1; // Set to maximum value in case closer seed not found --> don't consider 0 values in sorting
             ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - seedValues[iPreSeed + nSeedsOutput_].range(eta_high_, eta_low_);
             ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - seedValues[iPreSeed + nSeedsOutput_].range(phi_high_, phi_low_);
             
@@ -32,17 +46,56 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
             if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
             corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
             ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lutR_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi;
-            if (!(lutR_index >= max_Rlut_size_) && lut_[lutR_index]){
-                deltaRValuesSeed[iPreSeed][iSeed];
+            if (!(lutR_index >= max_Rlut_size_) && lutR_[lutR_index]){
+                deltaRValuesSeed[iPreSeed][iSeed] = lutR_[lutR_index];
             }
         }
     }
 
     // FIXME next do bitonic sorting of deltaRValuesSeed, get index back to original seedValues array corresponding to closest to each seed (figure out what to do if they are same)
+    ap_uint<2> index_of_closest_seed1 = index_of_min(deltaRValuesSeed[0]); // FIXME replace with a templated version of this s.t. you don't need to rewrite code for different number sorted
+    ap_uint<2> index_of_closest_seed2 = index_of_min(deltaRValuesSeed[1]);
 
-
-
+    ap_uint<2> indices[2];
+    indices[0] = index_of_closest_seed1;
+    indices[1] = index_of_closest_seed2;
     // next update leading, subleading seed positions (and energy?) to be in between closest other seed 
+
+    for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){
+        #pragma HLS unroll
+        //std::cout << "iSeed: " << iSeed << "\n";
+        //fflush(stdout);
+        // Raw eta/phi values as received from digitized format (unsigned)
+        ap_uint<eta_bit_length_> eta1_raw, eta2_raw;
+        ap_uint<phi_bit_length_> phi1_raw, phi2_raw;
+
+        // Convert eta to signed integers centered at 0
+        ap_int<eta_bit_length_ + 1> eta1 = seedValues[iSeed].range(eta_high_, eta_low_) - (1 << (eta_bit_length_ - 1));
+        ap_int<eta_bit_length_ + 1> eta2 = seedValues[indices[iSeed]].range(eta_high_, eta_low_) - (1 << (eta_bit_length_ - 1));
+
+        // Convert phi to signed integers centered at 0
+        ap_int<phi_bit_length_ + 1> phi1 = seedValues[iSeed].range(phi_high_, phi_low_) - (1 << (phi_bit_length_ - 1));
+        ap_int<phi_bit_length_ + 1> phi2 = seedValues[indices[iSeed]].range(phi_high_, phi_low_) - (1 << (phi_bit_length_ - 1));
+
+        // --- Compute midpoint in signed domain ---
+        ap_int<eta_bit_length_ + 1> eta_mid = (eta1 + eta2) >> 1; // Integer division by 2
+        ap_int<phi_bit_length_ + 1> phi_mid = (phi1 + phi2) >> 1;
+
+        // --- Optional: re-wrap phi midpoint to [-π, π) range if needed ---
+        if (phi_mid > pi_digitized_in_phi_) 
+            phi_mid -= (1 << phi_bit_length_);
+        if (phi_mid < -(pi_digitized_in_phi_ + 1)) 
+            phi_mid += (1 << phi_bit_length_);
+
+        // --- Convert midpoints back to digitized unsigned format ---
+        ap_uint<eta_bit_length_> eta_mid_digitized = eta_mid + (1 << (eta_bit_length_ - 1));
+        ap_uint<phi_bit_length_> phi_mid_digitized = phi_mid + (1 << (phi_bit_length_ - 1));
+        seedValues[iSeed].range(eta_high_, eta_low_) = eta_mid_digitized;
+        seedValues[iSeed].range(phi_high_, phi_low_) = phi_mid_digitized;
+    }
+    
+
+
 
     // must also account for when deltaRValuesSeed not set (no deltaR < 2.5 --> leave seed position as is)
     
@@ -50,13 +103,20 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
 
     ap_uint<et_bit_length_ > outputJetEt;
     ap_uint<io_bit_length_ > numMergedIO; 
-    for (unsigned int iSeed = 0; iSeed < nSeeds_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
+    for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
         #pragma HLS unroll
         //std::cout << "-------------- NEW SEED -------------- " << "\n";
         //std::cout << "iSeed: " << iSeed << "\n";
+        //fflush(stdout);
+        //std::cout << "outputjetvalues[0] "  << outputJetValues[0] << "\n";
+        //fflush(stdout);
         numMergedIO = 0;
         outputJetEt = 0;//seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
-        outputJetValues[iSeed] = 0;
+        //std::cout << "before" << "\n";
+        //fflush(stdout);
+        //outputJetValues[iSeed] = input(0);
+        //std::cout << "after" << "\n";
+        //fflush(stdout);
         for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             //#pragma HLS loop_tripcount min=512 max=1024
             #pragma HLS unroll
@@ -65,13 +125,13 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
             #if useInputEnergyCut_
             if (inputObjectValues[iInput].range(et_high_, et_low_) <= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
-            /*
-            std::cout << "iInput: " << iInput << "\n";
+            
+            /*std::cout << "iInput: " << iInput << "\n";
             std::cout << "inputObjectValues[iInput]: " << std::hex << inputObjectValues[iInput] << "\n";
             std::cout << "input et: " << std::dec << inputObjectValues[iInput].range(et_high_, et_low_) << " eta: " << inputObjectValues[iInput].range(eta_high_, eta_low_) << " phi: " << inputObjectValues[iInput].range(phi_high_, phi_low_) << "\n";
             std::cout << "seedValues[iSeed]: " << std::hex << seedValues[iSeed] << "\n";
             std::cout << "seed et: " << std::dec << seedValues[iSeed].range(et_high_, et_low_) << " eta: " << seedValues[iSeed].range(eta_high_, eta_low_) << " phi: " << seedValues[iSeed].range(phi_high_, phi_low_) << "\n";
-            */
+            fflush(stdout);*/
             // Calculate signed differences (deltaEta and deltaPhi)
             ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - inputObjectValues[iInput].range(eta_high_, eta_low_);
             ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - inputObjectValues[iInput].range(phi_high_, phi_low_);
@@ -104,13 +164,27 @@ void process_event(input seedValues[nTotalSeeds_], input inputObjectValues[maxOb
         outputJetValues[iSeed].range(et_bit_length_ - 1, 0) = outputJetEt; // set output Et 
         outputJetValues[iSeed].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_) = seedValues[iSeed].range(et_bit_length_ + eta_bit_length_ - 1, et_bit_length_); // set output eta to seed eta
         outputJetValues[iSeed].range(total_bits_ - 1, total_bits_ - phi_bit_length_) = seedValues[iSeed].range(total_bits_ - 1, total_bits_ - phi_bit_length_); // set output phi to seed phi
-        */
+        
+        std::cout << "before range access test" << "\n";
+        std::cout << "Raw bits of outputJetValues[1]: "
+          << outputJetValues[1].to_string(2) << "\n";
+        fflush(stdout);
+       for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
+            std::cout << "outputJetValues[" << i << "]: " << outputJetValues[i] << "\n";
+            fflush(stdout);
+        }
+        std::cout << "Range access test:\n";
+        std::cout << outputJetValues[0].range(et_high_, et_low_) << "\n";
+        std::cout << outputJetValues[1].range(et_high_, et_low_) << "\n";
+
+
+       std::cout << "test if it gets here" << "\n";
+       fflush(stdout);*/
         // FOR IMPLEMENTATION ONLY
         outputJetValues[iSeed].range(io_high_, io_low_) = numMergedIO / 2; 
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
         outputJetValues[iSeed].range(eta_high_, eta_low_) = seedValues[iSeed].range(eta_high_, eta_low_);
         outputJetValues[iSeed].range(phi_high_, phi_low_) = seedValues[iSeed].range(phi_high_, phi_low_);
-
         //std::cout << "number of merged input objects for seed: "  << std::dec << iSeed << " is : " << std::dec << numMergedIO << "\n";
     }
 

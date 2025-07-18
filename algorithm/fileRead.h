@@ -21,8 +21,10 @@ const unsigned int maxEvent_ = signalBool_ ? 3300 : 5000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
-void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeeds_]) {
+void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
+    //std::cout << "SORTING BY ET!" << std::endl;
     for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+        //std::cout << "i: " << i << std::endl;
         for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
             ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
             ap_uint<et_bit_length_> et2 = seedValues[j + 1].range(et_high_, et_low_);
@@ -33,9 +35,15 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeeds_]) {
             }
         }
     }
-    for (int j = 0; j < nSeeds_; ++j){
+    for (int j = 0; j < nSeedsInput_; ++j){
+        //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
+        //std::cout << "after sort j: " << std::dec << j << std::endl;
         sortedSeedValues[j] = seedValues[j];
+        //std::cout << "sortedSeedValues[j] : " << std::hex << sortedSeedValues[j] << std::endl;
+        //std::cout << "AFTER ASSIGNING VALUES j: " << std::dec << j << std::endl;
     }
+    //std::cout << "exiting???? " << std::endl;
+    return;
 }
 
 // read values from .dat files for a provided event

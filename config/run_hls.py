@@ -24,6 +24,7 @@ base_constants = {
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
     "io_bit_length_": 5, 
+    "deltaRBits_": 8,
     "phi_min_": -3.2,
     "phi_max_": 3.2,
     "pi_digitized_in_phi_": 31,
@@ -55,7 +56,7 @@ def calculate_lutR2_max_size(r2Cut, eta_bit_length, phi_bit_length, eta_granular
             if deltaR2 < r2Cut:
                 last_one_index = idx
             idx += 1
-            print("last_one_index:", last_one_index)
+            #print("last_one_index:", last_one_index)
     lut_max_size = last_one_index + 1
     #print("lut_max_size:", lut_max_size)
     return lut_max_size
@@ -153,8 +154,10 @@ const unsigned int maxEvent_ = signalBool_ ? 3300 : 5000;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
-void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeeds_]) {
+void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
+    //std::cout << "SORTING BY ET!" << std::endl;
     for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+        //std::cout << "i: " << i << std::endl;
         for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
             ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
             ap_uint<et_bit_length_> et2 = seedValues[j + 1].range(et_high_, et_low_);
@@ -165,9 +168,15 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeeds_]) {
             }
         }
     }
-    for (int j = 0; j < nSeeds_; ++j){
+    for (int j = 0; j < nSeedsInput_; ++j){
+        //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
+        //std::cout << "after sort j: " << std::dec << j << std::endl;
         sortedSeedValues[j] = seedValues[j];
+        //std::cout << "sortedSeedValues[j] : " << std::hex << sortedSeedValues[j] << std::endl;
+        //std::cout << "AFTER ASSIGNING VALUES j: " << std::dec << j << std::endl;
     }
+    //std::cout << "exiting???? " << std::endl;
+    return;
 }
 
 // read values from .dat files for a provided event
@@ -313,7 +322,7 @@ static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2Cut.h"
 ;
 
-static const bool lutR_[max_Rlut_size_] = 
+static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] = 
 #include "../data/LUTs/deltaR.h"
 ;
 
@@ -328,12 +337,12 @@ if __name__ == "__main__":
     #nSeeds_options = [1, 2, 3, 4, 5, 6, 7, 8]
     nSeeds_options = [2]
     #r2Cut_options = [0.8, 0.9, 1.0, 1.1, 1.2]
-    r2Cut_options = [1.0, 1.21, 1.44, 1.69, 1.96]
+    #r2Cut_options = [1.0, 1.21, 1.44, 1.69, 1.96]
     #r2Cut_options = [1.69]
-    #r2Cut_options = [0.64]
+    r2Cut_options = [1.0]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    maxObjectsConsidered_options = [128, 256]
-    #maxObjectsConsidered_options = [128]
+    #maxObjectsConsidered_options = [128, 256]
+    maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
     signalBool_options = [True, False]
@@ -420,7 +429,7 @@ if __name__ == "__main__":
                                 print(f" Wrote {constsFilename}")
                                 run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT.cc")
                                 print(f"Launching HLS with project name: {file_suffix}")
-                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "0"], check=True)
+                                subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "1"], check=True)
                                 xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
                                 print("xml_report_path,", xml_report_path)
                                 #resources, latency = extract_hls_report(xml_report_path)

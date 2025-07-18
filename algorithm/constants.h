@@ -20,6 +20,7 @@ constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
 constexpr unsigned int io_bit_length_ = 5;
+constexpr unsigned int deltaRBits_ = 8;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
 constexpr unsigned int pi_digitized_in_phi_ = 31;
@@ -58,7 +59,7 @@ static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2Cut.h"
 ;
 
-static const bool lutR_[max_Rlut_size_] = 
+static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] = 
 #include "../data/LUTs/deltaR.h"
 ;
 
