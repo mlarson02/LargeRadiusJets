@@ -1,5 +1,5 @@
-// Save as: process_xaod.C
-// To execute: root -l -b -q process_xaod.C
+// Save as: nTupler.C
+// To execute: root ; .L nTupler.C ; nTupler(true, false) 
 
 #include <iostream>
 #include <vector>
@@ -15,6 +15,7 @@
 #include "TH2F.h"
 #include "analysisHelperFunctions.h"
 
+#define PROCESS_DAOD true
 
 // Settings
 const bool afBool = true;
@@ -64,39 +65,77 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle, std::vector<s
 }
 
 // Main function
-void nTupler(bool signalBool, bool daodBool) {
-    SetPlotStyle();
-    // Setup file paths
+void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
+    // Setup file paths based on whether processing signal or background, and vbf production or ggF production
     string fileDir;
-    if (daodBool){
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAOD_JETM42/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
-    }
-    else{
-        if (signalBool) {
-            fileDir = afBool ?
-                "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
-                "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
-        } else {
-            fileDir = afBool ?
-                "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
-                "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+    if (vbfBool){
+        if (daodBool){
+            fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAOD_JETM42/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
+        }
+        else{
+            if (signalBool) {
+                fileDir = afBool ?
+                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
+                    "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            } else {
+                fileDir = afBool ?
+                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
+                    "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            }
         }
     }
-
+    else{
+        if (daodBool){
+            fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAOD_JETM42/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
+        }
+        else{
+            if (signalBool) {
+                fileDir = afBool ?
+                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130":
+                    "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            } else {
+                fileDir = afBool ?
+                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
+                    "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            }
+        }
+    }
+    
 
     TString outputFileName; 
-    if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_NTUPLE.root";
-    else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_NTUPLE.root";
+    if (vbfBool){
+        if (daodBool){
+            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_DAOD_NTUPLE.root";
+            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_DAOD_NTUPLE.root";
+        }
+        else{
+            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_AOD_NTUPLE.root";
+            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE.root";
+        }
+    }
+    else{
+        if (daodBool){
+            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_DAOD_NTUPLE.root"; // FIXME change these files 
+            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_DAOD_NTUPLE.root";
+        }
+        else{
+            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_AOD_NTUPLE.root";
+            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE.root";
+        }
+    }
+    
+    
 
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
 
-    // Create a TTree
+    // Create TTrees
     TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* truthParticleTree = new TTree("truthParticleTree", "Tree storing event-wise information about truth particles");
     TTree* truthbTree = new TTree("truthbTree", "Tree storing event-wise information about truth particles");
     TTree* truthHiggsTree = new TTree("truthHiggsTree", "Tree storing event-wise information about truth particles");
     TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
+    TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* topo422Tree = new TTree("topo422Tree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexSRJTree = new TTree("gFexSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexLeadingSRJTree = new TTree("gFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
@@ -109,8 +148,17 @@ void nTupler(bool signalBool, bool daodBool) {
     TTree* jFexLeadingSRJTree = new TTree("jFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* jFexSubleadingSRJTree = new TTree("jFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* hltAntiKt4EMTopoJetsTree = new TTree("hltAntiKt4EMTopoJetsTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* leadingHltAntiKt4EMTopoJetsTree = new TTree("leadingHltAntiKt4EMTopoJetsTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* subleadingHltAntiKt4EMTopoJetsTree = new TTree("subleadingHltAntiKt4EMTopoJetsTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* recoAntiKt10UFOCSSKJets = new TTree("recoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* leadingRecoAntiKt10UFOCSSKJets = new TTree("leadingRecoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* subleadingRecoAntiKt10UFOCSSKJets = new TTree("subleadingRecoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* recoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* leadingRecoAntiKt10LCTopoJets = new TTree("leadingRecoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* subleadingRecoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
+    TTree* gFexRhoRoI = new TTree("gFexRhoRoI", "Tree storing event-wise Et, Eta, Phi");
 
-    // Variables to store data
+    // Variables to store data to be written to TTrees
     int topoEventNumber, gFexEventNumber, jFexEventNumber;
     std::vector<double> caloTopoEtValues, caloTopoEtaValues, caloTopoPhiValues;
     std::vector<double> topoEtValues, topoEtaValues, topoPhiValues;
@@ -121,7 +169,7 @@ void nTupler(bool signalBool, bool daodBool) {
     std::vector<double> jFexSRJLeadingEtValues, jFexSRJLeadingEtaValues, jFexSRJLeadingPhiValues;
     std::vector<double> jFexSRJSubleadingEtValues, jFexSRJSubleadingEtaValues, jFexSRJSubleadingPhiValues;
 
-    // Create branches
+    // Create branches for each TTree
     topo422Tree->Branch("eventNumber", &topoEventNumber, "eventNumber/I");
     topo422Tree->Branch("Et", &topoEtValues);
     topo422Tree->Branch("Eta", &topoEtaValues);
@@ -151,34 +199,6 @@ void nTupler(bool signalBool, bool daodBool) {
     }
 
     cout << "Found " << fileNames.size() << " files." << endl;
-
-    // Declare vectors if not already
-    /*
-    std::vector<float> hlt_jet_pt_values;
-    std::vector<float> gfex_larger_jet_pt_values;
-    std::vector<float> jet_pt_values;
-    std::vector<float> jet_log_pt_values;
-    std::vector<float> deltaR_values;
-    std::vector<float> higgs_pt_values_for_dr;
-    std::vector<float> higgs_pt_values;
-    std::vector<float> higgs_pt_values_by_event;
-    std::vector<float> higgs_pt_values_after_cut;
-    std::vector<float> b_Et_values;
-    std::vector<float> b_Et_values_after_higgs_cut;
-
-    std::vector<float> highestEt_b_closest_gfex_deltar_list;
-    std::vector<float> highestEt_b_closest_truthjet_deltar_list;
-    std::vector<float> second_highestEt_b_closest_gfex_deltar_list;
-    std::vector<float> second_highestEt_b_closest_truthjet_deltar_list;
-    std::vector<float> third_highestEt_b_closest_gfex_deltar_list;
-    std::vector<float> third_highestEt_b_closest_truthjet_deltar_list;
-    std::vector<float> fourth_highestEt_b_closest_gfex_deltar_list;
-    std::vector<float> fourth_highestEt_b_closest_truthjet_deltar_list;
-
-    std::vector<float> b_gfex_deltar_list;
-
-    std::vector<float> b11_list, b21_list, b12_list, b22_list;
-    */
 
     // Main processing loop
     int fileIt = 0;
@@ -247,10 +267,6 @@ void nTupler(bool signalBool, bool daodBool) {
             // Initialize per-event counters
             int higgs_counter = 0;
             bool higgs_passes_cut = false;
-
-            float higgs_1_pt = 0, higgs_2_pt = 0;
-            float higgs_1_eta = 0, higgs_1_phi = 0;
-            float higgs_2_eta = 0, higgs_2_phi = 0;
 
             // --- Loop over HLT_AntiKt4EMTopoJets_subjesIS ---
             for (const auto& el : *HLTJets) {

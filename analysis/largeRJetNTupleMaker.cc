@@ -32,12 +32,14 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
 
     // Create a TTree
     TTree* topoTree = new TTree("topoTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* caloTopoTree = new TTree("caloTopoTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexTree = new TTree("gFexTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* jFexTree = new TTree("jFexTree", "Tree storing event-wise Et, Eta, Phi");
 
     // Variables to store data
-    int topoEventNumber, gFexEventNumber, jFexEventNumber;
+    int topoEventNumber, caloTopoEventNumber, gFexEventNumber, jFexEventNumber;
     std::vector<double> topoEtValues, topoEtaValues, topoPhiValues;
+    std::vector<double> caloTopoEtValues, caloTopoEtaValues, caloTopoPhiValues;
     std::vector<double> gFexEtValues, gFexEtaValues, gFexPhiValues;
     std::vector<double> jFexEtValues, jFexEtaValues, jFexPhiValues;
 
@@ -46,6 +48,11 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     topoTree->Branch("Et", &topoEtValues);
     topoTree->Branch("Eta", &topoEtaValues);
     topoTree->Branch("Phi", &topoPhiValues);
+
+    caloTopoTree->Branch("eventNumber", &caloTopoEventNumber, "eventNumber/I");
+    caloTopoTree->Branch("Et", &caloTopoEtValues);
+    caloTopoTree->Branch("Eta", &caloTopoEtaValues);
+    caloTopoTree->Branch("Phi", &caloTopoPhiValues);
 
     gFexTree->Branch("eventNumber", &gFexEventNumber, "eventNumber/I");
     gFexTree->Branch("Et", &gFexEtValues);
@@ -66,7 +73,9 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
         bool topo = false;
         bool gFex = false;
         bool jFex = false;
-        if (fileName.find("topo") != std::string::npos) topo = true;
+        bool caloTopo = false;
+        if (fileName.find("topo422") != std::string::npos) topo = true;
+        if (fileName.find("calotopo") != std::string::npos) caloTopo = true;
         if (fileName.find("gfex") != std::string::npos) gFex = true;
         if (fileName.find("jfex") != std::string::npos) jFex = true;
         std::ifstream infile(fileName);
@@ -86,6 +95,13 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
                         topoEtValues.clear();
                         topoEtaValues.clear();
                         topoPhiValues.clear();
+                    }
+                    if (caloTopo){
+                        caloTopoEventNumber = current_event;
+                        caloTopoTree->Fill();
+                        caloTopoEtValues.clear();
+                        caloTopoEtaValues.clear();
+                        caloTopoPhiValues.clear();
                     }
                     if (gFex){
                         topoEventNumber = current_event;
@@ -143,6 +159,12 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
                 topoEtaValues.push_back(undigitized_eta);
                 topoPhiValues.push_back(undigitized_phi);
             }
+            if (caloTopo){
+                // Store values in vectors
+                caloTopoEtValues.push_back(undigitized_et);
+                caloTopoEtaValues.push_back(undigitized_eta);
+                caloTopoPhiValues.push_back(undigitized_phi);
+            }
             if (gFex){
                 gFexEtValues.push_back(undigitized_et);
                 gFexEtaValues.push_back(undigitized_eta);
@@ -159,6 +181,7 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
 
         // Fill the last event
         if (topo) topoTree->Fill();
+        if (caloTopo) caloTopoTree->Fill();
         else if (gFex) gFexTree->Fill();
         else if (jFex) jFexTree->Fill();
         infile.close();
@@ -166,6 +189,7 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     }
     // Write and close the file
     topoTree->Write();
+    caloTopoTree->Write();
     gFexTree->Write();
     jFexTree->Write();
     outputFile->Close();
@@ -181,6 +205,11 @@ void callNTupleMaker(const bool signalBool) {
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/";
     if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
     else fileName += "mc21_14TeV_jj_JZ3_topo422.dat";
+    fileNames.push_back(fileName);
+
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/";
+    if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
+    else fileName += "mc21_14TeV_jj_JZ3_calotopotowers.dat";
     fileNames.push_back(fileName);
 
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/";

@@ -3,6 +3,7 @@
 # Set up ROOT and RootCore
 import ROOT
 import os
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -15,7 +16,7 @@ from matplotlib import colormaps
 
 # Configuration booleans
 signalBool = True
-afBool = True
+vbfBool = True
 higgsPtCut = True
 jFexPlotsBool = True
 
@@ -23,10 +24,19 @@ quark_pdgids = [1, 2, 3, 4, 5, 6]
 
 # Clear plots
 if (signalBool):
-    subprocess.run("rm -rf signalEventPlots/*", shell=True, check=True)
+    if vbfBool:
+        subprocess.run("rm -rf signalEventPlots/*", shell=True, check=True)
+    else: 
+        subprocess.run("rm -rf signalEventPlotsggF/*", shell=True, check=True)
 else: 
     subprocess.run("rm -rf backgroundEventPlots/*", shell=True, check=True)
 
+
+def extract_index(filename):
+    match = re.search(r'_(\d{6})\.pool\.root\.1$', filename)
+    if match:
+        return int(match.group(1))
+    return float('inf')  # For safety, put unrecognized patterns at the end
 
 def find_non_higgs_daughters(particle, result=None, level=0):
     """ Recursively find the first non-Higgs daughters of a given particle. """
@@ -158,13 +168,13 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
     """
     if objectType == "topo422" or objectType == "caloTopoTowers" and len(max_gfex_srjs) > 0:
         max_gfex_srjs.sort(reverse=True)  # sort by Et descending
-        for _, eta, phi in max_gfex_srjs[:2]:
+        for _, eta, phi in max_gfex_srjs[:6]:
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='black',
                                     facecolor='none', lw=1.2, linestyle='--')
-            plt.gca().add_patch(circle)
+            #plt.gca().add_patch(circle)
             circle = patches.Circle((eta, phi), radius=1.2, edgecolor='black',
                                     facecolor='none', lw=1.2, linestyle=':') 
-            plt.gca().add_patch(circle)
+            #plt.gca().add_patch(circle)
     if objectType == "topo422" or objectType == "caloTopoTowers" and len(max_jfex_srjs) > 0:
         #print("adding jfex circle")
         max_jfex_srjs.sort(reverse=True)
@@ -172,9 +182,13 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='yellow',
                                     facecolor='none', lw=1.2, linestyle='--') 
             plt.gca().add_patch(circle)
+        for _, eta, phi in max_jfex_srjs[2:6]: 
+            circle = patches.Circle((eta, phi), radius=1.0, edgecolor='orange',
+                                    facecolor='none', lw=1.2, linestyle='--') 
+            plt.gca().add_patch(circle)
             circle = patches.Circle((eta, phi), radius=1.2, edgecolor='yellow',
                                     facecolor='none', lw=1.2, linestyle=':') 
-            plt.gca().add_patch(circle)
+            #plt.gca().add_patch(circle)
 
     if signalBool:
         b_colors = ['red', 'cyan', 'green', 'orange']
@@ -256,25 +270,23 @@ ROOT.xAOD.Init()
 
 # Set up the input file directory
 if signalBool:
-    if afBool:
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
+    if vbfBool:
+        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/mc21_14TeV/"
     else:
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
-    
+        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.recon.AOD.e8564_s4422_r16130"
 else: 
-    if afBool:
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
-    else:
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
-    
-
+    fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130"
 
 # Get a list of all ROOT files in the directory
-fileNames = [os.path.join(fileDir, f) for f in os.listdir(fileDir) if f.endswith(".pool.root.1")]
+fileNames = [os.path.join(fileDir, f) for f in os.listdir(fileDir) if f.endswith(".pool.root.1")] # fixme want to make it so these files are incremented sequentially
+fileNames.sort(key=extract_index)
 
 if not fileNames:
     print("No ROOT files found in the specified directory.")
     exit(1)
+
+
+
 
 # Initialize arrays to store phi, eta, and Et values
 
@@ -335,30 +347,23 @@ b_Et_values_after_higgs_cut = []
 
 # Heatmap bin definitions
 phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
-eta_bins = np.linspace(-5.0, 5.0, 257)  # 256 bins
+eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
 if signalBool:
-    if afBool:
+    if vbfBool:
         output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
         output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat"
         output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
         output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
     else:
-        output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
-        output_file_calotopotowers = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat"
-        output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
-        output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
-    
+        output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_HHbbbb_HLLHC_topo422.dat"
+        output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat"
+        output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_HHbbbb_HLLHC_gfex_smallrj.dat"
+        output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_HHbbbb_HLLHC_jfex_smallrj.dat"
 else:
-    if afBool:
-        output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
-        output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat"
-        output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
-        output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
-    else:
-        output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
-        output_file_calotopotowers = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat"
-        output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
-        output_file_jfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
+    output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat"
+    output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat"
+    output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat"
+    output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat"
     
 
 # Function to scale and digitize a value
@@ -395,7 +400,7 @@ eventCounter = -1
 higgsPlotCounter = 0
 higgs_counter_average = 0
 higgs_counter = 0
-
+print("output_file_gfex:", output_file_gfex)
 # Process each file
 with open(output_file_calotopotowers, "w") as f_topotower:
     with open(output_file_topo422, "w") as f_topo:
@@ -403,8 +408,8 @@ with open(output_file_calotopotowers, "w") as f_topotower:
             with open(output_file_jfex, "w") as f_jfex:
                 
                 for fileName in fileNames:
-                    #if fileIt > 1:
-                    #    break
+                    if fileIt > 49:
+                        break
                     print(f"Processing file: {fileName}")
 
                     # Open the file and make the "transient tree"
@@ -447,6 +452,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         higgs_passes_cut = False
                         t.GetEntry(entry)
                         iEvt = eventCounter # 100 events per file
+                        print("event being processed, len of calocalalltopotowers:", iEvt, len(t.CaloCalAllTopoTowers))
                         #print("entry, fileIt, iEvt:", eventCounter, fileIt, iEvt)
 
                         topo_phi_values_by_event = []
@@ -723,7 +729,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         # Loop over the CaloCalTopoClusters collection
                         topotower_it = 0
                         for el in t.CaloCalAllTopoTowers:
-                            #print("caloTopoTowers eta, phi:", el.eta(), el.phi())
+                            print("caloTopoTowers eta, phi:", el.eta(), el.phi())
                             caloTopoTowers_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             caloTopoTowers_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                             if el.et() >= 0:
@@ -742,6 +748,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 # Write to file
                                 if topotower_it == 0:
+                                    print("writing calocal topotower event: ", iEvt)
                                     f_topotower.write(f"Event : {iEvt}\n")
                                 f_topotower.write(f"0x{topotower_it:02x} {binary_word} 0x{hex_word}\n")
                             topotower_it += 1
@@ -785,10 +792,10 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                                 eta_bin = digitize(el.eta(), eta_bit_length, eta_min, eta_max)
                                 #print("eta_bit_length:", eta_bit_length)
                                 #print("phi_bit_length:", phi_bit_length)
-                                print("topo422 et: ", el.et() / 1000.0)
+                                #print("topo422 et: ", el.et() / 1000.0)
                                 
                                 et_bin = digitize(el.et() / (et_granularity * 1000), et_bit_length, et_min / et_granularity, et_max / et_granularity)
-                                print("topo422 et_bin: ", et_bin)
+                                #print("topo422 et_bin: ", et_bin)
                                 #print("topo422 phi_bin, eta_bin, et_bin:", phi_bin, eta_bin, et_bin)
 
                                 # Create binary word
@@ -801,7 +808,6 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                                 if topo422_it == 0:
                                     f_topo.write(f"Event : {iEvt}\n")
                                 f_topo.write(f"0x{topo422_it:02x} {binary_word} 0x{hex_word}\n")
-                                print("topo binary word: ", binary_word)
                             if topo422_it < 128:
                                 topo_422_highest128_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             topo_422_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
@@ -836,9 +842,11 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 # Write to file
                                 if gfex_it == 0: 
+                                    print("gfex write")
                                     f_gfex.write(f"Event : {iEvt}\n")
                                 f_gfex.write(f"0x{gfex_it:02x} {binary_word} 0x{hex_word}\n")
-                                print("writing gfex for iEvt:", )
+                                print("gfex binary word: ", binary_word)
+                                print("writing gfex for iEvt:", iEvt)
 
                             gfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             gfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
@@ -885,10 +893,15 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         # Print the sum of transverse energy for the event
                         #print(f"  Event {iEvt}: Sum of transverse energy (ΣEt) = {sum_et/1000:.2f} GeV")
                         # Save the heatmaps
+                        
                         if signalBool:
-                            plotsDir = "signalEventPlots"
+                            if vbfBool:
+                                plotsDir = "signalEventPlots"
+                            else:
+                                plotsDir = "signalEventPlotsggF"
                         else: 
                             plotsDir = "backgroundEventPlots"
+
                         if signalBool:
                             if higgs_average_pt > higgs_min_average_pt and higgsPlotCounter < 50:
                                 higgsPlotCounter += 1
@@ -936,7 +949,14 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                     # Clean up the transient tree for the current file
                     ROOT.xAOD.ClearTransientTrees()
                     fileIt += 1
+                    
+directory = ''
 if signalBool:
+    if vbfBool:
+        directory = 'signalTruthPlots/'
+    else:
+        directory = 'signalTruthPlotsggF/'
+    
 
     # After the loop (once you've collected all values):
     plt.hist(higgs_pt_values, bins=50, range=(0, 500), histtype='step', label='Higgs pT')
@@ -946,7 +966,7 @@ if signalBool:
     plt.legend()
 
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/higgs_pt_distribution.pdf')
+    plt.savefig(directory + 'higgs_pt_distribution.pdf')
 
     
 
@@ -958,7 +978,7 @@ if signalBool:
         plt.legend()
 
         # Save the histogram as an image
-        plt.savefig('signalTruthPlots/higgs_pt_distribution_after_cut.pdf')
+        plt.savefig(directory + 'higgs_pt_distribution_after_cut.pdf')
         plt.clf()
     
     # Step 3: Create the histogram of b_Et values
@@ -969,7 +989,7 @@ if signalBool:
     plt.legend()
 
     # Step 4: Save the histogram as a PDF
-    plt.savefig('signalTruthPlots/b_Et_distribution.pdf')
+    plt.savefig(directory + 'b_Et_distribution.pdf')
     plt.clf()
 
     plt.hist(b_eta_values, bins=100, range=(-5, 5), histtype='step', label='b_eta')
@@ -979,7 +999,7 @@ if signalBool:
     plt.legend()
 
     # Step 4: Save the histogram as a PDF
-    plt.savefig('signalTruthPlots/b_eta_distribution.pdf')
+    plt.savefig(directory + 'b_eta_distribution.pdf')
     plt.clf()
 
     # Step 3: Create the histogram of b_Et values
@@ -990,7 +1010,7 @@ if signalBool:
     plt.legend()
 
     # Step 4: Save the histogram as a PDF
-    plt.savefig('signalTruthPlots/b_Et_distribution_after_higgs_cut.pdf')
+    plt.savefig(directory + 'b_Et_distribution_after_higgs_cut.pdf')
     plt.clf()
     
     pt_bins = np.linspace(40, 500, 23).astype(float)
@@ -1042,22 +1062,23 @@ if signalBool:
     plt.xlabel('Higgs pT (GeV)')
     plt.ylabel('Average ΔR (bb Higgs decay products) / 20 GeV')
     plt.title('Average ΔR (bb Higgs decay products) vs. Higgs pT')
-    plt.savefig('signalTruthPlots/deltaRbb_vs_higgs_pt.pdf')
+    plt.savefig(directory + 'deltaRbb_vs_higgs_pt.pdf')
     plt.clf()
 
     inTimeAntikt4LeadingpT = []
     inTimeAntikt4SubleadingpT = []
-    for i in range(len(inTimeAntikt4TruthJetpT)):
-        top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
-        (j1, value1), (j2, value2) = top_two
-        inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
-        inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
-        inTimeAntikt4_1_pT = inTimeAntikt4TruthJetpT[i][j1]
-        inTimeAntikt4_2_eta = inTimeAntikt4TruthJetEta[i][j2]
-        inTimeAntikt4_2_phi = inTimeAntikt4TruthJetPhi[i][j2]
-        inTimeAntikt4_2_pT = inTimeAntikt4TruthJetpT[i][j2]
-        inTimeAntikt4LeadingpT.append(inTimeAntikt4_1_pT)
-        inTimeAntikt4SubleadingpT.append(inTimeAntikt4_2_pT)
+    if (len(inTimeAntikt4TruthJetpT) > 2):
+        for i in range(len(inTimeAntikt4TruthJetpT)):
+            top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+            (j1, value1), (j2, value2) = top_two
+            inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
+            inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
+            inTimeAntikt4_1_pT = inTimeAntikt4TruthJetpT[i][j1]
+            inTimeAntikt4_2_eta = inTimeAntikt4TruthJetEta[i][j2]
+            inTimeAntikt4_2_phi = inTimeAntikt4TruthJetPhi[i][j2]
+            inTimeAntikt4_2_pT = inTimeAntikt4TruthJetpT[i][j2]
+            inTimeAntikt4LeadingpT.append(inTimeAntikt4_1_pT)
+            inTimeAntikt4SubleadingpT.append(inTimeAntikt4_2_pT)
     HLTJetLeadingpT = []
     HLTJetSubLeadingpT = []
     for i in range(len(HLTJetpTValues)):
@@ -1073,7 +1094,7 @@ if signalBool:
     plt.title(r"Leading Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/leading_truth_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'leading_truth_jet_pt_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1083,7 +1104,7 @@ if signalBool:
     plt.title(r"Subleading Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/subleading_truth_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'subleading_truth_jet_pt_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1093,7 +1114,7 @@ if signalBool:
     plt.title(r"Leading HLTAntiKt4EMTopo Jets $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/leading_hlt_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'leading_hlt_jet_pt_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1103,7 +1124,7 @@ if signalBool:
     plt.title(r"Subleading HLTAntiKt4EMTopo Jets $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/subleading_hlt_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'subleading_hlt_jet_pt_distribution.pdf')
     plt.clf()
 
     b_gfex_deltar_list = []
@@ -1137,7 +1158,7 @@ if signalBool:
     plt.title(r"deltaR distribution gFex Leading, Subleading SRJ Pairs")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_gfexSRJ_leading_subleading.pdf')
+    plt.savefig(directory + 'deltaR_gfexSRJ_leading_subleading.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1148,7 +1169,7 @@ if signalBool:
     plt.ylabel('# b, gFex small R combinations / 0.2')
     plt.title(r"ΔR Distribution (b's and 2 highest Et gFex small R Jets)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaRb_gFex_smallR_distribution.pdf')
+    plt.savefig(directory + 'deltaRb_gFex_smallR_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1159,7 +1180,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (highest Et b and closest gFex small R Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.savefig(directory + 'deltaR_highestEt_b_closest_gFex_smallR_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1170,7 +1191,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (2nd highest Et b and closest gFex small R Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_2nd_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.savefig(directory + 'deltaR_2nd_highestEt_b_closest_gFex_smallR_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1181,7 +1202,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (3rd highest Et b and closest gFex small R Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_3rd_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.savefig(directory + 'deltaR_3rd_highestEt_b_closest_gFex_smallR_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1192,7 +1213,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (4th highest Et b and closest gFex small R Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_4th_highestEt_b_closest_gFex_smallR_distribution.pdf')
+    plt.savefig(directory + 'deltaR_4th_highestEt_b_closest_gFex_smallR_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1203,7 +1224,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (highest Et b and closest in time truth Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_highestEt_b_closest_truth_jet_distribution.pdf')
+    plt.savefig(directory + 'deltaR_highestEt_b_closest_truth_jet_distribution.pdf')
     plt.clf()
 
     counts, bins = np.histogram(second_highestEt_b_closest_truthjet_deltar_list, bins=25, range=(0, 5))
@@ -1213,7 +1234,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (2nd highest Et b and closest in time truth Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_2nd_highestEt_b_closest_truth_jet_distribution.pdf')
+    plt.savefig(directory + 'deltaR_2nd_highestEt_b_closest_truth_jet_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1224,7 +1245,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (3rd highest Et b and closest in time truth Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_3rd_highestEt_b_closest_truth_jet_distribution.pdf')
+    plt.savefig(directory + 'deltaR_3rd_highestEt_b_closest_truth_jet_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1235,7 +1256,7 @@ if signalBool:
     plt.ylabel('normalized # events / 0.2')
     plt.title(r"ΔR Distribution (4th highest Et b and closest in time truth Jet)")
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/deltaR_4th_highestEt_b_closest_truth_jet_distribution.pdf')
+    plt.savefig(directory + 'deltaR_4th_highestEt_b_closest_truth_jet_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1245,7 +1266,7 @@ if signalBool:
     plt.title(r"Truth InTimeAntiKt4TruthJets $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/truth_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'truth_jet_pt_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1256,7 +1277,7 @@ if signalBool:
     plt.title(r"Truth InTimeAntiKt4TruthJets $(p_T)$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/truth_jet_pt_log_distribution.pdf')
+    plt.savefig(directory + 'truth_jet_pt_log_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1266,7 +1287,7 @@ if signalBool:
     plt.title(r"HLT_AntiKt4EMTopoJets_subjesIS $p_T$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/hlt_jet_pt_distribution.pdf')
+    plt.savefig(directory + 'hlt_jet_pt_distribution.pdf')
     plt.clf()
 
     # After the loop (once you've collected all values):
@@ -1277,24 +1298,24 @@ if signalBool:
     plt.title(r"HLT_AntiKt4EMTopoJets_subjesIS $(p_T)$ Distribution")
     plt.legend()
     # Save the histogram as an image
-    plt.savefig('signalTruthPlots/hlt_jet_pt_log_distribution.pdf')
+    plt.savefig(directory + 'hlt_jet_pt_log_distribution.pdf')
     plt.clf()
     plt.clf()
 else:
-    
     inTimeAntikt4LeadingpT = []
     inTimeAntikt4SubleadingpT = []
-    for i in range(len(inTimeAntikt4TruthJetpT)):
-        top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
-        (j1, value1), (j2, value2) = top_two
-        inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
-        inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
-        inTimeAntikt4_1_pT = inTimeAntikt4TruthJetpT[i][j1]
-        inTimeAntikt4_2_eta = inTimeAntikt4TruthJetEta[i][j2]
-        inTimeAntikt4_2_phi = inTimeAntikt4TruthJetPhi[i][j2]
-        inTimeAntikt4_2_pT = inTimeAntikt4TruthJetpT[i][j2]
-        inTimeAntikt4LeadingpT.append(inTimeAntikt4_1_pT)
-        inTimeAntikt4SubleadingpT.append(inTimeAntikt4_2_pT)
+    if (len(inTimeAntikt4TruthJetpT) > 2):
+        for i in range(len(inTimeAntikt4TruthJetpT)):
+            top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+            (j1, value1), (j2, value2) = top_two
+            inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
+            inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
+            inTimeAntikt4_1_pT = inTimeAntikt4TruthJetpT[i][j1]
+            inTimeAntikt4_2_eta = inTimeAntikt4TruthJetEta[i][j2]
+            inTimeAntikt4_2_phi = inTimeAntikt4TruthJetPhi[i][j2]
+            inTimeAntikt4_2_pT = inTimeAntikt4TruthJetpT[i][j2]
+            inTimeAntikt4LeadingpT.append(inTimeAntikt4_1_pT)
+            inTimeAntikt4SubleadingpT.append(inTimeAntikt4_2_pT)
     HLTJetLeadingpT = []
     HLTJetSubLeadingpT = []
     for i in range(len(HLTJetpTValues)):
