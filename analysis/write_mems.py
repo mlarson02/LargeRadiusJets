@@ -16,7 +16,7 @@ from matplotlib import colormaps
 
 # Configuration booleans
 signalBool = True
-vbfBool = True
+vbfBool = False
 higgsPtCut = True
 jFexPlotsBool = True
 
@@ -452,7 +452,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         higgs_passes_cut = False
                         t.GetEntry(entry)
                         iEvt = eventCounter # 100 events per file
-                        print("event being processed, len of calocalalltopotowers:", iEvt, len(t.CaloCalAllTopoTowers))
+                        #print("event being processed, len of calocalalltopotowers:", iEvt, len(t.CaloCalAllTopoTowers))
                         #print("entry, fileIt, iEvt:", eventCounter, fileIt, iEvt)
 
                         topo_phi_values_by_event = []
@@ -729,7 +729,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         # Loop over the CaloCalTopoClusters collection
                         topotower_it = 0
                         for el in t.CaloCalAllTopoTowers:
-                            print("caloTopoTowers eta, phi:", el.eta(), el.phi())
+                            #print("caloTopoTowers eta, phi:", el.eta(), el.phi())
                             caloTopoTowers_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             caloTopoTowers_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                             if el.et() >= 0:
@@ -748,10 +748,10 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 # Write to file
                                 if topotower_it == 0:
-                                    print("writing calocal topotower event: ", iEvt)
+                                    #print("writing calocal topotower event: ", iEvt)
                                     f_topotower.write(f"Event : {iEvt}\n")
                                 f_topotower.write(f"0x{topotower_it:02x} {binary_word} 0x{hex_word}\n")
-                            topotower_it += 1
+                                topotower_it += 1
                         for el in t.CaloCalTopoClusters:
                             #print('  topo eta = %g, phi = %g, Et = %g' %  (el.eta(), el.phi(), el.et()))
                             topo_phi_values_by_event.append(el.phi())
@@ -842,11 +842,11 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 # Write to file
                                 if gfex_it == 0: 
-                                    print("gfex write")
+                                    #print("gfex write")
                                     f_gfex.write(f"Event : {iEvt}\n")
                                 f_gfex.write(f"0x{gfex_it:02x} {binary_word} 0x{hex_word}\n")
-                                print("gfex binary word: ", binary_word)
-                                print("writing gfex for iEvt:", iEvt)
+                                #print("gfex binary word: ", binary_word)
+                                #print("writing gfex for iEvt:", iEvt)
 
                             gfex_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             gfex_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
@@ -1067,9 +1067,13 @@ if signalBool:
 
     inTimeAntikt4LeadingpT = []
     inTimeAntikt4SubleadingpT = []
-    if (len(inTimeAntikt4TruthJetpT) > 2):
+    if (len(inTimeAntikt4TruthJetpT) > 1):
         for i in range(len(inTimeAntikt4TruthJetpT)):
             top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+            if len(top_two) < 2:
+                # Not enough jets to unpack two highest pT — skip, warn, or handle as needed
+                print(f"Skipping event {i}: only {len(top_two)} truth jets found")
+                continue  # or handle differently
             (j1, value1), (j2, value2) = top_two
             inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
             inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
@@ -1083,6 +1087,10 @@ if signalBool:
     HLTJetSubLeadingpT = []
     for i in range(len(HLTJetpTValues)):
         top_two = heapq.nlargest(2, enumerate(HLTJetpTValues[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+        if len(top_two) < 2:
+                # Not enough jets to unpack two highest pT — skip, warn, or handle as needed
+                print(f"Skipping event {i}: only {len(top_two)} truth jets found")
+                continue  # or handle differently
         (j1, value1), (j2, value2) = top_two
         HLTJetLeadingpT.append(HLTJetpTValues[i][j1])
         HLTJetSubLeadingpT.append(HLTJetpTValues[i][j2])
@@ -1135,6 +1143,10 @@ if signalBool:
 
         # Find the top two highest values and their indices
         top_two = heapq.nlargest(2, enumerate(gfex_smallr_et_values[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+        if len(top_two) < 2:
+                # Not enough jets to unpack two highest pT — skip, warn, or handle as needed
+                print(f"Skipping event {i}: only {len(top_two)} truth jets found")
+                continue  # or handle differently
         (j1, value1), (j2, value2) = top_two
         gfex_1_eta = gfex_smallr_eta_values[i][j1]
         gfex_1_phi = gfex_smallr_phi_values[i][j1]
@@ -1304,9 +1316,13 @@ if signalBool:
 else:
     inTimeAntikt4LeadingpT = []
     inTimeAntikt4SubleadingpT = []
-    if (len(inTimeAntikt4TruthJetpT) > 2):
+    if (len(inTimeAntikt4TruthJetpT) > 1):
         for i in range(len(inTimeAntikt4TruthJetpT)):
             top_two = heapq.nlargest(2, enumerate(inTimeAntikt4TruthJetpT[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+            if len(top_two) < 2:
+                # Not enough jets to unpack two highest pT — skip, warn, or handle as needed
+                print(f"Skipping event {i}: only {len(top_two)} truth jets found")
+                continue  # or handle differently
             (j1, value1), (j2, value2) = top_two
             inTimeAntikt4_1_eta = inTimeAntikt4TruthJetEta[i][j1]
             inTimeAntikt4_1_phi = inTimeAntikt4TruthJetEta[i][j1]
@@ -1320,6 +1336,10 @@ else:
     HLTJetSubLeadingpT = []
     for i in range(len(HLTJetpTValues)):
         top_two = heapq.nlargest(2, enumerate(HLTJetpTValues[i]), key=lambda x: x[1]) # get indices of two highest energy gfex smallr jets (currently treated as seeds)
+        if len(top_two) < 2:
+                # Not enough jets to unpack two highest pT — skip, warn, or handle as needed
+                print(f"Skipping event {i}: only {len(top_two)} truth jets found")
+                continue  # or handle differently
         (j1, value1), (j2, value2) = top_two
         HLTJetLeadingpT.append(HLTJetpTValues[i][j1])
         HLTJetSubLeadingpT.append(HLTJetpTValues[i][j2])

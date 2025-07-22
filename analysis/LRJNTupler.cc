@@ -19,11 +19,7 @@
 
 // Settings
 const bool afBool = true;
-const bool higgsPtCut = true;
-const bool jFexPlotsBool = false;
-
-const float higgs_min_pt = 100.0; // GeV
-const float higgs_min_average_pt = 200.0; // GeV
+const bool vbfBool = true;
 
 // Define phi wrapping
 float delta_phi(float phi1, float phi2) {
@@ -129,12 +125,11 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
 
-    // Create TTrees
-    TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
-    TTree* truthParticleTree = new TTree("truthParticleTree", "Tree storing event-wise information about truth particles");
+    // Create TTrees - commented out trees that cannot be filled with DAOD information.
+    //TTree* truthParticleTree = new TTree("truthParticleTree", "Tree storing event-wise information about truth particles");
     TTree* truthbTree = new TTree("truthbTree", "Tree storing event-wise information about truth particles");
     TTree* truthHiggsTree = new TTree("truthHiggsTree", "Tree storing event-wise information about truth particles");
-    TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
+    //TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
     TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* topo422Tree = new TTree("topo422Tree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexSRJTree = new TTree("gFexSRJTree", "Tree storing event-wise Et, Eta, Phi");
@@ -144,6 +139,8 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     TTree* gFexLeadingLRJTree = new TTree("gFexLeadingLRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexSubleadingLRJTree = new TTree("gFexSubleadingLRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* inTimeAntiKt4TruthJetsTree = new TTree("inTimeAntiKt4TruthJetsTree", "Tree storing event-wise Et, eta phi");
+    TTree* leadingInTimeAntiKt4TruthJetsTree = new TTree("leadingInTimeAntiKt4TruthJetsTree", "Tree storing event-wise Et, eta phi");
+    TTree* subleadingInTimeAntiKt4TruthJetsTree = new TTree("subleadingInTimeAntiKt4TruthJetsTree", "Tree storing event-wise Et, eta phi");
     TTree* jFexSRJTree = new TTree("jFexSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* jFexLeadingSRJTree = new TTree("jFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* jFexSubleadingSRJTree = new TTree("jFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
@@ -153,37 +150,242 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     TTree* recoAntiKt10UFOCSSKJets = new TTree("recoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
     TTree* leadingRecoAntiKt10UFOCSSKJets = new TTree("leadingRecoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
     TTree* subleadingRecoAntiKt10UFOCSSKJets = new TTree("subleadingRecoAntiKt10UFOCSSKJets", "Tree storing event-wise Et, Eta, Phi");
-    TTree* recoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
+    /*TTree* recoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
     TTree* leadingRecoAntiKt10LCTopoJets = new TTree("leadingRecoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
-    TTree* subleadingRecoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");
-    TTree* gFexRhoRoI = new TTree("gFexRhoRoI", "Tree storing event-wise Et, Eta, Phi");
+    TTree* subleadingRecoAntiKt10LCTopoJets = new TTree("recoAntiKt10LCTopoJets", "Tree storing event-wise Et, Eta, Phi");*/
+    //TTree* gFexRhoRoI = new TTree("gFexRhoRoI", "Tree storing event-wise Et, Eta, Phi");
 
     // Variables to store data to be written to TTrees
-    int topoEventNumber, gFexEventNumber, jFexEventNumber;
-    std::vector<double> caloTopoEtValues, caloTopoEtaValues, caloTopoPhiValues;
-    std::vector<double> topoEtValues, topoEtaValues, topoPhiValues;
-    std::vector<double> gFexSRJEtValues, gFexSRJEtaValues, gFexSRJPhiValues;
-    std::vector<double> gFexSRJLeadingEtValues, gFexSRJLeadingEtaValues, gFexSRJLeadingPhiValues;
-    std::vector<double> gFexSRJSubleadingEtValues, gFexSRJSubleadingEtaValues, gFexSRJSubleadingPhiValues;
-    std::vector<double> jFexSRJEtValues, jFexSRJEtaValues, jFexSRJPhiValues;
-    std::vector<double> jFexSRJLeadingEtValues, jFexSRJLeadingEtaValues, jFexSRJLeadingPhiValues;
-    std::vector<double> jFexSRJSubleadingEtValues, jFexSRJSubleadingEtaValues, jFexSRJSubleadingPhiValues;
 
-    // Create branches for each TTree
-    topo422Tree->Branch("eventNumber", &topoEventNumber, "eventNumber/I");
-    topo422Tree->Branch("Et", &topoEtValues);
-    topo422Tree->Branch("Eta", &topoEtaValues);
-    topo422Tree->Branch("Phi", &topoPhiValues);
+    // Truth Particle vectors
+    //std::vector<int> truthParticlePDGId, truthParticleStatus; 
+    //std::vector<double> truthParticleEtValues, truthParticleEnergyValues, truthParticlepTValues, truthParticlepxValues, truthParticlepyValues, truthParticlepzValues, truthParticleEtaValues, truthParticlePhiValues;
+    std::vector<double> truthbquarksEtValues, truthbquarksEnergyValues, truthbquarkspTValues, truthbquarkspxValues, truthbquarkspyValues, truthbquarkspzValues, truthbquarksEtaValues, truthbquarksPhiValues;
+    std::vector<double> truthHiggsEtValues, truthHiggsEnergyValues, truthHiggspTValues, truthHiggspxValues, truthHiggspyValues, truthHiggspzValues, truthHiggsEtaValues, truthHiggsPhiValues;
+    //std::vector<double> truthVBFQuarkValues, truthVBFQuarkEnergyValues, truthVBFQuarkpTValues, truthVBFQuarkpxValues, truthVBFQuarkpyValues, truthVBFQuarkpzValues, truthVBFQuarkEtaValues, truthVBFQuarkPhiValues;
 
-    gFexSRJTree->Branch("eventNumber", &gFexEventNumber, "eventNumber/I");
-    gFexSRJTree->Branch("Et", &gFexEtValues);
-    gFexSRJTree->Branch("Eta", &gFexEtaValues);
-    gFexSRJTree->Branch("Phi", &gFexPhiValues);
+    // Tower / cluster vectors
+    std::vector<double> caloTopoTowerEtValues, caloTopoTowerEtaValues, caloTopoTowerPhiValues;
+    std::vector<double> topo422EtValues, topo422EtaValues, topo422PhiValues;
 
-    jFexSRJTree->Branch("eventNumber", &jFexEventNumber, "eventNumber/I");
-    jFexSRJTree->Branch("Et", &jFexEtValues);
-    jFexSRJTree->Branch("Eta", &jFexEtaValues);
-    jFexSRJTree->Branch("Phi", &jFexPhiValues);
+    // L1Calo jets vectors
+    std::vector<unsigned int> gFexSRJEtIndexValues; // stores index in sorted by Et list of jets
+    std::vector<double> gFexSRJEtValues, gFexSRJpTValues, gFexSRJEtaValues, gFexSRJPhiValues;
+    std::vector<double> gFexSRJLeadingEtValues, gFexSRJLeadingpTValues, gFexSRJLeadingEtaValues, gFexSRJLeadingPhiValues;
+    std::vector<double> gFexSRJSubleadingEtValues, gFexSRJSubleadingpTValues, gFexSRJSubleadingEtaValues, gFexSRJSubleadingPhiValues;
+    std::vector<unsigned int> gFexLRJEtIndexValues; // stores index in sorted by Et list of jets
+    std::vector<double> gFexLRJEtValues, gFexLRJpTValues, gFexLRJEtaValues, gFexLRJPhiValues;
+    std::vector<double> gFexLRJLeadingEtValues, gFexLRJLeadingpTValues, gFexLRJLeadingEtaValues, gFexLRJLeadingPhiValues;
+    std::vector<double> gFexLRJSubleadingEtValues, gFexLRJSubleadingpTValues, gFexLRJSubleadingEtaValues, gFexLRJSubleadingPhiValues;
+    std::vector<unsigned int> jFexSRJEtIndexValues;
+    std::vector<double> jFexSRJEtValues, jFexSRJpTValues, jFexSRJEtaValues, jFexSRJPhiValues;
+    std::vector<double> jFexSRJLeadingEtValues, jFexSRJLeadingpTValues, jFexSRJLeadingEtaValues, jFexSRJLeadingPhiValues;
+    std::vector<double> jFexSRJSubleadingEtValues, jFexSRJSubleadingpTValues, jFexSRJSubleadingEtaValues, jFexSRJSubleadingPhiValues;
+    //std::vector<double> gFexRhoRoIEtValues, gFexRhoRoIEtaValues, gFexRhoRoIPhiValues; // skip adding these for now.
+
+    // HLT jets vectors
+    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues; // stores index in sorted by Et list of jets
+    std::vector<double> hltAntiKt4SRJEtValues, hltAntiKt4SRJpTValues, hltAntiKt4SRJEtaValues, hltAntiKt4SRJPhiValues;
+    std::vector<double> hltAntiKt4SRJLeadingEtValues, hltAntiKt4SRJLeadingpTValues, hltAntiKt4SRJLeadingEtaValues, hltAntiKt4SRJLeadingPhiValues;
+    std::vector<double> hltAntiKt4SRJSubleadingEtValues, hltAntiKt4SRJSubleadingpTValues, hltAntiKt4SRJSubleadingEtaValues, hltAntiKt4SRJSubleadingPhiValues;
+
+    // Reco offline jets vectors
+    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues;
+    std::vector<double> recoAntiKt10LRJEtValues, recoAntiKt10LRJpTValues, recoAntiKt10LRJEtaValues, recoAntiKt10LRJPhiValues;
+    std::vector<double> recoAntiKt10LRJLeadingEtValues, recoAntiKt10LRJLeadingpTValues, recoAntiKt10LRJLeadingEtaValues, recoAntiKt10LRJLeadingPhiValues;
+    std::vector<double> recoAntiKt10LRJSubleadingEtValues, recoAntiKt10LRJSubleadingpTValues, recoAntiKt10LRJSubleadingEtaValues, recoAntiKt10LRJSubleadingPhiValues;
+
+    // In time anti-kt 4 truth jets vectors
+    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues;
+    std::vector<double> inTimeAntiKt4TruthSRJEtValues, inTimeAntiKt4TruthSRJpTValues, inTimeAntiKt4TruthSRJEtaValues, inTimeAntiKt4TruthSRJPhiValues;
+    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues, inTimeAntiKt4TruthSRJLeadingpTValues, inTimeAntiKt4TruthSRJLeadingEtaValues, inTimeAntiKt4TruthSRJLeadingPhiValues;
+    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues, inTimeAntiKt4TruthSRJSubleadingpTValues, inTimeAntiKt4TruthSRJSubleadingEtaValues, inTimeAntiKt4TruthSRJSubleadingPhiValues;
+
+    // Create branches for each TTree FIXME don't have access to full truth record for DAOD samples
+    /*
+    truthParticleTree->Branch("Et", &truthParticleEtValues);
+    truthParticleTree->Branch("Eta", &truthParticleEtaValues);
+    truthParticleTree->Branch("Phi", &truthParticlePhiValues);
+    truthParticleTree->Branch("pdgId", &truthParticlePDGId);
+    truthParticleTree->Branch("pdgStatus", &truthParticleStatus);
+    truthParticleTree->Branch("pT", &truthParticlepTValues);
+    truthParticleTree->Branch("px", &truthParticlepxValues);
+    truthParticleTree->Branch("py", &truthParticlepyValues);
+    truthParticleTree->Branch("pz", &truthParticlepzValues);*/
+
+    // truthbTree
+    truthbTree->Branch("Et", &truthbquarksEtValues);
+    truthbTree->Branch("Eta", &truthbquarksEtaValues);
+    truthbTree->Branch("Phi", &truthbquarksPhiValues);
+    truthbTree->Branch("pT", &truthbquarkspTValues);
+    truthbTree->Branch("px", &truthbquarkspxValues);
+    truthbTree->Branch("py", &truthbquarkspyValues);
+    truthbTree->Branch("pz", &truthbquarkspzValues);
+    truthbTree->Branch("Energy", &truthbquarksEnergyValues);
+
+    // truthHiggsTree
+    truthHiggsTree->Branch("Et", &truthHiggsEtValues);
+    truthHiggsTree->Branch("Eta", &truthHiggsEtaValues);
+    truthHiggsTree->Branch("Phi", &truthHiggsPhiValues);
+    truthHiggsTree->Branch("pT", &truthHiggspTValues);
+    truthHiggsTree->Branch("px", &truthHiggspxValues);
+    truthHiggsTree->Branch("py", &truthHiggspyValues);
+    truthHiggsTree->Branch("pz", &truthHiggspzValues);
+    truthHiggsTree->Branch("Energy", &truthHiggsEnergyValues);
+
+    // truthVBFQuark FIXME don't have for DAOD samples - unless can find corresponding aod events for which full truth record is stored
+    /*
+    truthVBFQuark->Branch("Et", &truthVBFQuarkValues);
+    truthVBFQuark->Branch("Eta", &truthVBFQuarkEtaValues);
+    truthVBFQuark->Branch("Phi", &truthVBFQuarkPhiValues);
+    truthVBFQuark->Branch("pT", &truthVBFQuarkpTValues);
+    truthVBFQuark->Branch("px", &truthVBFQuarkpxValues);
+    truthVBFQuark->Branch("py", &truthVBFQuarkpyValues);
+    truthVBFQuark->Branch("pz", &truthVBFQuarkpzValues);
+    truthVBFQuark->Branch("Energy", &truthVBFQuarkEnergyValues);*/
+
+    // caloTopoTowerTree
+    caloTopoTowerTree->Branch("Et", &caloTopoTowerEtValues);
+    caloTopoTowerTree->Branch("Eta", &caloTopoTowerEtaValues);
+    caloTopoTowerTree->Branch("Phi", &caloTopoTowerPhiValues);
+
+    // topo422Tree
+    topo422Tree->Branch("Et", &topo422EtValues);
+    topo422Tree->Branch("Eta", &topo422EtaValues);
+    topo422Tree->Branch("Phi", &topo422PhiValues);
+
+    // gFexSRJTree
+    gFexSRJTree->Branch("EtIndex", &gFexSRJEtIndexValues);
+    gFexSRJTree->Branch("Et", &gFexSRJEtValues);
+    gFexSRJTree->Branch("pT", &gFexSRJpTValues);
+    gFexSRJTree->Branch("Eta", &gFexSRJEtaValues);
+    gFexSRJTree->Branch("Phi", &gFexSRJPhiValues);
+
+    // gFexLeadingSRJTree
+    gFexLeadingSRJTree->Branch("Et", &gFexSRJLeadingEtValues);
+    gFexLeadingSRJTree->Branch("pT", &gFexSRJLeadingpTValues);
+    gFexLeadingSRJTree->Branch("Eta", &gFexSRJLeadingEtaValues);
+    gFexLeadingSRJTree->Branch("Phi", &gFexSRJLeadingPhiValues);
+
+    // gFexSubleadingSRJTree
+    gFexSubleadingSRJTree->Branch("Et", &gFexSRJSubleadingEtValues);
+    gFexSubleadingSRJTree->Branch("pT", &gFexSRJSubleadingpTValues);
+    gFexSubleadingSRJTree->Branch("Eta", &gFexSRJSubleadingEtaValues);
+    gFexSubleadingSRJTree->Branch("Phi", &gFexSRJSubleadingPhiValues);
+
+    // gFexLRJTree
+    gFexLRJTree->Branch("EtIndex", &gFexLRJEtIndexValues);
+    gFexLRJTree->Branch("Et", &gFexLRJEtValues);
+    gFexLRJTree->Branch("pT", &gFexLRJpTValues);
+    gFexLRJTree->Branch("Eta", &gFexLRJEtaValues);
+    gFexLRJTree->Branch("Phi", &gFexLRJPhiValues);
+
+    // gFexLeadingLRJTree
+    gFexLeadingLRJTree->Branch("Et", &gFexLRJLeadingEtValues);
+    gFexLeadingLRJTree->Branch("pT", &gFexLRJLeadingpTValues);
+    gFexLeadingLRJTree->Branch("Eta", &gFexLRJLeadingEtaValues);
+    gFexLeadingLRJTree->Branch("Phi", &gFexLRJLeadingPhiValues);
+
+    // gFexSubleadingLRJTree
+    gFexSubleadingLRJTree->Branch("Et", &gFexLRJSubleadingEtValues);
+    gFexSubleadingLRJTree->Branch("pT", &gFexLRJSubleadingpTValues);
+    gFexSubleadingLRJTree->Branch("Eta", &gFexLRJSubleadingEtaValues);
+    gFexSubleadingLRJTree->Branch("Phi", &gFexLRJSubleadingPhiValues);
+
+    // inTimeAntiKt4TruthJetsTree
+    inTimeAntiKt4TruthJetsTree->Branch("EtIndex", &inTimeAntiKt4TruthSRJEtIndexValues);
+    inTimeAntiKt4TruthJetsTree->Branch("Et", &inTimeAntiKt4TruthSRJEtValues);
+    inTimeAntiKt4TruthJetsTree->Branch("pT", &inTimeAntiKt4TruthSRJpTValues);
+    inTimeAntiKt4TruthJetsTree->Branch("Eta", &inTimeAntiKt4TruthSRJEtaValues);
+    inTimeAntiKt4TruthJetsTree->Branch("Phi", &inTimeAntiKt4TruthSRJPhiValues);
+
+    // leadingInTimeAntiKt4TruthJetsTree
+    leadingInTimeAntiKt4TruthJetsTree->Branch("Et", &inTimeAntiKt4TruthSRJLeadingEtValues);
+    leadingInTimeAntiKt4TruthJetsTree->Branch("pT", &inTimeAntiKt4TruthSRJLeadingpTValues);
+    leadingInTimeAntiKt4TruthJetsTree->Branch("Eta", &inTimeAntiKt4TruthSRJLeadingEtaValues);
+    leadingInTimeAntiKt4TruthJetsTree->Branch("Phi", &inTimeAntiKt4TruthSRJLeadingPhiValues);
+
+    // subleadingInTimeAntiKt4TruthJetsTree
+    subleadingInTimeAntiKt4TruthJetsTree->Branch("Et", &inTimeAntiKt4TruthSRJSubleadingEtValues);
+    subleadingInTimeAntiKt4TruthJetsTree->Branch("pT", &inTimeAntiKt4TruthSRJSubleadingpTValues);
+    subleadingInTimeAntiKt4TruthJetsTree->Branch("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValues);
+    subleadingInTimeAntiKt4TruthJetsTree->Branch("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValues);
+
+    // jFexSRJTree
+    jFexSRJTree->Branch("EtIndex", &jFexSRJEtIndexValues);
+    jFexSRJTree->Branch("Et", &jFexSRJEtValues);
+    jFexSRJTree->Branch("pT", &jFexSRJpTValues);
+    jFexSRJTree->Branch("Eta", &jFexSRJEtaValues);
+    jFexSRJTree->Branch("Phi", &jFexSRJPhiValues);
+
+    // jFexLeadingSRJTree
+    jFexLeadingSRJTree->Branch("Et", &jFexSRJLeadingEtValues);
+    jFexLeadingSRJTree->Branch("pT", &jFexSRJLeadingpTValues);
+    jFexLeadingSRJTree->Branch("Eta", &jFexSRJLeadingEtaValues);
+    jFexLeadingSRJTree->Branch("Phi", &jFexSRJLeadingPhiValues);
+
+    // jFexSubleadingSRJTree
+    jFexSubleadingSRJTree->Branch("Et", &jFexSRJSubleadingEtValues);
+    jFexSubleadingSRJTree->Branch("pT", &jFexSRJSubleadingpTValues);
+    jFexSubleadingSRJTree->Branch("Eta", &jFexSRJSubleadingEtaValues);
+    jFexSubleadingSRJTree->Branch("Phi", &jFexSRJSubleadingPhiValues);
+
+    // hltAntiKt4EMTopoJetsTree
+    hltAntiKt4EMTopoJetsTree->Branch("Et", &hltAntiKt4SRJEtValues);
+    hltAntiKt4EMTopoJetsTree->Branch("pT", &hltAntiKt4SRJpTValues);
+    hltAntiKt4EMTopoJetsTree->Branch("Eta", &hltAntiKt4SRJEtaValues);
+    hltAntiKt4EMTopoJetsTree->Branch("Phi", &hltAntiKt4SRJPhiValues);
+
+    // leadingHltAntiKt4EMTopoJetsTree
+    leadingHltAntiKt4EMTopoJetsTree->Branch("Et", &hltAntiKt4SRJLeadingEtValues);
+    leadingHltAntiKt4EMTopoJetsTree->Branch("pT", &hltAntiKt4SRJLeadingpTValues);
+    leadingHltAntiKt4EMTopoJetsTree->Branch("Eta", &hltAntiKt4SRJLeadingEtaValues);
+    leadingHltAntiKt4EMTopoJetsTree->Branch("Phi", &hltAntiKt4SRJLeadingPhiValues);
+
+    // subleadingHltAntiKt4EMTopoJetsTree
+    subleadingHltAntiKt4EMTopoJetsTree->Branch("Et", &hltAntiKt4SRJSubleadingEtValues);
+    subleadingHltAntiKt4EMTopoJetsTree->Branch("pT", &hltAntiKt4SRJSubleadingpTValues);
+    subleadingHltAntiKt4EMTopoJetsTree->Branch("Eta", &hltAntiKt4SRJSubleadingEtaValues);
+    subleadingHltAntiKt4EMTopoJetsTree->Branch("Phi", &hltAntiKt4SRJSubleadingPhiValues);
+
+    // recoAntiKt10UFOCSSKJets
+    recoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJEtValues);
+    recoAntiKt10UFOCSSKJets->Branch("pT", &recoAntiKt10LRJpTValues);
+    recoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJEtaValues);
+    recoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJPhiValues);
+
+    // leadingRecoAntiKt10UFOCSSKJets
+    leadingRecoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJLeadingEtValues);
+    leadingRecoAntiKt10UFOCSSKJets->Branch("pT", &recoAntiKt10LRJLeadingpTValues);
+    leadingRecoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJLeadingEtaValues);
+    leadingRecoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJLeadingPhiValues);
+
+    // subleadingRecoAntiKt10UFOCSSKJets
+    subleadingRecoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJSubleadingEtValues);
+    subleadingRecoAntiKt10UFOCSSKJets->Branch("pT", &recoAntiKt10LRJSubleadingpTValues);
+    subleadingRecoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJSubleadingEtaValues);
+    subleadingRecoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJSubleadingPhiValues);
+
+    // recoAntiKt10LCTopoJets - unsure if want to use these at all?? 
+    /*
+    recoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJEtValues);
+    recoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJEtaValues);
+    recoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJPhiValues);
+
+    // leadingRecoAntiKt10LCTopoJets
+    leadingRecoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJLeadingEtValues);
+    leadingRecoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJLeadingEtaValues);
+    leadingRecoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJLeadingPhiValues);
+
+    // subleadingRecoAntiKt10LCTopoJets
+    subleadingRecoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJSubleadingEtValues);
+    subleadingRecoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJSubleadingEtaValues);
+    subleadingRecoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJSubleadingPhiValues);*/
+
+    // gFexRhoRoI
+    /*gFexRhoRoI->Branch("Et", &gFexRhoRoIEtValues);
+    gFexRhoRoI->Branch("Eta", &gFexRhoRoIEtaValues);
+    gFexRhoRoI->Branch("Phi", &gFexRhoRoIPhiValues);*/
     
     // Collect input file names
     vector<string> fileNames;
@@ -204,7 +406,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     int fileIt = 0;
     for (const auto& fileName : fileNames) {
         fileIt++; 
-        if (fileIt > 9) break; 
+        //if (fileIt > 9) break; 
         cout << "Processing file: " << fileName << endl;
 
         TFile* f = TFile::Open(fileName.c_str());
@@ -226,54 +428,325 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
         for (Long64_t entry = 0; entry < event.getEntries(); ++entry) {
             event.getEntry(entry);
 
-            // -- ADD collections you want here ---
-            const xAOD::TruthParticleContainer* truthParticles = nullptr;
-            if (!event.retrieve(truthParticles, "TruthParticles").isSuccess()) {
+            // -- retrieve collections from DOAD ---
+            const xAOD::TruthParticleContainer* TruthBosonsWithDecayParticles = nullptr;
+            if (!event.retrieve(TruthBosonsWithDecayParticles, "TruthBosonsWithDecayParticles").isSuccess()) {
                 cerr << "Cannot access TruthParticles" << endl;
                 continue;
             }
 
-            const xAOD::JetContainer* HLTJets = nullptr;
-            if (!event.retrieve(HLTJets, "HLT_AntiKt4EMTopoJets_subjesIS").isSuccess()) {
+            const xAOD::JetContainer* HLT_AntiKt4EMTopoJets_subjesIS = nullptr;
+            if (!event.retrieve(HLT_AntiKt4EMTopoJets_subjesIS, "HLT_AntiKt4EMTopoJets_subjesIS").isSuccess()) {
                 cerr << "Failed to retrieve HLT jets" << endl;
                 continue;
             }
 
-            const xAOD::JetContainer* RecoJets = nullptr;
-            if (!event.retrieve(RecoJets, "AntiKt10UFOCSSKJets").isSuccess()) {
+            const xAOD::JetContainer* AntiKt10UFOCSSKJets = nullptr;
+            if (!event.retrieve(AntiKt10UFOCSSKJets, "AntiKt10UFOCSSKJets").isSuccess()) {
                 cerr << "Failed to retrieve HLT jets" << endl;
                 continue;
             }
 
 
-            const xAOD::gFexJetRoIContainer* gFexSRJets = nullptr;
-            if (!event.retrieve(gFexSRJets, "L1_gFexSRJetRoI").isSuccess()) {
+            const xAOD::gFexJetRoIContainer* L1_gFexSRJetRoI = nullptr;
+            if (!event.retrieve(L1_gFexSRJetRoI, "L1_gFexSRJetRoI").isSuccess()) {
                 std::cerr << "Failed to retrieve gFex SR jets" << std::endl;
                 continue;
             }
 
-            const xAOD::gFexJetRoIContainer* gFexLRJets = nullptr;
-            if (!event.retrieve(gFexLRJets, "L1_gFexLRJetRoI").isSuccess()) {
+            const xAOD::gFexJetRoIContainer* L1_gFexLRJetRoI = nullptr;
+            if (!event.retrieve(L1_gFexLRJetRoI, "L1_gFexLRJetRoI").isSuccess()) {
                 cerr << "Failed to retrieve gFex LR jets" << endl;
                 continue;
             }
 
-            const xAOD::JetContainer* TruthJets = nullptr;
-            if (!event.retrieve(TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
+            const xAOD::jFexJetRoIContainer* L1_jFexSRJetRoI = nullptr;
+            if (!event.retrieve(L1_jFexSRJetRoI, "L1_jFexSRJetRoI").isSuccess()) {
+                std::cerr << "Failed to retrieve jFex SR jets" << std::endl;
+                continue;
+            }
+
+            const xAOD::jFexJetRoIContainer* L1_gFexRhoRoI = nullptr;
+            if (!event.retrieve(L1_gFexRhoRoI, "L1_gFexRhoRoI").isSuccess()) {
+                std::cerr << "Failed to retrieve gFex energy density" << std::endl;
+                continue;
+            }
+
+            const xAOD::JetContainer* InTimeAntiKt4TruthJets = nullptr;
+            if (!event.retrieve(InTimeAntiKt4TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
                 cerr << "Failed to retrieve Truth jets" << endl;
                 continue;
             }
 
-            // Initialize per-event counters
-            int higgs_counter = 0;
-            bool higgs_passes_cut = false;
+            const xAOD::JetContainer* AntiKt10UFOCSSKJets = nullptr;
+            if (!event.retrieve(AntiKt10UFOCSSKJets, "AntiKt10UFOCSSKJets").isSuccess()) {
+                cerr << "Failed to retrieve reco Antik4 10 UFOCSSK jets" << endl;
+                continue;
+            }
 
-            // --- Loop over HLT_AntiKt4EMTopoJets_subjesIS ---
-            for (const auto& el : *HLTJets) {
-                hlt_jet_pt_values.push_back(el->pt() / 1000.0);
-                float hlt_jet_total_p = el->pt() * cosh(el->eta());
-                float hlt_jet_ptoverp = el->pt() / hlt_jet_total_p;
-                float hlt_jet_Et = (el->e() * hlt_jet_ptoverp) / 1000.0;
+            // Retrieve the CaloTopoClusters422 container
+            const DataVector<xAOD::CaloCluster_v1>* CaloTopoClusters422 = nullptr;
+            if (!event.retrieve(CaloTopoClusters422, "CaloTopoClusters422").isSuccess()) {
+                std::cerr << "Failed to retrieve CaloTopoClusters422" << std::endl;
+                continue;
+            }
+
+            // Retrieve the CaloCalAllTopoTowers container
+            const DataVector<xAOD::CaloCluster_v1>* CaloCalAllTopoTowers = nullptr;
+            if (!event.retrieve(CaloCalAllTopoTowers, "CaloCalAllTopoTowers").isSuccess()) {
+                std::cerr << "Failed to retrieve CaloCalAllTopoTowers" << std::endl;
+                continue;
+            }
+
+
+            // FIXME add all this, fill trees and clear vectors:
+            hltAntiKt4SRJpTValues.clear();
+            hltAntiKtSRJEtaValues.clear();
+            hltAntiKt4SRJEtValues.clear();
+            hltAntiKt4SRJPhiValues.clear();
+            hltAntiKt4SRJEtIndexValues.clear();
+            hltAntiKtSRJLeadingEtValues.clear();
+            hltAntiKtSRJLeadingEtaValues.clear();
+            hltAntiKtSRJLeadingPhiValues.clear();
+            hltAntiKtSRJSubleadingEtValues.clear();
+            hltAntiKtSRJSubleadingEtaValues.clear();
+            hltAntiKtSRJSubleadingPhiValues.clear();
+            inTimeAntiKt4TruthSRJEtValues.clear();
+            inTimeAntiKt4TruthSRJEtIndexValues.clear();
+            inTimeAntiKt4TruthSRJEtaValues.clear();
+            inTimeAntiKt4TruthSRJPhiValues.clear();
+            inTimeAntiKt4TruthSRJLeadingEtValues.clear();
+            inTimeAntiKt4TruthSRJLeadingEtaValues.clear();
+            inTimeAntiKt4TruthSRJLeadingPhiValues.clear();
+            inTimeAntiKt4TruthSRJSubleadingEtValues.clear();
+            inTimeAntiKt4TruthSRJSubleadingEtaValues.clear();
+            inTimeAntiKt4TruthSRJSubleadingPhiValues.clear();
+            recoAntiKt10LRJEtValues.clear();
+            recoAntiKt10LRJEtaValues.clear();
+            recoAntiKt10LRJPhiValues.clear();
+            recoAntiKt10LRJEtIndexValues.clear();
+            recoAntiKt10LRJLeadingEtValues.clear();
+            recoAntiKt10LRJLeadingEtaValues.clear();
+            recoAntiKt10LRJLeadingPhiValues.clear();
+            recoAntiKt10LRJSubleadingEtValues.clear();
+            recoAntiKt10LRJSubleadingEtaValues.clear();
+            recoAntiKt10LRJSubleadingPhiValues.clear();
+            gFexLRJEtValues.clear();
+            gFexLRJEtaValues.clear();
+            gFexLRJPhiValues.clear();
+            gFexLRJEtIndexValues.clear();
+            gFexLRJLeadingEtValues.clear();
+            gFexLRJLeadingEtaValues.clear();
+            gFexLRJLeadingPhiValues.clear();
+            gFexLRJSubleadingEtValues.clear();
+            gFexLRJSubleadingEtaValues.clear();
+            gFexLRJSubleadingPhiValues.clear();
+            gFexSRJEtValues.clear();
+            gFexSRJEtaValues.clear();
+            gFexSRJPhiValues.clear();
+            gFexSRJEtIndexValues.clear();
+            gFexSRJLeadingEtValues.clear();
+            gFexSRJLeadingEtaValues.clear();
+            gFexSRJLeadingPhiValues.clear();
+            gFexSRJSubleadingEtValues.clear();
+            gFexSRJSubleadingEtaValues.clear();
+            gFexSRJSubleadingPhiValues.clear();
+            jFexSRJEtValues.clear();
+            jFexSRJEtaValues.clear();
+            jFexSRJPhiValues.clear();
+            jFexSRJEtIndexValues.clear();
+            jFexSRJLeadingEtValues.clear();
+            jFexSRJLeadingEtaValues.clear();
+            jFexSRJLeadingPhiValues.clear();
+            jFexSRJSubleadingEtValues.clear();
+            jFexSRJSubleadingEtaValues.clear();
+            jFexSRJSubleadingPhiValues.clear();
+            topo422EtValues.clear();
+            topo422EtaValues.clear();
+            topo422PhiValues.clear();
+            caloTopoTowerEtValues.clear();
+            caloTopoTowerEtaValues.clear();
+            caloTopoTowerPhiValues.clear();
+
+            // Loop over clusters and fill Et, Eta, Phi
+            for (const auto* cluster : *CaloCalAllTopoTowers) {
+                if (!cluster) continue;
+
+                double et = cluster->e() / cosh(cluster->eta()) / 1000.0; // Et in GeV
+                caloTopoTowerEtValues.push_back(et);
+                caloTopoTowerEtaValues.push_back(cluster->eta());
+                caloTopoTowerPhiValues.push_back(cluster->phi());
+            }
+
+            // Loop over the clusters and store Et, Eta, Phi
+            for (const auto* cluster : *CaloTopoClusters422) {
+                if (!cluster) continue;
+
+                double et = cluster->e() / cosh(cluster->eta()) / 1000.0; // Et in GeV
+                topo422EtValues.push_back(et);
+                topo422EtaValues.push_back(cluster->eta());
+                topo422PhiValues.push_back(cluster->phi());
+            }
+
+            // Temporary vector for sorting by Et
+            std::vector<std::pair<size_t, double>> jFexSRJetEtWithIndex;
+
+            for (size_t i = 0; i < L1_jFexSRJetRoI->size(); ++i) {
+                const auto& jet = (*L1_jFexSRJetRoI)[i];
+                double et = jet->et(); // Already in GeV
+                jFexSRJetEtWithIndex.emplace_back(i, et);
+            }
+
+            // Sort descending by Et
+            std::sort(jFexSRJetEtWithIndex.begin(), jFexSRJetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+
+            // Fill vectors in sorted order
+            for (const auto& [index, et] : jFexSRJetEtWithIndex) {
+                const auto& jet = (*L1_jFexSRJetRoI)[index];
+
+                jFexSRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                jFexSRJEtValues.push_back(et);
+                jFexSRJEtaValues.push_back(jet->eta());
+                jFexSRJPhiValues.push_back(jet->phi());
+            }
+
+            // Leading jet
+            if (!jFexSRJetEtWithIndex.empty()) {
+                const auto& leading = (*L1_jFexSRJetRoI)[jFexSRJetEtWithIndex[0].first];
+                jFexSRJLeadingEtValues.push_back(jFexSRJEtValues[0]);
+                jFexSRJLeadingEtaValues.push_back(leading->eta());
+                jFexSRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            // Subleading jet
+            if (jFexSRJetEtWithIndex.size() > 1) {
+                const auto& subleading = (*L1_jFexSRJetRoI)[jFexSRJetEtWithIndex[1].first];
+                jFexSRJSubleadingEtValues.push_back(jFexSRJEtValues[1]);
+                jFexSRJSubleadingEtaValues.push_back(subleading->eta());
+                jFexSRJSubleadingPhiValues.push_back(subleading->phi());
+            }
+
+            // Temporary vector for sorting by Et
+            std::vector<std::pair<size_t, double>> gFexSRJetEtWithIndex;
+
+            for (size_t i = 0; i < L1_gFexSRJetRoI->size(); ++i) {
+                const auto& jet = (*L1_gFexSRJetRoI)[i];
+                double et = jet->et(); // Already in GeV
+                gFexSRJetEtWithIndex.emplace_back(i, et);
+            }
+
+            // Sort descending by Et
+            std::sort(gFexSRJetEtWithIndex.begin(), gFexSRJetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+
+            // Fill vectors in sorted order
+            for (const auto& [index, et] : gFexSRJetEtWithIndex) {
+                const auto& jet = (*L1_gFexSRJetRoI)[index];
+
+                gFexSRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                gFexSRJEtValues.push_back(et);
+                gFexSRJEtaValues.push_back(jet->eta());
+                gFexSRJPhiValues.push_back(jet->phi());
+            }
+
+            // Leading jet
+            if (!gFexSRJetEtWithIndex.empty()) {
+                const auto& leading = (*L1_gFexSRJetRoI)[gFexSRJetEtWithIndex[0].first];
+                gFexSRJLeadingEtValues.push_back(gFexSRJEtValues[0]);
+                gFexSRJLeadingEtaValues.push_back(leading->eta());
+                gFexSRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            // Subleading jet
+            if (gFexSRJetEtWithIndex.size() > 1) {
+                const auto& subleading = (*L1_gFexSRJetRoI)[gFexSRJetEtWithIndex[1].first];
+                gFexSRJSubleadingEtValues.push_back(gFexSRJEtValues[1]);
+                gFexSRJSubleadingEtaValues.push_back(subleading->eta());
+                gFexSRJSubleadingPhiValues.push_back(subleading->phi());
+            }
+
+
+            // Temporary vector for sorting by Et
+            std::vector<std::pair<size_t, double>> gFexLRJetEtWithIndex;
+
+            for (size_t i = 0; i < L1_gFexLRJetRoI->size(); ++i) {
+                const auto& jet = (*L1_gFexLRJetRoI)[i];
+                double et = jet->et(); // already in GeV
+                gFexLRJetEtWithIndex.emplace_back(i, et);
+            }
+
+            // Sort descending by Et
+            std::sort(gFexLRJetEtWithIndex.begin(), gFexLRJetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+
+            // Fill vectors in sorted order
+            for (const auto& [index, et] : gFexLRJetEtWithIndex) {
+                const auto& jet = (*L1_gFexLRJetRoI)[index];
+
+                gFexLRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                gFexLRJEtValues.push_back(et);
+                gFexLRJEtaValues.push_back(jet->eta());
+                gFexLRJPhiValues.push_back(jet->phi());
+            }
+
+            // Leading jet
+            if (!gFexLRJetEtWithIndex.empty()) {
+                const auto& leading = (*L1_gFexLRJetRoI)[gFexLRJetEtWithIndex[0].first];
+                gFexLRJLeadingEtValues.push_back(gFexLRJEtValues[0]);
+                gFexLRJLeadingEtaValues.push_back(leading->eta());
+                gFexLRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            // Subleading jet
+            if (gFexLRJetEtWithIndex.size() > 1) {
+                const auto& subleading = (*L1_gFexLRJetRoI)[gFexLRJetEtWithIndex[1].first];
+                gFexLRJSubleadingEtValues.push_back(gFexLRJEtValues[1]);
+                gFexLRJSubleadingEtaValues.push_back(subleading->eta());
+                gFexLRJSubleadingPhiValues.push_back(subleading->phi());
+            }
+
+
+            std::vector<std::pair<size_t, double>> hltJetEtWithIndex;
+            for (size_t i = 0; i < HLT_AntiKt4EMTopoJets_subjesIS->size(); ++i) {
+                const auto& el = (*HLT_AntiKt4EMTopoJets_subjesIS)[i];
+                double et = el->e() / (1000.0 * cosh(el->eta()));
+                jetEtWithIndex.emplace_back(i, et);  // Store index and Et for sorting
+            }
+            // Sort by descending Et
+            std::sort(jetEtWithIndex.begin(), jetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+            // Now push back into vectors in sorted order
+            for (const auto& [index, et] : jetEtWithIndex) {
+                const auto& el = (*HLT_AntiKt4EMTopoJets_subjesIS)[index];
+                hltAntiKt4SRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                hltAntiKt4SRJEtValues.push_back(et);
+                hltAntiKt4SRJpTValues.push_back(el->pt() / 1000.0);
+                hltAntiKtSRJEtaValues.push_back(el->eta());
+                hltAntiKt4SRJPhiValues.push_back(el->phi());
+            }
+
+            // Store leading and subleading jets if available
+            if (!jetEtWithIndex.empty()) {
+                const auto& leading = (*HLT_AntiKt4EMTopoJets_subjesIS)[jetEtWithIndex[0].first];
+                hltAntiKtSRJLeadingEtValues.push_back(hltAntiKt4SRJEtValues[0]);
+                hltAntiKtSRJLeadingEtaValues.push_back(leading->eta());
+                hltAntiKtSRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            if (jetEtWithIndex.size() > 1) {
+                const auto& subleading = (*HLT_AntiKt4EMTopoJets_subjesIS)[jetEtWithIndex[1].first];
+                hltAntiKtSRJSubleadingEtValues.push_back(hltAntiKt4SRJEtValues[1]);
+                hltAntiKtSRJSubleadingEtaValues.push_back(subleading->eta());
+                hltAntiKtSRJSubleadingPhiValues.push_back(subleading->phi());
             }
 
             // --- Loop over L1_gFexLRJetRoI ---
@@ -283,17 +756,91 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             //}
 
             // --- Loop over InTimeAntiKt4TruthJets ---
-            for (const auto& el : *TruthJets) {
-                jet_pt_values.push_back(el->pt() / 1000.0);
-                jet_log_pt_values.push_back(log10(el->pt() / 1000.0));
-                float truth_jet_total_p = el->pt() * cosh(el->eta());
-                float truth_jet_ptoverp = el->pt() / truth_jet_total_p;
-                float truth_jet_Et = (el->e() * truth_jet_ptoverp) / 1000.0;
+            // Temporary vector to hold (index, Et) for sorting
+            std::vector<std::pair<size_t, double>> truthJetEtWithIndex;
+
+            for (size_t i = 0; i < InTimeAntiKt4TruthJets->size(); ++i) {
+                const auto& jet = (*InTimeAntiKt4TruthJets)[i];
+                double et = jet->e() / (1000.0 * cosh(jet->eta()));
+                truthJetEtWithIndex.emplace_back(i, et);  // Store original index and Et
             }
 
+            // Sort by descending Et
+            std::sort(truthJetEtWithIndex.begin(), truthJetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+
+            // Fill vectors in sorted order
+            for (const auto& [index, et] : truthJetEtWithIndex) {
+                const auto& jet = (*InTimeAntiKt4TruthJets)[index];
+                inTimeAntiKt4TruthSRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                inTimeAntiKt4TruthSRJEtValues.push_back(et);
+                inTimeAntiKt4TruthSRJEtaValues.push_back(jet->eta());
+                inTimeAntiKt4TruthSRJPhiValues.push_back(jet->phi());
+            }
+
+            // Store leading jet info if available
+            if (!truthJetEtWithIndex.empty()) {
+                const auto& leading = (*InTimeAntiKt4TruthJets)[truthJetEtWithIndex[0].first];
+                inTimeAntiKt4TruthSRJLeadingEtValues.push_back(inTimeAntiKt4TruthSRJEtValues[0]);
+                inTimeAntiKt4TruthSRJLeadingEtaValues.push_back(leading->eta());
+                inTimeAntiKt4TruthSRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            // Store subleading jet info if available
+            if (truthJetEtWithIndex.size() > 1) {
+                const auto& subleading = (*InTimeAntiKt4TruthJets)[truthJetEtWithIndex[1].first];
+                inTimeAntiKt4TruthSRJSubleadingEtValues.push_back(inTimeAntiKt4TruthSRJEtValues[1]);
+                inTimeAntiKt4TruthSRJSubleadingEtaValues.push_back(subleading->eta());
+                inTimeAntiKt4TruthSRJSubleadingPhiValues.push_back(subleading->phi());
+            }
+
+            // Temporary vector to hold (index, Et) for sorting
+            std::vector<std::pair<size_t, double>> recoJetEtWithIndex;
+
+            for (size_t i = 0; i < AntiKt10UFOCSSKJets->size(); ++i) {
+                const auto& jet = (*AntiKt10UFOCSSKJets)[i];
+                double et = jet->e() / (1000.0 * cosh(jet->eta()));
+                recoJetEtWithIndex.emplace_back(i, et);
+            }
+
+            // Sort by descending Et
+            std::sort(recoJetEtWithIndex.begin(), recoJetEtWithIndex.end(),
+                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
+                        return a.second > b.second;
+                    });
+
+            // Fill vectors in sorted order
+            for (const auto& [index, et] : recoJetEtWithIndex) {
+                const auto& jet = (*AntiKt10UFOCSSKJets)[index];
+                recoAntiKt10LRJEtIndexValues.push_back(static_cast<unsigned int>(index));
+                recoAntiKt10LRJEtValues.push_back(et);
+                recoAntiKt10LRJEtaValues.push_back(jet->eta());
+                recoAntiKt10LRJPhiValues.push_back(jet->phi());
+            }
+
+            // Leading jet
+            if (!recoJetEtWithIndex.empty()) {
+                const auto& leading = (*AntiKt10UFOCSSKJets)[recoJetEtWithIndex[0].first];
+                recoAntiKt10LRJLeadingEtValues.push_back(recoAntiKt10LRJEtValues[0]);
+                recoAntiKt10LRJLeadingEtaValues.push_back(leading->eta());
+                recoAntiKt10LRJLeadingPhiValues.push_back(leading->phi());
+            }
+
+            // Subleading jet
+            if (recoJetEtWithIndex.size() > 1) {
+                const auto& subleading = (*AntiKt10UFOCSSKJets)[recoJetEtWithIndex[1].first];
+                recoAntiKt10LRJSubleadingEtValues.push_back(recoAntiKt10LRJEtValues[1]);
+                recoAntiKt10LRJSubleadingEtaValues.push_back(subleading->eta());
+                recoAntiKt10LRJSubleadingPhiValues.push_back(subleading->phi());
+            }
+
+            // Initialize per-event counters
+            unsigned int higgs_counter = 0;
             // --- Loop over TruthParticles (for Higgs and B's) ---
             std::vector<std::vector<float > > allb_list;
-            for (const auto& el : *truthParticles) {
+            for (const auto& el : *TruthBosonsWithDecayParticles) {
                 if (el->pdgId() == 25 && el->status() == 22) {
                     higgs_counter++;
                     float total_p = el->pt() * cosh(el->eta());
@@ -307,9 +854,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                         find_non_higgs_daughters(el, b1_list);
                         b11_list = b1_list[0];
                         b21_list = b1_list[1];
-                        float dR_1 = delta_R(b11_list[1], b11_list[2], b21_list[1], b21_list[2]);
-                        deltaR_values.push_back(dR_1);
-                        higgs_pt_values_for_dr.push_back(el->pt()/1000.0);
+
                     }
                     if (higgs_counter == 2) {
                         higgs_2_pt = el->pt()/1000.0;
@@ -319,9 +864,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                         find_non_higgs_daughters(el, b2_list);
                         b12_list = b2_list[0];
                         b22_list = b2_list[1];
-                        float dR_2 = delta_R(b12_list[1], b12_list[2], b22_list[1], b22_list[2]);
-                        deltaR_values.push_back(dR_2);
-                        higgs_pt_values_for_dr.push_back(el->pt()/1000.0);
+
                     }
 
                     float higgs_average_pt = (higgs_1_pt + higgs_2_pt) / 2.0;
@@ -331,92 +874,8 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 }
             }
 
-            // --- After TruthParticles loop, build full b-list ---
-            allb_list.push_back(b11_list);
-            allb_list.push_back(b21_list);
-            allb_list.push_back(b12_list);
-            allb_list.push_back(b22_list);
-
-            /*
-            for (const auto& p : b11_list) allb_list.push_back({p[0], p[1], p[2]});
-            for (const auto& p : b21_list) allb_list.push_back({p[0], p[1], p[2]});
-            for (const auto& p : b12_list) allb_list.push_back({p[0], p[1], p[2]});
-            for (const auto& p : b22_list) allb_list.push_back({p[0], p[1], p[2]});
-            */
-
-            std::sort(allb_list.begin(), allb_list.end(),
-                [](const std::vector<float>& a, const std::vector<float>& b) {
-                    return a[0] > b[0]; // Sort by Et descending
-                });
 
 
-
-            // --- Delta R matching between b-jets and truth jets / gFEX jets ---
-            int b_iterator = 0;
-            for (const auto& b : allb_list) {
-                float b_Et  = b[0];
-                float b_eta = b[1];
-                float b_phi = b[2];
-                std::vector<float> deltaR_truth_jets, deltaR_gFex_smallR_jets;
-
-                for (const auto& jet : *TruthJets) {
-                    deltaR_truth_jets.push_back(delta_R(b_eta, b_phi, jet->eta(), jet->phi()));
-                }
-                /*
-                for (int i = 0 ; i < gFexSRJets->size(); i++){
-                    deltaR_gFex_smallR_jets.push_back(delta_R(b_eta, b_phi, gFexSRJets[i].eta(), gFexSRJets[i].phi()));
-                    b_gfex_deltar_list.push_back(delta_R(b_eta, b_phi, gFexSRJets[i].eta(), gFexSRJets[i].phi()));
-                }*/
-
-                for (const auto& jet : *gFexLRJets) {
-                    deltaR_gFex_smallR_jets.push_back(delta_R(b_eta, b_phi, jet->eta(), jet->phi()));
-                    b_gfex_deltar_list.push_back(delta_R(b_eta, b_phi, jet->eta(), jet->phi()));
-                }
-
-                std::sort(deltaR_truth_jets.begin(), deltaR_truth_jets.end());
-                std::sort(deltaR_gFex_smallR_jets.begin(), deltaR_gFex_smallR_jets.end());
-
-                if (!deltaR_truth_jets.empty() && !deltaR_gFex_smallR_jets.empty()) {
-                    if (b_iterator == 0) {
-                        highestEt_b_closest_truthjet_deltar_list.push_back(deltaR_truth_jets[0]);
-                        highestEt_b_closest_gfex_deltar_list.push_back(deltaR_gFex_smallR_jets[0]);
-                    }
-                    if (b_iterator == 1) {
-                        second_highestEt_b_closest_truthjet_deltar_list.push_back(deltaR_truth_jets[0]);
-                        second_highestEt_b_closest_gfex_deltar_list.push_back(deltaR_gFex_smallR_jets[0]);
-                    }
-                    if (b_iterator == 2) {
-                        third_highestEt_b_closest_truthjet_deltar_list.push_back(deltaR_truth_jets[0]);
-                        third_highestEt_b_closest_gfex_deltar_list.push_back(deltaR_gFex_smallR_jets[0]);
-                    }
-                    if (b_iterator == 3) {
-                        fourth_highestEt_b_closest_truthjet_deltar_list.push_back(deltaR_truth_jets[0]);
-                        fourth_highestEt_b_closest_gfex_deltar_list.push_back(deltaR_gFex_smallR_jets[0]);
-                    }
-                }
-                b_iterator++;
-            }
-
-            // --- Higgs Pt Cut ---
-            if (higgsPtCut && signalBool) {
-                if (higgs_pt_values_by_event[0] > 100.0 || higgs_pt_values_by_event[1] > 100.0){
-                    higgs_passes_cut = true;
-                    higgs_pt_values_after_cut.insert(higgs_pt_values_after_cut.end(), higgs_pt_values_by_event.begin(), higgs_pt_values_by_event.end());
-                    for (const auto& b : allb_list) {
-                        b_Et_values_after_higgs_cut.push_back(b[0]);
-                    }
-                }
-                /*
-                if (std::any_of(higgs_pt_values_by_event.begin(), higgs_pt_values_by_event.end(),
-                                [&](float pt) { return (pt > higgs_min_pt); })) {
-                    higgs_pt_values_after_cut.insert(higgs_pt_values_after_cut.end(),
-                                                    higgs_pt_values_by_event.begin(), higgs_pt_values_by_event.end());
-                    higgs_passes_cut = true;
-                    for (const auto& b : allb_list) {
-                        b_Et_values_after_higgs_cut.push_back(b[0]);
-                    }*/
-                        
-                }
             }
         f->Close();
     }

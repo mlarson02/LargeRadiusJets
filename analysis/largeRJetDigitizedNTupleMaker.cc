@@ -21,10 +21,13 @@ double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * 0.25;
 }
 */
-void analyze_file(const std::vector<std::string> fileNames, const bool signalBool) {
+void analyze_file(const std::vector<std::string> fileNames, const bool signalBool, const bool vbfBool) {
     
     TString outputFileName; 
-    if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
+    if (signalBool){
+        if (vbfBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
+        else outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC.root";
+    } 
     else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3.root";
 
     // Create ROOT output file
@@ -195,33 +198,45 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     outputFile->Close();
 }
 
-void callNTupleMaker(const bool signalBool) {
-    // usage: callNTupleMaker(true), callNTupleMaker(false)
+void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
+    // usage: callNTupleMaker(true, true), callNTupleMaker(false)
 
     std::vector<std::string > fileNames; 
     std::string fileName;
 
     
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/";
-    if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
+    if (signalBool){
+        if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
+        else fileName += "mc21_14TeV_HHbbbb_HLLHC_topo422.dat";
+    } 
     else fileName += "mc21_14TeV_jj_JZ3_topo422.dat";
     fileNames.push_back(fileName);
 
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/";
-    if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
+    if (signalBool){
+        if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
+        else fileName += "mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";
+    } 
     else fileName += "mc21_14TeV_jj_JZ3_calotopotowers.dat";
     fileNames.push_back(fileName);
 
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/";
-    if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
+    if (signalBool){
+        if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
+        else fileName += "mc21_14TeV_HHbbbb_HLLHC_gfex_smallrj.dat";
+    } 
     else fileName += "mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
     fileNames.push_back(fileName);
 
     fileName = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/";
-    if (signalBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
+    if (signalBool){
+        if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
+        else fileName += "mc21_14TeV_HHbbbb_HLLHC_jfex_smallrj.dat";
+    } 
     else fileName += "mc21_14TeV_jj_JZ3_jfex_smallrj.dat";
     fileNames.push_back(fileName);
 
-    analyze_file(fileNames, signalBool);
+    analyze_file(fileNames, signalBool, vbfBool);
     return;
 }

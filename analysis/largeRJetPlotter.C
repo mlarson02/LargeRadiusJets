@@ -10,7 +10,7 @@
 #define WRITE_LUT false // for disabling firmware (ap_uint), LUT declarations
 
 template <bool signalBackgroundOverlay> 
-void analyze_existing_histograms(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool);
+void analyze_existing_histograms(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool);
 
 double deltaPhi(double phi1, double phi2) {
     double dphi = phi1 - phi2;
@@ -69,7 +69,7 @@ std::pair<int, int> getTwoHighestIndices(const std::vector<double>& etValues) {
 }
 
 template <>
-void analyze_existing_histograms<false>(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool) {
+void analyze_existing_histograms<false>(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool) {
     SetPlotStyle();
     // Open input ROOT file
     std::string inputFileName; 
@@ -335,7 +335,7 @@ void analyze_existing_histograms<false>(const std::string& signalInputFileName, 
 }
 
 template <>
-void analyze_existing_histograms<true>(const std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool) {
+void analyze_existing_histograms<true>(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool) {
     gSystem->RedirectOutput("largeRJetPlotterOutput.log", "w");
     unsigned int nTopo = 0;
     unsigned int nTopoGreater1GeV = 0;
@@ -1005,7 +1005,9 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
     }
 
     // Save histograms
-    TString outputFileDir = "overlayHistograms/";
+    TString outputFileDir;
+    if (vbfBool) outputFileDir = "overlayHistogramsVBF/";
+    else outputFileDir = "overlayHistogramsggF/";
 
     TCanvas c2D = new TCanvas("c2D", "2D Histogram", 1000, 600);  // wider than 800
 
@@ -1929,8 +1931,10 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 
     sig_h_jFex_Et->SetLineColor(kRed);
     back_h_jFex_Et->SetLineColor(kBlue);
-    back_h_jFex_Et->Draw();
-    sig_h_jFex_Et->Draw("SAME");
+    sig_h_jFex_Et->Scale(1.0 / sig_h_jFex_Et->Integral());
+    back_h_jFex_Et->Scale(1.0 / back_h_jFex_Et->Integral());
+    back_h_jFex_Et->Draw("HIST");
+    sig_h_jFex_Et->Draw("HIST SAME");
     leg->Draw();
     cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
 
@@ -1951,14 +1955,20 @@ void analyze_existing_histograms<true>(const std::string& signalInputFileName, c
 }
 
 template<bool overlayBool>
-void callPlot(const bool signalBool) {
+void callPlot(const bool signalBool, const bool vbfBool = true) {
     // Usage: callPlot<true>(true)
-    const std::string signalInputFile = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
+    std::string signalInputFile;
+    if (vbfBool) signalInputFile = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
+    else signalInputFile = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC.root";
+     
     const std::string backgroundInputFile = "outputRootFiles/mc21_14TeV_jj_JZ3.root";
     std::string outputPrefix;
-    if (signalBool) outputPrefix = "signalHistograms/";
+    if (signalBool){
+        if (vbfBool) outputPrefix = "signalHistogramsVBF/";
+        else outputPrefix = "signalHistogramsggF/";
+    } 
     else outputPrefix = "backgroundHistograms/"; 
 
-    analyze_existing_histograms<overlayBool>(signalInputFile, backgroundInputFile, outputPrefix, signalBool);
+    analyze_existing_histograms<overlayBool>(signalInputFile, backgroundInputFile, outputPrefix, signalBool, vbfBool);
     gSystem->Exit(0);
 }
