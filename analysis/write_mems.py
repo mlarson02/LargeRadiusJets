@@ -16,7 +16,7 @@ from matplotlib import colormaps
 
 # Configuration booleans
 signalBool = True
-vbfBool = False
+vbfBool = True
 higgsPtCut = True
 jFexPlotsBool = True
 
@@ -729,7 +729,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         # Loop over the CaloCalTopoClusters collection
                         topotower_it = 0
                         for el in t.CaloCalAllTopoTowers:
-                            #print("caloTopoTowers eta, phi:", el.eta(), el.phi())
+                            print("caloTopoTowers eta, phi, et:", el.eta(), el.phi(), el.et()/1000.0)
                             caloTopoTowers_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             caloTopoTowers_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                             if el.et() >= 0:
