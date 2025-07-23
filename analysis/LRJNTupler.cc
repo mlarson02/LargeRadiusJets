@@ -1,5 +1,5 @@
 // Save as: nTupler.C
-// To execute: root ; .L nTupler.C ; nTupler(true, false) 
+// To execute: e.g., root ; .L nTupler.C ; nTupler(true, true, true) 
 
 #include <iostream>
 #include <vector>
