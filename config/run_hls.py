@@ -19,7 +19,7 @@ base_constants = {
     "useInputEnergyCut_": "false", 
     "et_granularity_": 0.25,
     "r2Cut_": 1.0,
-    "rMergeCut_": 2.5,
+    "rMergeCut_": 5.0,
     "et_bit_length_": 13,
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
@@ -36,7 +36,9 @@ base_constants = {
     "et_max_": 2048,
     "useMax_": "false",
     "max_R2lut_size_": 2048,
-    "max_Rlut_size_": 2048
+    "max_Rlut_size_": 2048,
+    "deltaR_max_": 10.48187,
+    "deltaR_bits_": 8
 }
 
 def calculate_lutR2_max_size(r2Cut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
@@ -327,6 +329,9 @@ static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] =
 ;
 
 #endif
+constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 64
+constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.039
+constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
         ''')
 
         f.write("\n#endif // CONSTANTS_H\n")
@@ -339,6 +344,7 @@ if __name__ == "__main__":
     #r2Cut_options = [0.8, 0.9, 1.0, 1.1, 1.2]
     #r2Cut_options = [1.0, 1.21, 1.44, 1.69, 1.96]
     #r2Cut_options = [1.69]
+    #r2Cut_options = [0.81, 1.0, 1.21, 1.44]
     r2Cut_options = [1.0]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
     #maxObjectsConsidered_options = [128, 256]

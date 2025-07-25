@@ -15,7 +15,7 @@ constexpr unsigned int inputEnergyCut_ = 1;
 #define useInputEnergyCut_ false
 constexpr double et_granularity_ = 0.25;
 constexpr double r2Cut_ = 1.0;
-constexpr double rMergeCut_ = 2.5;
+constexpr double rMergeCut_ = 5.0;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
@@ -32,7 +32,9 @@ constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 2048;
 #define useMax_ false
 constexpr unsigned int max_R2lut_size_ = 803;
-constexpr unsigned int max_Rlut_size_ = 2021;
+constexpr unsigned int max_Rlut_size_ = 4071;
+constexpr double deltaR_max_ = 10.48187;
+constexpr unsigned int deltaR_bits_ = 8;
 constexpr unsigned int nSeeds_ = 2;
 constexpr double phi_range_ = 6.4;
 
@@ -64,5 +66,8 @@ static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] =
 ;
 
 #endif
+constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 64
+constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.039
+constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
         
 #endif // CONSTANTS_H

@@ -37,9 +37,9 @@ int main() {
         std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
         return 0;
     }
-
+    std::cout << "rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n";
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        //if (iEvt > 6) break;
+        //if (iEvt > 999) break;
         std::cout << "processing event: " << iEvt << "\n";
         /*for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
             std::cout << "outputJetValues[i] before: " << outputJetValues[i] << "\n";

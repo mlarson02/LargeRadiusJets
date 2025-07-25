@@ -51,14 +51,6 @@ int main() {
     outfile << "\n};\n";
     outfile.close();
 
-
-    // Digitization parameters
-    constexpr float deltaR_max = 10.48187;
-    constexpr unsigned int deltaR_bits = 8;
-    constexpr unsigned int deltaR_levels = (1 << deltaR_bits); // 64
-    constexpr float deltaR_step = deltaR_max / (deltaR_levels - 1); // ~0.039
-
-
     unsigned int i = 0;
     outfileR << "{\n    ";
 
@@ -75,7 +67,7 @@ int main() {
             float deltaR = std::sqrt(deltaR2);
 
             // Digitize deltaR to 8-bit value
-            uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / deltaR_step + 0.5f);
+            uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / deltaR_step_ + 0.5f);
             if (digitizedDeltaR > 255) digitizedDeltaR = 255; // Clamp (optional safety)
 
             outfileR << static_cast<unsigned int>(digitizedDeltaR); // cast for readability

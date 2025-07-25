@@ -15,6 +15,32 @@
 
 // INTEGER VERSION, to be used by FW
 // FIXME return 
+
+
+
+static inline ap_uint<2> index_of_min(ap_uint<deltaRBits_> (&in)[nSeedsDeltaR_]) {
+//#pragma HLS pipeline II=1
+//#pragma HLS inline on
+
+    ap_uint<deltaRBits_> min_val = in[0];
+    ap_uint<2> min_idx = 0;
+
+    if (in[1] < min_val) {
+        min_val = in[1];
+        min_idx = 1;
+    }
+    if (in[2] < min_val) {
+        min_val = in[2];
+        min_idx = 2;
+    }
+    if (in[3] < min_val) {
+        min_val = in[3];
+        min_idx = 3;
+    }
+
+    return min_idx;
+}
+
 /*
 inline ap_uint <eta_bit_length_ * 2 + 1 > calcDeltaR2(ap_uint<eta_bit_length_ > eta1, ap_uint<phi_bit_length_ >  phi1, ap_uint<eta_bit_length_ >  eta2, ap_uint<phi_bit_length_ >  phi2) {
     
