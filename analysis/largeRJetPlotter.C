@@ -9,9 +9,6 @@
 
 #define WRITE_LUT false // for disabling firmware (ap_uint), LUT declarations
 
-template <bool signalBackgroundOverlay> 
-void analyze_existing_histograms(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool);
-
 double deltaPhi(double phi1, double phi2) {
     double dphi = phi1 - phi2;
     if (dphi > TMath::Pi()) dphi -= 2 * TMath::Pi();
@@ -49,1926 +46,811 @@ float computeStandardError(const std::vector<float>& vec, float stdDev) {
 
 
 
-
-// Declare helper functions 
-
-
-// Function to sort and get highest Et gFex jets
-std::pair<int, int> getTwoHighestIndices(const std::vector<double>& etValues) {
-    if (etValues.size() < 2) return {-1, -1}; // If not enough jets, return invalid indices
-    int maxIdx1 = 0, maxIdx2 = -1;
-    for (size_t i = 1; i < etValues.size(); i++) {
-        if (etValues[i] > etValues[maxIdx1]) {
-            maxIdx2 = maxIdx1;
-            maxIdx1 = i;
-        } else if (maxIdx2 == -1 || etValues[i] > etValues[maxIdx2]) {
-            maxIdx2 = i;
-        }
-    }
-    return {maxIdx1, maxIdx2};
-}
-
-template <>
-void analyze_existing_histograms<false>(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool) {
-    SetPlotStyle();
-    // Open input ROOT file
-    std::string inputFileName; 
-    if (signalBool) inputFileName = signalInputFileName;
-    else inputFileName = backgroundInputFileName;
-    TFile* inputFile = TFile::Open(inputFileName.c_str(), "READ");
-    if (!inputFile || inputFile->IsZombie()) {
-        std::cerr << "Error: Could not open file " << inputFileName << std::endl;
-        return;
-    }
-
-    // Get trees
-    TTree* topoTree = (TTree*)inputFile->Get("topoTree");
-    TTree* caloTopoTree = (TTree*)inputFile->Get("caloTopoTree");
-    TTree* gFexTree = (TTree*)inputFile->Get("gFexTree");
-    TTree* jFexTree = (TTree*)inputFile->Get("jFexTree");
-
-    if (!topoTree || !caloTopoTree || !gFexTree || !jFexTree) {
-        std::cerr << "Error: Could not retrieve one or more trees." << std::endl;
-        inputFile->Close();
-        return;
-    }
-
-    // Define variables
-    std::vector<double>* topoEtValues = nullptr;
-    std::vector<double>* topoEtaValues = nullptr;
-    std::vector<double>* topoPhiValues = nullptr;
-
-    std::vector<double>* caloTopoEtValues = nullptr;
-    std::vector<double>* caloTopoEtaValues = nullptr;
-    std::vector<double>* caloTopoPhiValues = nullptr;
-
-    std::vector<double>* gFexEtValues = nullptr;
-    std::vector<double>* gFexEtaValues = nullptr;
-    std::vector<double>* gFexPhiValues = nullptr;
-
-    std::vector<double>* jFexEtValues = nullptr;
-    std::vector<double>* jFexEtaValues = nullptr;
-    std::vector<double>* jFexPhiValues = nullptr;
-
-    // Histograms
-    TH1F* h_topo_Et = new TH1F("h_topo_Et", "Topo Et Distribution;Et (GeV);Counts", 100, 0, 400);
-    TH1F* h_calotopo_Et = new TH1F("h_calotopo_Et", "CaloTopoTower Et Distribution;Et (GeV);Counts", 100, 0, 400);
-    TH1F* h_gFex_Et = new TH1F("h_gFex_Et", "gFex Et Distribution;Et (GeV);Counts", 100, 0, 400);
-    TH1F* h_jFex_Et = new TH1F("h_jFex_Et", "jFex Et Distribution;Et (GeV);Counts", 100, 0, 400);
-
-    TH1F* h_topo_eta = new TH1F("h_topo_eta", "Topo Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* h_calotopo_eta = new TH1F("h_calotopo_eta", "CaloTopoTower Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* h_gFex_eta = new TH1F("h_gFex_eta", "gFex Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* h_jFex_eta = new TH1F("h_jFex_eta", "jFex Eta Distribution;Eta;Counts", 50, -5, 5);
-
-    TH1F* h_gFex_leading_Et = new TH1F("h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
-    TH1F* h_gFex_subleading_Et = new TH1F("h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
-
-    TH1F* h_gFex_leading_eta = new TH1F("h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
-    TH1F* h_gFex_subleading_eta = new TH1F("h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
-
-    TH1F* h_gFex_leading_phi = new TH1F("h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-    TH1F* h_gFex_subleading_phi = new TH1F("h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-
-    TH1F* h_gFex_leading_subleading_deltaR = new TH1F("h_gFex_leading_subleading_deltaR", "Leading, subleading gFex SRJ DeltaR Dist.; #Delta R gFex Lead, Sublead SRJ; Normalized Events  / 0.08", 100, 0, 8);
-
-    TH1F* h_topo_phi = new TH1F("h_topo_phi", "Topo Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* h_calotopo_phi = new TH1F("h_calotopo_phi", "CaloTopoTower Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* h_gFex_phi = new TH1F("h_gFex_phi", "gFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* h_jFex_phi = new TH1F("h_jFex_phi", "jFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-
-    TH1F* h_gFex_multiplicity = new TH1F("h_gFex_multiplicity", "gFex SmallR Jet Multiplicity;Number of gFex SmallR Jets;Counts", 20, 0, 20);
-    TH1F* h_topo_multiplicity = new TH1F("h_topo_multiplicity", "Topo422 Cluster Multiplicity;Number of Topo422 Clusters;Counts", 60, 400, 1000);
-    TH1F* h_calotopo_multiplicity = new TH1F("h_calotopo_multiplicity", "caloTopo Tower Multiplicity;Number of caloTopo Towers;Events", 60, 400, 1600);
-    TH1F* h_jFex_multiplicity = new TH1F("h_jFex_multiplicity", "jFex SmallR Jet Multiplicity;Number of jFex SmallR Jets;Counts", 50, 0, 100);
-
-    // gFex jet deltaR^2 histogram
-    TH1F* h_deltaR2_jet1 = new TH1F("h_deltaR2_jet1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 50, 0, 10);
-    TH1F* h_deltaR2_jet2 = new TH1F("h_deltaR2_jet2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 50, 0, 10);
-    TH1F* h_deltaR_jet1 = new TH1F("h_deltaR_jet1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
-    TH1F* h_deltaR_jet2 = new TH1F("h_deltaR_jet2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
-
-    // Process trees
-    topoTree->SetBranchAddress("Et", &topoEtValues);
-    topoTree->SetBranchAddress("Eta", &topoEtaValues);
-    topoTree->SetBranchAddress("Phi", &topoPhiValues);
-
-    caloTopoTree->SetBranchAddress("Et", &caloTopoEtValues);
-    caloTopoTree->SetBranchAddress("Eta", &caloTopoEtaValues);
-    caloTopoTree->SetBranchAddress("Phi", &caloTopoPhiValues);
-
-    gFexTree->SetBranchAddress("Et", &gFexEtValues);
-    gFexTree->SetBranchAddress("Eta", &gFexEtaValues);
-    gFexTree->SetBranchAddress("Phi", &gFexPhiValues);
-
-    jFexTree->SetBranchAddress("Et", &jFexEtValues);
-    jFexTree->SetBranchAddress("Eta", &jFexEtaValues);
-    jFexTree->SetBranchAddress("Phi", &jFexPhiValues);
-
-    int nEntries = gFexTree->GetEntries();
-    std::cout << "gfex nentries : " << nEntries << "\n";
-    for (int i = 0; i < nEntries; i++) {
-        gFexTree->GetEntry(i);
-        h_gFex_multiplicity->Fill(gFexEtValues->size());
-        for (size_t j = 0; j < gFexEtValues->size(); j++) {
-            h_gFex_Et->Fill(gFexEtValues->at(j));
-            h_gFex_eta->Fill(gFexEtaValues->at(j));
-            h_gFex_phi->Fill(gFexPhiValues->at(j));
-        }
-
-        // Find two highest Et jets
-        auto [idx1, idx2] = getTwoHighestIndices(*gFexEtValues);
-
-        // Leading jet
-        h_gFex_leading_Et->Fill(gFexEtValues->at(idx1));
-        h_gFex_leading_eta->Fill(gFexEtaValues->at(idx1));
-        h_gFex_leading_phi->Fill(gFexPhiValues->at(idx1));
-
-        // Sub-leading jet
-        h_gFex_subleading_Et->Fill(gFexEtValues->at(idx2));
-        h_gFex_subleading_eta->Fill(gFexEtaValues->at(idx2));
-        h_gFex_subleading_phi->Fill(gFexPhiValues->at(idx2));
-        std::cout << "idx1: " << idx1 << " idx2: " << idx2 << "\n";
-        std::cout << "gfex 1 eta: " << gFexEtaValues->at(idx1) << " gfex 1 phi: " << gFexPhiValues->at(idx1) << "\n";
-        std::cout << "gfex 2 eta: " << gFexEtaValues->at(idx2) << " gfex 2 phi: " << gFexPhiValues->at(idx2) << "\n";
-        std::cout << "deltaR^2: " << sqrt(calcDeltaR2(gFexEtaValues->at(idx1), gFexPhiValues->at(idx1), gFexEtaValues->at(idx2), gFexPhiValues->at(idx2))) << "\n";
-        h_gFex_leading_subleading_deltaR->Fill(sqrt(calcDeltaR2(gFexEtaValues->at(idx1), gFexPhiValues->at(idx1), gFexEtaValues->at(idx2), gFexPhiValues->at(idx2))));
-
-        caloTopoTree->GetEntry(i);
-
-        h_calotopo_multiplicity->Fill(caloTopoEtValues->size());
-
-        for (size_t m = 0; m < caloTopoEtValues->size(); m++) {
-            h_calotopo_Et->Fill(caloTopoEtValues->at(m));
-            h_calotopo_eta->Fill(caloTopoEtaValues->at(m));
-            h_calotopo_phi->Fill(caloTopoPhiValues->at(m));
-        }
-
-
-        topoTree->GetEntry(i);
-        //std::cout << "topoEtValues->size(): " << topoEtValues->size() << "\n";
-        h_topo_multiplicity->Fill(topoEtValues->size());
-        for (size_t k = 0; k < topoEtValues->size(); k++) {
-            h_topo_Et->Fill(topoEtValues->at(k));
-            h_topo_eta->Fill(topoEtaValues->at(k));
-            h_topo_phi->Fill(topoPhiValues->at(k));
-            double dr2_1 = ((gFexEtaValues->at(idx1)) - topoEtaValues->at(k))*((gFexEtaValues->at(idx1)) - topoEtaValues->at(k)) + deltaPhi(gFexPhiValues->at(idx1), topoPhiValues->at(k))*deltaPhi(gFexPhiValues->at(idx1), topoPhiValues->at(k));
-            h_deltaR2_jet1->Fill(dr2_1);
-            h_deltaR_jet1->Fill(sqrt(dr2_1));
-            double dr2_2 = ((gFexEtaValues->at(idx2)) - topoEtaValues->at(k))*((gFexEtaValues->at(idx2)) - topoEtaValues->at(k)) + deltaPhi(gFexPhiValues->at(idx2), topoPhiValues->at(k))*deltaPhi(gFexPhiValues->at(idx2), topoPhiValues->at(k));
-            h_deltaR2_jet2->Fill(dr2_2);
-            h_deltaR_jet2->Fill(sqrt(dr2_2));
-        }
-            
-    }
-
-    for (int i = 0; i < jFexTree->GetEntries(); i++) {
-        jFexTree->GetEntry(i);
-        //std::cout << "jFexEtValues->size(): " << jFexEtValues->size() << "\n";
-        h_jFex_multiplicity->Fill(jFexEtValues->size());
-        for (float et : *jFexEtValues) h_jFex_Et->Fill(et);
-        for (float eta : *jFexEtaValues) h_jFex_eta->Fill(eta);
-        for (float phi : *jFexPhiValues) h_jFex_phi->Fill(phi);
-    }
-
-    // Save histograms
-    TCanvas c;
-    TString outputFileDir = outputPrefix;
-
-    h_topo_Et->Draw();
-    c.SaveAs(outputFileDir + "topo_Et.pdf");
-    h_calotopo_Et->Draw();
-    c.SaveAs(outputFileDir + "calotopo_Et.pdf");
-    h_gFex_Et->Draw();
-    c.SaveAs(outputFileDir + "gFex_Et.pdf");
-    h_jFex_Et->Draw();
-    c.SaveAs(outputFileDir + "jFex_Et.pdf");
-
-    h_topo_eta->Draw();
-    c.SaveAs(outputFileDir + "topo_eta.pdf");
-    h_calotopo_eta->Draw();
-    c.SaveAs(outputFileDir + "calotopo_eta.pdf");
-    h_gFex_eta->Draw();
-    c.SaveAs(outputFileDir + "gFex_eta.pdf");
-    h_jFex_eta->Draw();
-    c.SaveAs(outputFileDir + "jFex_eta.pdf");
-
-    h_topo_phi->Draw();
-    c.SaveAs(outputFileDir + "topo_phi.pdf");
-    h_calotopo_phi->Draw();
-    c.SaveAs(outputFileDir + "calotopo_phi.pdf");
-    h_gFex_phi->Draw();
-    c.SaveAs(outputFileDir + "gFex_phi.pdf");
-    h_jFex_phi->Draw();
-    c.SaveAs(outputFileDir + "jFex_phi.pdf");
+analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputFileNameggF, const std::string& backgroundInputFileName){
     
-    h_gFex_leading_Et->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_Et.pdf");    
-    h_gFex_leading_eta->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_eta.pdf");   
-    h_gFex_leading_phi->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_phi.pdf");   
-
-    h_gFex_subleading_Et->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_Et.pdf");   
-    h_gFex_subleading_eta->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_eta.pdf");   
-    h_gFex_subleading_phi->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_phi.pdf");   
-
     
-    h_gFex_leading_subleading_deltaR->Scale(1.0 / h_gFex_leading_subleading_deltaR->Integral());
-    h_gFex_leading_subleading_deltaR->Draw("HIST");
-    c.SaveAs(outputFileDir + "gFex_leading_subleading_deltaR.pdf");
-    
-
-    h_gFex_multiplicity->Draw();
-    c.SaveAs(outputFileDir + "gFex_multiplicity.pdf");
-    h_topo_multiplicity->Draw();
-    c.SaveAs(outputFileDir + "topo_multiplicity.pdf");
-    h_jFex_multiplicity->Draw();
-    c.SaveAs(outputFileDir + "jFex_multiplicity.pdf");
-
-    h_deltaR2_jet1->Scale(1.0 / h_deltaR2_jet1->Integral());
-    h_deltaR2_jet1->SetXTitle("#Delta R^{2}");   // X-axis title
-    h_deltaR2_jet1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    h_deltaR2_jet1->Draw();
-
-    c.SaveAs(outputFileDir + "deltaR2_jet1.pdf");
-    h_deltaR2_jet2->Scale(1.0 / h_deltaR2_jet2->Integral());
-    h_deltaR2_jet2->SetXTitle("#Delta R^{2}");   // X-axis title
-    h_deltaR2_jet2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    h_deltaR2_jet2->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_jet2.pdf");
-
-    h_deltaR_jet1->Scale(1.0 / h_deltaR_jet1->Integral());
-    h_deltaR_jet1->SetXTitle("#Delta R");   // X-axis title
-    h_deltaR_jet1->SetYTitle("Normalized Num. of Topo422 Clusters / 0.2");  // Y-axis title
-    h_deltaR_jet1->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jet1.pdf");
-    h_deltaR_jet2->Scale(1.0 / h_deltaR_jet2->Integral());
-    h_deltaR_jet2->SetXTitle("#Delta R");   // X-axis title
-    h_deltaR_jet2->SetYTitle("Normalized Num. of Topo422 Clusters / 0.2");  // Y-axis title
-    h_deltaR_jet2->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jet2.pdf");
-
-
-    TCanvas cLog;
-    // Log scale plots
-    cLog.SetLogx();
-    cLog.SetLogy();
-
-    h_topo_Et->Draw();
-    cLog.SaveAs(outputFileDir + "log_topo_Et.pdf");
-    h_gFex_Et->Draw();
-    cLog.SaveAs(outputFileDir + "log_gFex_Et.pdf");
-    h_jFex_Et->Draw();
-    cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
-
-    h_gFex_leading_Et->Draw();
-    c.SaveAs(outputFileDir + "log_gFex_leading_Et.pdf");    
-
-    h_gFex_subleading_Et->Draw();
-    c.SaveAs(outputFileDir + "log_gFex_subleading_Et.pdf"); 
-
-    inputFile->Close();
-}
-
-template <>
-void analyze_existing_histograms<true>(std::string& signalInputFileName, const std::string& backgroundInputFileName, const std::string& outputPrefix, const bool signalBool, const bool vbfBool) {
-    gSystem->RedirectOutput("largeRJetPlotterOutput.log", "w");
-    unsigned int nTopo = 0;
-    unsigned int nTopoGreater1GeV = 0;
-    double totalTopoEnergy = 0.0;
-    double topoEnergyClustersGreater1GeV = 0.0;
     SetPlotStyle();
 
     // Open input ROOT file
-    TFile* signalInputFile = TFile::Open(signalInputFileName.c_str(), "READ");
+    TFile* signalInputFileVBF = TFile::Open(signalInputFileNameVBF.c_str(), "READ");
+    TFile* signalInputFileggF = TFile::Open(signalInputFileNameggF.c_str(), "READ");
     TFile* backgroundInputFile = TFile::Open(backgroundInputFileName.c_str(), "READ");
-    if ((!signalInputFile || signalInputFile->IsZombie()) && (!backgroundInputFile || backgroundInputFile->IsZombie())) {
-        std::cerr << "Error: Could not open file " << signalInputFileName << std::endl;
+    if ((!signalInputFileVBF || signalInputFileVBF->IsZombie()) || (!signalInputFileggF || signalInputFileggF->IsZombie()) || (!backgroundInputFile || backgroundInputFile->IsZombie())) {
+        std::cerr << "Error: Could not open file " << signalInputFileNameVBF << std::endl;
         return;
     }
 
-    // Get trees
-    TTree* sigTopoTree = (TTree*)signalInputFile->Get("topoTree");
-    TTree* sigCaloTopoTree = (TTree*)signalInputFile->Get("caloTopoTree");
-    TTree* sigGFexTree = (TTree*)signalInputFile->Get("gFexTree");
-    TTree* sigJFexTree = (TTree*)signalInputFile->Get("jFexTree");
 
-    TTree* backTopoTree = (TTree*)backgroundInputFile->Get("topoTree");
-    TTree* backCaloTopoTree = (TTree*)backgroundInputFile->Get("caloTopoTree");
-    TTree* backGFexTree = (TTree*)backgroundInputFile->Get("gFexTree");
-    TTree* backJFexTree = (TTree*)backgroundInputFile->Get("jFexTree");
+    TTree* truthbTree_VBF = (TTree*)signalInputFileVBF->Get("truthbTree");
+    TTree* truthHiggsTree_VBF = (TTree*)signalInputFileVBF->Get("truthHiggsTree");
+    TTree* caloTopoTowerTree_VBF = (TTree*)signalInputFileVBF->Get("caloTopoTowerTree");
+    TTree* topo422Tree_VBF = (TTree*)signalInputFileVBF->Get("topo422Tree");
+    TTree* gFexSRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexSRJTree");
+    TTree* gFexLeadingSRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexLeadingSRJTree");
+    TTree* gFexSubleadingSRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexSubleadingSRJTree");
+    TTree* gFexLRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexLRJTree");
+    TTree* gFexLeadingLRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexLeadingLRJTree");
+    TTree* gFexSubleadingLRJTree_VBF = (TTree*)signalInputFileVBF->Get("gFexSubleadingLRJTree");
+    TTree* inTimeAntiKt4TruthJetsTree_VBF = (TTree*)signalInputFileVBF->Get("inTimeAntiKt4TruthJetsTree");
+    TTree* leadingInTimeAntiKt4TruthJetsTree_VBF = (TTree*)signalInputFileVBF->Get("leadingInTimeAntiKt4TruthJetsTree");
+    TTree* subleadingInTimeAntiKt4TruthJetsTree_VBF = (TTree*)signalInputFileVBF->Get("subleadingInTimeAntiKt4TruthJetsTree");
+    TTree* jFexSRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexSRJTree");
+    TTree* jFexLeadingSRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexLeadingSRJTree");
+    TTree* jFexSubleadingSRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexSubleadingSRJTree");
+    TTree* jFexLRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexLRJTree");
+    TTree* jFexLeadingLRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexLeadingLRJTree");
+    TTree* jFexSubleadingLRJTree_VBF = (TTree*)signalInputFileVBF->Get("jFexSubleadingLRJTree");
+    TTree* hltAntiKt4EMTopoJetsTree_VBF = (TTree*)signalInputFileVBF->Get("hltAntiKt4EMTopoJetsTree");
+    TTree* leadingHltAntiKt4EMTopoJetsTree_VBF = (TTree*)signalInputFileVBF->Get("leadingHltAntiKt4EMTopoJetsTree");
+    TTree* subleadingHltAntiKt4EMTopoJetsTree_VBF = (TTree*)signalInputFileVBF->Get("subleadingHltAntiKt4EMTopoJetsTree");
+    TTree* recoAntiKt10UFOCSSKJets_VBF = (TTree*)signalInputFileVBF->Get("recoAntiKt10UFOCSSKJets");
+    TTree* leadingRecoAntiKt10UFOCSSKJets_VBF = (TTree*)signalInputFileVBF->Get("leadingRecoAntiKt10UFOCSSKJets");
+    TTree* subleadingRecoAntiKt10UFOCSSKJets_VBF = (TTree*)signalInputFileVBF->Get("subleadingRecoAntiKt10UFOCSSKJets");
+    TTree* truthAntiKt4TruthDressedWZJets_VBF = (TTree*)signalInputFileVBF->Get("truthAntiKt4TruthDressedWZJets");
+    TTree* leadingTruthAntiKt4TruthDressedWZJets_VBF = (TTree*)signalInputFileVBF->Get("leadingTruthAntiKt4TruthDressedWZJets");
+    TTree* subleadingTruthAntiKt4TruthDressedWZJets_VBF = (TTree*)signalInputFileVBF->Get("subleadingTruthAntiKt4TruthDressedWZJets");
 
-    if (!sigTopoTree || !sigCaloTopoTree || !backCaloTopoTree || !sigGFexTree || !sigJFexTree || !backTopoTree || !backGFexTree || !backJFexTree) {
-        std::cerr << "Error: Could not retrieve one or more trees." << std::endl;
-        signalInputFile->Close();
-        backgroundInputFile->Close();
-        return;
-    }
+    TTree* truthbTree_ggF = (TTree*)signalInputFileggF->Get("truthbTree");
+    TTree* truthHiggsTree_ggF = (TTree*)signalInputFileggF->Get("truthHiggsTree");
+    TTree* caloTopoTowerTree_ggF = (TTree*)signalInputFileggF->Get("caloTopoTowerTree");
+    TTree* topo422Tree_ggF = (TTree*)signalInputFileggF->Get("topo422Tree");
+    TTree* gFexSRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexSRJTree");
+    TTree* gFexLeadingSRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexLeadingSRJTree");
+    TTree* gFexSubleadingSRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexSubleadingSRJTree");
+    TTree* gFexLRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexLRJTree");
+    TTree* gFexLeadingLRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexLeadingLRJTree");
+    TTree* gFexSubleadingLRJTree_ggF = (TTree*)signalInputFileggF->Get("gFexSubleadingLRJTree");
+    TTree* inTimeAntiKt4TruthJetsTree_ggF = (TTree*)signalInputFileggF->Get("inTimeAntiKt4TruthJetsTree");
+    TTree* leadingInTimeAntiKt4TruthJetsTree_ggF = (TTree*)signalInputFileggF->Get("leadingInTimeAntiKt4TruthJetsTree");
+    TTree* subleadingInTimeAntiKt4TruthJetsTree_ggF = (TTree*)signalInputFileggF->Get("subleadingInTimeAntiKt4TruthJetsTree");
+    TTree* jFexSRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexSRJTree");
+    TTree* jFexLeadingSRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexLeadingSRJTree");
+    TTree* jFexSubleadingSRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexSubleadingSRJTree");
+    TTree* jFexLRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexLRJTree");
+    TTree* jFexLeadingLRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexLeadingLRJTree");
+    TTree* jFexSubleadingLRJTree_ggF = (TTree*)signalInputFileggF->Get("jFexSubleadingLRJTree");
+    TTree* hltAntiKt4EMTopoJetsTree_ggF = (TTree*)signalInputFileggF->Get("hltAntiKt4EMTopoJetsTree");
+    TTree* leadingHltAntiKt4EMTopoJetsTree_ggF = (TTree*)signalInputFileggF->Get("leadingHltAntiKt4EMTopoJetsTree");
+    TTree* subleadingHltAntiKt4EMTopoJetsTree_ggF = (TTree*)signalInputFileggF->Get("subleadingHltAntiKt4EMTopoJetsTree");
+    TTree* recoAntiKt10UFOCSSKJets_ggF = (TTree*)signalInputFileggF->Get("recoAntiKt10UFOCSSKJets");
+    TTree* leadingRecoAntiKt10UFOCSSKJets_ggF = (TTree*)signalInputFileggF->Get("leadingRecoAntiKt10UFOCSSKJets");
+    TTree* subleadingRecoAntiKt10UFOCSSKJets_ggF = (TTree*)signalInputFileggF->Get("subleadingRecoAntiKt10UFOCSSKJets");
+    TTree* truthAntiKt4TruthDressedWZJets_ggF = (TTree*)signalInputFileggF->Get("truthAntiKt4TruthDressedWZJets");
+    TTree* leadingTruthAntiKt4TruthDressedWZJets_ggF = (TTree*)signalInputFileggF->Get("leadingTruthAntiKt4TruthDressedWZJets");
+    TTree* subleadingTruthAntiKt4TruthDressedWZJets_ggF = (TTree*)signalInputFileggF->Get("subleadingTruthAntiKt4TruthDressedWZJets");
 
-    // Define variables
-    std::vector<double>* sigTopoEtValues = nullptr;
-    std::vector<double>* sigTopoEtaValues = nullptr;
-    std::vector<double>* sigTopoPhiValues = nullptr;
+    TTree* caloTopoTowerTree_back = (TTree*)backgroundInputFile->Get("caloTopoTowerTree");
+    TTree* topo422Tree_back = (TTree*)backgroundInputFile->Get("topo422Tree");
+    TTree* gFexSRJTree_back = (TTree*)backgroundInputFile->Get("gFexSRJTree");
+    TTree* gFexLeadingSRJTree_back = (TTree*)backgroundInputFile->Get("gFexLeadingSRJTree");
+    TTree* gFexSubleadingSRJTree_back = (TTree*)backgroundInputFile->Get("gFexSubleadingSRJTree");
+    TTree* gFexLRJTree_back = (TTree*)backgroundInputFile->Get("gFexLRJTree");
+    TTree* gFexLeadingLRJTree_back = (TTree*)backgroundInputFile->Get("gFexLeadingLRJTree");
+    TTree* gFexSubleadingLRJTree_back = (TTree*)backgroundInputFile->Get("gFexSubleadingLRJTree");
+    TTree* inTimeAntiKt4TruthJetsTree_back = (TTree*)backgroundInputFile->Get("inTimeAntiKt4TruthJetsTree");
+    TTree* leadingInTimeAntiKt4TruthJetsTree_back = (TTree*)backgroundInputFile->Get("leadingInTimeAntiKt4TruthJetsTree");
+    TTree* subleadingInTimeAntiKt4TruthJetsTree_back = (TTree*)backgroundInputFile->Get("subleadingInTimeAntiKt4TruthJetsTree");
+    TTree* jFexSRJTree_back = (TTree*)backgroundInputFile->Get("jFexSRJTree");
+    TTree* jFexLeadingSRJTree_back = (TTree*)backgroundInputFile->Get("jFexLeadingSRJTree");
+    TTree* jFexSubleadingSRJTree_back = (TTree*)backgroundInputFile->Get("jFexSubleadingSRJTree");
+    TTree* jFexLRJTree_back = (TTree*)backgroundInputFile->Get("jFexLRJTree");
+    TTree* jFexLeadingLRJTree_back = (TTree*)backgroundInputFile->Get("jFexLeadingLRJTree");
+    TTree* jFexSubleadingLRJTree_back = (TTree*)backgroundInputFile->Get("jFexSubleadingLRJTree");
+    TTree* hltAntiKt4EMTopoJetsTree_back = (TTree*)backgroundInputFile->Get("hltAntiKt4EMTopoJetsTree");
+    TTree* leadingHltAntiKt4EMTopoJetsTree_back = (TTree*)backgroundInputFile->Get("leadingHltAntiKt4EMTopoJetsTree");
+    TTree* subleadingHltAntiKt4EMTopoJetsTree_back = (TTree*)backgroundInputFile->Get("subleadingHltAntiKt4EMTopoJetsTree");
+    TTree* recoAntiKt10UFOCSSKJets_back = (TTree*)backgroundInputFile->Get("recoAntiKt10UFOCSSKJets");
+    TTree* leadingRecoAntiKt10UFOCSSKJets_back = (TTree*)backgroundInputFile->Get("leadingRecoAntiKt10UFOCSSKJets");
+    TTree* subleadingRecoAntiKt10UFOCSSKJets_back = (TTree*)backgroundInputFile->Get("subleadingRecoAntiKt10UFOCSSKJets");
+    TTree* truthAntiKt4TruthDressedWZJets_back = (TTree*)backgroundInputFile->Get("truthAntiKt4TruthDressedWZJets");
+    TTree* leadingTruthAntiKt4TruthDressedWZJets_back = (TTree*)backgroundInputFile->Get("leadingTruthAntiKt4TruthDressedWZJets");
+    TTree* subleadingTruthAntiKt4TruthDressedWZJets_back = (TTree*)backgroundInputFile->Get("subleadingTruthAntiKt4TruthDressedWZJets");
 
-    std::vector<double>* sigCaloTopoEtValues = nullptr;
-    std::vector<double>* sigCaloTopoEtaValues = nullptr;
-    std::vector<double>* sigCaloTopoPhiValues = nullptr;
+    std::vector<unsigned int> higgsIndexValues_VBF, indexOfHiggsValues_VBF;
+    std::vector<double> truthbquarksEtValues_VBF, truthbquarksEnergyValues_VBF, truthbquarkspTValues_VBF, truthbquarkspxValues_VBF, truthbquarkspyValues_VBF, truthbquarkspzValues_VBF, truthbquarksEtaValues_VBF, truthbquarksPhiValues_VBF;
+    std::vector<double> truthHiggsEtValues_VBF, truthHiggsEnergyValues_VBF, truthHiggspTValues_VBF, truthHiggspxValues_VBF, truthHiggspyValues_VBF, truthHiggspzValues_VBF, truthHiggsEtaValues_VBF, truthHiggsPhiValues_VBF, truthHiggsInvMassValues_VBF;
+    std::vector<double> caloTopoTowerEtValues_VBF, caloTopoTowerEtaValues_VBF, caloTopoTowerPhiValues_VBF;
+    std::vector<double> topo422EtValues_VBF, topo422EtaValues_VBF, topo422PhiValues_VBF;
+    std::vector<unsigned int> gFexSRJEtIndexValues_VBF;
+    std::vector<double> gFexSRJEtValues_VBF, gFexSRJEtaValues_VBF, gFexSRJPhiValues_VBF;
+    std::vector<double> gFexSRJLeadingEtValues_VBF, gFexSRJLeadingEtaValues_VBF, gFexSRJLeadingPhiValues_VBF;
+    std::vector<double> gFexSRJSubleadingEtValues_VBF, gFexSRJSubleadingEtaValues_VBF, gFexSRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> gFexLRJEtIndexValues_VBF;
+    std::vector<double> gFexLRJEtValues_VBF, gFexLRJEtaValues_VBF, gFexLRJPhiValues_VBF;
+    std::vector<double> gFexLRJLeadingEtValues_VBF, gFexLRJLeadingEtaValues_VBF, gFexLRJLeadingPhiValues_VBF;
+    std::vector<double> gFexLRJSubleadingEtValues_VBF, gFexLRJSubleadingEtaValues_VBF, gFexLRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> jFexSRJEtIndexValues_VBF;
+    std::vector<double> jFexSRJEtValues_VBF, jFexSRJEtaValues_VBF, jFexSRJPhiValues_VBF;
+    std::vector<double> jFexSRJLeadingEtValues_VBF, jFexSRJLeadingEtaValues_VBF, jFexSRJLeadingPhiValues_VBF;
+    std::vector<double> jFexSRJSubleadingEtValues_VBF, jFexSRJSubleadingEtaValues_VBF, jFexSRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> jFexLRJEtIndexValues_VBF;
+    std::vector<double> jFexLRJEtValues_VBF, jFexLRJEtaValues_VBF, jFexLRJPhiValues_VBF;
+    std::vector<double> jFexLRJLeadingEtValues_VBF, jFexLRJLeadingEtaValues_VBF, jFexLRJLeadingPhiValues_VBF;
+    std::vector<double> jFexLRJSubleadingEtValues_VBF, jFexLRJSubleadingEtaValues_VBF, jFexLRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_VBF;
+    std::vector<double> hltAntiKt4SRJEtValues_VBF, hltAntiKt4SRJEtaValues_VBF, hltAntiKt4SRJPhiValues_VBF;
+    std::vector<double> hltAntiKt4SRJLeadingEtValues_VBF, hltAntiKt4SRJLeadingEtaValues_VBF, hltAntiKt4SRJLeadingPhiValues_VBF;
+    std::vector<double> hltAntiKt4SRJSubleadingEtValues_VBF, hltAntiKt4SRJSubleadingEtaValues_VBF, hltAntiKt4SRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_VBF;
+    std::vector<double> recoAntiKt10LRJEtValues_VBF, recoAntiKt10LRJEtaValues_VBF, recoAntiKt10LRJPhiValues_VBF;
+    std::vector<double> recoAntiKt10LRJLeadingEtValues_VBF, recoAntiKt10LRJLeadingEtaValues_VBF, recoAntiKt10LRJLeadingPhiValues_VBF;
+    std::vector<double> recoAntiKt10LRJSubleadingEtValues_VBF, recoAntiKt10LRJSubleadingEtaValues_VBF, recoAntiKt10LRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_VBF;
+    std::vector<double> truthAntiKt4WZSRJEtValues_VBF, truthAntiKt4WZSRJEtaValues_VBF, truthAntiKt4WZSRJPhiValues_VBF;
+    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_VBF, truthAntiKt4WZSRJLeadingEtaValues_VBF, truthAntiKt4WZSRJLeadingPhiValues_VBF;
+    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_VBF, truthAntiKt4WZSRJSubleadingEtaValues_VBF, truthAntiKt4WZSRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_VBF;
+    std::vector<double> inTimeAntiKt4TruthSRJEtValues_VBF, inTimeAntiKt4TruthSRJEtaValues_VBF, inTimeAntiKt4TruthSRJPhiValues_VBF;
+    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_VBF, inTimeAntiKt4TruthSRJLeadingEtaValues_VBF, inTimeAntiKt4TruthSRJLeadingPhiValues_VBF;
+    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_VBF, inTimeAntiKt4TruthSRJSubleadingEtaValues_VBF, inTimeAntiKt4TruthSRJSubleadingPhiValues_VBF;
 
-    std::vector<double> sigTopoEtValues_top128;
-    std::vector<double> sigTopoEtaValues_top128;
-    std::vector<double> sigTopoPhiValues_top128;
+    std::vector<unsigned int> higgsIndexValues_ggF, indexOfHiggsValues_ggF;
+    std::vector<double> truthbquarksEtValues_ggF, truthbquarksEnergyValues_ggF, truthbquarkspTValues_ggF, truthbquarkspxValues_ggF, truthbquarkspyValues_ggF, truthbquarkspzValues_ggF, truthbquarksEtaValues_ggF, truthbquarksPhiValues_ggF;
+    std::vector<double> truthHiggsEtValues_ggF, truthHiggsEnergyValues_ggF, truthHiggspTValues_ggF, truthHiggspxValues_ggF, truthHiggspyValues_ggF, truthHiggspzValues_ggF, truthHiggsEtaValues_ggF, truthHiggsPhiValues_ggF, truthHiggsInvMassValues_ggF;
+    std::vector<double> caloTopoTowerEtValues_ggF, caloTopoTowerEtaValues_ggF, caloTopoTowerPhiValues_ggF;
+    std::vector<double> topo422EtValues_ggF, topo422EtaValues_ggF, topo422PhiValues_ggF;
+    std::vector<unsigned int> gFexSRJEtIndexValues_ggF;
+    std::vector<double> gFexSRJEtValues_ggF, gFexSRJEtaValues_ggF, gFexSRJPhiValues_ggF;
+    std::vector<double> gFexSRJLeadingEtValues_ggF, gFexSRJLeadingEtaValues_ggF, gFexSRJLeadingPhiValues_ggF;
+    std::vector<double> gFexSRJSubleadingEtValues_ggF, gFexSRJSubleadingEtaValues_ggF, gFexSRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> gFexLRJEtIndexValues_ggF;
+    std::vector<double> gFexLRJEtValues_ggF, gFexLRJEtaValues_ggF, gFexLRJPhiValues_ggF;
+    std::vector<double> gFexLRJLeadingEtValues_ggF, gFexLRJLeadingEtaValues_ggF, gFexLRJLeadingPhiValues_ggF;
+    std::vector<double> gFexLRJSubleadingEtValues_ggF, gFexLRJSubleadingEtaValues_ggF, gFexLRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> jFexSRJEtIndexValues_ggF;
+    std::vector<double> jFexSRJEtValues_ggF, jFexSRJEtaValues_ggF, jFexSRJPhiValues_ggF;
+    std::vector<double> jFexSRJLeadingEtValues_ggF, jFexSRJLeadingEtaValues_ggF, jFexSRJLeadingPhiValues_ggF;
+    std::vector<double> jFexSRJSubleadingEtValues_ggF, jFexSRJSubleadingEtaValues_ggF, jFexSRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> jFexLRJEtIndexValues_ggF;
+    std::vector<double> jFexLRJEtValues_ggF, jFexLRJEtaValues_ggF, jFexLRJPhiValues_ggF;
+    std::vector<double> jFexLRJLeadingEtValues_ggF, jFexLRJLeadingEtaValues_ggF, jFexLRJLeadingPhiValues_ggF;
+    std::vector<double> jFexLRJSubleadingEtValues_ggF, jFexLRJSubleadingEtaValues_ggF, jFexLRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_ggF;
+    std::vector<double> hltAntiKt4SRJEtValues_ggF, hltAntiKt4SRJEtaValues_ggF, hltAntiKt4SRJPhiValues_ggF;
+    std::vector<double> hltAntiKt4SRJLeadingEtValues_ggF, hltAntiKt4SRJLeadingEtaValues_ggF, hltAntiKt4SRJLeadingPhiValues_ggF;
+    std::vector<double> hltAntiKt4SRJSubleadingEtValues_ggF, hltAntiKt4SRJSubleadingEtaValues_ggF, hltAntiKt4SRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_ggF;
+    std::vector<double> recoAntiKt10LRJEtValues_ggF, recoAntiKt10LRJEtaValues_ggF, recoAntiKt10LRJPhiValues_ggF;
+    std::vector<double> recoAntiKt10LRJLeadingEtValues_ggF, recoAntiKt10LRJLeadingEtaValues_ggF, recoAntiKt10LRJLeadingPhiValues_ggF;
+    std::vector<double> recoAntiKt10LRJSubleadingEtValues_ggF, recoAntiKt10LRJSubleadingEtaValues_ggF, recoAntiKt10LRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_ggF;
+    std::vector<double> truthAntiKt4WZSRJEtValues_ggF, truthAntiKt4WZSRJEtaValues_ggF, truthAntiKt4WZSRJPhiValues_ggF;
+    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_ggF, truthAntiKt4WZSRJLeadingEtaValues_ggF, truthAntiKt4WZSRJLeadingPhiValues_ggF;
+    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_ggF, truthAntiKt4WZSRJSubleadingEtaValues_ggF, truthAntiKt4WZSRJSubleadingPhiValues_ggF;
+    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_ggF;
+    std::vector<double> inTimeAntiKt4TruthSRJEtValues_ggF, inTimeAntiKt4TruthSRJEtaValues_ggF, inTimeAntiKt4TruthSRJPhiValues_ggF;
+    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_ggF, inTimeAntiKt4TruthSRJLeadingEtaValues_ggF, inTimeAntiKt4TruthSRJLeadingPhiValues_ggF;
+    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_ggF, inTimeAntiKt4TruthSRJSubleadingEtaValues_ggF, inTimeAntiKt4TruthSRJSubleadingPhiValues_ggF;
 
-    std::vector<double>* sigGFexEtValues = nullptr;
-    std::vector<double>* sigGFexEtaValues = nullptr;
-    std::vector<double>* sigGFexPhiValues = nullptr;
+    std::vector<double> caloTopoTowerEtValues_back, caloTopoTowerEtaValues_back, caloTopoTowerPhiValues_back;
+    std::vector<double> topo422EtValues_back, topo422EtaValues_back, topo422PhiValues_back;
+    std::vector<unsigned int> gFexSRJEtIndexValues_back;
+    std::vector<double> gFexSRJEtValues_back, gFexSRJEtaValues_back, gFexSRJPhiValues_back;
+    std::vector<double> gFexSRJLeadingEtValues_back, gFexSRJLeadingEtaValues_back, gFexSRJLeadingPhiValues_back;
+    std::vector<double> gFexSRJSubleadingEtValues_back, gFexSRJSubleadingEtaValues_back, gFexSRJSubleadingPhiValues_back;
+    std::vector<unsigned int> gFexLRJEtIndexValues_back;
+    std::vector<double> gFexLRJEtValues_back, gFexLRJEtaValues_back, gFexLRJPhiValues_back;
+    std::vector<double> gFexLRJLeadingEtValues_back, gFexLRJLeadingEtaValues_back, gFexLRJLeadingPhiValues_back;
+    std::vector<double> gFexLRJSubleadingEtValues_back, gFexLRJSubleadingEtaValues_back, gFexLRJSubleadingPhiValues_back;
+    std::vector<unsigned int> jFexSRJEtIndexValues_back;
+    std::vector<double> jFexSRJEtValues_back, jFexSRJEtaValues_back, jFexSRJPhiValues_back;
+    std::vector<double> jFexSRJLeadingEtValues_back, jFexSRJLeadingEtaValues_back, jFexSRJLeadingPhiValues_back;
+    std::vector<double> jFexSRJSubleadingEtValues_back, jFexSRJSubleadingEtaValues_back, jFexSRJSubleadingPhiValues_back;
+    std::vector<unsigned int> jFexLRJEtIndexValues_back;
+    std::vector<double> jFexLRJEtValues_back, jFexLRJEtaValues_back, jFexLRJPhiValues_back;
+    std::vector<double> jFexLRJLeadingEtValues_back, jFexLRJLeadingEtaValues_back, jFexLRJLeadingPhiValues_back;
+    std::vector<double> jFexLRJSubleadingEtValues_back, jFexLRJSubleadingEtaValues_back, jFexLRJSubleadingPhiValues_back;
+    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_back;
+    std::vector<double> hltAntiKt4SRJEtValues_back, hltAntiKt4SRJEtaValues_back, hltAntiKt4SRJPhiValues_back;
+    std::vector<double> hltAntiKt4SRJLeadingEtValues_back, hltAntiKt4SRJLeadingEtaValues_back, hltAntiKt4SRJLeadingPhiValues_back;
+    std::vector<double> hltAntiKt4SRJSubleadingEtValues_back, hltAntiKt4SRJSubleadingEtaValues_back, hltAntiKt4SRJSubleadingPhiValues_back;
+    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_back;
+    std::vector<double> recoAntiKt10LRJEtValues_back, recoAntiKt10LRJEtaValues_back, recoAntiKt10LRJPhiValues_back;
+    std::vector<double> recoAntiKt10LRJLeadingEtValues_back, recoAntiKt10LRJLeadingEtaValues_back, recoAntiKt10LRJLeadingPhiValues_back;
+    std::vector<double> recoAntiKt10LRJSubleadingEtValues_back, recoAntiKt10LRJSubleadingEtaValues_back, recoAntiKt10LRJSubleadingPhiValues_back;
+    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_back;
+    std::vector<double> truthAntiKt4WZSRJEtValues_back, truthAntiKt4WZSRJEtaValues_back, truthAntiKt4WZSRJPhiValues_back;
+    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_back, truthAntiKt4WZSRJLeadingEtaValues_back, truthAntiKt4WZSRJLeadingPhiValues_back;
+    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_back, truthAntiKt4WZSRJSubleadingEtaValues_back, truthAntiKt4WZSRJSubleadingPhiValues_back;
+    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_back;
+    std::vector<double> inTimeAntiKt4TruthSRJEtValues_back, inTimeAntiKt4TruthSRJEtaValues_back, inTimeAntiKt4TruthSRJPhiValues_back;
+    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_back, inTimeAntiKt4TruthSRJLeadingEtaValues_back, inTimeAntiKt4TruthSRJLeadingPhiValues_back;
+    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_back, inTimeAntiKt4TruthSRJSubleadingEtaValues_back, inTimeAntiKt4TruthSRJSubleadingPhiValues_back;
 
-    std::vector<double>* sigJFexEtValues = nullptr;
-    std::vector<double>* sigJFexEtaValues = nullptr;
-    std::vector<double>* sigJFexPhiValues = nullptr;
+    // === truthbTree_VBF ===
+    truthbTree_VBF->SetBranchAddress("higgsIndex", &higgsIndexValues_VBF);
+    truthbTree_VBF->SetBranchAddress("Et", &truthbquarksEtValues_VBF);
+    truthbTree_VBF->SetBranchAddress("Energy", &truthbquarksEnergyValues_VBF);
+    truthbTree_VBF->SetBranchAddress("pT", &truthbquarkspTValues_VBF);
+    truthbTree_VBF->SetBranchAddress("px", &truthbquarkspxValues_VBF);
+    truthbTree_VBF->SetBranchAddress("py", &truthbquarkspyValues_VBF);
+    truthbTree_VBF->SetBranchAddress("pz", &truthbquarkspzValues_VBF);
+    truthbTree_VBF->SetBranchAddress("Eta", &truthbquarksEtaValues_VBF);
+    truthbTree_VBF->SetBranchAddress("Phi", &truthbquarksPhiValues_VBF);
 
-    std::vector<double>* backTopoEtValues = nullptr;
-    std::vector<double>* backTopoEtaValues = nullptr;
-    std::vector<double>* backTopoPhiValues = nullptr;
+    // === truthHiggsTree_VBF ===
+    truthHiggsTree_VBF->SetBranchAddress("indexOfHiggs", &indexOfHiggsValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("invMass", &truthHiggsInvMassValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("Et", &truthHiggsEtValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("Energy", &truthHiggsEnergyValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("pT", &truthHiggspTValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("px", &truthHiggspxValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("py", &truthHiggspyValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("pz", &truthHiggspzValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("Eta", &truthHiggsEtaValues_VBF);
+    truthHiggsTree_VBF->SetBranchAddress("Phi", &truthHiggsPhiValues_VBF);
 
-    std::vector<double>* backCaloTopoEtValues = nullptr;
-    std::vector<double>* backCaloTopoEtaValues = nullptr;
-    std::vector<double>* backCaloTopoPhiValues = nullptr;
+    // === caloTopoTowerTree_VBF ===
+    caloTopoTowerTree_VBF->SetBranchAddress("Et", &caloTopoTowerEtValues_VBF);
+    caloTopoTowerTree_VBF->SetBranchAddress("Eta", &caloTopoTowerEtaValues_VBF);
+    caloTopoTowerTree_VBF->SetBranchAddress("Phi", &caloTopoTowerPhiValues_VBF);
 
-    std::vector<double> backTopoEtValues_top128;
-    std::vector<double> backTopoEtaValues_top128;
-    std::vector<double> backTopoPhiValues_top128;
+    // === topo422Tree_VBF ===
+    topo422Tree_VBF->SetBranchAddress("Et", &topo422EtValues_VBF);
+    topo422Tree_VBF->SetBranchAddress("Eta", &topo422EtaValues_VBF);
+    topo422Tree_VBF->SetBranchAddress("Phi", &topo422PhiValues_VBF);
 
-    std::vector<double>* backGFexEtValues = nullptr;
-    std::vector<double>* backGFexEtaValues = nullptr;
-    std::vector<double>* backGFexPhiValues = nullptr;
+    // === gFexSRJTree_VBF ===
+    gFexSRJTree_VBF->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues_VBF);
+    gFexSRJTree_VBF->SetBranchAddress("Et", &gFexSRJEtValues_VBF);
+    gFexSRJTree_VBF->SetBranchAddress("Eta", &gFexSRJEtaValues_VBF);
+    gFexSRJTree_VBF->SetBranchAddress("Phi", &gFexSRJPhiValues_VBF);
 
-    std::vector<double>* backJFexEtValues = nullptr;
-    std::vector<double>* backJFexEtaValues = nullptr;
-    std::vector<double>* backJFexPhiValues = nullptr;
+    // === gFexLeadingSRJTree_VBF ===
+    gFexLeadingSRJTree_VBF->SetBranchAddress("Et", &gFexSRJLeadingEtValues_VBF);
+    gFexLeadingSRJTree_VBF->SetBranchAddress("Eta", &gFexSRJLeadingEtaValues_VBF);
+    gFexLeadingSRJTree_VBF->SetBranchAddress("Phi", &gFexSRJLeadingPhiValues_VBF);
 
-    // Histograms
-    TH1F* sig_h_topo_Et = new TH1F("sig_h_topo_Et", "Topo Et Distribution;Et (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
-    TH1F* sig_h_calotopo_Et = new TH1F("sig_h_calotopo_Et", "CaloTopoTower Et Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
-    TH1F* sig_h_gFex_Et = new TH1F("sig_h_gFex_Et", "gFex Et Distribution;Et (GeV);Counts", 30, 0, 300);
-    TH1F* sig_h_jFex_Et = new TH1F("sig_h_jFex_Et", "jFex Et Distribution;Et (GeV);Counts", 30, 0, 300);
+    // === gFexSubleadingSRJTree_VBF ===
+    gFexSubleadingSRJTree_VBF->SetBranchAddress("Et", &gFexSRJSubleadingEtValues_VBF);
+    gFexSubleadingSRJTree_VBF->SetBranchAddress("Eta", &gFexSRJSubleadingEtaValues_VBF);
+    gFexSubleadingSRJTree_VBF->SetBranchAddress("Phi", &gFexSRJSubleadingPhiValues_VBF);
 
-    TH1F* sig_h_topo_eta = new TH1F("sig_h_topo_eta", "Topo Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* sig_h_calotopo_eta = new TH1F("sig_h_calotopo_eta", "CaloTopoTower Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* sig_h_gFex_eta = new TH1F("sig_h_gFex_eta", "gFex Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* sig_h_jFex_eta = new TH1F("sig_h_jFex_eta", "jFex Eta Distribution;Eta;Counts", 50, -5, 5);
+    // === gFexLRJTree_VBF ===
+    gFexLRJTree_VBF->SetBranchAddress("EtIndex", &gFexLRJEtIndexValues_VBF);
+    gFexLRJTree_VBF->SetBranchAddress("Et", &gFexLRJEtValues_VBF);
+    gFexLRJTree_VBF->SetBranchAddress("Eta", &gFexLRJEtaValues_VBF);
+    gFexLRJTree_VBF->SetBranchAddress("Phi", &gFexLRJPhiValues_VBF);
 
-    TH1F* sig_h_topo_phi = new TH1F("sig_h_topo_phi", "Topo Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* sig_h_calotopo_phi = new TH1F("sig_h_calotopo_phi", "CaloTopoTower Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* sig_h_gFex_phi = new TH1F("sig_h_gFex_phi", "gFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* sig_h_jFex_phi = new TH1F("sig_h_jFex_phi", "jFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
+    // === gFexLeadingLRJTree_VBF ===
+    gFexLeadingLRJTree_VBF->SetBranchAddress("Et", &gFexLRJLeadingEtValues_VBF);
+    gFexLeadingLRJTree_VBF->SetBranchAddress("Eta", &gFexLRJLeadingEtaValues_VBF);
+    gFexLeadingLRJTree_VBF->SetBranchAddress("Phi", &gFexLRJLeadingPhiValues_VBF);
 
-    TH1F* sig_h_gFex_multiplicity = new TH1F("sig_h_gFex_multiplicity", "gFex SmallR Jet Multiplicity;Number of gFex SmallR Jets;Counts", 20, 0, 20);
-    TH1F* sig_h_topo_multiplicity = new TH1F("sig_h_topo_multiplicity", "Topo422 Cluster Multiplicity;Number of Topo422 Clusters;Counts", 60, 400, 1000);
-    TH1F* sig_h_calotopo_multiplicity = new TH1F("sig_h_calotopo_multiplicity", "CaloTopo Tower Multiplicity;Number of CaloTopo Towers;Counts", 60, 400, 1600);
-    TH1F* sig_h_jFex_multiplicity = new TH1F("sig_h_jFex_multiplicity", "jFex SmallR Jet Multiplicity;Number of jFex SmallR Jets;Counts", 50, 0, 100);
+    // === gFexSubleadingLRJTree_VBF ===
+    gFexSubleadingLRJTree_VBF->SetBranchAddress("Et", &gFexLRJSubleadingEtValues_VBF);
+    gFexSubleadingLRJTree_VBF->SetBranchAddress("Eta", &gFexLRJSubleadingEtaValues_VBF);
+    gFexSubleadingLRJTree_VBF->SetBranchAddress("Phi", &gFexLRJSubleadingPhiValues_VBF);
 
-    TH1F* sig_h_gFex_leading_Et = new TH1F("sig_h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
-    TH1F* sig_h_gFex_subleading_Et = new TH1F("sig_h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+    // === jFexSRJTree_VBF ===
+    jFexSRJTree_VBF->SetBranchAddress("EtIndex", &jFexSRJEtIndexValues_VBF);
+    jFexSRJTree_VBF->SetBranchAddress("Et", &jFexSRJEtValues_VBF);
+    jFexSRJTree_VBF->SetBranchAddress("Eta", &jFexSRJEtaValues_VBF);
+    jFexSRJTree_VBF->SetBranchAddress("Phi", &jFexSRJPhiValues_VBF);
 
-    TH1F* sig_h_gFex_leading_eta = new TH1F("sig_h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
-    TH1F* sig_h_gFex_subleading_eta = new TH1F("sig_h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    // === jFexLeadingSRJTree_VBF ===
+    jFexLeadingSRJTree_VBF->SetBranchAddress("Et", &jFexSRJLeadingEtValues_VBF);
+    jFexLeadingSRJTree_VBF->SetBranchAddress("Eta", &jFexSRJLeadingEtaValues_VBF);
+    jFexLeadingSRJTree_VBF->SetBranchAddress("Phi", &jFexSRJLeadingPhiValues_VBF);
 
-    TH1F* sig_h_gFex_leading_phi = new TH1F("sig_h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-    TH1F* sig_h_gFex_subleading_phi = new TH1F("sig_h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === jFexSubleadingSRJTree_VBF ===
+    jFexSubleadingSRJTree_VBF->SetBranchAddress("Et", &jFexSRJSubleadingEtValues_VBF);
+    jFexSubleadingSRJTree_VBF->SetBranchAddress("Eta", &jFexSRJSubleadingEtaValues_VBF);
+    jFexSubleadingSRJTree_VBF->SetBranchAddress("Phi", &jFexSRJSubleadingPhiValues_VBF);
 
-    TH1F* sig_h_gFex_leading_subleading_deltaR = new TH1F("sig_h_gFex_leading_subleading_deltaR", "Leading, subleading gFex SRJ DeltaR Dist.; #Delta R gFex Lead, Sublead SRJ; Normalized Events / 0.08", 100, 0, 8);
+    // === jFexLRJTree_VBF ===
+    jFexLRJTree_VBF->SetBranchAddress("EtIndex", &jFexLRJEtIndexValues_VBF);
+    jFexLRJTree_VBF->SetBranchAddress("Et", &jFexLRJEtValues_VBF);
+    jFexLRJTree_VBF->SetBranchAddress("Eta", &jFexLRJEtaValues_VBF);
+    jFexLRJTree_VBF->SetBranchAddress("Phi", &jFexLRJPhiValues_VBF);
 
-    TH1F* sig_h_jFex_leading_Et = new TH1F("sig_h_jFex_leading_Et", "Leading jFEX Jet Et;Et (GeV);Counts", 100, 0, 800);
-    TH1F* sig_h_jFex_subleading_Et = new TH1F("sig_h_jFex_subleading_Et", "Sub-leading jFEX Jet Et;Et (GeV);Counts", 100, 0, 500);
+    // === jFexLeadingLRJTree_VBF ===
+    jFexLeadingLRJTree_VBF->SetBranchAddress("Et", &jFexLRJLeadingEtValues_VBF);
+    jFexLeadingLRJTree_VBF->SetBranchAddress("Eta", &jFexLRJLeadingEtaValues_VBF);
+    jFexLeadingLRJTree_VBF->SetBranchAddress("Phi", &jFexLRJLeadingPhiValues_VBF);
 
-    TH1F* sig_h_jFex_leading_eta = new TH1F("sig_h_jFex_leading_eta", "Leading jFEX Jet Eta;#eta;Counts", 50, -5, 5);
-    TH1F* sig_h_jFex_subleading_eta = new TH1F("sig_h_jFex_subleading_eta", "Sub-leading jFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    // === jFexSubleadingLRJTree_VBF ===
+    jFexSubleadingLRJTree_VBF->SetBranchAddress("Et", &jFexLRJSubleadingEtValues_VBF);
+    jFexSubleadingLRJTree_VBF->SetBranchAddress("Eta", &jFexLRJSubleadingEtaValues_VBF);
+    jFexSubleadingLRJTree_VBF->SetBranchAddress("Phi", &jFexLRJSubleadingPhiValues_VBF);
 
-    TH1F* sig_h_jFex_leading_phi = new TH1F("sig_h_jFex_leading_phi", "Leading jFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-    TH1F* sig_h_jFex_subleading_phi = new TH1F("sig_h_jFex_subleading_phi", "Sub-leading jFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === hltAntiKt4EMTopoJetsTree_VBF ===
+    hltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("EtIndex", &hltAntiKt4SRJEtIndexValues_VBF);
+    hltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Et", &hltAntiKt4SRJEtValues_VBF);
+    hltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Eta", &hltAntiKt4SRJEtaValues_VBF);
+    hltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Phi", &hltAntiKt4SRJPhiValues_VBF);
 
-    TH1F* sig_h_jFex_leading_subleading_deltaR = new TH1F("sig_h_jFex_leading_subleading_deltaR", "Leading, subleading jFex SRJ DeltaR Dist.; #Delta R jFex Lead, Sublead SRJ; Normalized Events / 0.08", 100, 0, 8);
+    // === leadingHltAntiKt4EMTopoJetsTree_VBF ===
+    leadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Et", &hltAntiKt4SRJLeadingEtValues_VBF);
+    leadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Eta", &hltAntiKt4SRJLeadingEtaValues_VBF);
+    leadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Phi", &hltAntiKt4SRJLeadingPhiValues_VBF);
 
-    TH1F* sig_h_topo_Et_top128  = new TH1F("sig_h_topo_Et_top128", "128 Highest Et Topo Cluster Et;Et (GeV); Topo422 Cluster / 2 GeV", 200, 0, 400);
-    TH1F* sig_h_topo_eta_top128 = new TH1F("sig_h_topo_eta_top128", "128 Highest Et Topo Cluster Eta;#eta;Counts", 50, -5, 5);
-    TH1F* sig_h_topo_phi_top128 = new TH1F("sig_h_topo_phi_top128", "128 Highest Et Topo Cluster Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === subleadingHltAntiKt4EMTopoJetsTree_VBF ===
+    subleadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Et", &hltAntiKt4SRJSubleadingEtValues_VBF);
+    subleadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Eta", &hltAntiKt4SRJSubleadingEtaValues_VBF);
+    subleadingHltAntiKt4EMTopoJetsTree_VBF->SetBranchAddress("Phi", &hltAntiKt4SRJSubleadingPhiValues_VBF);
 
-    // gFex jet deltaR^2 histogram
-    TH1F* sig_h_deltaR2_gFex_SRJ1 = new TH1F("sig_h_deltaR2_gFex_SRJ1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR2_gFex_SRJ2 = new TH1F("sig_h_deltaR2_gFex_SRJ2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR_gFex_SRJ1 = new TH1F("sig_h_deltaR_gFex_SRJ1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
-    TH1F* sig_h_deltaR_gFex_SRJ2 = new TH1F("sig_h_deltaR_gFex_SRJ2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+    // === recoAntiKt10UFOCSSKJets_VBF ===
+    recoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("EtIndex", &recoAntiKt10LRJEtIndexValues_VBF);
+    recoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Et", &recoAntiKt10LRJEtValues_VBF);
+    recoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Eta", &recoAntiKt10LRJEtaValues_VBF);
+    recoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Phi", &recoAntiKt10LRJPhiValues_VBF);
 
-    TH1F* sig_h_deltaR2_gFex_SRJ1_topo128 = new TH1F("sig_h_deltaR2_gFex_SRJ1_topo128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR2_gFex_SRJ2_topo128 = new TH1F("sig_h_deltaR2_gFex_SRJ2_topo128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR_gFex_SRJ1_topo128 = new TH1F("sig_h_deltaR_gFex_SRJ1_topo128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
-    TH1F* sig_h_deltaR_gFex_SRJ2_topo128 = new TH1F("sig_h_deltaR_gFex_SRJ2_topo128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    // === leadingRecoAntiKt10UFOCSSKJets_VBF ===
+    leadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Et", &recoAntiKt10LRJLeadingEtValues_VBF);
+    leadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Eta", &recoAntiKt10LRJLeadingEtaValues_VBF);
+    leadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Phi", &recoAntiKt10LRJLeadingPhiValues_VBF);
 
-    TH1F* sig_h_deltaR2_jFex_SRJ1 = new TH1F("sig_h_deltaR2_jFex_SRJ1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR2_jFex_SRJ2 = new TH1F("sig_h_deltaR2_jFex_SRJ2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR_jFex_SRJ1 = new TH1F("sig_h_deltaR_jFex_SRJ1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
-    TH1F* sig_h_deltaR_jFex_SRJ2 = new TH1F("sig_h_deltaR_jFex_SRJ2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+    // === subleadingRecoAntiKt10UFOCSSKJets_VBF ===
+    subleadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Et", &recoAntiKt10LRJSubleadingEtValues_VBF);
+    subleadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Eta", &recoAntiKt10LRJSubleadingEtaValues_VBF);
+    subleadingRecoAntiKt10UFOCSSKJets_VBF->SetBranchAddress("Phi", &recoAntiKt10LRJSubleadingPhiValues_VBF);
 
-    TH1F* sig_h_deltaR2_jFex_SRJ1_topo128 = new TH1F("sig_h_deltaR2_jFex_SRJ1_topo128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR2_jFex_SRJ2_topo128 = new TH1F("sig_h_deltaR2_jFex_SRJ2_topo128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* sig_h_deltaR_jFex_SRJ1_topo128 = new TH1F("sig_h_deltaR_jFex_SRJ1_topo128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
-    TH1F* sig_h_deltaR_jFex_SRJ2_topo128 = new TH1F("sig_h_deltaR_jFex_SRJ2_topo128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    // === truthAntiKt4TruthDressedWZJets_VBF ===
+    truthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("EtIndex", &truthAntiKt4WZSRJEtIndexValues_VBF);
+    truthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Et", &truthAntiKt4WZSRJEtValues_VBF);
+    truthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Eta", &truthAntiKt4WZSRJEtaValues_VBF);
+    truthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Phi", &truthAntiKt4WZSRJPhiValues_VBF);
 
-    TH1F* back_h_topo_Et = new TH1F("back_h_topo_Et", "Topo Et Distribution;Et (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
-    TH1F* back_h_calotopo_Et = new TH1F("back_h_calotopo_Et", "CaloTopo Tower Et Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
-    TH1F* back_h_gFex_Et = new TH1F("back_h_gFex_Et", "gFex Et Distribution;Et (GeV);Counts", 30, 0, 300);
-    TH1F* back_h_jFex_Et = new TH1F("back_h_jFex_Et", "jFex Et Distribution;Et (GeV);Counts", 30, 0, 300);
+    // === leadingTruthAntiKt4TruthDressedWZJets_VBF ===
+    leadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Et", &truthAntiKt4WZSRJLeadingEtValues_VBF);
+    leadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Eta", &truthAntiKt4WZSRJLeadingEtaValues_VBF);
+    leadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Phi", &truthAntiKt4WZSRJLeadingPhiValues_VBF);
 
-    TH1F* back_h_topo_eta = new TH1F("back_h_topo_eta", "Topo Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* back_h_calotopo_eta = new TH1F("back_h_calotopo_eta", "CaloTopoTower Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* back_h_gFex_eta = new TH1F("back_h_gFex_eta", "gFex Eta Distribution;Eta;Counts", 50, -5, 5);
-    TH1F* back_h_jFex_eta = new TH1F("back_h_jFex_eta", "jFex Eta Distribution;Eta;Counts", 50, -5, 5);
+    // === subleadingTruthAntiKt4TruthDressedWZJets_VBF ===
+    subleadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Et", &truthAntiKt4WZSRJSubleadingEtValues_VBF);
+    subleadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Eta", &truthAntiKt4WZSRJSubleadingEtaValues_VBF);
+    subleadingTruthAntiKt4TruthDressedWZJets_VBF->SetBranchAddress("Phi", &truthAntiKt4WZSRJSubleadingPhiValues_VBF);
 
-    TH1F* back_h_topo_phi = new TH1F("back_h_topo_phi", "Topo Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* back_h_calotopo_phi = new TH1F("back_h_calotopo_phi", "CaloTopoTower Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* back_h_gFex_phi = new TH1F("back_h_gFex_phi", "gFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
-    TH1F* back_h_jFex_phi = new TH1F("back_h_jFex_phi", "jFex Phi Distribution;Phi;Counts", 64, -3.2, 3.2);
+    // === inTimeAntiKt4TruthJetsTree_VBF ===
+    inTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("EtIndex", &inTimeAntiKt4TruthSRJEtIndexValues_VBF);
+    inTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJEtValues_VBF);
+    inTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJEtaValues_VBF);
+    inTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJPhiValues_VBF);
 
-    TH1F* back_h_gFex_multiplicity = new TH1F("back_h_gFex_multiplicity", "gFex SmallR Jet Multiplicity;Number of gFex SmallR Jets;Counts", 20, 0, 20);
-    TH1F* back_h_topo_multiplicity = new TH1F("back_h_topo_multiplicity", "Topo422 Cluster Multiplicity;Number of Topo422 Clusters;Counts", 60, 400, 1000);
-    TH1F* back_h_calotopo_multiplicity = new TH1F("back_h_calotopo_multiplicity", "CaloTopo Tower Multiplicity;Number of CaloTopo Towers;Counts", 60, 400, 1600);
-    TH1F* back_h_jFex_multiplicity = new TH1F("back_h_jFex_multiplicity", "jFex SmallR Jet Multiplicity;Number of jFex SmallR Jets;Counts", 50, 0, 100);
+    // === leadingInTimeAntiKt4TruthJetsTree_VBF ===
+    leadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJLeadingEtValues_VBF);
+    leadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJLeadingEtaValues_VBF);
+    leadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJLeadingPhiValues_VBF);
 
-    TH1F* back_h_gFex_leading_Et = new TH1F("back_h_gFex_leading_Et", "Leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
-    TH1F* back_h_gFex_subleading_Et = new TH1F("back_h_gFex_subleading_Et", "Sub-leading gFEX Jet Et;Et (GeV);Counts", 100, 0, 400);
+    // === subleadingInTimeAntiKt4TruthJetsTree_VBF ===
+    subleadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJSubleadingEtValues_VBF);
+    subleadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValues_VBF);
+    subleadingInTimeAntiKt4TruthJetsTree_VBF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValues_VBF);
 
-    TH1F* back_h_gFex_leading_eta = new TH1F("back_h_gFex_leading_eta", "Leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
-    TH1F* back_h_gFex_subleading_eta = new TH1F("back_h_gFex_subleading_eta", "Sub-leading gFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    // === truthbTree_ggF ===
+    truthbTree_ggF->SetBranchAddress("higgsIndex", &higgsIndexValues_ggF);
+    truthbTree_ggF->SetBranchAddress("Et", &truthbquarksEtValues_ggF);
+    truthbTree_ggF->SetBranchAddress("Energy", &truthbquarksEnergyValues_ggF);
+    truthbTree_ggF->SetBranchAddress("pT", &truthbquarkspTValues_ggF);
+    truthbTree_ggF->SetBranchAddress("px", &truthbquarkspxValues_ggF);
+    truthbTree_ggF->SetBranchAddress("py", &truthbquarkspyValues_ggF);
+    truthbTree_ggF->SetBranchAddress("pz", &truthbquarkspzValues_ggF);
+    truthbTree_ggF->SetBranchAddress("Eta", &truthbquarksEtaValues_ggF);
+    truthbTree_ggF->SetBranchAddress("Phi", &truthbquarksPhiValues_ggF);
 
-    TH1F* back_h_gFex_leading_phi = new TH1F("back_h_gFex_leading_phi", "Leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-    TH1F* back_h_gFex_subleading_phi = new TH1F("back_h_gFex_subleading_phi", "Sub-leading gFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === truthHiggsTree_ggF ===
+    truthHiggsTree_ggF->SetBranchAddress("indexOfHiggs", &indexOfHiggsValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("invMass", &truthHiggsInvMassValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("Et", &truthHiggsEtValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("Energy", &truthHiggsEnergyValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("pT", &truthHiggspTValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("px", &truthHiggspxValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("py", &truthHiggspyValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("pz", &truthHiggspzValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("Eta", &truthHiggsEtaValues_ggF);
+    truthHiggsTree_ggF->SetBranchAddress("Phi", &truthHiggsPhiValues_ggF);
 
-    TH1F* back_h_gFex_leading_subleading_deltaR = new TH1F("back_h_gFex_leading_subleading_deltaR", "Leading, subleading gFex SRJ DeltaR Dist.; #Delta R gFex Lead, Sublead SRJ; Normalized Events / 0.08", 100, 0, 8);
+    // === caloTopoTowerTree_ggF ===
+    caloTopoTowerTree_ggF->SetBranchAddress("Et", &caloTopoTowerEtValues_ggF);
+    caloTopoTowerTree_ggF->SetBranchAddress("Eta", &caloTopoTowerEtaValues_ggF);
+    caloTopoTowerTree_ggF->SetBranchAddress("Phi", &caloTopoTowerPhiValues_ggF);
 
-    TH1F* back_h_jFex_leading_Et = new TH1F("back_h_jFex_leading_Et", "Leading jFEX Jet Et;Et (GeV);Counts", 100, 0, 500);
-    TH1F* back_h_jFex_subleading_Et = new TH1F("back_h_jFex_subleading_Et", "Sub-leading jFEX Jet Et;Et (GeV);Counts", 100, 0, 500);
+    // === topo422Tree_ggF ===
+    topo422Tree_ggF->SetBranchAddress("Et", &topo422EtValues_ggF);
+    topo422Tree_ggF->SetBranchAddress("Eta", &topo422EtaValues_ggF);
+    topo422Tree_ggF->SetBranchAddress("Phi", &topo422PhiValues_ggF);
 
-    TH1F* back_h_jFex_leading_eta = new TH1F("back_h_jFex_leading_eta", "Leading jFEX Jet Eta;#eta;Counts", 50, -5, 5);
-    TH1F* back_h_jFex_subleading_eta = new TH1F("back_h_jFex_subleading_eta", "Sub-leading jFEX Jet Eta;#eta;Counts", 50, -5, 5);
+    // === gFexSRJTree_ggF ===
+    gFexSRJTree_ggF->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues_ggF);
+    gFexSRJTree_ggF->SetBranchAddress("Et", &gFexSRJEtValues_ggF);
+    gFexSRJTree_ggF->SetBranchAddress("Eta", &gFexSRJEtaValues_ggF);
+    gFexSRJTree_ggF->SetBranchAddress("Phi", &gFexSRJPhiValues_ggF);
 
-    TH1F* back_h_jFex_leading_phi = new TH1F("back_h_jFex_leading_phi", "Leading jFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
-    TH1F* back_h_jFex_subleading_phi = new TH1F("back_h_jFex_subleading_phi", "Sub-leading jFEX Jet Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === gFexLeadingSRJTree_ggF ===
+    gFexLeadingSRJTree_ggF->SetBranchAddress("Et", &gFexSRJLeadingEtValues_ggF);
+    gFexLeadingSRJTree_ggF->SetBranchAddress("Eta", &gFexSRJLeadingEtaValues_ggF);
+    gFexLeadingSRJTree_ggF->SetBranchAddress("Phi", &gFexSRJLeadingPhiValues_ggF);
 
-    TH1F* back_h_jFex_leading_subleading_deltaR = new TH1F("back_h_jFex_leading_subleading_deltaR", "Leading, subleading jFex SRJ DeltaR Dist.; #Delta R jFex Lead, Sublead SRJ; Normalized Events / 0.08", 100, 0, 8);
+    // === gFexSubleadingSRJTree_ggF ===
+    gFexSubleadingSRJTree_ggF->SetBranchAddress("Et", &gFexSRJSubleadingEtValues_ggF);
+    gFexSubleadingSRJTree_ggF->SetBranchAddress("Eta", &gFexSRJSubleadingEtaValues_ggF);
+    gFexSubleadingSRJTree_ggF->SetBranchAddress("Phi", &gFexSRJSubleadingPhiValues_ggF);
 
-    TH1F* back_h_topo_Et_top128  = new TH1F("back_h_topo_Et_top128", "128 Highest Et Topo Cluster Et;Et (GeV); Topo422 Clusters / 2 GeV", 200, 0, 400);
-    TH1F* back_h_topo_eta_top128 = new TH1F("back_h_topo_eta_top128", "128 Highest Et Topo Cluster Eta;#eta;Counts", 50, -5, 5);
-    TH1F* back_h_topo_phi_top128 = new TH1F("back_h_topo_phi_top128", "128 Highest Et Topo Cluster Phi;#phi;Counts", 64, -3.2, 3.2);
+    // === gFexLRJTree_ggF ===
+    gFexLRJTree_ggF->SetBranchAddress("EtIndex", &gFexLRJEtIndexValues_ggF);
+    gFexLRJTree_ggF->SetBranchAddress("Et", &gFexLRJEtValues_ggF);
+    gFexLRJTree_ggF->SetBranchAddress("Eta", &gFexLRJEtaValues_ggF);
+    gFexLRJTree_ggF->SetBranchAddress("Phi", &gFexLRJPhiValues_ggF);
 
-    // gFex, jFex jet deltaR^2 histogram
-    TH1F* back_h_deltaR2_gFex_SRJ1 = new TH1F("back_h_deltaR2_gFex_SRJ1", "#DeltaR^{2} (gFex Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR2_gFex_SRJ2 = new TH1F("back_h_deltaR2_gFex_SRJ2", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR_gFex_SRJ1 = new TH1F("back_h_deltaR_gFex_SRJ1", "#DeltaR (gFex Highest Et Jet vs. topo422)", 25, 0, 5);
-    TH1F* back_h_deltaR_gFex_SRJ2 = new TH1F("back_h_deltaR_gFex_SRJ2", "#DeltaR (gFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+    // === gFexLeadingLRJTree_ggF ===
+    gFexLeadingLRJTree_ggF->SetBranchAddress("Et", &gFexLRJLeadingEtValues_ggF);
+    gFexLeadingLRJTree_ggF->SetBranchAddress("Eta", &gFexLRJLeadingEtaValues_ggF);
+    gFexLeadingLRJTree_ggF->SetBranchAddress("Phi", &gFexLRJLeadingPhiValues_ggF);
 
-    TH1F* back_h_deltaR2_jFex_SRJ1 = new TH1F("back_h_deltaR2_jFex_SRJ1", "#DeltaR^{2} (jFex Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR2_jFex_SRJ2 = new TH1F("back_h_deltaR2_jFex_SRJ2", "#DeltaR^{2} (jFex 2nd Highest Et Jet vs. topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR_jFex_SRJ1 = new TH1F("back_h_deltaR_jFex_SRJ1", "#DeltaR (jFex Highest Et Jet vs. topo422)", 25, 0, 5);
-    TH1F* back_h_deltaR_jFex_SRJ2 = new TH1F("back_h_deltaR_jFex_SRJ2", "#DeltaR (jFex 2nd Highest Et Jet vs. topo422)", 25, 0, 5);
+    // === gFexSubleadingLRJTree_ggF ===
+    gFexSubleadingLRJTree_ggF->SetBranchAddress("Et", &gFexLRJSubleadingEtValues_ggF);
+    gFexSubleadingLRJTree_ggF->SetBranchAddress("Eta", &gFexLRJSubleadingEtaValues_ggF);
+    gFexSubleadingLRJTree_ggF->SetBranchAddress("Phi", &gFexLRJSubleadingPhiValues_ggF);
 
-    TH1F* back_h_deltaR2_gFex_SRJ1_topo128 = new TH1F("back_h_deltaR2_gFex_SRJ1_topo128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR2_gFex_SRJ2_topo128 = new TH1F("back_h_deltaR2_gFex_SRJ2_topo128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR_gFex_SRJ1_topo128 = new TH1F("back_h_deltaR_gFex_SRJ1_topo128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
-    TH1F* back_h_deltaR_gFex_SRJ2_topo128 = new TH1F("back_h_deltaR_gFex_SRJ2_topo128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    // === jFexSRJTree_ggF ===
+    jFexSRJTree_ggF->SetBranchAddress("EtIndex", &jFexSRJEtIndexValues_ggF);
+    jFexSRJTree_ggF->SetBranchAddress("Et", &jFexSRJEtValues_ggF);
+    jFexSRJTree_ggF->SetBranchAddress("Eta", &jFexSRJEtaValues_ggF);
+    jFexSRJTree_ggF->SetBranchAddress("Phi", &jFexSRJPhiValues_ggF);
 
-    TH1F* back_h_deltaR2_jFex_SRJ1_topo128 = new TH1F("back_h_deltaR2_jFex_SRJ1_topo128", "#DeltaR^{2} (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR2_jFex_SRJ2_topo128 = new TH1F("back_h_deltaR2_jFex_SRJ2_topo128", "#DeltaR^{2} (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 10);
-    TH1F* back_h_deltaR_jFex_SRJ1_topo128 = new TH1F("back_h_deltaR_jFex_SRJ1_topo128", "#DeltaR (gFex Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
-    TH1F* back_h_deltaR_jFex_SRJ2_topo128 = new TH1F("back_h_deltaR_jFex_SRJ2_topo128", "#DeltaR (gFex 2nd Highest Et Jet vs. 128 highest Et topo422)", 25, 0, 5);
+    // === jFexLeadingSRJTree_ggF ===
+    jFexLeadingSRJTree_ggF->SetBranchAddress("Et", &jFexSRJLeadingEtValues_ggF);
+    jFexLeadingSRJTree_ggF->SetBranchAddress("Eta", &jFexSRJLeadingEtaValues_ggF);
+    jFexLeadingSRJTree_ggF->SetBranchAddress("Phi", &jFexSRJLeadingPhiValues_ggF);
 
-    TH1F* sigdR2gFexLeadingTopoByEnergy = new TH1F("sigdR2gFexLeadingTopoByEnergy", "#Delta R^{2} Leading gFex SRJ, topo422 / 8 GeV", 20, 0, 400);
-    TH1F* backdR2gFexLeadingTopoByEnergy = new TH1F("backdR2gFexLeadingTopoByEnergy", "#Delta R^{2} Leading gFex SRJ, topo422 / 8 GeV", 20, 0, 400);
+    // === jFexSubleadingSRJTree_ggF ===
+    jFexSubleadingSRJTree_ggF->SetBranchAddress("Et", &jFexSRJSubleadingEtValues_ggF);
+    jFexSubleadingSRJTree_ggF->SetBranchAddress("Eta", &jFexSRJSubleadingEtaValues_ggF);
+    jFexSubleadingSRJTree_ggF->SetBranchAddress("Phi", &jFexSRJSubleadingPhiValues_ggF);
 
-    TH1F* sigdR2gFexSubLeadingTopoByEnergy = new TH1F("dR2gFexSubLeadingTopoByEnergy", "#Delta R^{2} Subleading gFex SRJ, topo422 / 8 GeV", 20, 0, 400);
-    TH1F* backdR2gFexSubLeadingTopoByEnergy = new TH1F("backdR2gFexSubLeadingTopoByEnergy", "#Delta R^{2} Subleading gFex SRJ, topo422 / 8 GeV", 20, 0, 400);
+    // === jFexLRJTree_ggF ===
+    jFexLRJTree_ggF->SetBranchAddress("EtIndex", &jFexLRJEtIndexValues_ggF);
+    jFexLRJTree_ggF->SetBranchAddress("Et", &jFexLRJEtValues_ggF);
+    jFexLRJTree_ggF->SetBranchAddress("Eta", &jFexLRJEtaValues_ggF);
+    jFexLRJTree_ggF->SetBranchAddress("Phi", &jFexLRJPhiValues_ggF);
+
+    // === jFexLeadingLRJTree_ggF ===
+    jFexLeadingLRJTree_ggF->SetBranchAddress("Et", &jFexLRJLeadingEtValues_ggF);
+    jFexLeadingLRJTree_ggF->SetBranchAddress("Eta", &jFexLRJLeadingEtaValues_ggF);
+    jFexLeadingLRJTree_ggF->SetBranchAddress("Phi", &jFexLRJLeadingPhiValues_ggF);
+
+    // === jFexSubleadingLRJTree_ggF ===
+    jFexSubleadingLRJTree_ggF->SetBranchAddress("Et", &jFexLRJSubleadingEtValues_ggF);
+    jFexSubleadingLRJTree_ggF->SetBranchAddress("Eta", &jFexLRJSubleadingEtaValues_ggF);
+    jFexSubleadingLRJTree_ggF->SetBranchAddress("Phi", &jFexLRJSubleadingPhiValues_ggF);
+
+    // === hltAntiKt4EMTopoJetsTree_ggF ===
+    hltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("EtIndex", &hltAntiKt4SRJEtIndexValues_ggF);
+    hltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Et", &hltAntiKt4SRJEtValues_ggF);
+    hltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Eta", &hltAntiKt4SRJEtaValues_ggF);
+    hltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Phi", &hltAntiKt4SRJPhiValues_ggF);
+
+    // === leadingHltAntiKt4EMTopoJetsTree_ggF ===
+    leadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Et", &hltAntiKt4SRJLeadingEtValues_ggF);
+    leadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Eta", &hltAntiKt4SRJLeadingEtaValues_ggF);
+    leadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Phi", &hltAntiKt4SRJLeadingPhiValues_ggF);
+
+    // === subleadingHltAntiKt4EMTopoJetsTree_ggF ===
+    subleadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Et", &hltAntiKt4SRJSubleadingEtValues_ggF);
+    subleadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Eta", &hltAntiKt4SRJSubleadingEtaValues_ggF);
+    subleadingHltAntiKt4EMTopoJetsTree_ggF->SetBranchAddress("Phi", &hltAntiKt4SRJSubleadingPhiValues_ggF);
+
+    // === recoAntiKt10UFOCSSKJets_ggF ===
+    recoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("EtIndex", &recoAntiKt10LRJEtIndexValues_ggF);
+    recoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Et", &recoAntiKt10LRJEtValues_ggF);
+    recoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Eta", &recoAntiKt10LRJEtaValues_ggF);
+    recoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Phi", &recoAntiKt10LRJPhiValues_ggF);
+
+    // === leadingRecoAntiKt10UFOCSSKJets_ggF ===
+    leadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Et", &recoAntiKt10LRJLeadingEtValues_ggF);
+    leadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Eta", &recoAntiKt10LRJLeadingEtaValues_ggF);
+    leadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Phi", &recoAntiKt10LRJLeadingPhiValues_ggF);
+
+    // === subleadingRecoAntiKt10UFOCSSKJets_ggF ===
+    subleadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Et", &recoAntiKt10LRJSubleadingEtValues_ggF);
+    subleadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Eta", &recoAntiKt10LRJSubleadingEtaValues_ggF);
+    subleadingRecoAntiKt10UFOCSSKJets_ggF->SetBranchAddress("Phi", &recoAntiKt10LRJSubleadingPhiValues_ggF);
+
+    // === truthAntiKt4TruthDressedWZJets_ggF ===
+    truthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("EtIndex", &truthAntiKt4WZSRJEtIndexValues_ggF);
+    truthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Et", &truthAntiKt4WZSRJEtValues_ggF);
+    truthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Eta", &truthAntiKt4WZSRJEtaValues_ggF);
+    truthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Phi", &truthAntiKt4WZSRJPhiValues_ggF);
+
+    // === leadingTruthAntiKt4TruthDressedWZJets_ggF ===
+    leadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Et", &truthAntiKt4WZSRJLeadingEtValues_ggF);
+    leadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Eta", &truthAntiKt4WZSRJLeadingEtaValues_ggF);
+    leadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Phi", &truthAntiKt4WZSRJLeadingPhiValues_ggF);
+
+    // === subleadingTruthAntiKt4TruthDressedWZJets_ggF ===
+    subleadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Et", &truthAntiKt4WZSRJSubleadingEtValues_ggF);
+    subleadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Eta", &truthAntiKt4WZSRJSubleadingEtaValues_ggF);
+    subleadingTruthAntiKt4TruthDressedWZJets_ggF->SetBranchAddress("Phi", &truthAntiKt4WZSRJSubleadingPhiValues_ggF);
+
+    // === inTimeAntiKt4TruthJetsTree_ggF ===
+    inTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("EtIndex", &inTimeAntiKt4TruthSRJEtIndexValues_ggF);
+    inTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJEtValues_ggF);
+    inTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJEtaValues_ggF);
+    inTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJPhiValues_ggF);
+
+    // === leadingInTimeAntiKt4TruthJetsTree_ggF ===
+    leadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJLeadingEtValues_ggF);
+    leadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJLeadingEtaValues_ggF);
+    leadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJLeadingPhiValues_ggF);
+
+    // === subleadingInTimeAntiKt4TruthJetsTree_ggF ===
+    subleadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJSubleadingEtValues_ggF);
+    subleadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValues_ggF);
+    subleadingInTimeAntiKt4TruthJetsTree_ggF->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValues_ggF);
+
+    // === caloTopoTowerTree_back ===
+    caloTopoTowerTree_back->SetBranchAddress("Et", &caloTopoTowerEtValues_back);
+    caloTopoTowerTree_back->SetBranchAddress("Eta", &caloTopoTowerEtaValues_back);
+    caloTopoTowerTree_back->SetBranchAddress("Phi", &caloTopoTowerPhiValues_back);
+
+    // === topo422Tree_back ===
+    topo422Tree_back->SetBranchAddress("Et", &topo422EtValues_back);
+    topo422Tree_back->SetBranchAddress("Eta", &topo422EtaValues_back);
+    topo422Tree_back->SetBranchAddress("Phi", &topo422PhiValues_back);
+
+    // === gFexSRJTree_back ===
+    gFexSRJTree_back->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues_back);
+    gFexSRJTree_back->SetBranchAddress("Et", &gFexSRJEtValues_back);
+    gFexSRJTree_back->SetBranchAddress("Eta", &gFexSRJEtaValues_back);
+    gFexSRJTree_back->SetBranchAddress("Phi", &gFexSRJPhiValues_back);
+
+    // === gFexLeadingSRJTree_back ===
+    gFexLeadingSRJTree_back->SetBranchAddress("Et", &gFexSRJLeadingEtValues_back);
+    gFexLeadingSRJTree_back->SetBranchAddress("Eta", &gFexSRJLeadingEtaValues_back);
+    gFexLeadingSRJTree_back->SetBranchAddress("Phi", &gFexSRJLeadingPhiValues_back);
+
+    // === gFexSubleadingSRJTree_back ===
+    gFexSubleadingSRJTree_back->SetBranchAddress("Et", &gFexSRJSubleadingEtValues_back);
+    gFexSubleadingSRJTree_back->SetBranchAddress("Eta", &gFexSRJSubleadingEtaValues_back);
+    gFexSubleadingSRJTree_back->SetBranchAddress("Phi", &gFexSRJSubleadingPhiValues_back);
+
+    // === gFexLRJTree_back ===
+    gFexLRJTree_back->SetBranchAddress("EtIndex", &gFexLRJEtIndexValues_back);
+    gFexLRJTree_back->SetBranchAddress("Et", &gFexLRJEtValues_back);
+    gFexLRJTree_back->SetBranchAddress("Eta", &gFexLRJEtaValues_back);
+    gFexLRJTree_back->SetBranchAddress("Phi", &gFexLRJPhiValues_back);
+
+    // === gFexLeadingLRJTree_back ===
+    gFexLeadingLRJTree_back->SetBranchAddress("Et", &gFexLRJLeadingEtValues_back);
+    gFexLeadingLRJTree_back->SetBranchAddress("Eta", &gFexLRJLeadingEtaValues_back);
+    gFexLeadingLRJTree_back->SetBranchAddress("Phi", &gFexLRJLeadingPhiValues_back);
+
+    // === gFexSubleadingLRJTree_back ===
+    gFexSubleadingLRJTree_back->SetBranchAddress("Et", &gFexLRJSubleadingEtValues_back);
+    gFexSubleadingLRJTree_back->SetBranchAddress("Eta", &gFexLRJSubleadingEtaValues_back);
+    gFexSubleadingLRJTree_back->SetBranchAddress("Phi", &gFexLRJSubleadingPhiValues_back);
+
+    // === jFexSRJTree_back ===
+    jFexSRJTree_back->SetBranchAddress("EtIndex", &jFexSRJEtIndexValues_back);
+    jFexSRJTree_back->SetBranchAddress("Et", &jFexSRJEtValues_back);
+    jFexSRJTree_back->SetBranchAddress("Eta", &jFexSRJEtaValues_back);
+    jFexSRJTree_back->SetBranchAddress("Phi", &jFexSRJPhiValues_back);
+
+    // === jFexLeadingSRJTree_back ===
+    jFexLeadingSRJTree_back->SetBranchAddress("Et", &jFexSRJLeadingEtValues_back);
+    jFexLeadingSRJTree_back->SetBranchAddress("Eta", &jFexSRJLeadingEtaValues_back);
+    jFexLeadingSRJTree_back->SetBranchAddress("Phi", &jFexSRJLeadingPhiValues_back);
+
+    // === jFexSubleadingSRJTree_back ===
+    jFexSubleadingSRJTree_back->SetBranchAddress("Et", &jFexSRJSubleadingEtValues_back);
+    jFexSubleadingSRJTree_back->SetBranchAddress("Eta", &jFexSRJSubleadingEtaValues_back);
+    jFexSubleadingSRJTree_back->SetBranchAddress("Phi", &jFexSRJSubleadingPhiValues_back);
+
+    // === jFexLRJTree_back ===
+    jFexLRJTree_back->SetBranchAddress("EtIndex", &jFexLRJEtIndexValues_back);
+    jFexLRJTree_back->SetBranchAddress("Et", &jFexLRJEtValues_back);
+    jFexLRJTree_back->SetBranchAddress("Eta", &jFexLRJEtaValues_back);
+    jFexLRJTree_back->SetBranchAddress("Phi", &jFexLRJPhiValues_back);
+
+    // === jFexLeadingLRJTree_back ===
+    jFexLeadingLRJTree_back->SetBranchAddress("Et", &jFexLRJLeadingEtValues_back);
+    jFexLeadingLRJTree_back->SetBranchAddress("Eta", &jFexLRJLeadingEtaValues_back);
+    jFexLeadingLRJTree_back->SetBranchAddress("Phi", &jFexLRJLeadingPhiValues_back);
+
+    // === jFexSubleadingLRJTree_back ===
+    jFexSubleadingLRJTree_back->SetBranchAddress("Et", &jFexLRJSubleadingEtValues_back);
+    jFexSubleadingLRJTree_back->SetBranchAddress("Eta", &jFexLRJSubleadingEtaValues_back);
+    jFexSubleadingLRJTree_back->SetBranchAddress("Phi", &jFexLRJSubleadingPhiValues_back);
+
+    // === hltAntiKt4EMTopoJetsTree_back ===
+    hltAntiKt4EMTopoJetsTree_back->SetBranchAddress("EtIndex", &hltAntiKt4SRJEtIndexValues_back);
+    hltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Et", &hltAntiKt4SRJEtValues_back);
+    hltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Eta", &hltAntiKt4SRJEtaValues_back);
+    hltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Phi", &hltAntiKt4SRJPhiValues_back);
+
+    // === leadingHltAntiKt4EMTopoJetsTree_back ===
+    leadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Et", &hltAntiKt4SRJLeadingEtValues_back);
+    leadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Eta", &hltAntiKt4SRJLeadingEtaValues_back);
+    leadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Phi", &hltAntiKt4SRJLeadingPhiValues_back);
+
+    // === subleadingHltAntiKt4EMTopoJetsTree_back ===
+    subleadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Et", &hltAntiKt4SRJSubleadingEtValues_back);
+    subleadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Eta", &hltAntiKt4SRJSubleadingEtaValues_back);
+    subleadingHltAntiKt4EMTopoJetsTree_back->SetBranchAddress("Phi", &hltAntiKt4SRJSubleadingPhiValues_back);
+
+    // === recoAntiKt10UFOCSSKJets_back ===
+    recoAntiKt10UFOCSSKJets_back->SetBranchAddress("EtIndex", &recoAntiKt10LRJEtIndexValues_back);
+    recoAntiKt10UFOCSSKJets_back->SetBranchAddress("Et", &recoAntiKt10LRJEtValues_back);
+    recoAntiKt10UFOCSSKJets_back->SetBranchAddress("Eta", &recoAntiKt10LRJEtaValues_back);
+    recoAntiKt10UFOCSSKJets_back->SetBranchAddress("Phi", &recoAntiKt10LRJPhiValues_back);
+
+    // === leadingRecoAntiKt10UFOCSSKJets_back ===
+    leadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Et", &recoAntiKt10LRJLeadingEtValues_back);
+    leadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Eta", &recoAntiKt10LRJLeadingEtaValues_back);
+    leadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Phi", &recoAntiKt10LRJLeadingPhiValues_back);
+
+    // === subleadingRecoAntiKt10UFOCSSKJets_back ===
+    subleadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Et", &recoAntiKt10LRJSubleadingEtValues_back);
+    subleadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Eta", &recoAntiKt10LRJSubleadingEtaValues_back);
+    subleadingRecoAntiKt10UFOCSSKJets_back->SetBranchAddress("Phi", &recoAntiKt10LRJSubleadingPhiValues_back);
+
+    // === truthAntiKt4TruthDressedWZJets_back ===
+    truthAntiKt4TruthDressedWZJets_back->SetBranchAddress("EtIndex", &truthAntiKt4WZSRJEtIndexValues_back);
+    truthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Et", &truthAntiKt4WZSRJEtValues_back);
+    truthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Eta", &truthAntiKt4WZSRJEtaValues_back);
+    truthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Phi", &truthAntiKt4WZSRJPhiValues_back);
+
+    // === leadingTruthAntiKt4TruthDressedWZJets_back ===
+    leadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Et", &truthAntiKt4WZSRJLeadingEtValues_back);
+    leadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Eta", &truthAntiKt4WZSRJLeadingEtaValues_back);
+    leadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Phi", &truthAntiKt4WZSRJLeadingPhiValues_back);
+
+    // === subleadingTruthAntiKt4TruthDressedWZJets_back ===
+    subleadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Et", &truthAntiKt4WZSRJSubleadingEtValues_back);
+    subleadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Eta", &truthAntiKt4WZSRJSubleadingEtaValues_back);
+    subleadingTruthAntiKt4TruthDressedWZJets_back->SetBranchAddress("Phi", &truthAntiKt4WZSRJSubleadingPhiValues_back);
+
+    // === inTimeAntiKt4TruthJetsTree_back ===
+    inTimeAntiKt4TruthJetsTree_back->SetBranchAddress("EtIndex", &inTimeAntiKt4TruthSRJEtIndexValues_back);
+    inTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJEtValues_back);
+    inTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJEtaValues_back);
+    inTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJPhiValues_back);
+
+    // === leadingInTimeAntiKt4TruthJetsTree_back ===
+    leadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJLeadingEtValues_back);
+    leadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJLeadingEtaValues_back);
+    leadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJLeadingPhiValues_back);
+
+    // === subleadingInTimeAntiKt4TruthJetsTree_back ===
+    subleadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Et", &inTimeAntiKt4TruthSRJSubleadingEtValues_back);
+    subleadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValues_back);
+    subleadingInTimeAntiKt4TruthJetsTree_back->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValues_back);
+
+    // VBF histogram declarations
+    TH1F* sig_vbf_h_b_Et = new TH1F("sig_vbf_h_b_Et", "b E_{T} Distribution;E_{T} (GeV);b's / 2 GeV", 200, 0, 400);
+    TH1F* sig_vbf_h_higgs_Et = new TH1F("sig_vbf_h_higgs_Et", "Higgs E_{T} Distribution;E_{T} (GeV);Higgs's / 2 GeV", 200, 0, 400);
+
+    TH1F* sig_vbf_h_topo_Et = new TH1F("sig_vbf_h_topo_Et", "Topo E_{T} Distribution;E_{T} (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
+    TH1F* sig_vbf_h_calotopo_Et = new TH1F("sig_vbf_h_calotopo_Et", "CaloTopoTower E_{T} Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
+
+    TH1F* sig_vbf_h_gFex_SRJ_Et = new TH1F("sig_vbf_h_gFex_SRJ_Et", "gFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_gFex_SRJ_Et = new TH1F("sig_vbf_h_lead_gFex_SRJ_Et", "Lead. gFex SRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
+
+    TH1F* sig_vbf_h_gFex_LRJ_Et = new TH1F("sig_vbf_h_gFex_LRJ_Et", "gFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_gFex_LRJ_Et = new TH1F("sig_vbf_h_lead_gFex_LRJ_Et", "Lead. gFex LRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
+
+    TH1F* sig_vbf_h_jFex_SRJ_Et = new TH1F("sig_vbf_h_jFex_SRJ_Et", "jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_jFex_SRJ_Et = new TH1F("sig_vbf_h_lead_jFex_SRJ_Et", "Lead. jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+
+    TH1F* sig_vbf_h_jFex_LRJ_Et = new TH1F("sig_vbf_h_jFex_LRJ_Et", "jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_jFex_LRJ_Et = new TH1F("sig_vbf_h_lead_jFex_LRJ_Et", "Lead. jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
     
-    TH2F *sigdR2gFexLeadingTopoByEnergy2D = new TH2F("sigdR2gFexLeadingTopoByEnergy2D", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexLeadingTopoByEnergy2D = new TH2F("backdR2gFexLeadingTopoByEnergy2D", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2gFexSubLeadingTopoByEnergy2D = new TH2F("sigdR2gFexSubLeadingTopoByEnergy2D", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexSubLeadingTopoByEnergy2D = new TH2F("backdR2gFexSubLeadingTopoByEnergy2D", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    TH1F* sig_vbf_h_reco_antikt10UFOCSSKJets_Et = new TH1F("sig_vbf_h_reco_antikt10UFOCSSKJets_Et", "Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_reco_antikt10UFOCSSKJets_Et = new TH1F("sig_vbf_h_lead_reco_antikt10UFOCSSKJets_Et", "Lead. Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
-    TH2F *sigdR2gFexLeadingTopoByEnergy2D0to50GeV = new TH2F("sigdR2gFexLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexLeadingTopoByEnergy2D0to50GeV = new TH2F("backdR2gFexLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV = new TH2F("sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexSubLeadingTopoByEnergy2D0to50GeV = new TH2F("backdR2gFexSubLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    TH1F* sig_vbf_h_truth_antikt4DressedWZJets_Et = new TH1F("sig_vbf_h_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_vbf_h_lead_truth_antikt4DressedWZJets_Et = new TH1F("sig_vbf_h_lead_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
-    TH2F *sigdR2gFexLeadingTopoByEnergy2D50to550GeV = new TH2F("sigdR2gFexLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexLeadingTopoByEnergy2D50to550GeV = new TH2F("backdR2gFexLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Leading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV = new TH2F("sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2gFexSubLeadingTopoByEnergy2D50to550GeV = new TH2F("backdR2gFexSubLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Subleading gFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading gFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    // ggF histogram declarations
+    TH1F* sig_ggf_h_b_Et = new TH1F("sig_ggf_h_b_Et", "b E_{T} Distribution;E_{T} (GeV);b's / 2 GeV", 200, 0, 400);
+    TH1F* sig_ggf_h_higgs_Et = new TH1F("sig_ggf_h_higgs_Et", "Higgs E_{T} Distribution;E_{T} (GeV);Higgs's / 2 GeV", 200, 0, 400);
 
+    TH1F* sig_ggf_h_topo_Et = new TH1F("sig_ggf_h_topo_Et", "Topo E_{T} Distribution;E_{T} (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
+    TH1F* sig_ggf_h_calotopo_Et = new TH1F("sig_ggf_h_calotopo_Et", "CaloTopoTower E_{T} Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
 
-    TH2F *sigdR2jFexLeadingTopoByEnergy2D = new TH2F("sigdR2jFexLeadingTopoByEnergy2D", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexLeadingTopoByEnergy2D = new TH2F("backdR2jFexLeadingTopoByEnergy2D", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2jFexSubLeadingTopoByEnergy2D = new TH2F("sigdR2jFexSubLeadingTopoByEnergy2D", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexSubLeadingTopoByEnergy2D = new TH2F("backdR2jFexSubLeadingTopoByEnergy2D", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 0, 500,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    TH1F* sig_ggf_h_gFex_SRJ_Et = new TH1F("sig_ggf_h_gFex_SRJ_Et", "gFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_gFex_SRJ_Et = new TH1F("sig_ggf_h_lead_gFex_SRJ_Et", "Lead. gFex SRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
 
-    TH2F *sigdR2jFexLeadingTopoByEnergy2D0to50GeV = new TH2F("sigdR2jFexLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexLeadingTopoByEnergy2D0to50GeV = new TH2F("backdR2jFexLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV = new TH2F("sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexSubLeadingTopoByEnergy2D0to50GeV = new TH2F("backdR2jFexSubLeadingTopoByEnergy2D0to50GeV", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        100, 0, 50,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    TH1F* sig_ggf_h_gFex_LRJ_Et = new TH1F("sig_ggf_h_gFex_LRJ_Et", "gFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_gFex_LRJ_Et = new TH1F("sig_ggf_h_lead_gFex_LRJ_Et", "Lead. gFex LRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
 
-    TH2F *sigdR2jFexLeadingTopoByEnergy2D50to550GeV = new TH2F("sigdR2jFexLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexLeadingTopoByEnergy2D50to550GeV = new TH2F("backdR2jFexLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Leading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV = new TH2F("sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
-    TH2F *backdR2jFexSubLeadingTopoByEnergy2D50to550GeV = new TH2F("backdR2jFexSubLeadingTopoByEnergy2D50to550GeV", "#Delta R^{2} Subleading jFex SRJ, topo422; Topo422 Energy [GeV];#Delta R^{2} Leading jFex SRJ, topo422", 
-                        50, 50, 550,   // 50 bins from -5 to 5 on X axis
-                        50, 0, 2.5);  // 50 bins from -5 to 5 on Y axis
+    TH1F* sig_ggf_h_jFex_SRJ_Et = new TH1F("sig_ggf_h_jFex_SRJ_Et", "jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_jFex_SRJ_Et = new TH1F("sig_ggf_h_lead_jFex_SRJ_Et", "Lead. jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+
+    TH1F* sig_ggf_h_jFex_LRJ_Et = new TH1F("sig_ggf_h_jFex_LRJ_Et", "jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_jFex_LRJ_Et = new TH1F("sig_ggf_h_lead_jFex_LRJ_Et", "Lead. jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
     
+    TH1F* sig_ggf_h_reco_antikt10UFOCSSKJets_Et = new TH1F("sig_ggf_h_reco_antikt10UFOCSSKJets_Et", "Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_reco_antikt10UFOCSSKJets_Et = new TH1F("sig_ggf_h_lead_reco_antikt10UFOCSSKJets_Et", "Lead. Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
-    // Process trees
-    sigTopoTree->SetBranchAddress("Et", &sigTopoEtValues);
-    sigTopoTree->SetBranchAddress("Eta", &sigTopoEtaValues);
-    sigTopoTree->SetBranchAddress("Phi", &sigTopoPhiValues);
+    TH1F* sig_ggf_h_truth_antikt4DressedWZJets_Et = new TH1F("sig_ggf_h_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* sig_ggf_h_lead_truth_antikt4DressedWZJets_Et = new TH1F("sig_ggf_h_lead_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
-    sigCaloTopoTree->SetBranchAddress("Et", &sigCaloTopoEtValues);
-    sigCaloTopoTree->SetBranchAddress("Eta", &sigCaloTopoEtaValues);
-    sigCaloTopoTree->SetBranchAddress("Phi", &sigCaloTopoPhiValues);
+    // Background histogram declarations
+    TH1F* back_h_topo_Et = new TH1F("back_h_topo_Et", "Topo E_{T} Distribution;E_{T} (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
+    TH1F* back_h_calotopo_Et = new TH1F("back_h_calotopo_Et", "CaloTopoTower E_{T} Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
 
-    sigGFexTree->SetBranchAddress("Et", &sigGFexEtValues);
-    sigGFexTree->SetBranchAddress("Eta", &sigGFexEtaValues);
-    sigGFexTree->SetBranchAddress("Phi", &sigGFexPhiValues);
+    TH1F* back_h_gFex_SRJ_Et = new TH1F("back_h_gFex_SRJ_Et", "gFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_gFex_SRJ_Et = new TH1F("back_h_lead_gFex_SRJ_Et", "Lead. gFex SRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
 
-    sigJFexTree->SetBranchAddress("Et", &sigJFexEtValues);
-    sigJFexTree->SetBranchAddress("Eta", &sigJFexEtaValues);
-    sigJFexTree->SetBranchAddress("Phi", &sigJFexPhiValues);
+    TH1F* back_h_gFex_LRJ_Et = new TH1F("back_h_gFex_LRJ_Et", "gFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_gFex_LRJ_Et = new TH1F("back_h_lead_gFex_LRJ_Et", "Lead. gFex LRJ E_{T} Distribution;Et (GeV);Counts", 30, 0, 300);
 
-    backCaloTopoTree->SetBranchAddress("Et", &backCaloTopoEtValues);
-    backCaloTopoTree->SetBranchAddress("Eta", &backCaloTopoEtaValues);
-    backCaloTopoTree->SetBranchAddress("Phi", &backCaloTopoPhiValues);
+    TH1F* back_h_jFex_SRJ_Et = new TH1F("back_h_jFex_SRJ_Et", "jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_jFex_SRJ_Et = new TH1F("back_h_lead_jFex_SRJ_Et", "Lead. jFex SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
-    backTopoTree->SetBranchAddress("Et", &backTopoEtValues);
-    backTopoTree->SetBranchAddress("Eta", &backTopoEtaValues);
-    backTopoTree->SetBranchAddress("Phi", &backTopoPhiValues);
-
-    backGFexTree->SetBranchAddress("Et", &backGFexEtValues);
-    backGFexTree->SetBranchAddress("Eta", &backGFexEtaValues);
-    backGFexTree->SetBranchAddress("Phi", &backGFexPhiValues);
-
-    backJFexTree->SetBranchAddress("Et", &backJFexEtValues);
-    backJFexTree->SetBranchAddress("Eta", &backJFexEtaValues);
-    backJFexTree->SetBranchAddress("Phi", &backJFexPhiValues);
-    const unsigned int nEnergyBins = 20;
-
-    std::vector<std::vector<float>> sigdR2LeadinggFexSRJTopo422Energy(nEnergyBins);
-    std::vector<std::vector<float>> backdR2LeadinggFexSRJTopo422Energy(nEnergyBins);
-    std::vector<std::vector<float>> sigdR2SubLeadinggFexSRJTopo422Energy(nEnergyBins);
-    std::vector<std::vector<float>> backdR2SubLeadinggFexSRJTopo422Energy(nEnergyBins);
-    std::vector<double> sigTopo128EnergyValues1;
-    std::vector<double> backTopo128EnergyValues1;
-    std::vector<double> sigTopo128EnergyValues2;
-    std::vector<double> backTopo128EnergyValues2;
-    std::vector<double> sigdR2LeadinggFexSRJTopo128;
-    std::vector<double> backdR2LeadinggFexSRJTopo128;
-    std::vector<double> sigdR2SubLeadinggFexSRJTopo128;
-    std::vector<double> backdR2SubLeadinggFexSRJTopo128;
-
-    int sigNEntries = sigGFexTree->GetEntries();
-    std::cout << " sigNEntries : "<< sigNEntries << "\n";
-    for (int i = 0; i < sigNEntries; i++) {
-        sigGFexTree->GetEntry(i);
-        sigJFexTree->GetEntry(i);
-        sig_h_gFex_multiplicity->Fill(sigGFexEtValues->size());
-        for (size_t j = 0; j < sigGFexEtValues->size(); j++) {
-            sig_h_gFex_Et->Fill(sigGFexEtValues->at(j));
-            sig_h_gFex_eta->Fill(sigGFexEtaValues->at(j));
-            sig_h_gFex_phi->Fill(sigGFexPhiValues->at(j));
-        }
-
-        // Find two highest Et jets
-        auto [idx1, idx2] = getTwoHighestIndices(*sigGFexEtValues);
-        auto [idx1_jFex, idx2_jFex] = getTwoHighestIndices(*sigJFexEtValues);
-
-        // Leading jet
-        sig_h_gFex_leading_Et->Fill(sigGFexEtValues->at(idx1));
-        sig_h_gFex_leading_eta->Fill(sigGFexEtaValues->at(idx1));
-        sig_h_gFex_leading_phi->Fill(sigGFexPhiValues->at(idx1));
-
-        // Sub-leading jet
-        sig_h_gFex_subleading_Et->Fill(sigGFexEtValues->at(idx2));
-        sig_h_gFex_subleading_eta->Fill(sigGFexEtaValues->at(idx2));
-        sig_h_gFex_subleading_phi->Fill(sigGFexPhiValues->at(idx2));
-        sig_h_gFex_leading_subleading_deltaR->Fill(sqrt(calcDeltaR2(sigGFexEtaValues->at(idx1), sigGFexPhiValues->at(idx1), sigGFexEtaValues->at(idx2), sigGFexPhiValues->at(idx2))));
-
-        sigCaloTopoTree->GetEntry(i); 
-
-        sig_h_calotopo_multiplicity->Fill(sigCaloTopoEtValues->size());
-        std::cout << "sig calotopo multiplicity: " << sigCaloTopoEtValues->size() << " for event: " << i << "\n";
-
-        for(size_t m = 0; m < sigCaloTopoEtValues->size(); m++){
-            std::cout << "sig calotopo et: " << sigCaloTopoEtValues->at(m) << "\n";
-            std::cout << "sig calotopo eta: " << sigCaloTopoEtaValues->at(m) << "\n";
-            sig_h_calotopo_Et->Fill(sigCaloTopoEtValues->at(m));
-            sig_h_calotopo_eta->Fill(sigCaloTopoEtaValues->at(m)); // FIXME rename all GFex, Topo variables to something like input object, seed
-            sig_h_calotopo_phi->Fill(sigCaloTopoPhiValues->at(m));
-        }
-
-        sigTopoTree->GetEntry(i);
-        //std::cout << "sigTopoEtValues->size(): " << sigTopoEtValues->size() << "\n";
-        sig_h_topo_multiplicity->Fill(sigTopoEtValues->size());
-        for (size_t k = 0; k < sigTopoEtValues->size(); k++) {
-            nTopo += 1;
-            //std::cout << "sigTopoEtValues->at(k): " << sigTopoEtValues->at(k) << " for k: " << k << "\n";
-            totalTopoEnergy += sigTopoEtValues->at(k);
-            if (sigTopoEtValues->at(k) > 1.0){
-                nTopoGreater1GeV += 1;
-                topoEnergyClustersGreater1GeV += sigTopoEtValues->at(k);
-            } 
-            
-            sig_h_topo_Et->Fill(sigTopoEtValues->at(k));
-            sig_h_topo_eta->Fill(sigTopoEtaValues->at(k)); // FIXME rename all GFex, Topo variables to something like input object, seed
-            sig_h_topo_phi->Fill(sigTopoPhiValues->at(k));
-            double dr2_1 = ((sigGFexEtaValues->at(idx1)) - sigTopoEtaValues->at(k))*((sigGFexEtaValues->at(idx1)) - sigTopoEtaValues->at(k)) + deltaPhi(sigGFexPhiValues->at(idx1), sigTopoPhiValues->at(k))*deltaPhi(sigGFexPhiValues->at(idx1), sigTopoPhiValues->at(k));
-            sig_h_deltaR2_gFex_SRJ1->Fill(dr2_1);
-            sig_h_deltaR_gFex_SRJ1->Fill(sqrt(dr2_1));
-            double dr2_2 = ((sigGFexEtaValues->at(idx2)) - sigTopoEtaValues->at(k))*((sigGFexEtaValues->at(idx2)) - sigTopoEtaValues->at(k)) + deltaPhi(sigGFexPhiValues->at(idx2), sigTopoPhiValues->at(k))*deltaPhi(sigGFexPhiValues->at(idx2), sigTopoPhiValues->at(k));
-            sig_h_deltaR2_gFex_SRJ2->Fill(dr2_2);
-            sig_h_deltaR_gFex_SRJ2->Fill(sqrt(dr2_2));
-            double dr2_1_jFex = ((sigJFexEtaValues->at(idx1_jFex)) - sigTopoEtaValues->at(k))*((sigJFexEtaValues->at(idx1_jFex)) - sigTopoEtaValues->at(k)) + deltaPhi(sigJFexPhiValues->at(idx1_jFex), sigTopoPhiValues->at(k))*deltaPhi(sigJFexPhiValues->at(idx1_jFex), sigTopoPhiValues->at(k));
-            sig_h_deltaR2_jFex_SRJ1->Fill(dr2_1_jFex);
-            sig_h_deltaR_jFex_SRJ1->Fill(sqrt(dr2_1_jFex));
-            double dr2_2_jFex = ((sigJFexEtaValues->at(idx2_jFex)) - sigTopoEtaValues->at(k))*((sigJFexEtaValues->at(idx2_jFex)) - sigTopoEtaValues->at(k)) + deltaPhi(sigJFexPhiValues->at(idx2_jFex), sigTopoPhiValues->at(k))*deltaPhi(sigJFexPhiValues->at(idx2_jFex), sigTopoPhiValues->at(k));
-            sig_h_deltaR2_jFex_SRJ2->Fill(dr2_2_jFex);
-            sig_h_deltaR_jFex_SRJ2->Fill(sqrt(dr2_2_jFex));
-            if (k < 128){
-                sig_h_topo_Et_top128->Fill(sigTopoEtValues->at(k));
-                sig_h_topo_eta_top128->Fill(sigTopoEtaValues->at(k));
-                sig_h_topo_phi_top128->Fill(sigTopoPhiValues->at(k));
-
-                sig_h_deltaR2_gFex_SRJ1_topo128->Fill(dr2_1);
-                sig_h_deltaR_gFex_SRJ1_topo128->Fill(sqrt(dr2_1));
-                sig_h_deltaR2_gFex_SRJ2_topo128->Fill(dr2_2);
-                sig_h_deltaR_gFex_SRJ2_topo128->Fill(sqrt(dr2_2));
-
-                sig_h_deltaR2_jFex_SRJ1_topo128->Fill(dr2_1_jFex);
-                sig_h_deltaR_jFex_SRJ1_topo128->Fill(sqrt(dr2_1_jFex));
-                sig_h_deltaR2_jFex_SRJ2_topo128->Fill(dr2_2_jFex);
-                sig_h_deltaR_jFex_SRJ2_topo128->Fill(sqrt(dr2_2_jFex));
-
-                if (dr2_1 < 2.5){
-                    sigTopo128EnergyValues1.push_back(sigTopoEtValues->at(k));
-                    sigdR2LeadinggFexSRJTopo128.push_back(dr2_1);
-                    sigdR2gFexLeadingTopoByEnergy2D->Fill(sigTopoEtValues->at(k), dr2_1);
-                    sigdR2jFexLeadingTopoByEnergy2D->Fill(sigTopoEtValues->at(k), dr2_1_jFex);
-                    if (sigTopoEtValues->at(k) <= 50.0){
-                        sigdR2gFexLeadingTopoByEnergy2D0to50GeV->Fill(sigTopoEtValues->at(k), dr2_1);
-                        sigdR2jFexLeadingTopoByEnergy2D0to50GeV->Fill(sigTopoEtValues->at(k), dr2_1_jFex);
-                    }
-                    if ((sigTopoEtValues->at(k) > 50.0) && (sigTopoEtValues->at(k) <= 550.0)){
-                        sigdR2gFexLeadingTopoByEnergy2D50to550GeV->Fill(sigTopoEtValues->at(k), dr2_1);
-                        sigdR2jFexLeadingTopoByEnergy2D50to550GeV->Fill(sigTopoEtValues->at(k), dr2_1_jFex);
-                    }
-                    
-                }
-                if (dr2_2 < 2.5){
-                    sigTopo128EnergyValues2.push_back(sigTopoEtValues->at(k));
-                    sigdR2SubLeadinggFexSRJTopo128.push_back(dr2_2);
-                    sigdR2gFexSubLeadingTopoByEnergy2D->Fill(sigTopoEtValues->at(k), dr2_2);
-                    sigdR2jFexSubLeadingTopoByEnergy2D->Fill(sigTopoEtValues->at(k), dr2_2_jFex);
-                    if (sigTopoEtValues->at(k) <= 50.0){
-                        sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Fill(sigTopoEtValues->at(k), dr2_2);
-                        sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Fill(sigTopoEtValues->at(k), dr2_2_jFex);
-                    }
-                    if ((sigTopoEtValues->at(k) > 50.0) && (sigTopoEtValues->at(k) <= 550.0)){
-                        sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Fill(sigTopoEtValues->at(k), dr2_2);
-                        sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Fill(sigTopoEtValues->at(k), dr2_2_jFex);
-                    }
-                }   
-                
-                
-
-                //std::cout << "sigTopoEtValues->at(k): " << sigTopoEtValues->at(k) << "\n";
-                unsigned int energyBin = sig_h_topo_Et_top128->FindBin(sigTopoEtValues->at(k));
-                //std::cout << "energy bin sig: " << energyBin << "\n";
-                if (energyBin > nEnergyBins){
-                    //std::cout << "SIGNAL ENERGY OUTLIER WITH: " << sigTopoEtValues->at(k) << " [GeV]" << "\n";
-                    energyBin = nEnergyBins;
-                }
-                sigdR2LeadinggFexSRJTopo422Energy[energyBin - 1].push_back(dr2_1);
-                sigdR2SubLeadinggFexSRJTopo422Energy[energyBin - 1].push_back(dr2_2);
-            }
-        }
-        
-    }
-
-    for (int i = 0; i < sigJFexTree->GetEntries(); i++) {
-        sigJFexTree->GetEntry(i);
-        //std::cout << "sigJFexEtValues->size(): " << sigJFexEtValues->size() << "\n";
-        sig_h_jFex_multiplicity->Fill(sigJFexEtValues->size());
-        for (float et : *sigJFexEtValues) sig_h_jFex_Et->Fill(et);
-        for (float eta : *sigJFexEtaValues) sig_h_jFex_eta->Fill(eta);
-        for (float phi : *sigJFexPhiValues) sig_h_jFex_phi->Fill(phi);
-
-        auto [idx1, idx2] = getTwoHighestIndices(*sigJFexEtValues);
-
-        // Leading jet
-        sig_h_jFex_leading_Et->Fill(sigJFexEtValues->at(idx1));
-        //if (sigJFexEtValues->at(idx1) > 100.0){
-        //   std::cout << "sigJFexEtValues->at(idx1): " << sigJFexEtValues->at(idx1) << "\n";
-        //}
-        
-        sig_h_jFex_leading_eta->Fill(sigJFexEtaValues->at(idx1));
-        sig_h_jFex_leading_phi->Fill(sigJFexPhiValues->at(idx1));
-
-        // Sub-leading jet
-        sig_h_jFex_subleading_Et->Fill(sigJFexEtValues->at(idx2));
-        sig_h_jFex_subleading_eta->Fill(sigJFexEtaValues->at(idx2));
-        sig_h_jFex_subleading_phi->Fill(sigJFexPhiValues->at(idx2));
-
-        sig_h_jFex_leading_subleading_deltaR->Fill(sqrt(calcDeltaR2(sigJFexEtaValues->at(idx1), sigJFexPhiValues->at(idx1), sigJFexEtaValues->at(idx2), sigJFexPhiValues->at(idx2))));
-    }
-
-    int backNEntries = backGFexTree->GetEntries();
-    std::cout << " backNEntries: " << backNEntries << "\n";
-    for (int i = 0; i < backNEntries; i++) {
-        backGFexTree->GetEntry(i);
-        backJFexTree->GetEntry(i);
-        back_h_gFex_multiplicity->Fill(backGFexEtValues->size());
-        for (size_t j = 0; j < backGFexEtValues->size(); j++) {
-            back_h_gFex_Et->Fill(backGFexEtValues->at(j));
-            back_h_gFex_eta->Fill(backGFexEtaValues->at(j));
-            back_h_gFex_phi->Fill(backGFexPhiValues->at(j));
-        }
-
-        // Find two highest Et jets
-        auto [idx1, idx2] = getTwoHighestIndices(*backGFexEtValues);
-
-        auto [idx1_jFex, idx2_jFex] = getTwoHighestIndices(*backJFexEtValues);
-
-        // Leading jet
-        back_h_gFex_leading_Et->Fill(backGFexEtValues->at(idx1));
-        back_h_gFex_leading_eta->Fill(backGFexEtaValues->at(idx1));
-        back_h_gFex_leading_phi->Fill(backGFexPhiValues->at(idx1));
-
-        // Sub-leading jet
-        back_h_gFex_subleading_Et->Fill(backGFexEtValues->at(idx2));
-        back_h_gFex_subleading_eta->Fill(backGFexEtaValues->at(idx2));
-        back_h_gFex_subleading_phi->Fill(backGFexPhiValues->at(idx2));
-
-        back_h_gFex_leading_subleading_deltaR->Fill(sqrt(calcDeltaR2(backGFexEtaValues->at(idx1), backGFexPhiValues->at(idx1), backGFexEtaValues->at(idx2), backGFexPhiValues->at(idx2))));
-        
-
-
-        backCaloTopoTree->GetEntry(i); 
-
-        back_h_calotopo_multiplicity->Fill(backCaloTopoEtValues->size());
-
-        std::cout << "back calotopo multiplicity: " << backCaloTopoEtValues->size() << " for event: " << i << "\n";
-
-        for(size_t m = 0; m < backCaloTopoEtValues->size(); m++){
-            std::cout << "back calotopo et: " << backCaloTopoEtValues->at(m) << "\n";
-            std::cout << "back calotopo eta: " << backCaloTopoEtaValues->at(m) << "\n";
-            back_h_calotopo_Et->Fill(backCaloTopoEtValues->at(m));
-            back_h_calotopo_eta->Fill(backCaloTopoEtaValues->at(m)); // FIXME rename all GFex, Topo variables to something like input object, seed
-            back_h_calotopo_phi->Fill(backCaloTopoPhiValues->at(m));
-        }
-
-        backTopoTree->GetEntry(i);
-        //std::cout << "topoEtValues->size(): " << backTopoEtValues->size() << "\n";
-        back_h_topo_multiplicity->Fill(backTopoEtValues->size());
-        for (size_t k = 0; k < backTopoEtValues->size(); k++) {
-            back_h_topo_Et->Fill(backTopoEtValues->at(k));
-            back_h_topo_eta->Fill(backTopoEtaValues->at(k));
-            back_h_topo_phi->Fill(backTopoPhiValues->at(k));
-            double dr2_1 = ((backGFexEtaValues->at(idx1)) - backTopoEtaValues->at(k))*((backGFexEtaValues->at(idx1)) - backTopoEtaValues->at(k)) + deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues->at(k))*deltaPhi(backGFexPhiValues->at(idx1), backTopoPhiValues->at(k));
-            //std::cout << "background dr2_1: " << dr2_1 << " and dr: " << sqrt(dr2_1) << "\n";
-            back_h_deltaR2_gFex_SRJ1->Fill(dr2_1);
-            back_h_deltaR_gFex_SRJ1->Fill(sqrt(dr2_1));
-            double dr2_2 = ((backGFexEtaValues->at(idx2)) - backTopoEtaValues->at(k))*((backGFexEtaValues->at(idx2)) - backTopoEtaValues->at(k)) + deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues->at(k))*deltaPhi(backGFexPhiValues->at(idx2), backTopoPhiValues->at(k));
-            back_h_deltaR2_gFex_SRJ2->Fill(dr2_2);
-            back_h_deltaR_gFex_SRJ2->Fill(sqrt(dr2_2));
-
-
-            double dr2_1_jFex = ((backJFexEtaValues->at(idx1_jFex)) - backTopoEtaValues->at(k))*((backJFexEtaValues->at(idx1_jFex)) - backTopoEtaValues->at(k)) + deltaPhi(backJFexPhiValues->at(idx1_jFex), backTopoPhiValues->at(k))*deltaPhi(backJFexPhiValues->at(idx1_jFex), backTopoPhiValues->at(k));
-            double dr2_2_jFex = ((backJFexEtaValues->at(idx2_jFex)) - backTopoEtaValues->at(k))*((backJFexEtaValues->at(idx2_jFex)) - backTopoEtaValues->at(k)) + deltaPhi(backJFexPhiValues->at(idx2_jFex), backTopoPhiValues->at(k))*deltaPhi(backJFexPhiValues->at(idx2_jFex), backTopoPhiValues->at(k));
-            back_h_deltaR2_jFex_SRJ1->Fill(dr2_1_jFex);
-            back_h_deltaR_jFex_SRJ1->Fill(sqrt(dr2_1_jFex));
-            back_h_deltaR2_jFex_SRJ2->Fill(dr2_2_jFex);
-            back_h_deltaR_jFex_SRJ2->Fill(sqrt(dr2_2_jFex));
-
-
-            if (k < 128){
-                back_h_topo_Et_top128->Fill(backTopoEtValues->at(k));
-                back_h_topo_eta_top128->Fill(backTopoEtaValues->at(k));
-                back_h_topo_phi_top128->Fill(backTopoPhiValues->at(k));
-                back_h_deltaR2_gFex_SRJ1_topo128->Fill(dr2_1);
-                back_h_deltaR_gFex_SRJ1_topo128->Fill(sqrt(dr2_1));
-                back_h_deltaR2_gFex_SRJ2_topo128->Fill(dr2_2);
-                back_h_deltaR_gFex_SRJ2_topo128->Fill(sqrt(dr2_2));
-
-                back_h_deltaR2_jFex_SRJ1_topo128->Fill(dr2_1_jFex);
-                back_h_deltaR_jFex_SRJ1_topo128->Fill(sqrt(dr2_1_jFex));
-                back_h_deltaR2_jFex_SRJ2_topo128->Fill(dr2_2_jFex);
-                back_h_deltaR_jFex_SRJ2_topo128->Fill(sqrt(dr2_2_jFex));
-
-                if (dr2_1 < 5.0){
-                    backTopo128EnergyValues1.push_back(backTopoEtValues->at(k));
-                    backdR2LeadinggFexSRJTopo128.push_back(dr2_1);
-                    backdR2gFexLeadingTopoByEnergy2D->Fill(backTopoEtValues->at(k), dr2_1);
-                    backdR2jFexLeadingTopoByEnergy2D->Fill(backTopoEtValues->at(k), dr2_1_jFex);
-                    if (backTopoEtValues->at(k) <= 50.0){
-                        backdR2gFexLeadingTopoByEnergy2D0to50GeV->Fill(backTopoEtValues->at(k), dr2_1);
-                        backdR2jFexLeadingTopoByEnergy2D0to50GeV->Fill(backTopoEtValues->at(k), dr2_1_jFex);
-                    }
-                    if ((backTopoEtValues->at(k) > 50.0) && (backTopoEtValues->at(k) <= 550.0)){
-                        backdR2gFexLeadingTopoByEnergy2D50to550GeV->Fill(backTopoEtValues->at(k), dr2_1);
-                        backdR2jFexLeadingTopoByEnergy2D50to550GeV->Fill(backTopoEtValues->at(k), dr2_1_jFex);
-                    }
-                }
-                if (dr2_2 < 5.0){
-                    backTopo128EnergyValues2.push_back(backTopoEtValues->at(k));
-                    backdR2SubLeadinggFexSRJTopo128.push_back(dr2_1);
-                    backdR2gFexSubLeadingTopoByEnergy2D->Fill(backTopoEtValues->at(k), dr2_2);
-                    backdR2jFexSubLeadingTopoByEnergy2D->Fill(backTopoEtValues->at(k), dr2_2_jFex);
-                    if (backTopoEtValues->at(k) <= 50.0){
-                        backdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Fill(backTopoEtValues->at(k), dr2_2);
-                        backdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Fill(backTopoEtValues->at(k), dr2_2_jFex);
-                    }
-                    if ((backTopoEtValues->at(k) > 50.0) && (backTopoEtValues->at(k) <= 550.0)){
-                        backdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Fill(backTopoEtValues->at(k), dr2_2);
-                        backdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Fill(backTopoEtValues->at(k), dr2_2_jFex);
-                    }
-                }
-                
-
-                unsigned int energyBin = back_h_topo_Et_top128->FindBin(backTopoEtValues->at(k));
-                if (energyBin > nEnergyBins){
-                    //std::cout << "BACKGROUND ENERGY OUTLIER WITH: " << backTopoEtValues->at(k) << " [GeV]" << "\n";
-                    energyBin = nEnergyBins;
-                }
-                backdR2LeadinggFexSRJTopo422Energy[energyBin - 1].push_back(dr2_1);
-                backdR2SubLeadinggFexSRJTopo422Energy[energyBin - 1].push_back(dr2_2);
-
-            }
-        }
-        
-    }
-
-    for (int i = 0; i < backJFexTree->GetEntries(); i++) {
-        backJFexTree->GetEntry(i);
-        //std::cout << "backJFexEtValues->size(): " << backJFexEtValues->size() << "\n";
-        back_h_jFex_multiplicity->Fill(backJFexEtValues->size());
-        for (float et : *backJFexEtValues) back_h_jFex_Et->Fill(et);
-        for (float eta : *backJFexEtaValues) back_h_jFex_eta->Fill(eta);
-        for (float phi : *backJFexPhiValues) back_h_jFex_phi->Fill(phi);
-
-        auto [idx1, idx2] = getTwoHighestIndices(*backJFexEtValues);
-
-        // Leading jet
-        back_h_jFex_leading_Et->Fill(backJFexEtValues->at(idx1));
-        if (backJFexEtValues->at(idx1) > 100.0){
-            std::cout << "backJFexEtValues->at(idx1): " << backJFexEtValues->at(idx1) << "\n";
-        }
-        back_h_jFex_leading_eta->Fill(backJFexEtaValues->at(idx1));
-        back_h_jFex_leading_phi->Fill(backJFexPhiValues->at(idx1));
-
-        // Sub-leading jet
-        back_h_jFex_subleading_Et->Fill(backJFexEtValues->at(idx2));
-        back_h_jFex_subleading_eta->Fill(backJFexEtaValues->at(idx2));
-        back_h_jFex_subleading_phi->Fill(backJFexPhiValues->at(idx2));
-
-        back_h_jFex_leading_subleading_deltaR->Fill(sqrt(calcDeltaR2(backJFexEtaValues->at(idx1), backJFexPhiValues->at(idx1), backJFexEtaValues->at(idx2), backJFexPhiValues->at(idx2))));
-    }
-
-    for (int bin = 0; bin < nEnergyBins; ++bin){
-        //std::cout << "bin: " << bin << "\n";
-        if (bin == (nEnergyBins - 1)){
-            std::cout << "last bin mean (sig, leading): " << computeMean(sigdR2LeadinggFexSRJTopo422Energy[bin]);
-            std::cout << " sig n entries for last bin: " << sigdR2LeadinggFexSRJTopo422Energy[bin].size() << "\n";
-
-            std::cout << "last bin mean (back, leading): " << computeMean(backdR2LeadinggFexSRJTopo422Energy[bin]);
-            std::cout << " back n entries for last bin: " << backdR2LeadinggFexSRJTopo422Energy[bin].size() << "\n";
-        } 
-        sigdR2gFexLeadingTopoByEnergy->SetBinContent(bin + 1, computeMean(sigdR2LeadinggFexSRJTopo422Energy[bin]));
-        backdR2gFexLeadingTopoByEnergy->SetBinContent(bin + 1, computeMean(backdR2LeadinggFexSRJTopo422Energy[bin]));
-        sigdR2gFexSubLeadingTopoByEnergy->SetBinContent(bin + 1, computeMean(sigdR2SubLeadinggFexSRJTopo422Energy[bin]));
-        backdR2gFexSubLeadingTopoByEnergy->SetBinContent(bin + 1, computeMean(backdR2SubLeadinggFexSRJTopo422Energy[bin]));
-        sigdR2gFexLeadingTopoByEnergy->SetBinError(bin + 1, computeStandardError(sigdR2LeadinggFexSRJTopo422Energy[bin], computeStandardDeviation(sigdR2LeadinggFexSRJTopo422Energy[bin], computeMean(sigdR2LeadinggFexSRJTopo422Energy[bin]))));
-        backdR2gFexLeadingTopoByEnergy->SetBinError(bin + 1, computeStandardError(backdR2LeadinggFexSRJTopo422Energy[bin], computeStandardDeviation(backdR2LeadinggFexSRJTopo422Energy[bin], computeMean(backdR2LeadinggFexSRJTopo422Energy[bin]))));
-        sigdR2gFexSubLeadingTopoByEnergy->SetBinError(bin + 1, computeStandardError(sigdR2SubLeadinggFexSRJTopo422Energy[bin], computeStandardDeviation(sigdR2SubLeadinggFexSRJTopo422Energy[bin], computeMean(sigdR2SubLeadinggFexSRJTopo422Energy[bin]))));
-        backdR2gFexSubLeadingTopoByEnergy->SetBinError(bin + 1, computeStandardError(backdR2SubLeadinggFexSRJTopo422Energy[bin], computeStandardDeviation(backdR2SubLeadinggFexSRJTopo422Energy[bin], computeMean(backdR2SubLeadinggFexSRJTopo422Energy[bin]))));
-    }
-
-    // Save histograms
-    TString outputFileDir;
-    if (vbfBool) outputFileDir = "overlayHistogramsVBF/";
-    else outputFileDir = "overlayHistogramsggF/";
-
-    TCanvas c2D = new TCanvas("c2D", "2D Histogram", 1000, 600);  // wider than 800
-
+    TH1F* back_h_jFex_LRJ_Et = new TH1F("back_h_jFex_LRJ_Et", "jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_jFex_LRJ_Et = new TH1F("back_h_lead_jFex_LRJ_Et", "Lead. jFex LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
     
-    sigdR2gFexLeadingTopoByEnergy2D->Scale(1.0 / sigdR2gFexLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCut1 = sigdR2gFexLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCut
-    int nBinsX1 = sigdR2gFexLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsY1 = sigdR2gFexLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCut1 = sigdR2gFexLeadingTopoByEnergy2D->Integral(1, nBinsX1, 1, yBinCut1 - 1);
-    double totalIntegral1 = sigdR2gFexLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCut1 = integralBelowCut1 / totalIntegral1;
-    char* label1 = Form("%.3f", fractionBelowCut1);
-    std::cout << "sig gfex leading fraction below deltaR^2: " << fractionBelowCut1 << "\n";
-    mySmallText(0.6, 0.6, 0, label1);
-    TLine *line = new TLine(sigdR2gFexLeadingTopoByEnergy2D->GetXaxis()->GetXmin(), 1.0, sigdR2gFexLeadingTopoByEnergy2D->GetXaxis()->GetXmax(), 1.0); // xMin/xMax = x-axis limits
-    line->SetLineColor(kBlack);
-    line->SetLineWidth(2);
-    line->SetLineStyle(2);  // dashed
-    
-    gStyle->SetPalette(1);
-    sigdR2gFexLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *palette1 = (TPaletteAxis*)sigdR2gFexLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette1->SetLabelSize(0.15);
-    sigdR2gFexLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexLeadingTopoByEnergy2D.pdf");
-
-
-    gStyle->SetPalette(1);
-    sigdR2gFexLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / sigdR2gFexLeadingTopoByEnergy2D0to50GeV->Integral());
-    sigdR2gFexLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2gFexLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexLeadingTopoByEnergy2D0to50GeV.pdf");
-
-
-    gStyle->SetPalette(1);
-    backdR2gFexLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / backdR2gFexLeadingTopoByEnergy2D0to50GeV->Integral());
-    backdR2gFexLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2gFexLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexLeadingTopoByEnergy2D0to50GeV.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2gFexLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / sigdR2gFexLeadingTopoByEnergy2D50to550GeV->Integral());
-    sigdR2gFexLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2gFexLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2gFexLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / backdR2gFexLeadingTopoByEnergy2D50to550GeV->Integral());
-    backdR2gFexLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2gFexLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexLeadingTopoByEnergy2D50to550GeV.pdf");
-
-
-    gStyle->SetPalette(1);
-    sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Integral());
-    sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexSubLeadingTopoByEnergy2D0to50GeV.pdf");
-
-
-    gStyle->SetPalette(1);
-    backdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / backdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Integral());
-    backdR2gFexSubLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2gFexSubLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexSubLeadingTopoByEnergy2D0to50GeV.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Integral());
-    sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexSubLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / backdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Integral());
-    backdR2gFexSubLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2gFexSubLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexSubLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2gFexLeadingTopoByEnergy2D->Scale(1.0 / backdR2gFexLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCut2 = backdR2gFexLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCut
-    int nBinsX2 = backdR2gFexLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsY2 = backdR2gFexLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCut2 = backdR2gFexLeadingTopoByEnergy2D->Integral(1, nBinsX2, 1, yBinCut2 - 1);
-    double totalIntegral2 = backdR2gFexLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCut2 = integralBelowCut2 / totalIntegral2;
-    std::cout << "back gfex leading fraction below deltaR^2: " << fractionBelowCut2 << "\n";
-    char* label2 = Form("%.3f", fractionBelowCut2);
-    mySmallText(0.6, 0.6, 0, label2);
-    
-    backdR2gFexLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *palette2 = (TPaletteAxis*)backdR2gFexLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette2->SetLabelSize(0.15);
-    backdR2gFexLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexLeadingTopoByEnergy2D.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2gFexSubLeadingTopoByEnergy2D->Scale(1.0 / sigdR2gFexSubLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCut3 = sigdR2gFexSubLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCut
-    int nBinsX3 = sigdR2gFexSubLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsY3 = sigdR2gFexSubLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCut3 = sigdR2gFexSubLeadingTopoByEnergy2D->Integral(1, nBinsX3, 1, yBinCut3 - 1);
-    double totalIntegral3 = sigdR2gFexSubLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCut3 = integralBelowCut3 / totalIntegral3;
-    char* label3 = Form("%.3f", fractionBelowCut3);
-    std::cout << "sig gfex subleading fraction below deltaR^2: " << fractionBelowCut3 << "\n";
-    mySmallText(0.6, 0.6, 0, label3);
-    sigdR2gFexSubLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *palette3 = (TPaletteAxis*)sigdR2gFexSubLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette3->SetLabelSize(0.15);
-    sigdR2gFexSubLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2gFexSubLeadingTopoByEnergy2D.pdf");
-    
-    backdR2gFexSubLeadingTopoByEnergy2D->Scale(1.0 / backdR2gFexSubLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCut4 = backdR2gFexSubLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCut
-    int nBinsX4 = backdR2gFexSubLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsY4 = backdR2gFexSubLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCut4 = backdR2gFexSubLeadingTopoByEnergy2D->Integral(1, nBinsX4, 1, yBinCut4 - 1);
-    double totalIntegral4 = backdR2gFexSubLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCut4 = integralBelowCut4 / totalIntegral4;
-    char* label4 = Form("%.3f", fractionBelowCut4);
-    std::cout << "back gfex subleading fraction below deltaR^2: " << fractionBelowCut4 << "\n";
-    mySmallText(0.6, 0.6, 0, label4);
-    gStyle->SetPalette(1);
-    backdR2gFexSubLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *palette4 = (TPaletteAxis*)backdR2gFexSubLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette4->SetLabelSize(0.15);
-    backdR2gFexSubLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2gFexSubLeadingTopoByEnergy2D.pdf");
-
-    sigdR2jFexLeadingTopoByEnergy2D->Scale(1.0 / sigdR2jFexLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCutJ1 = sigdR2jFexLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCutJ
-    int nBinsXJ1 = sigdR2jFexLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsYJ1 = sigdR2jFexLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCutJ1 = sigdR2jFexLeadingTopoByEnergy2D->Integral(1, nBinsXJ1, 1, yBinCutJ1 - 1);
-    double totalIntegralJ1 = sigdR2jFexLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCutJ1 = integralBelowCutJ1 / totalIntegralJ1;
-    char* labelJ1 = Form("%.3f", fractionBelowCutJ1);
-    std::cout << "sig jfex leading fraction below deltaR^2: " << fractionBelowCutJ1 << "\n";
-    mySmallText(0.6, 0.6, 0, labelJ1);
-
-
-    gStyle->SetPalette(1);
-    sigdR2jFexLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *paletteJ1 = (TPaletteAxis*)sigdR2jFexLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette1->SetLabelSize(0.15);
-    sigdR2jFexLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexLeadingTopoByEnergy2D.pdf");
-
-
-    gStyle->SetPalette(1);
-    sigdR2jFexLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / sigdR2jFexLeadingTopoByEnergy2D0to50GeV->Integral());
-    sigdR2jFexLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2jFexLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexLeadingTopoByEnergy2D0to50GeV.pdf");
-
-
-    gStyle->SetPalette(1);
-    backdR2jFexLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / backdR2jFexLeadingTopoByEnergy2D0to50GeV->Integral());
-    backdR2jFexLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2jFexLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexLeadingTopoByEnergy2D0to50GeV.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2jFexLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / sigdR2jFexLeadingTopoByEnergy2D50to550GeV->Integral());
-    sigdR2jFexLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2jFexLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2jFexLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / backdR2jFexLeadingTopoByEnergy2D50to550GeV->Integral());
-    backdR2jFexLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2jFexLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Integral());
-    sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexSubLeadingTopoByEnergy2D0to50GeV.pdf");
-
-
-    gStyle->SetPalette(1);
-    backdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Scale(1.0 / backdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Integral());
-    backdR2jFexSubLeadingTopoByEnergy2D0to50GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2jFexSubLeadingTopoByEnergy2D0to50GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexSubLeadingTopoByEnergy2D0to50GeV.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Integral());
-    sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexSubLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Scale(1.0 / backdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Integral());
-    backdR2jFexSubLeadingTopoByEnergy2D50to550GeV->Draw("COLZ");  
-    gPad->Update();
-    backdR2jFexSubLeadingTopoByEnergy2D50to550GeV->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexSubLeadingTopoByEnergy2D50to550GeV.pdf");
-
-    gStyle->SetPalette(1);
-    backdR2jFexLeadingTopoByEnergy2D->Scale(1.0 / backdR2jFexLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCutJ2 = backdR2jFexLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCutJ
-    int nBinsXJ2 = backdR2jFexLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsYJ2 = backdR2jFexLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCutJ2 = backdR2jFexLeadingTopoByEnergy2D->Integral(1, nBinsXJ2, 1, yBinCutJ2 - 1);
-    double totalIntegralJ2 = backdR2jFexLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCutJ2 = integralBelowCutJ2 / totalIntegralJ2;
-    std::cout << "back jfex leading fraction below deltaR^2: " << fractionBelowCutJ2 << "\n";
-    char* labelJ2 = Form("%.3f", fractionBelowCutJ2);
-    mySmallText(0.6, 0.6, 0, labelJ2);
-
-    backdR2jFexLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *paletteJ2 = (TPaletteAxis*)backdR2jFexLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette2->SetLabelSize(0.15);
-    backdR2jFexLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexLeadingTopoByEnergy2D.pdf");
-
-    gStyle->SetPalette(1);
-    sigdR2jFexSubLeadingTopoByEnergy2D->Scale(1.0 / sigdR2jFexSubLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCutJ3 = sigdR2jFexSubLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCutJ
-    int nBinsXJ3 = sigdR2jFexSubLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsYJ3 = sigdR2jFexSubLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCutJ3 = sigdR2jFexSubLeadingTopoByEnergy2D->Integral(1, nBinsXJ3, 1, yBinCutJ3 - 1);
-    double totalIntegralJ3 = sigdR2jFexSubLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCutJ3 = integralBelowCutJ3 / totalIntegralJ3;
-    char* labelJ3 = Form("%.3f", fractionBelowCutJ3);
-    std::cout << "sig jfex subleading fraction below deltaR^2: " << fractionBelowCutJ3 << "\n";
-    mySmallText(0.6, 0.6, 0, labelJ3);
-    sigdR2jFexSubLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *paletteJ3 = (TPaletteAxis*)sigdR2jFexSubLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette3->SetLabelSize(0.15);
-    sigdR2jFexSubLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "sigdR2jFexSubLeadingTopoByEnergy2D.pdf");
-
-    backdR2jFexSubLeadingTopoByEnergy2D->Scale(1.0 / backdR2jFexSubLeadingTopoByEnergy2D->Integral());
-    // Get number of bins in Y and the bin corresponding to y = 1.0
-    int yBinCutJ4 = backdR2jFexSubLeadingTopoByEnergy2D->GetYaxis()->FindBin(1.0);
-
-    // Integrate over all X bins and Y bins from 1 up to (but not including) yBinCutJ
-    int nBinsXJ4 = backdR2jFexSubLeadingTopoByEnergy2D->GetNbinsX();
-    int nBinsYJ4 = backdR2jFexSubLeadingTopoByEnergy2D->GetNbinsY();
-
-    double integralBelowCutJ4 = backdR2jFexSubLeadingTopoByEnergy2D->Integral(1, nBinsXJ4, 1, yBinCutJ4 - 1);
-    double totalIntegralJ4 = backdR2jFexSubLeadingTopoByEnergy2D->Integral();
-
-    double fractionBelowCutJ4 = integralBelowCutJ4 / totalIntegralJ4;
-    char* labelJ4 = Form("%.3f", fractionBelowCutJ4);
-    std::cout << "back jfex subleading fraction below deltaR^2: " << fractionBelowCutJ4 << "\n";
-    mySmallText(0.6, 0.6, 0, labelJ4);
-    gStyle->SetPalette(1);
-    backdR2jFexSubLeadingTopoByEnergy2D->Draw("COLZ");  
-    gPad->Update();
-    TPaletteAxis *paletteJ4 = (TPaletteAxis*)backdR2jFexSubLeadingTopoByEnergy2D->GetListOfFunctions()->FindObject("palette");
-    //palette4->SetLabelSize(0.15);
-    backdR2jFexSubLeadingTopoByEnergy2D->GetZaxis()->SetLabelSize(0.03);
-    line->Draw("SAME");
-    c2D.SaveAs(outputFileDir + "backdR2jFexSubLeadingTopoByEnergy2D.pdf");
-
-    
-
-    TCanvas c;
-    c.cd();
-    sigdR2gFexLeadingTopoByEnergy->Draw();
-    c.SaveAs(outputFileDir + "sigdR2gFexLeadingTopoByEnergy.pdf");
-
-    
-    backdR2gFexLeadingTopoByEnergy->Draw();
-    c.SaveAs(outputFileDir + "backdR2gFexLeadingTopoByEnergy.pdf");
-
-
-    sigdR2gFexSubLeadingTopoByEnergy->Draw();
-    c.SaveAs(outputFileDir + "sigdR2gFexSubLeadingTopoByEnergy.pdf");
-
-
-    backdR2gFexSubLeadingTopoByEnergy->Draw();
-    c.SaveAs(outputFileDir + "backdR2gFexSubLeadingTopoByEnergy.pdf");
-
-
-    sigdR2gFexLeadingTopoByEnergy->SetLineColor(kRed);
-    backdR2gFexLeadingTopoByEnergy->SetLineColor(kBlue);
-    sigdR2gFexLeadingTopoByEnergy->SetMarkerSize(0.5);  // smaller marker
-    backdR2gFexLeadingTopoByEnergy->SetMarkerSize(0.5);  // smaller marker
-    sigdR2gFexLeadingTopoByEnergy->SetYTitle("#Delta R^{2} (lead gFex SRJ, 128 highest Et topo422)");   // Y-axis title
-    sigdR2gFexLeadingTopoByEnergy->SetXTitle("Topo422 Energy [GeV]");  // X-axis title
-    sigdR2gFexLeadingTopoByEnergy->Draw();
-    backdR2gFexLeadingTopoByEnergy->Draw("SAME");
-    TLegend *leg = new TLegend(0.75,0.75,0.9,0.95);
-    leg->SetTextSize(0.03);
-    leg->AddEntry(sigdR2gFexLeadingTopoByEnergy, "Signal", "l");
-    leg->AddEntry(backdR2gFexLeadingTopoByEnergy, "Background", "l");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "OverlaydR2gFexLeadingTopoByEnergy.pdf");
-
-    sigdR2gFexSubLeadingTopoByEnergy->SetLineColor(kRed);
-    backdR2gFexSubLeadingTopoByEnergy->SetLineColor(kBlue);
-    sigdR2gFexSubLeadingTopoByEnergy->SetMarkerSize(0.5);  // smaller marker
-    backdR2gFexSubLeadingTopoByEnergy->SetMarkerSize(0.5);  // smaller marker
-    sigdR2gFexSubLeadingTopoByEnergy->SetYTitle("#Delta R^{2} (sublead gFex SRJ, 128 highest Et topo)");   // Y-axis title
-    sigdR2gFexSubLeadingTopoByEnergy->SetXTitle("Topo422 Energy [GeV]");  // X-axis title
-    sigdR2gFexSubLeadingTopoByEnergy->Draw("");
-    backdR2gFexSubLeadingTopoByEnergy->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "OverlaydR2gFexSubLeadingTopoByEnergy.pdf");
-
-    TGraph *g1 = new TGraph(sigTopo128EnergyValues1.size(), &sigTopo128EnergyValues1[0], &sigdR2LeadinggFexSRJTopo128[0]);
-    g1->SetMarkerStyle(20);
-    g1->SetMarkerColor(kRed);
-    g1->SetMarkerSize(0.5);
-    g1->SetTitle("Unbinned Scatter Plot;Topo422 Energy [GeV];#Delta R^{2} (lead gFex SRJ, topo)");
-    g1->Draw("AP");
-    c.SaveAs(outputFileDir + "scatter_sigdR2gFexLeadingTopo422ByEnergy.pdf");
-
-    TGraph *g2 = new TGraph(backTopo128EnergyValues1.size(), &backTopo128EnergyValues1[0], &backdR2LeadinggFexSRJTopo128[0]);
-    g2->SetMarkerStyle(20);
-    g2->SetMarkerColor(kBlue);
-    g2->SetMarkerSize(0.5);
-    g2->SetTitle("Unbinned Scatter Plot;Topo422 Energy [GeV];#Delta R^{2} (lead gFex SRJ, topo)");
-    g2->Draw("AP");
-    c.SaveAs(outputFileDir + "scatter_backdR2gFexLeadingTopo422ByEnergy.pdf");
-
-    TGraph *g3 = new TGraph(sigTopo128EnergyValues2.size(), &sigTopo128EnergyValues2[0], &sigdR2SubLeadinggFexSRJTopo128[0]);
-    g3->SetMarkerStyle(20);
-    g3->SetMarkerColor(kRed);
-    g3->SetMarkerSize(0.5);
-    g3->SetTitle("Unbinned Scatter Plot;Topo422 Energy [GeV];#Delta R^{2} (sublead gFex SRJ, topo)");
-    g3->Draw("AP");
-    c.SaveAs(outputFileDir + "scatter_sigdR2gFexSubLeadingTopo422ByEnergy.pdf");
-
-    TGraph *g4 = new TGraph(backTopo128EnergyValues2.size(), &backTopo128EnergyValues2[0], &backdR2SubLeadinggFexSRJTopo128[0]);
-    g4->SetMarkerStyle(20);
-    g4->SetMarkerColor(kBlue);
-    g4->SetMarkerSize(0.5);
-    g4->SetTitle("Unbinned Scatter Plot;Topo422 Energy [GeV];#Delta R^{2} (sublead gFex SRJ, topo)");
-    g4->Draw("AP");
-    c.SaveAs(outputFileDir + "scatter_backdR2gFexSubLeadingTopo422ByEnergy.pdf");
-
-    sig_h_topo_Et->SetLineColor(kRed);
-    back_h_topo_Et->SetLineColor(kBlue);
-    back_h_topo_Et->Draw();
-    sig_h_topo_Et->Draw("SAME");
-    
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_Et.pdf");
-
-    sig_h_calotopo_Et->SetLineColor(kRed);
-    back_h_calotopo_Et->SetLineColor(kBlue);
-    back_h_calotopo_Et->Draw();
-    sig_h_calotopo_Et->Draw("SAME");
-    
-    leg->Draw();
-    c.SaveAs(outputFileDir + "calotopo_Et.pdf");
-
-    sig_h_topo_Et_top128->SetLineColor(kRed);
-    back_h_topo_Et_top128->SetLineColor(kBlue);
-    sig_h_topo_Et_top128->Scale(1.0 / sig_h_topo_Et_top128->Integral());
-    back_h_topo_Et_top128->Scale(1.0 / back_h_topo_Et_top128->Integral());
-    back_h_topo_Et_top128->Draw("HIST");
-    sig_h_topo_Et_top128->Draw("HIST SAME");
-    c.SaveAs(outputFileDir + "topo_Et_top128.pdf");
-
-    sig_h_gFex_leading_Et->SetLineColor(kRed);
-    back_h_gFex_leading_Et->SetLineColor(kBlue);
-    sig_h_gFex_leading_Et->Scale(1.0 / sig_h_gFex_leading_Et->Integral());
-    back_h_gFex_leading_Et->Scale(1.0 / back_h_gFex_leading_Et->Integral());
-    sig_h_gFex_leading_Et->Draw("HIST");
-    back_h_gFex_leading_Et->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_Et.pdf");
-
-    sig_h_gFex_subleading_Et->SetLineColor(kRed);
-    back_h_gFex_subleading_Et->SetLineColor(kBlue);
-    sig_h_gFex_subleading_Et->Scale(1.0 / sig_h_gFex_subleading_Et->Integral());
-    back_h_gFex_subleading_Et->Scale(1.0 / back_h_gFex_subleading_Et->Integral());
-    sig_h_gFex_subleading_Et->Draw("HIST");
-    back_h_gFex_subleading_Et->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_Et.pdf");
-
-    sig_h_jFex_leading_Et->SetLineColor(kRed);
-    back_h_jFex_leading_Et->SetLineColor(kBlue);
-    sig_h_jFex_leading_Et->Scale(1.0 / sig_h_jFex_leading_Et->Integral());
-    back_h_jFex_leading_Et->Scale(1.0 / back_h_jFex_leading_Et->Integral());
-    back_h_jFex_leading_Et->Draw("HIST");
-    sig_h_jFex_leading_Et->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_leading_Et.pdf");
-
-    sig_h_jFex_subleading_Et->SetLineColor(kRed);
-    back_h_jFex_subleading_Et->SetLineColor(kBlue);
-    sig_h_jFex_subleading_Et->Scale(1.0 / sig_h_jFex_subleading_Et->Integral());
-    back_h_jFex_subleading_Et->Scale(1.0 / back_h_jFex_subleading_Et->Integral());
-    sig_h_jFex_subleading_Et->Draw("HIST");
-    back_h_jFex_subleading_Et->Draw("HIST SAME");
-    
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_subleading_Et.pdf");
-
-    sig_h_gFex_leading_subleading_deltaR->SetLineColor(kRed);
-    back_h_gFex_leading_subleading_deltaR->SetLineColor(kBlue);
-    sig_h_gFex_leading_subleading_deltaR->Scale(1.0 / sig_h_gFex_leading_subleading_deltaR->Integral());
-    back_h_gFex_leading_subleading_deltaR->Scale(1.0 / back_h_gFex_leading_subleading_deltaR->Integral());
-    sig_h_gFex_leading_subleading_deltaR->Draw("HIST");
-    back_h_gFex_leading_subleading_deltaR->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_leading_subleading_gFexSRJ.pdf");
-
-    sig_h_jFex_leading_subleading_deltaR->SetLineColor(kRed);
-    back_h_jFex_leading_subleading_deltaR->SetLineColor(kBlue);
-    sig_h_jFex_leading_subleading_deltaR->Scale(1.0 / sig_h_jFex_leading_subleading_deltaR->Integral());
-    back_h_jFex_leading_subleading_deltaR->Scale(1.0 / back_h_jFex_leading_subleading_deltaR->Integral());
-    
-    back_h_jFex_leading_subleading_deltaR->Draw("HIST");
-    sig_h_jFex_leading_subleading_deltaR->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_leading_subleading_jFexSRJ.pdf");
-
-    sig_h_gFex_Et->SetLineColor(kRed);
-    back_h_gFex_Et->SetLineColor(kBlue);
-    sig_h_gFex_Et->Scale(1.0 / sig_h_gFex_Et->Integral());
-    back_h_gFex_Et->Scale(1.0 / back_h_gFex_Et->Integral());
-    back_h_gFex_Et->Draw("HIST");
-    sig_h_gFex_Et->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_Et.pdf");
-
-    sig_h_jFex_Et->SetLineColor(kRed);
-    back_h_jFex_Et->SetLineColor(kBlue);
-    back_h_jFex_Et->Draw();
-    sig_h_jFex_Et->Draw("SAME");
-    
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_Et.pdf");
-
-    sig_h_topo_eta->SetLineColor(kRed);
-    back_h_topo_eta->SetLineColor(kBlue);
-    back_h_topo_eta->Draw();
-    sig_h_topo_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_eta.pdf");
-
-    sig_h_calotopo_eta->SetLineColor(kRed);
-    back_h_calotopo_eta->SetLineColor(kBlue);
-    back_h_calotopo_eta->Draw();
-    sig_h_calotopo_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "calotopo_eta.pdf");
-
-    sig_h_topo_eta_top128->SetLineColor(kRed);
-    back_h_topo_eta_top128->SetLineColor(kBlue);
-    back_h_topo_eta_top128->Draw();
-    sig_h_topo_eta_top128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_eta_top128.pdf");
-
-    sig_h_gFex_eta->SetLineColor(kRed);
-    back_h_gFex_eta->SetLineColor(kBlue);
-    back_h_gFex_eta->Draw();
-    sig_h_gFex_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_eta.pdf");
-
-    sig_h_gFex_leading_eta->SetLineColor(kRed);
-    back_h_gFex_leading_eta->SetLineColor(kBlue);
-    back_h_gFex_leading_eta->Draw();
-    sig_h_gFex_leading_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_eta.pdf");
-
-    sig_h_gFex_subleading_eta->SetLineColor(kRed);
-    back_h_gFex_subleading_eta->SetLineColor(kBlue);
-    back_h_gFex_subleading_eta->Draw();
-    sig_h_gFex_subleading_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_eta.pdf");
-
-    sig_h_jFex_leading_eta->SetLineColor(kRed);
-    back_h_jFex_leading_eta->SetLineColor(kBlue);
-    back_h_jFex_leading_eta->Draw();
-    sig_h_jFex_leading_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_leading_eta.pdf");
-
-    sig_h_jFex_subleading_eta->SetLineColor(kRed);
-    back_h_jFex_subleading_eta->SetLineColor(kBlue);
-    back_h_jFex_subleading_eta->Draw();
-    sig_h_jFex_subleading_eta->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_subleading_eta.pdf");
-
-    sig_h_jFex_eta->SetLineColor(kRed);
-    back_h_jFex_eta->SetLineColor(kBlue);
-    back_h_jFex_eta->Draw();
-    sig_h_jFex_eta->Draw("SAME");
-    
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_eta.pdf");
-
-    sig_h_topo_phi->SetLineColor(kRed);
-    back_h_topo_phi->SetLineColor(kBlue);
-    back_h_topo_phi->Draw();
-    sig_h_topo_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_phi.pdf");
-
-    sig_h_calotopo_phi->SetLineColor(kRed);
-    back_h_calotopo_phi->SetLineColor(kBlue);
-    back_h_calotopo_phi->Draw();
-    sig_h_calotopo_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "calotopo_phi.pdf");
-
-    sig_h_topo_phi_top128->SetLineColor(kRed);
-    back_h_topo_phi_top128->SetLineColor(kBlue);
-    back_h_topo_phi_top128->Draw();
-    sig_h_topo_phi_top128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_phi_top128.pdf");
-
-    sig_h_gFex_phi->SetLineColor(kRed);
-    back_h_gFex_phi->SetLineColor(kBlue);
-    back_h_gFex_phi->Draw();
-    sig_h_gFex_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_phi.pdf");
-
-    sig_h_gFex_leading_phi->SetLineColor(kRed);
-    back_h_gFex_leading_phi->SetLineColor(kBlue);
-    back_h_gFex_leading_phi->Draw();
-    sig_h_gFex_leading_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_leading_phi.pdf");
-
-    sig_h_gFex_leading_phi->SetLineColor(kRed);
-    back_h_gFex_leading_phi->SetLineColor(kBlue);
-    back_h_gFex_leading_phi->Draw();
-    sig_h_gFex_leading_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_subleading_phi.pdf");
-
-    sig_h_jFex_leading_phi->SetLineColor(kRed);
-    back_h_jFex_leading_phi->SetLineColor(kBlue);
-    back_h_jFex_leading_phi->Draw();
-    sig_h_jFex_leading_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_leading_phi.pdf");
-
-    sig_h_jFex_leading_phi->SetLineColor(kRed);
-    back_h_jFex_leading_phi->SetLineColor(kBlue);
-    back_h_jFex_leading_phi->Draw();
-    sig_h_jFex_leading_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_subleading_phi.pdf");
-
-    sig_h_jFex_phi->SetLineColor(kRed);
-    back_h_jFex_phi->SetLineColor(kBlue);
-    back_h_jFex_phi->Draw();
-    sig_h_jFex_phi->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_phi.pdf");
-
-    sig_h_gFex_multiplicity->SetLineColor(kRed);
-    back_h_gFex_multiplicity->SetLineColor(kBlue);
-    back_h_gFex_multiplicity->Draw();
-    sig_h_gFex_multiplicity->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "gFex_multiplicity.pdf");
-
-    sig_h_topo_multiplicity->SetLineColor(kRed);
-    back_h_topo_multiplicity->SetLineColor(kBlue);
-    sig_h_topo_multiplicity->Scale(1.0 / sig_h_topo_multiplicity->Integral());
-    back_h_topo_multiplicity->Scale(1.0 / back_h_topo_multiplicity->Integral());
-    sig_h_topo_multiplicity->Draw("HIST");
-    back_h_topo_multiplicity->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "topo_multiplicity.pdf");
-
-    sig_h_calotopo_multiplicity->SetLineColor(kRed);
-    back_h_calotopo_multiplicity->SetLineColor(kBlue);
-    sig_h_calotopo_multiplicity->Scale(1.0 / sig_h_calotopo_multiplicity->Integral());
-    back_h_calotopo_multiplicity->Scale(1.0 / back_h_calotopo_multiplicity->Integral());
-    
-    back_h_calotopo_multiplicity->Draw("HIST");
-    sig_h_calotopo_multiplicity->Draw("HIST SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "calotopo_multiplicity.pdf");
-
-    sig_h_jFex_multiplicity->SetLineColor(kRed);
-    back_h_jFex_multiplicity->SetLineColor(kBlue);
-    back_h_jFex_multiplicity->Draw();
-    sig_h_jFex_multiplicity->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "jFex_multiplicity.pdf");
-
-    std::cout << "maximum jfex mult. signal: " << sig_h_jFex_multiplicity->GetMaximum() << "\n";
-    std::cout << "maximum jfex mult. background: " << back_h_jFex_multiplicity->GetMaximum() << "\n";
-
-    
-    back_h_deltaR2_gFex_SRJ1->Scale(1.0 / back_h_deltaR2_gFex_SRJ1->Integral());
-    back_h_deltaR2_gFex_SRJ1->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ1->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_gFex_SRJ1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_gFex_SRJ1->SetLineColor(kRed);
-    back_h_deltaR2_gFex_SRJ1->SetLineColor(kBlue);
-    sig_h_deltaR2_gFex_SRJ1->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ1->Draw();
-    sig_h_deltaR2_gFex_SRJ1->Scale(1.0 / sig_h_deltaR2_gFex_SRJ1->Integral());
-    sig_h_deltaR2_gFex_SRJ1->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_gFex_SRJ1.pdf");
-
-    back_h_deltaR2_jFex_SRJ1->Scale(1.0 / back_h_deltaR2_jFex_SRJ1->Integral());
-    back_h_deltaR2_jFex_SRJ1->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ1->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_jFex_SRJ1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_jFex_SRJ1->SetLineColor(kRed);
-    back_h_deltaR2_jFex_SRJ1->SetLineColor(kBlue);
-    sig_h_deltaR2_jFex_SRJ1->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ1->Draw();
-    sig_h_deltaR2_jFex_SRJ1->Scale(1.0 / sig_h_deltaR2_jFex_SRJ1->Integral());
-    sig_h_deltaR2_jFex_SRJ1->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_jFex_SRJ1.pdf");
-
-    back_h_deltaR2_gFex_SRJ2->Scale(1.0 / back_h_deltaR2_gFex_SRJ2->Integral());
-    back_h_deltaR2_gFex_SRJ2->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_gFex_SRJ2->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_gFex_SRJ2->SetLineColor(kRed);
-    back_h_deltaR2_gFex_SRJ2->SetLineColor(kBlue);
-    back_h_deltaR2_gFex_SRJ2->Draw();
-    sig_h_deltaR2_gFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR2_gFex_SRJ2->Scale(1.0 / sig_h_deltaR2_gFex_SRJ2->Integral());
-    sig_h_deltaR2_gFex_SRJ2->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_gFex_SRJ2.pdf");
-    
-    back_h_deltaR2_jFex_SRJ2->Scale(1.0 / back_h_deltaR2_jFex_SRJ2->Integral());
-    back_h_deltaR2_jFex_SRJ2->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_jFex_SRJ2->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_jFex_SRJ2->SetLineColor(kRed);
-    back_h_deltaR2_jFex_SRJ2->SetLineColor(kBlue);
-    back_h_deltaR2_jFex_SRJ2->Draw();
-    sig_h_deltaR2_jFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR2_jFex_SRJ2->Scale(1.0 / sig_h_deltaR2_jFex_SRJ2->Integral());
-    sig_h_deltaR2_jFex_SRJ2->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_jFex_SRJ2.pdf");
-
-    back_h_deltaR_gFex_SRJ1->Scale(1.0 / back_h_deltaR_gFex_SRJ1->Integral());
-    back_h_deltaR_gFex_SRJ1->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_gFex_SRJ1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_gFex_SRJ1->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ1->SetLineColor(kRed);
-    back_h_deltaR_gFex_SRJ1->SetLineColor(kBlue);
-    back_h_deltaR_gFex_SRJ1->Draw();
-    sig_h_deltaR_gFex_SRJ1->Scale(1.0 / sig_h_deltaR_gFex_SRJ1->Integral());
-    sig_h_deltaR_gFex_SRJ1->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ1->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_gFex_SRJ1.pdf");
-
-    back_h_deltaR_jFex_SRJ1->Scale(1.0 / back_h_deltaR_jFex_SRJ1->Integral());
-    back_h_deltaR_jFex_SRJ1->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_jFex_SRJ1->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_jFex_SRJ1->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ1->SetLineColor(kRed);
-    back_h_deltaR_jFex_SRJ1->SetLineColor(kBlue);
-    back_h_deltaR_jFex_SRJ1->Draw();
-    sig_h_deltaR_jFex_SRJ1->Scale(1.0 / sig_h_deltaR_jFex_SRJ1->Integral());
-    sig_h_deltaR_jFex_SRJ1->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ1->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jFex_SRJ1.pdf");
-
-    back_h_deltaR_gFex_SRJ2->Scale(1.0 / back_h_deltaR_gFex_SRJ2->Integral());
-    back_h_deltaR_gFex_SRJ2->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_gFex_SRJ2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_gFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ2->SetLineColor(kRed);
-    back_h_deltaR_gFex_SRJ2->SetLineColor(kBlue);
-    back_h_deltaR_gFex_SRJ2->Draw();
-    sig_h_deltaR_gFex_SRJ2->Scale(1.0 / sig_h_deltaR_gFex_SRJ2->Integral());
-    sig_h_deltaR_gFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ2->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_gFex_SRJ2.pdf");
-
-    back_h_deltaR_jFex_SRJ2->Scale(1.0 / back_h_deltaR_jFex_SRJ2->Integral());
-    back_h_deltaR_jFex_SRJ2->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_jFex_SRJ2->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_jFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ2->SetLineColor(kRed);
-    back_h_deltaR_jFex_SRJ2->SetLineColor(kBlue);
-    back_h_deltaR_jFex_SRJ2->Draw();
-    sig_h_deltaR_jFex_SRJ2->Scale(1.0 / sig_h_deltaR_jFex_SRJ2->Integral());
-    sig_h_deltaR_jFex_SRJ2->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ2->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jFex_SRJ2.pdf");
-
-    back_h_deltaR2_gFex_SRJ1_topo128->Scale(1.0 / back_h_deltaR2_gFex_SRJ1_topo128->Integral());
-    back_h_deltaR2_gFex_SRJ1_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ1_topo128->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_gFex_SRJ1_topo128->SetYTitle("Normalized # of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_gFex_SRJ1_topo128->SetLineColor(kRed);
-    back_h_deltaR2_gFex_SRJ1_topo128->SetLineColor(kBlue);
-    sig_h_deltaR2_gFex_SRJ1_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ1_topo128->Draw();
-    sig_h_deltaR2_gFex_SRJ1_topo128->Scale(1.0 / sig_h_deltaR2_gFex_SRJ1_topo128->Integral());
-    sig_h_deltaR2_gFex_SRJ1_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_gFex_SRJ1_top128.pdf");
-
-    back_h_deltaR2_jFex_SRJ1_topo128->Scale(1.0 / back_h_deltaR2_jFex_SRJ1_topo128->Integral());
-    back_h_deltaR2_jFex_SRJ1_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ1_topo128->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_jFex_SRJ1_topo128->SetYTitle("Normalized # of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_jFex_SRJ1_topo128->SetLineColor(kRed);
-    back_h_deltaR2_jFex_SRJ1_topo128->SetLineColor(kBlue);
-    sig_h_deltaR2_jFex_SRJ1_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ1_topo128->Draw();
-    sig_h_deltaR2_jFex_SRJ1_topo128->Scale(1.0 / sig_h_deltaR2_jFex_SRJ1_topo128->Integral());
-    sig_h_deltaR2_jFex_SRJ1_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_jFex_SRJ1_top128.pdf");
-    
-    back_h_deltaR2_gFex_SRJ2_topo128->Scale(1.0 / back_h_deltaR2_gFex_SRJ2_topo128->Integral());
-    back_h_deltaR2_gFex_SRJ2_topo128->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_gFex_SRJ2_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_gFex_SRJ2_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_gFex_SRJ2_topo128->SetLineColor(kRed);
-    back_h_deltaR2_gFex_SRJ2_topo128->SetLineColor(kBlue);
-    back_h_deltaR2_gFex_SRJ2_topo128->Draw();
-    sig_h_deltaR2_gFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR2_gFex_SRJ2_topo128->Scale(1.0 / sig_h_deltaR2_gFex_SRJ2_topo128->Integral());
-    sig_h_deltaR2_gFex_SRJ2_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_gFex_SRJ2_top128.pdf");
-
-    back_h_deltaR2_jFex_SRJ2_topo128->Scale(1.0 / back_h_deltaR2_jFex_SRJ2_topo128->Integral());
-    back_h_deltaR2_jFex_SRJ2_topo128->SetXTitle("#Delta R^{2}");   // X-axis title
-    back_h_deltaR2_jFex_SRJ2_topo128->SetMarkerSize(0.5);
-    back_h_deltaR2_jFex_SRJ2_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    sig_h_deltaR2_jFex_SRJ2_topo128->SetLineColor(kRed);
-    back_h_deltaR2_jFex_SRJ2_topo128->SetLineColor(kBlue);
-    back_h_deltaR2_jFex_SRJ2_topo128->Draw();
-    sig_h_deltaR2_jFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR2_jFex_SRJ2_topo128->Scale(1.0 / sig_h_deltaR2_jFex_SRJ2_topo128->Integral());
-    sig_h_deltaR2_jFex_SRJ2_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR2_jFex_SRJ2_top128.pdf");
-
-    back_h_deltaR_gFex_SRJ1_topo128->Scale(1.0 / back_h_deltaR_gFex_SRJ1_topo128->Integral());
-    back_h_deltaR_gFex_SRJ1_topo128->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_gFex_SRJ1_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_gFex_SRJ1_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ1_topo128->SetLineColor(kRed);
-    back_h_deltaR_gFex_SRJ1_topo128->SetLineColor(kBlue);
-    back_h_deltaR_gFex_SRJ1_topo128->Draw();
-    sig_h_deltaR_gFex_SRJ1_topo128->Scale(1.0 / sig_h_deltaR_gFex_SRJ1_topo128->Integral());
-    sig_h_deltaR_gFex_SRJ1_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ1_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_gFex_SRJ1_top128.pdf");
-
-    back_h_deltaR_jFex_SRJ1_topo128->Scale(1.0 / back_h_deltaR_jFex_SRJ1_topo128->Integral());
-    back_h_deltaR_jFex_SRJ1_topo128->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_jFex_SRJ1_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_jFex_SRJ1_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ1_topo128->SetLineColor(kRed);
-    back_h_deltaR_jFex_SRJ1_topo128->SetLineColor(kBlue);
-    back_h_deltaR_jFex_SRJ1_topo128->Draw();
-    sig_h_deltaR_jFex_SRJ1_topo128->Scale(1.0 / sig_h_deltaR_jFex_SRJ1_topo128->Integral());
-    sig_h_deltaR_jFex_SRJ1_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ1_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jFex_SRJ1_top128.pdf");
-
-    back_h_deltaR_gFex_SRJ2_topo128->Scale(1.0 / back_h_deltaR_gFex_SRJ2_topo128->Integral());
-    back_h_deltaR_gFex_SRJ2_topo128->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_gFex_SRJ2_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_gFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ2_topo128->SetLineColor(kRed);
-    back_h_deltaR_gFex_SRJ2_topo128->SetLineColor(kBlue);
-    back_h_deltaR_gFex_SRJ2_topo128->Draw();
-    sig_h_deltaR_gFex_SRJ2_topo128->Scale(1.0 / sig_h_deltaR_gFex_SRJ2_topo128->Integral());
-    sig_h_deltaR_gFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_gFex_SRJ2_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_gFex_SRJ2_top128.pdf");
-
-    back_h_deltaR_jFex_SRJ2_topo128->Scale(1.0 / back_h_deltaR_jFex_SRJ2_topo128->Integral());
-    back_h_deltaR_jFex_SRJ2_topo128->SetXTitle("#Delta R");   // X-axis title
-    back_h_deltaR_jFex_SRJ2_topo128->SetYTitle("Normalized Num. of Topo422 Clusters (per 0.2)");  // Y-axis title
-    back_h_deltaR_jFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ2_topo128->SetLineColor(kRed);
-    back_h_deltaR_jFex_SRJ2_topo128->SetLineColor(kBlue);
-    back_h_deltaR_jFex_SRJ2_topo128->Draw();
-    sig_h_deltaR_jFex_SRJ2_topo128->Scale(1.0 / sig_h_deltaR_jFex_SRJ2_topo128->Integral());
-    sig_h_deltaR_jFex_SRJ2_topo128->SetMarkerSize(0.5);
-    sig_h_deltaR_jFex_SRJ2_topo128->Draw("SAME");
-    leg->Draw();
-    c.SaveAs(outputFileDir + "deltaR_jFex_SRJ2_top128.pdf");
-
-    TCanvas cLog;
-    //cLog.SetLogx();
-    cLog.SetLogy();
-
-    sig_h_topo_Et->SetLineColor(kRed);
-    back_h_topo_Et->SetLineColor(kBlue);
-    sig_h_topo_Et->Scale(1.0 / sig_h_topo_Et->Integral());
-    back_h_topo_Et->Scale(1.0 / back_h_topo_Et->Integral());
-    back_h_topo_Et->Draw("HIST");
-    sig_h_topo_Et->Draw("HIST SAME");
-    leg->Draw();
-    cLog.SaveAs(outputFileDir + "log_topo_Et.pdf");
-
-    sig_h_calotopo_Et->SetLineColor(kRed);
-    back_h_calotopo_Et->SetLineColor(kBlue);
-    sig_h_calotopo_Et->Scale(1.0 / sig_h_calotopo_Et->Integral());
-    back_h_calotopo_Et->Scale(1.0 / back_h_calotopo_Et->Integral());
-    back_h_calotopo_Et->Draw("HIST");
-    sig_h_calotopo_Et->Draw("HIST SAME");
-    leg->Draw();
-    cLog.SaveAs(outputFileDir + "log_calotopo_Et.pdf");
-
-    sig_h_gFex_Et->SetLineColor(kRed);
-    back_h_gFex_Et->SetLineColor(kBlue);
-    sig_h_gFex_Et->Scale(1.0 / sig_h_gFex_Et->Integral());
-    back_h_gFex_Et->Scale(1.0 / back_h_gFex_Et->Integral());
-    back_h_gFex_Et->Draw("HIST");
-    sig_h_gFex_Et->Draw("HIST SAME");
-    
-    leg->Draw();
-    cLog.SaveAs(outputFileDir + "log_gFex_Et.pdf");
-
-    sig_h_jFex_Et->SetLineColor(kRed);
-    back_h_jFex_Et->SetLineColor(kBlue);
-    sig_h_jFex_Et->Scale(1.0 / sig_h_jFex_Et->Integral());
-    back_h_jFex_Et->Scale(1.0 / back_h_jFex_Et->Integral());
-    back_h_jFex_Et->Draw("HIST");
-    sig_h_jFex_Et->Draw("HIST SAME");
-    leg->Draw();
-    cLog.SaveAs(outputFileDir + "log_jFex_Et.pdf");
-
-    sig_h_topo_Et_top128->SetLineColor(kRed);
-    back_h_topo_Et_top128->SetLineColor(kBlue);
-    sig_h_topo_Et_top128->Scale(1.0 / sig_h_topo_Et_top128->Integral());
-    back_h_topo_Et_top128->Scale(1.0 / back_h_topo_Et_top128->Integral());
-    back_h_topo_Et_top128->Draw("HIST");
-    sig_h_topo_Et_top128->Draw("HIST SAME");
-    cLog.SaveAs(outputFileDir + "log_topo_Et_top128.pdf");
-
-    std::cout << "nTopo: " << nTopo << " and nTopoGreater1GeV: " << nTopoGreater1GeV << "\n";
-    std::cout << "totalTopoEnergy: "  << totalTopoEnergy << " and topoEnergyClustersGreater1GeV: " << topoEnergyClustersGreater1GeV << "\n";
-
-    signalInputFile->Close();
-    backgroundInputFile->Close();
-    
+    TH1F* back_h_reco_antikt10UFOCSSKJets_Et = new TH1F("back_h_reco_antikt10UFOCSSKJets_Et", "Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_reco_antikt10UFOCSSKJets_Et = new TH1F("back_h_lead_reco_antikt10UFOCSSKJets_Et", "Lead. Offline Reco. LRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+
+    TH1F* back_h_truth_antikt4DressedWZJets_Et = new TH1F("back_h_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+    TH1F* back_h_lead_truth_antikt4DressedWZJets_Et = new TH1F("back_h_lead_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
+
+    unsigned int sigVBFNEntries = truthbTree_VBF->GetEntries();
+
+
+
+
+
+
+
+    unsigned int sigggFNEntries = truthbTree_VBF->GetEntries();
+
+
+
+
+
+
+
+
+
+
+
+
+    unsigned int backNEntries = caloTopoTowerTree_back->GetEntries(); 
+
+
+
+
+
+
+
+
+
+
+
 }
 
-template<bool overlayBool>
-void callPlot(const bool signalBool, const bool vbfBool = true) {
-    // Usage: callPlot<true>(true)
-    std::string signalInputFile;
-    if (vbfBool) signalInputFile = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
-    else signalInputFile = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC.root";
-     
-    const std::string backgroundInputFile = "outputRootFiles/mc21_14TeV_jj_JZ3.root";
-    std::string outputPrefix;
-    if (signalBool){
-        if (vbfBool) outputPrefix = "signalHistogramsVBF/";
-        else outputPrefix = "signalHistogramsggF/";
-    } 
-    else outputPrefix = "backgroundHistograms/"; 
 
-    analyze_existing_histograms<overlayBool>(signalInputFile, backgroundInputFile, outputPrefix, signalBool, vbfBool);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void callPlot() {
+    // Usage: callPlot(true, true)
+    std::string signalInputFileVBF = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_DAOD_NTUPLE.root";
+    std::string signalInputFileggF = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_DAOD_NTUPLE.root";
+     
+    const std::string backgroundInputFile = "outputRootFiles/mc21_14TeV_jj_JZ3_DAOD_NTUPLE.root";
+
+
+    analyzeHistograms(signalInputFileVBF, signalInputFileggF, backgroundInputFile);
     gSystem->Exit(0);
 }
