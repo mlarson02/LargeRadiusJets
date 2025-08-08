@@ -25,10 +25,11 @@ int main() {
     //const std::string seedFile = memPrintsPath_ + "gFex/" + fileName_ + "_gfex_smallrj.dat";
     const std::string seedFile = memPrintsPath_ + "jFex/" + fileName_ + "_jfex_smallrj.dat";
     const std::string inputObjectFile = memPrintsPath_ + "CaloTopo_422/" + fileName_ + "_topo422.dat";
-    
+    std::cout << "inputObjectFile: " << inputObjectFile << "\n";
+    std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsjFexSeedCalc/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsrMergeScan/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -39,8 +40,8 @@ int main() {
     }
     std::cout << "rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n";
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        //if (iEvt > 999) break;
-        std::cout << "processing event: " << iEvt << "\n";
+        //if (iEvt > 1) break;
+        //std::cout << "processing event: " << iEvt << "\n";
         /*for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
             std::cout << "outputJetValues[i] before: " << outputJetValues[i] << "\n";
             outputJetValues[i] = input(0);
@@ -56,13 +57,11 @@ int main() {
         //std::cout << "nTotalSeeds_: " << nTotalSeeds_ << std::endl;
         //std::cout << "nSeedsInput_: " << nSeedsInput_ << std::endl;
         extract_values_from_file<maxObjectsConsidered_ >(inputObjectFile, inputObjectValues, iEvt);
-        sortByEt(seedValues, sortedSeedValues);
+        sortByEt(seedValues, sortedSeedValues); // FIXME don't need to sort seeds anymore - pre-sorted in LRJNTupler.cc
         //std::cout << "after sort!!!" << "\n";
         //fflush(stdout);
         //for (unsigned int i = 0; i < nSeedsInput_; i++){
-        //    fflush(stdout);
         //    std::cout << "sorted seedValues et: " << sortedSeedValues[i].range(et_high_, et_low_) << "\n";
-        //    fflush(stdout);
         //}
         input outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {

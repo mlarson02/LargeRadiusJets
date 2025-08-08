@@ -5,21 +5,23 @@
 void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxObjectsConsidered_], input (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
     //#pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
-    #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    //#pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
+    // AXI4-Master interfaces for input arrays
+    //#pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nSeedsInput_
+    //#pragma HLS INTERFACE m_axi port=inputObjectValues bundle=gmem1 offset=slave depth=maxObjectsConsidered_
+    // AXI4-Master interfaces for output arrays
+    //#pragma HLS INTERFACE m_axi port=outputJetValues   bundle=gmem2 offset=slave depth=nSeedsOutput_
+    // AXI4-Lite interface only for control signals (function arguments, etc.)
+    //#pragma HLS INTERFACE s_axilite port=return bundle=CTRL
+    
     for (unsigned int i = 0; i < nSeedsOutput_; ++i)
         outputJetValues[i] = 0;
 
     
     
     
-    // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
-    // AXI4-Master interfaces for input arrays
-    #pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nSeedsInput_
-    #pragma HLS INTERFACE m_axi port=inputObjectValues bundle=gmem1 offset=slave depth=maxObjectsConsidered_
-    // AXI4-Master interfaces for output arrays
-    #pragma HLS INTERFACE m_axi port=outputJetValues   bundle=gmem2 offset=slave depth=nSeedsOutput_
-    // AXI4-Lite interface only for control signals (function arguments, etc.)
-    #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
+    
 
 
     // FIXME make this entire process more dynamic to account for nSeedsOutput_ != 2 (progressively do this for highest Et seeds rather than for 1st 2 seeds immediately)
@@ -122,7 +124,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
         if (deltaRValuesSeed[iSeed][indices[iSeed]] > rMergeConsiderCutDigitized_) continue; // FIXME replace 64 (deltaR = 2.5 digitized)
         
        //std::cout << "-------------- calcing mid point -----------------" << "\n"; 
-       //std::cout << "iSeed: " << iSeed << "\n";
+        //std::cout << "iSeed: " << iSeed << "\n";
         //fflush(stdout);
         // Raw eta/phi values as received from digitized format (unsigned)
         ap_uint<eta_bit_length_> eta1_raw, eta2_raw;
@@ -154,7 +156,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
         // --- Convert midpoints back to digitized unsigned format ---
         ap_uint<eta_bit_length_> eta_mid_digitized = eta_mid + (1 << (eta_bit_length_ - 1));
         ap_uint<phi_bit_length_> phi_mid_digitized = phi_mid + (1 << (phi_bit_length_ - 1));
-       //std::cout << "eta_mid_digitized: " << eta_mid_digitized << " phi_mid_digitized: " << phi_mid_digitized << "\n";
+        //std::cout << "eta_mid_digitized: " << eta_mid_digitized << " phi_mid_digitized: " << phi_mid_digitized << "\n";
         seedValues[iSeed].range(eta_high_, eta_low_) = eta_mid_digitized;
         seedValues[iSeed].range(phi_high_, phi_low_) = phi_mid_digitized;
     }
@@ -191,12 +193,12 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
             if (inputObjectValues[iInput].range(et_high_, et_low_) <= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
             
-            /*std::cout << "iInput: " << iInput << "\n";
+            //std::cout << "iInput: " << iInput << "\n";
            //std::cout << "inputObjectValues[iInput]: " << std::hex << inputObjectValues[iInput] << "\n";
            //std::cout << "input et: " << std::dec << inputObjectValues[iInput].range(et_high_, et_low_) << " eta: " << inputObjectValues[iInput].range(eta_high_, eta_low_) << " phi: " << inputObjectValues[iInput].range(phi_high_, phi_low_) << "\n";
            //std::cout << "seedValues[iSeed]: " << std::hex << seedValues[iSeed] << "\n";
            //std::cout << "seed et: " << std::dec << seedValues[iSeed].range(et_high_, et_low_) << " eta: " << seedValues[iSeed].range(eta_high_, eta_low_) << " phi: " << seedValues[iSeed].range(phi_high_, phi_low_) << "\n";
-            fflush(stdout);*/
+
             // Calculate signed differences (deltaEta and deltaPhi)
             ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - inputObjectValues[iInput].range(eta_high_, eta_low_);
             ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - inputObjectValues[iInput].range(phi_high_, phi_low_);
