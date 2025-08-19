@@ -46,7 +46,7 @@ float computeStandardError(const std::vector<float>& vec, float stdDev) {
 
 
 
-analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputFileNameggF, const std::string& backgroundInputFileName){
+void analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputFileNameggF, const std::string& backgroundInputFileName){
     
     
     SetPlotStyle();
@@ -146,116 +146,120 @@ analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputF
     TTree* leadingTruthAntiKt4TruthDressedWZJets_back = (TTree*)backgroundInputFile->Get("leadingTruthAntiKt4TruthDressedWZJets");
     TTree* subleadingTruthAntiKt4TruthDressedWZJets_back = (TTree*)backgroundInputFile->Get("subleadingTruthAntiKt4TruthDressedWZJets");
 
-    std::vector<unsigned int> higgsIndexValues_VBF, indexOfHiggsValues_VBF;
-    std::vector<double> truthbquarksEtValues_VBF, truthbquarksEnergyValues_VBF, truthbquarkspTValues_VBF, truthbquarkspxValues_VBF, truthbquarkspyValues_VBF, truthbquarkspzValues_VBF, truthbquarksEtaValues_VBF, truthbquarksPhiValues_VBF;
-    std::vector<double> truthHiggsEtValues_VBF, truthHiggsEnergyValues_VBF, truthHiggspTValues_VBF, truthHiggspxValues_VBF, truthHiggspyValues_VBF, truthHiggspzValues_VBF, truthHiggsEtaValues_VBF, truthHiggsPhiValues_VBF, truthHiggsInvMassValues_VBF;
-    std::vector<double> caloTopoTowerEtValues_VBF, caloTopoTowerEtaValues_VBF, caloTopoTowerPhiValues_VBF;
-    std::vector<double> topo422EtValues_VBF, topo422EtaValues_VBF, topo422PhiValues_VBF;
-    std::vector<unsigned int> gFexSRJEtIndexValues_VBF;
-    std::vector<double> gFexSRJEtValues_VBF, gFexSRJEtaValues_VBF, gFexSRJPhiValues_VBF;
-    std::vector<double> gFexSRJLeadingEtValues_VBF, gFexSRJLeadingEtaValues_VBF, gFexSRJLeadingPhiValues_VBF;
-    std::vector<double> gFexSRJSubleadingEtValues_VBF, gFexSRJSubleadingEtaValues_VBF, gFexSRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> gFexLRJEtIndexValues_VBF;
-    std::vector<double> gFexLRJEtValues_VBF, gFexLRJEtaValues_VBF, gFexLRJPhiValues_VBF;
-    std::vector<double> gFexLRJLeadingEtValues_VBF, gFexLRJLeadingEtaValues_VBF, gFexLRJLeadingPhiValues_VBF;
-    std::vector<double> gFexLRJSubleadingEtValues_VBF, gFexLRJSubleadingEtaValues_VBF, gFexLRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> jFexSRJEtIndexValues_VBF;
-    std::vector<double> jFexSRJEtValues_VBF, jFexSRJEtaValues_VBF, jFexSRJPhiValues_VBF;
-    std::vector<double> jFexSRJLeadingEtValues_VBF, jFexSRJLeadingEtaValues_VBF, jFexSRJLeadingPhiValues_VBF;
-    std::vector<double> jFexSRJSubleadingEtValues_VBF, jFexSRJSubleadingEtaValues_VBF, jFexSRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> jFexLRJEtIndexValues_VBF;
-    std::vector<double> jFexLRJEtValues_VBF, jFexLRJEtaValues_VBF, jFexLRJPhiValues_VBF;
-    std::vector<double> jFexLRJLeadingEtValues_VBF, jFexLRJLeadingEtaValues_VBF, jFexLRJLeadingPhiValues_VBF;
-    std::vector<double> jFexLRJSubleadingEtValues_VBF, jFexLRJSubleadingEtaValues_VBF, jFexLRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_VBF;
-    std::vector<double> hltAntiKt4SRJEtValues_VBF, hltAntiKt4SRJEtaValues_VBF, hltAntiKt4SRJPhiValues_VBF;
-    std::vector<double> hltAntiKt4SRJLeadingEtValues_VBF, hltAntiKt4SRJLeadingEtaValues_VBF, hltAntiKt4SRJLeadingPhiValues_VBF;
-    std::vector<double> hltAntiKt4SRJSubleadingEtValues_VBF, hltAntiKt4SRJSubleadingEtaValues_VBF, hltAntiKt4SRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_VBF;
-    std::vector<double> recoAntiKt10LRJEtValues_VBF, recoAntiKt10LRJEtaValues_VBF, recoAntiKt10LRJPhiValues_VBF;
-    std::vector<double> recoAntiKt10LRJLeadingEtValues_VBF, recoAntiKt10LRJLeadingEtaValues_VBF, recoAntiKt10LRJLeadingPhiValues_VBF;
-    std::vector<double> recoAntiKt10LRJSubleadingEtValues_VBF, recoAntiKt10LRJSubleadingEtaValues_VBF, recoAntiKt10LRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_VBF;
-    std::vector<double> truthAntiKt4WZSRJEtValues_VBF, truthAntiKt4WZSRJEtaValues_VBF, truthAntiKt4WZSRJPhiValues_VBF;
-    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_VBF, truthAntiKt4WZSRJLeadingEtaValues_VBF, truthAntiKt4WZSRJLeadingPhiValues_VBF;
-    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_VBF, truthAntiKt4WZSRJSubleadingEtaValues_VBF, truthAntiKt4WZSRJSubleadingPhiValues_VBF;
-    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_VBF;
-    std::vector<double> inTimeAntiKt4TruthSRJEtValues_VBF, inTimeAntiKt4TruthSRJEtaValues_VBF, inTimeAntiKt4TruthSRJPhiValues_VBF;
-    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_VBF, inTimeAntiKt4TruthSRJLeadingEtaValues_VBF, inTimeAntiKt4TruthSRJLeadingPhiValues_VBF;
-    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_VBF, inTimeAntiKt4TruthSRJSubleadingEtaValues_VBF, inTimeAntiKt4TruthSRJSubleadingPhiValues_VBF;
+    std::vector<unsigned int> *higgsIndexValues_VBF = nullptr, *indexOfHiggsValues_VBF = nullptr;
+    std::vector<double> *truthbquarksEtValues_VBF = nullptr, *truthbquarksEnergyValues_VBF = nullptr, *truthbquarkspTValues_VBF = nullptr, *truthbquarkspxValues_VBF = nullptr, *truthbquarkspyValues_VBF = nullptr, *truthbquarkspzValues_VBF = nullptr, *truthbquarksEtaValues_VBF = nullptr, *truthbquarksPhiValues_VBF = nullptr;
+    std::vector<double> *truthHiggsEtValues_VBF = nullptr, *truthHiggsEnergyValues_VBF = nullptr, *truthHiggspTValues_VBF = nullptr, *truthHiggspxValues_VBF = nullptr, *truthHiggspyValues_VBF = nullptr, *truthHiggspzValues_VBF = nullptr, *truthHiggsEtaValues_VBF = nullptr, *truthHiggsPhiValues_VBF = nullptr, *truthHiggsInvMassValues_VBF = nullptr;
+    std::vector<double> *caloTopoTowerEtValues_VBF = nullptr, *caloTopoTowerEtaValues_VBF = nullptr, *caloTopoTowerPhiValues_VBF = nullptr;
+    std::vector<double> *topo422EtValues_VBF = nullptr, *topo422EtaValues_VBF = nullptr, *topo422PhiValues_VBF = nullptr;
+    std::vector<unsigned int> *gFexSRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *gFexSRJEtValues_VBF = nullptr, *gFexSRJEtaValues_VBF = nullptr, *gFexSRJPhiValues_VBF = nullptr;
+    std::vector<double> *gFexSRJLeadingEtValues_VBF = nullptr, *gFexSRJLeadingEtaValues_VBF = nullptr, *gFexSRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *gFexSRJSubleadingEtValues_VBF = nullptr, *gFexSRJSubleadingEtaValues_VBF = nullptr, *gFexSRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *gFexLRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *gFexLRJEtValues_VBF = nullptr, *gFexLRJEtaValues_VBF = nullptr, *gFexLRJPhiValues_VBF = nullptr;
+    std::vector<double> *gFexLRJLeadingEtValues_VBF = nullptr, *gFexLRJLeadingEtaValues_VBF = nullptr, *gFexLRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *gFexLRJSubleadingEtValues_VBF = nullptr, *gFexLRJSubleadingEtaValues_VBF = nullptr, *gFexLRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *jFexSRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *jFexSRJEtValues_VBF = nullptr, *jFexSRJEtaValues_VBF = nullptr, *jFexSRJPhiValues_VBF = nullptr;
+    std::vector<double> *jFexSRJLeadingEtValues_VBF = nullptr, *jFexSRJLeadingEtaValues_VBF = nullptr, *jFexSRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *jFexSRJSubleadingEtValues_VBF = nullptr, *jFexSRJSubleadingEtaValues_VBF = nullptr, *jFexSRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *jFexLRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *jFexLRJEtValues_VBF = nullptr, *jFexLRJEtaValues_VBF = nullptr, *jFexLRJPhiValues_VBF = nullptr;
+    std::vector<double> *jFexLRJLeadingEtValues_VBF = nullptr, *jFexLRJLeadingEtaValues_VBF = nullptr, *jFexLRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *jFexLRJSubleadingEtValues_VBF = nullptr, *jFexLRJSubleadingEtaValues_VBF = nullptr, *jFexLRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *hltAntiKt4SRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *hltAntiKt4SRJEtValues_VBF = nullptr, *hltAntiKt4SRJEtaValues_VBF = nullptr, *hltAntiKt4SRJPhiValues_VBF = nullptr;
+    std::vector<double> *hltAntiKt4SRJLeadingEtValues_VBF = nullptr, *hltAntiKt4SRJLeadingEtaValues_VBF = nullptr, *hltAntiKt4SRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *hltAntiKt4SRJSubleadingEtValues_VBF = nullptr, *hltAntiKt4SRJSubleadingEtaValues_VBF = nullptr, *hltAntiKt4SRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *recoAntiKt10LRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *recoAntiKt10LRJEtValues_VBF = nullptr, *recoAntiKt10LRJEtaValues_VBF = nullptr, *recoAntiKt10LRJPhiValues_VBF = nullptr;
+    std::vector<double> *recoAntiKt10LRJLeadingEtValues_VBF = nullptr, *recoAntiKt10LRJLeadingEtaValues_VBF = nullptr, *recoAntiKt10LRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *recoAntiKt10LRJSubleadingEtValues_VBF = nullptr, *recoAntiKt10LRJSubleadingEtaValues_VBF = nullptr, *recoAntiKt10LRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *truthAntiKt4WZSRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJEtValues_VBF = nullptr, *truthAntiKt4WZSRJEtaValues_VBF = nullptr, *truthAntiKt4WZSRJPhiValues_VBF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJLeadingEtValues_VBF = nullptr, *truthAntiKt4WZSRJLeadingEtaValues_VBF = nullptr, *truthAntiKt4WZSRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJSubleadingEtValues_VBF = nullptr, *truthAntiKt4WZSRJSubleadingEtaValues_VBF = nullptr, *truthAntiKt4WZSRJSubleadingPhiValues_VBF = nullptr;
+    std::vector<unsigned int> *inTimeAntiKt4TruthSRJEtIndexValues_VBF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJEtValues_VBF = nullptr, *inTimeAntiKt4TruthSRJEtaValues_VBF = nullptr, *inTimeAntiKt4TruthSRJPhiValues_VBF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJLeadingEtValues_VBF = nullptr, *inTimeAntiKt4TruthSRJLeadingEtaValues_VBF = nullptr, *inTimeAntiKt4TruthSRJLeadingPhiValues_VBF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJSubleadingEtValues_VBF = nullptr, *inTimeAntiKt4TruthSRJSubleadingEtaValues_VBF = nullptr, *inTimeAntiKt4TruthSRJSubleadingPhiValues_VBF = nullptr;
 
-    std::vector<unsigned int> higgsIndexValues_ggF, indexOfHiggsValues_ggF;
-    std::vector<double> truthbquarksEtValues_ggF, truthbquarksEnergyValues_ggF, truthbquarkspTValues_ggF, truthbquarkspxValues_ggF, truthbquarkspyValues_ggF, truthbquarkspzValues_ggF, truthbquarksEtaValues_ggF, truthbquarksPhiValues_ggF;
-    std::vector<double> truthHiggsEtValues_ggF, truthHiggsEnergyValues_ggF, truthHiggspTValues_ggF, truthHiggspxValues_ggF, truthHiggspyValues_ggF, truthHiggspzValues_ggF, truthHiggsEtaValues_ggF, truthHiggsPhiValues_ggF, truthHiggsInvMassValues_ggF;
-    std::vector<double> caloTopoTowerEtValues_ggF, caloTopoTowerEtaValues_ggF, caloTopoTowerPhiValues_ggF;
-    std::vector<double> topo422EtValues_ggF, topo422EtaValues_ggF, topo422PhiValues_ggF;
-    std::vector<unsigned int> gFexSRJEtIndexValues_ggF;
-    std::vector<double> gFexSRJEtValues_ggF, gFexSRJEtaValues_ggF, gFexSRJPhiValues_ggF;
-    std::vector<double> gFexSRJLeadingEtValues_ggF, gFexSRJLeadingEtaValues_ggF, gFexSRJLeadingPhiValues_ggF;
-    std::vector<double> gFexSRJSubleadingEtValues_ggF, gFexSRJSubleadingEtaValues_ggF, gFexSRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> gFexLRJEtIndexValues_ggF;
-    std::vector<double> gFexLRJEtValues_ggF, gFexLRJEtaValues_ggF, gFexLRJPhiValues_ggF;
-    std::vector<double> gFexLRJLeadingEtValues_ggF, gFexLRJLeadingEtaValues_ggF, gFexLRJLeadingPhiValues_ggF;
-    std::vector<double> gFexLRJSubleadingEtValues_ggF, gFexLRJSubleadingEtaValues_ggF, gFexLRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> jFexSRJEtIndexValues_ggF;
-    std::vector<double> jFexSRJEtValues_ggF, jFexSRJEtaValues_ggF, jFexSRJPhiValues_ggF;
-    std::vector<double> jFexSRJLeadingEtValues_ggF, jFexSRJLeadingEtaValues_ggF, jFexSRJLeadingPhiValues_ggF;
-    std::vector<double> jFexSRJSubleadingEtValues_ggF, jFexSRJSubleadingEtaValues_ggF, jFexSRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> jFexLRJEtIndexValues_ggF;
-    std::vector<double> jFexLRJEtValues_ggF, jFexLRJEtaValues_ggF, jFexLRJPhiValues_ggF;
-    std::vector<double> jFexLRJLeadingEtValues_ggF, jFexLRJLeadingEtaValues_ggF, jFexLRJLeadingPhiValues_ggF;
-    std::vector<double> jFexLRJSubleadingEtValues_ggF, jFexLRJSubleadingEtaValues_ggF, jFexLRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_ggF;
-    std::vector<double> hltAntiKt4SRJEtValues_ggF, hltAntiKt4SRJEtaValues_ggF, hltAntiKt4SRJPhiValues_ggF;
-    std::vector<double> hltAntiKt4SRJLeadingEtValues_ggF, hltAntiKt4SRJLeadingEtaValues_ggF, hltAntiKt4SRJLeadingPhiValues_ggF;
-    std::vector<double> hltAntiKt4SRJSubleadingEtValues_ggF, hltAntiKt4SRJSubleadingEtaValues_ggF, hltAntiKt4SRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_ggF;
-    std::vector<double> recoAntiKt10LRJEtValues_ggF, recoAntiKt10LRJEtaValues_ggF, recoAntiKt10LRJPhiValues_ggF;
-    std::vector<double> recoAntiKt10LRJLeadingEtValues_ggF, recoAntiKt10LRJLeadingEtaValues_ggF, recoAntiKt10LRJLeadingPhiValues_ggF;
-    std::vector<double> recoAntiKt10LRJSubleadingEtValues_ggF, recoAntiKt10LRJSubleadingEtaValues_ggF, recoAntiKt10LRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_ggF;
-    std::vector<double> truthAntiKt4WZSRJEtValues_ggF, truthAntiKt4WZSRJEtaValues_ggF, truthAntiKt4WZSRJPhiValues_ggF;
-    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_ggF, truthAntiKt4WZSRJLeadingEtaValues_ggF, truthAntiKt4WZSRJLeadingPhiValues_ggF;
-    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_ggF, truthAntiKt4WZSRJSubleadingEtaValues_ggF, truthAntiKt4WZSRJSubleadingPhiValues_ggF;
-    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_ggF;
-    std::vector<double> inTimeAntiKt4TruthSRJEtValues_ggF, inTimeAntiKt4TruthSRJEtaValues_ggF, inTimeAntiKt4TruthSRJPhiValues_ggF;
-    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_ggF, inTimeAntiKt4TruthSRJLeadingEtaValues_ggF, inTimeAntiKt4TruthSRJLeadingPhiValues_ggF;
-    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_ggF, inTimeAntiKt4TruthSRJSubleadingEtaValues_ggF, inTimeAntiKt4TruthSRJSubleadingPhiValues_ggF;
 
-    std::vector<double> caloTopoTowerEtValues_back, caloTopoTowerEtaValues_back, caloTopoTowerPhiValues_back;
-    std::vector<double> topo422EtValues_back, topo422EtaValues_back, topo422PhiValues_back;
-    std::vector<unsigned int> gFexSRJEtIndexValues_back;
-    std::vector<double> gFexSRJEtValues_back, gFexSRJEtaValues_back, gFexSRJPhiValues_back;
-    std::vector<double> gFexSRJLeadingEtValues_back, gFexSRJLeadingEtaValues_back, gFexSRJLeadingPhiValues_back;
-    std::vector<double> gFexSRJSubleadingEtValues_back, gFexSRJSubleadingEtaValues_back, gFexSRJSubleadingPhiValues_back;
-    std::vector<unsigned int> gFexLRJEtIndexValues_back;
-    std::vector<double> gFexLRJEtValues_back, gFexLRJEtaValues_back, gFexLRJPhiValues_back;
-    std::vector<double> gFexLRJLeadingEtValues_back, gFexLRJLeadingEtaValues_back, gFexLRJLeadingPhiValues_back;
-    std::vector<double> gFexLRJSubleadingEtValues_back, gFexLRJSubleadingEtaValues_back, gFexLRJSubleadingPhiValues_back;
-    std::vector<unsigned int> jFexSRJEtIndexValues_back;
-    std::vector<double> jFexSRJEtValues_back, jFexSRJEtaValues_back, jFexSRJPhiValues_back;
-    std::vector<double> jFexSRJLeadingEtValues_back, jFexSRJLeadingEtaValues_back, jFexSRJLeadingPhiValues_back;
-    std::vector<double> jFexSRJSubleadingEtValues_back, jFexSRJSubleadingEtaValues_back, jFexSRJSubleadingPhiValues_back;
-    std::vector<unsigned int> jFexLRJEtIndexValues_back;
-    std::vector<double> jFexLRJEtValues_back, jFexLRJEtaValues_back, jFexLRJPhiValues_back;
-    std::vector<double> jFexLRJLeadingEtValues_back, jFexLRJLeadingEtaValues_back, jFexLRJLeadingPhiValues_back;
-    std::vector<double> jFexLRJSubleadingEtValues_back, jFexLRJSubleadingEtaValues_back, jFexLRJSubleadingPhiValues_back;
-    std::vector<unsigned int> hltAntiKt4SRJEtIndexValues_back;
-    std::vector<double> hltAntiKt4SRJEtValues_back, hltAntiKt4SRJEtaValues_back, hltAntiKt4SRJPhiValues_back;
-    std::vector<double> hltAntiKt4SRJLeadingEtValues_back, hltAntiKt4SRJLeadingEtaValues_back, hltAntiKt4SRJLeadingPhiValues_back;
-    std::vector<double> hltAntiKt4SRJSubleadingEtValues_back, hltAntiKt4SRJSubleadingEtaValues_back, hltAntiKt4SRJSubleadingPhiValues_back;
-    std::vector<unsigned int> recoAntiKt10LRJEtIndexValues_back;
-    std::vector<double> recoAntiKt10LRJEtValues_back, recoAntiKt10LRJEtaValues_back, recoAntiKt10LRJPhiValues_back;
-    std::vector<double> recoAntiKt10LRJLeadingEtValues_back, recoAntiKt10LRJLeadingEtaValues_back, recoAntiKt10LRJLeadingPhiValues_back;
-    std::vector<double> recoAntiKt10LRJSubleadingEtValues_back, recoAntiKt10LRJSubleadingEtaValues_back, recoAntiKt10LRJSubleadingPhiValues_back;
-    std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues_back;
-    std::vector<double> truthAntiKt4WZSRJEtValues_back, truthAntiKt4WZSRJEtaValues_back, truthAntiKt4WZSRJPhiValues_back;
-    std::vector<double> truthAntiKt4WZSRJLeadingEtValues_back, truthAntiKt4WZSRJLeadingEtaValues_back, truthAntiKt4WZSRJLeadingPhiValues_back;
-    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues_back, truthAntiKt4WZSRJSubleadingEtaValues_back, truthAntiKt4WZSRJSubleadingPhiValues_back;
-    std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues_back;
-    std::vector<double> inTimeAntiKt4TruthSRJEtValues_back, inTimeAntiKt4TruthSRJEtaValues_back, inTimeAntiKt4TruthSRJPhiValues_back;
-    std::vector<double> inTimeAntiKt4TruthSRJLeadingEtValues_back, inTimeAntiKt4TruthSRJLeadingEtaValues_back, inTimeAntiKt4TruthSRJLeadingPhiValues_back;
-    std::vector<double> inTimeAntiKt4TruthSRJSubleadingEtValues_back, inTimeAntiKt4TruthSRJSubleadingEtaValues_back, inTimeAntiKt4TruthSRJSubleadingPhiValues_back;
+    std::vector<unsigned int> *higgsIndexValues_ggF = nullptr, *indexOfHiggsValues_ggF = nullptr;
+    std::vector<double> *truthbquarksEtValues_ggF = nullptr, *truthbquarksEnergyValues_ggF = nullptr, *truthbquarkspTValues_ggF = nullptr, *truthbquarkspxValues_ggF = nullptr, *truthbquarkspyValues_ggF = nullptr, *truthbquarkspzValues_ggF = nullptr, *truthbquarksEtaValues_ggF = nullptr, *truthbquarksPhiValues_ggF = nullptr;
+    std::vector<double> *truthHiggsEtValues_ggF = nullptr, *truthHiggsEnergyValues_ggF = nullptr, *truthHiggspTValues_ggF = nullptr, *truthHiggspxValues_ggF = nullptr, *truthHiggspyValues_ggF = nullptr, *truthHiggspzValues_ggF = nullptr, *truthHiggsEtaValues_ggF = nullptr, *truthHiggsPhiValues_ggF = nullptr, *truthHiggsInvMassValues_ggF = nullptr;
+    std::vector<double> *caloTopoTowerEtValues_ggF = nullptr, *caloTopoTowerEtaValues_ggF = nullptr, *caloTopoTowerPhiValues_ggF = nullptr;
+    std::vector<double> *topo422EtValues_ggF = nullptr, *topo422EtaValues_ggF = nullptr, *topo422PhiValues_ggF = nullptr;
+    std::vector<unsigned int> *gFexSRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *gFexSRJEtValues_ggF = nullptr, *gFexSRJEtaValues_ggF = nullptr, *gFexSRJPhiValues_ggF = nullptr;
+    std::vector<double> *gFexSRJLeadingEtValues_ggF = nullptr, *gFexSRJLeadingEtaValues_ggF = nullptr, *gFexSRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *gFexSRJSubleadingEtValues_ggF = nullptr, *gFexSRJSubleadingEtaValues_ggF = nullptr, *gFexSRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *gFexLRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *gFexLRJEtValues_ggF = nullptr, *gFexLRJEtaValues_ggF = nullptr, *gFexLRJPhiValues_ggF = nullptr;
+    std::vector<double> *gFexLRJLeadingEtValues_ggF = nullptr, *gFexLRJLeadingEtaValues_ggF = nullptr, *gFexLRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *gFexLRJSubleadingEtValues_ggF = nullptr, *gFexLRJSubleadingEtaValues_ggF = nullptr, *gFexLRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *jFexSRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *jFexSRJEtValues_ggF = nullptr, *jFexSRJEtaValues_ggF = nullptr, *jFexSRJPhiValues_ggF = nullptr;
+    std::vector<double> *jFexSRJLeadingEtValues_ggF = nullptr, *jFexSRJLeadingEtaValues_ggF = nullptr, *jFexSRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *jFexSRJSubleadingEtValues_ggF = nullptr, *jFexSRJSubleadingEtaValues_ggF = nullptr, *jFexSRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *jFexLRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *jFexLRJEtValues_ggF = nullptr, *jFexLRJEtaValues_ggF = nullptr, *jFexLRJPhiValues_ggF = nullptr;
+    std::vector<double> *jFexLRJLeadingEtValues_ggF = nullptr, *jFexLRJLeadingEtaValues_ggF = nullptr, *jFexLRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *jFexLRJSubleadingEtValues_ggF = nullptr, *jFexLRJSubleadingEtaValues_ggF = nullptr, *jFexLRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *hltAntiKt4SRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *hltAntiKt4SRJEtValues_ggF = nullptr, *hltAntiKt4SRJEtaValues_ggF = nullptr, *hltAntiKt4SRJPhiValues_ggF = nullptr;
+    std::vector<double> *hltAntiKt4SRJLeadingEtValues_ggF = nullptr, *hltAntiKt4SRJLeadingEtaValues_ggF = nullptr, *hltAntiKt4SRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *hltAntiKt4SRJSubleadingEtValues_ggF = nullptr, *hltAntiKt4SRJSubleadingEtaValues_ggF = nullptr, *hltAntiKt4SRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *recoAntiKt10LRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *recoAntiKt10LRJEtValues_ggF = nullptr, *recoAntiKt10LRJEtaValues_ggF = nullptr, *recoAntiKt10LRJPhiValues_ggF = nullptr;
+    std::vector<double> *recoAntiKt10LRJLeadingEtValues_ggF = nullptr, *recoAntiKt10LRJLeadingEtaValues_ggF = nullptr, *recoAntiKt10LRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *recoAntiKt10LRJSubleadingEtValues_ggF = nullptr, *recoAntiKt10LRJSubleadingEtaValues_ggF = nullptr, *recoAntiKt10LRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *truthAntiKt4WZSRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJEtValues_ggF = nullptr, *truthAntiKt4WZSRJEtaValues_ggF = nullptr, *truthAntiKt4WZSRJPhiValues_ggF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJLeadingEtValues_ggF = nullptr, *truthAntiKt4WZSRJLeadingEtaValues_ggF = nullptr, *truthAntiKt4WZSRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJSubleadingEtValues_ggF = nullptr, *truthAntiKt4WZSRJSubleadingEtaValues_ggF = nullptr, *truthAntiKt4WZSRJSubleadingPhiValues_ggF = nullptr;
+    std::vector<unsigned int> *inTimeAntiKt4TruthSRJEtIndexValues_ggF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJEtValues_ggF = nullptr, *inTimeAntiKt4TruthSRJEtaValues_ggF = nullptr, *inTimeAntiKt4TruthSRJPhiValues_ggF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJLeadingEtValues_ggF = nullptr, *inTimeAntiKt4TruthSRJLeadingEtaValues_ggF = nullptr, *inTimeAntiKt4TruthSRJLeadingPhiValues_ggF = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJSubleadingEtValues_ggF = nullptr, *inTimeAntiKt4TruthSRJSubleadingEtaValues_ggF = nullptr, *inTimeAntiKt4TruthSRJSubleadingPhiValues_ggF = nullptr;
+
+    std::vector<unsigned int> *higgsIndexValues_back = nullptr, *indexOfHiggsValues_back = nullptr;
+    std::vector<double> *truthbquarksEtValues_back = nullptr, *truthbquarksEnergyValues_back = nullptr, *truthbquarkspTValues_back = nullptr, *truthbquarkspxValues_back = nullptr, *truthbquarkspyValues_back = nullptr, *truthbquarkspzValues_back = nullptr, *truthbquarksEtaValues_back = nullptr, *truthbquarksPhiValues_back = nullptr;
+    std::vector<double> *truthHiggsEtValues_back = nullptr, *truthHiggsEnergyValues_back = nullptr, *truthHiggspTValues_back = nullptr, *truthHiggspxValues_back = nullptr, *truthHiggspyValues_back = nullptr, *truthHiggspzValues_back = nullptr, *truthHiggsEtaValues_back = nullptr, *truthHiggsPhiValues_back = nullptr, *truthHiggsInvMassValues_back = nullptr;
+    std::vector<double> *caloTopoTowerEtValues_back = nullptr, *caloTopoTowerEtaValues_back = nullptr, *caloTopoTowerPhiValues_back = nullptr;
+    std::vector<double> *topo422EtValues_back = nullptr, *topo422EtaValues_back = nullptr, *topo422PhiValues_back = nullptr;
+    std::vector<unsigned int> *gFexSRJEtIndexValues_back = nullptr;
+    std::vector<double> *gFexSRJEtValues_back = nullptr, *gFexSRJEtaValues_back = nullptr, *gFexSRJPhiValues_back = nullptr;
+    std::vector<double> *gFexSRJLeadingEtValues_back = nullptr, *gFexSRJLeadingEtaValues_back = nullptr, *gFexSRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *gFexSRJSubleadingEtValues_back = nullptr, *gFexSRJSubleadingEtaValues_back = nullptr, *gFexSRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *gFexLRJEtIndexValues_back = nullptr;
+    std::vector<double> *gFexLRJEtValues_back = nullptr, *gFexLRJEtaValues_back = nullptr, *gFexLRJPhiValues_back = nullptr;
+    std::vector<double> *gFexLRJLeadingEtValues_back = nullptr, *gFexLRJLeadingEtaValues_back = nullptr, *gFexLRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *gFexLRJSubleadingEtValues_back = nullptr, *gFexLRJSubleadingEtaValues_back = nullptr, *gFexLRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *jFexSRJEtIndexValues_back = nullptr;
+    std::vector<double> *jFexSRJEtValues_back = nullptr, *jFexSRJEtaValues_back = nullptr, *jFexSRJPhiValues_back = nullptr;
+    std::vector<double> *jFexSRJLeadingEtValues_back = nullptr, *jFexSRJLeadingEtaValues_back = nullptr, *jFexSRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *jFexSRJSubleadingEtValues_back = nullptr, *jFexSRJSubleadingEtaValues_back = nullptr, *jFexSRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *jFexLRJEtIndexValues_back = nullptr;
+    std::vector<double> *jFexLRJEtValues_back = nullptr, *jFexLRJEtaValues_back = nullptr, *jFexLRJPhiValues_back = nullptr;
+    std::vector<double> *jFexLRJLeadingEtValues_back = nullptr, *jFexLRJLeadingEtaValues_back = nullptr, *jFexLRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *jFexLRJSubleadingEtValues_back = nullptr, *jFexLRJSubleadingEtaValues_back = nullptr, *jFexLRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *hltAntiKt4SRJEtIndexValues_back = nullptr;
+    std::vector<double> *hltAntiKt4SRJEtValues_back = nullptr, *hltAntiKt4SRJEtaValues_back = nullptr, *hltAntiKt4SRJPhiValues_back = nullptr;
+    std::vector<double> *hltAntiKt4SRJLeadingEtValues_back = nullptr, *hltAntiKt4SRJLeadingEtaValues_back = nullptr, *hltAntiKt4SRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *hltAntiKt4SRJSubleadingEtValues_back = nullptr, *hltAntiKt4SRJSubleadingEtaValues_back = nullptr, *hltAntiKt4SRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *recoAntiKt10LRJEtIndexValues_back = nullptr;
+    std::vector<double> *recoAntiKt10LRJEtValues_back = nullptr, *recoAntiKt10LRJEtaValues_back = nullptr, *recoAntiKt10LRJPhiValues_back = nullptr;
+    std::vector<double> *recoAntiKt10LRJLeadingEtValues_back = nullptr, *recoAntiKt10LRJLeadingEtaValues_back = nullptr, *recoAntiKt10LRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *recoAntiKt10LRJSubleadingEtValues_back = nullptr, *recoAntiKt10LRJSubleadingEtaValues_back = nullptr, *recoAntiKt10LRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *truthAntiKt4WZSRJEtIndexValues_back = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJEtValues_back = nullptr, *truthAntiKt4WZSRJEtaValues_back = nullptr, *truthAntiKt4WZSRJPhiValues_back = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJLeadingEtValues_back = nullptr, *truthAntiKt4WZSRJLeadingEtaValues_back = nullptr, *truthAntiKt4WZSRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *truthAntiKt4WZSRJSubleadingEtValues_back = nullptr, *truthAntiKt4WZSRJSubleadingEtaValues_back = nullptr, *truthAntiKt4WZSRJSubleadingPhiValues_back = nullptr;
+    std::vector<unsigned int> *inTimeAntiKt4TruthSRJEtIndexValues_back = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJEtValues_back = nullptr, *inTimeAntiKt4TruthSRJEtaValues_back = nullptr, *inTimeAntiKt4TruthSRJPhiValues_back = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJLeadingEtValues_back = nullptr, *inTimeAntiKt4TruthSRJLeadingEtaValues_back = nullptr, *inTimeAntiKt4TruthSRJLeadingPhiValues_back = nullptr;
+    std::vector<double> *inTimeAntiKt4TruthSRJSubleadingEtValues_back = nullptr, *inTimeAntiKt4TruthSRJSubleadingEtaValues_back = nullptr, *inTimeAntiKt4TruthSRJSubleadingPhiValues_back = nullptr;
 
     // === truthbTree_VBF ===
     truthbTree_VBF->SetBranchAddress("higgsIndex", &higgsIndexValues_VBF);
@@ -742,6 +746,14 @@ analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputF
     TH1F* sig_vbf_h_truth_antikt4DressedWZJets_Et = new TH1F("sig_vbf_h_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
     TH1F* sig_vbf_h_lead_truth_antikt4DressedWZJets_Et = new TH1F("sig_vbf_h_lead_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
+    TH2F* h_HiggsPt_vs_LeadLargeRJetEt_VBF = new TH2F(
+        "h_HiggsPt_vs_LeadLargeRJetEt_VBF",
+        ";Higgs p_{T} [GeV];Leading large-R jet E_{T} [GeV];Events",
+        50, 0., 1000.,   // x-axis: Higgs pT bins
+        50, 0., 1000.    // y-axis: leading large-R jet Et bins
+    );
+
+
     // ggF histogram declarations
     TH1F* sig_ggf_h_b_Et = new TH1F("sig_ggf_h_b_Et", "b E_{T} Distribution;E_{T} (GeV);b's / 2 GeV", 200, 0, 400);
     TH1F* sig_ggf_h_higgs_Et = new TH1F("sig_ggf_h_higgs_Et", "Higgs E_{T} Distribution;E_{T} (GeV);Higgs's / 2 GeV", 200, 0, 400);
@@ -767,6 +779,13 @@ analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputF
     TH1F* sig_ggf_h_truth_antikt4DressedWZJets_Et = new TH1F("sig_ggf_h_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
     TH1F* sig_ggf_h_lead_truth_antikt4DressedWZJets_Et = new TH1F("sig_ggf_h_lead_truth_antikt4DressedWZJets_Et", "Truth SRJ E_{T} Distribution;E_{T} (GeV);Counts", 30, 0, 300);
 
+    TH2F* h_HiggsPt_vs_LeadLargeRJetEt_ggF = new TH2F(
+        "h_HiggsPt_vs_LeadLargeRJetEt_ggF",
+        ";Higgs p_{T} [GeV];Leading large-R jet E_{T} [GeV];Events",
+        50, 0., 1000.,   // x-axis: Higgs pT bins
+        50, 0., 1000.    // y-axis: leading large-R jet Et bins
+    );
+
     // Background histogram declarations
     TH1F* back_h_topo_Et = new TH1F("back_h_topo_Et", "Topo E_{T} Distribution;E_{T} (GeV);Topo422 Clusters / 2 GeV", 200, 0, 400);
     TH1F* back_h_calotopo_Et = new TH1F("back_h_calotopo_Et", "CaloTopoTower E_{T} Distribution;Et (GeV);CaloTopo Towers / 2 GeV", 200, 0, 400);
@@ -791,13 +810,47 @@ analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputF
 
     unsigned int sigVBFNEntries = truthbTree_VBF->GetEntries();
 
-
+    for(unsigned int i = 0; i < sigVBFNEntries; i++){
+        truthbTree_VBF->GetEntry(i);
+        truthHiggsTree_VBF->GetEntry(i);
+        leadingRecoAntiKt10UFOCSSKJets_VBF->GetEntry(i);
+        for(unsigned int j = 0; j < truthbquarksEtValues_VBF->size(); j++){
+            sig_vbf_h_b_Et->Fill(truthbquarksEtValues_VBF->at(j));
+            
+        }
+        double avg_higgs_pt = 0;
+        for (unsigned int k = 0; k < truthHiggspTValues_VBF->size(); k++){
+            avg_higgs_pt += truthHiggspTValues_VBF->at(k) / 2.0; 
+           
+        }
+        if(recoAntiKt10LRJLeadingEtValues_VBF->size() > 0){
+            h_HiggsPt_vs_LeadLargeRJetEt_VBF->Fill(avg_higgs_pt, recoAntiKt10LRJLeadingEtValues_VBF->at(0));
+        }
+        
+        
+    }
 
 
 
 
 
     unsigned int sigggFNEntries = truthbTree_VBF->GetEntries();
+    for(unsigned int i = 0; i < sigggFNEntries; i++){
+        truthbTree_ggF->GetEntry(i);
+        truthHiggsTree_ggF->GetEntry(i);
+        leadingRecoAntiKt10UFOCSSKJets_ggF->GetEntry(i);
+
+        double avg_higgs_pt = 0;
+        for (unsigned int k = 0; k < truthHiggspTValues_ggF->size(); k++){
+            avg_higgs_pt += truthHiggspTValues_ggF->at(k) / 2.0; 
+           
+        }
+        if(recoAntiKt10LRJLeadingEtValues_ggF->size() > 0){
+            h_HiggsPt_vs_LeadLargeRJetEt_ggF->Fill(avg_higgs_pt, recoAntiKt10LRJLeadingEtValues_ggF->at(0));
+        }
+        
+        
+    }
 
 
 
@@ -817,10 +870,15 @@ analyzeHistograms(std::string& signalInputFileNameVBF, std::string& signalInputF
 
 
 
+    TCanvas* c1 = new TCanvas("c1", "Higgs pT vs Leading Large-R Jet E_{T}", 900, 600);
+    h_HiggsPt_vs_LeadLargeRJetEt_VBF->Scale(1.0 / h_HiggsPt_vs_LeadLargeRJetEt_VBF->Integral());
+    h_HiggsPt_vs_LeadLargeRJetEt_VBF->Draw("COLZ");  // "COLZ" gives a colored 2D plot with a Z-axis color scale
+    c1->SaveAs("largeRJetNTuplePlots/HiggsPt_vs_LeadLargeRJetEt_VBF.pdf");  // PDF
 
-
-
-
+    h_HiggsPt_vs_LeadLargeRJetEt_ggF->Scale(1.0 / h_HiggsPt_vs_LeadLargeRJetEt_ggF->Integral());
+    h_HiggsPt_vs_LeadLargeRJetEt_ggF->Draw("COLZ");  // "COLZ" gives a colored 2D plot with a Z-axis color scale
+    c1->SaveAs("largeRJetNTuplePlots/HiggsPt_vs_LeadLargeRJetEt_ggF.pdf");  // PDF
+    
 
 }
 

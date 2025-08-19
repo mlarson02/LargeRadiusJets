@@ -16,7 +16,7 @@ from matplotlib import colormaps
 # Configuration booleans
 signalBool = True
 afBool = True
-higgsPtCut = True
+higgsPtCut = False
 jFexPlotsBool = False
 
 quark_pdgids = [1, 2, 3, 4, 5, 6]
@@ -231,7 +231,7 @@ ROOT.xAOD.Init()
 # Set up the input file directory
 if signalBool:
     if afBool:
-        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/"
+        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/VBF/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658/"
     else:
         fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/"
     
@@ -312,9 +312,9 @@ phi_bins = np.linspace(-3.2, 3.2, 65)  # 64 bins
 eta_bins = np.linspace(-5.0, 5.0, 101)  # 100 bins
 if signalBool:
     if afBool:
-        output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
-        output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"
-        output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat"
+        output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422_DAODWRITEMEMS.dat"
+        output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj_DAODWRITEMEMS.dat"
+        output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj_DAODWRITEMEMS.dat"
     else:
         output_file_topo422 = "/home/larsonma/LargeRadiusJets/data/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat"
         output_file_gfex = "/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat"

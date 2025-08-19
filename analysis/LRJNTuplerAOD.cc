@@ -25,17 +25,10 @@ const bool vbfBool = true;
 
 unsigned int digitize(double value, int bit_length, double min_val, double max_val) {
     // Check if value is in range
-    if (value < min_val) {
-        value = min_val;
-        std::cout << "Warning: Value " << value
-          << " is out of range (" << min_val
-          << ", " << max_val << ")\n";
-    }
-    if (value > max_val){
-        value = max_val;
-        std::cout << "Warning: Value " << value
-          << " is out of range (" << min_val
-          << ", " << max_val << ")\n";
+    if (value < min_val || value > max_val) {
+        throw std::runtime_error("Value " + std::to_string(value) +
+                                 " is out of range (" + std::to_string(min_val) +
+                                 ", " + std::to_string(max_val) + ")");
     }
 
     double scale = (std::pow(2, bit_length) - 1) / (max_val - min_val);
@@ -82,7 +75,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     if (vbfBool){
         if (daodBool){
             if(signalBool){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAOD_100kEv/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/VBF/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
             }
             else{
                 fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
@@ -92,7 +85,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
         else{
             if (signalBool) {
                 fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
+                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbb_AOD_10kEv/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.recon.AOD.e8557_s4422_r16130" :
                     "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
             } else {
                 fileDir = afBool ?
@@ -130,10 +123,10 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
 
     if (signalBool) {
         if (vbfBool) {
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422_100k.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers_100k.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj_100k.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj_100k.dat";
+            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
+            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
+            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
+            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
         } else {
             output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_HHbbbb_HLLHC_topo422.dat";
             output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";
@@ -522,15 +515,14 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
         
         
         for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) {
-            //if (iEvt > 10) continue;
             event.getEntry(iEvt);
 
             if ((iEvt % 100) == 0) std::cout << "iEvt: " << iEvt << "\n";
             
 
             // -- retrieve collections from DOAD ---
-            const xAOD::TruthParticleContainer* TruthBosonsWithDecayParticles = nullptr;
-            if (!event.retrieve(TruthBosonsWithDecayParticles, "TruthBosonsWithDecayParticles").isSuccess()) {
+            const xAOD::TruthParticleContainer* TruthParticles = nullptr;
+            if (!event.retrieve(TruthParticles, "TruthParticles").isSuccess()) {
                 cerr << "Cannot access TruthParticles" << endl;
                 continue;
             }
@@ -575,18 +567,6 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             const xAOD::JetContainer* InTimeAntiKt4TruthJets = nullptr;
             if (!event.retrieve(InTimeAntiKt4TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
                 cerr << "Failed to retrieve Truth jets" << endl;
-                continue;
-            }
-
-            const xAOD::JetContainer* AntiKt10UFOCSSKJets = nullptr;
-            if (!event.retrieve(AntiKt10UFOCSSKJets, "AntiKt10UFOCSSKJets").isSuccess()) {
-                cerr << "Failed to retrieve reco Antik10 UFOCSSK jets" << endl;
-                continue;
-            }
-
-            const xAOD::JetContainer* AntiKt4TruthDressedWZJets = nullptr;
-            if (!event.retrieve(AntiKt4TruthDressedWZJets, "AntiKt4TruthDressedWZJets").isSuccess()) {
-                cerr << "Failed to retrieve reco Antik4 Truth Dressed WZ jets" << endl;
                 continue;
             }
 
@@ -719,7 +699,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             bool higgsPtCutPassed[2] = {false, false}; 
             // --- Loop over TruthParticles (for Higgs and B's) ---
             std::vector<std::vector<float > > allb_list;
-            for (const auto& el : *TruthBosonsWithDecayParticles) {
+            for (const auto& el : *TruthParticles) {
                 if (el->pdgId() == 25 && el->status() == 22) {
                     higgs_counter++;
 
@@ -887,7 +867,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
 
-                //std::cout << "eta: " << cluster->eta() << " and eta_bin : " << eta_bin << "\n";
+                std::cout << "eta: " << cluster->eta() << " and eta_bin : " << eta_bin << "\n";
                                         
                 // 2. Build binary string (for debug or text output)
                 std::stringstream binary_ss;
@@ -901,7 +881,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                                     (eta_bin << phi_bit_length_) |
                                     (phi_bin);
 
-                //std::cout << "binary: " << binary_word << "\n";
+                std::cout << "binary: " << binary_word << "\n";
 
                 // 4. Write to output file
                 
@@ -1234,86 +1214,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 inTimeAntiKt4TruthSRJSubleadingPhiValues.push_back(subleading->phi());
             }
 
-            // Temporary vector to hold (index, Et) for sorting
-            std::vector<std::pair<size_t, double>> recoJetEtWithIndex;
-
-            for (size_t i = 0; i < AntiKt10UFOCSSKJets->size(); ++i) {
-                const auto& jet = (*AntiKt10UFOCSSKJets)[i];
-                double et = jet->e() / (1000.0 * cosh(jet->eta()));
-                recoJetEtWithIndex.emplace_back(i, et);
-            }
-
-            // Sort by descending Et
-            std::sort(recoJetEtWithIndex.begin(), recoJetEtWithIndex.end(),
-                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
-                        return a.second > b.second;
-                    });
-
-            // Fill vectors in sorted order
-            for (const auto& [index, et] : recoJetEtWithIndex) {
-                const auto& jet = (*AntiKt10UFOCSSKJets)[index];
-                recoAntiKt10LRJEtIndexValues.push_back(static_cast<unsigned int>(index));
-                recoAntiKt10LRJEtValues.push_back(et);
-                recoAntiKt10LRJEtaValues.push_back(jet->eta());
-                recoAntiKt10LRJPhiValues.push_back(jet->phi());
-            }
-
-            // Leading jet
-            if (!recoJetEtWithIndex.empty()) {
-                const auto& leading = (*AntiKt10UFOCSSKJets)[recoJetEtWithIndex[0].first];
-                recoAntiKt10LRJLeadingEtValues.push_back(recoAntiKt10LRJEtValues[0]);
-                recoAntiKt10LRJLeadingEtaValues.push_back(leading->eta());
-                recoAntiKt10LRJLeadingPhiValues.push_back(leading->phi());
-            }
-
-            // Subleading jet
-            if (recoJetEtWithIndex.size() > 1) {
-                const auto& subleading = (*AntiKt10UFOCSSKJets)[recoJetEtWithIndex[1].first];
-                recoAntiKt10LRJSubleadingEtValues.push_back(recoAntiKt10LRJEtValues[1]);
-                recoAntiKt10LRJSubleadingEtaValues.push_back(subleading->eta());
-                recoAntiKt10LRJSubleadingPhiValues.push_back(subleading->phi());
-            }
-
-
-            // Temporary vector to hold (index, Et) for sorting
-            std::vector<std::pair<size_t, double>> truthWZJetEtWithIndex;
-
-            for (size_t i = 0; i < AntiKt4TruthDressedWZJets->size(); ++i) {
-                const auto& jet = (*AntiKt4TruthDressedWZJets)[i];
-                double et = jet->e() / (1000.0 * cosh(jet->eta()));
-                truthWZJetEtWithIndex.emplace_back(i, et);
-            }
-
-            // Sort by descending Et
-            std::sort(truthWZJetEtWithIndex.begin(), truthWZJetEtWithIndex.end(),
-                    [](const std::pair<size_t, double>& a, const std::pair<size_t, double>& b) {
-                        return a.second > b.second;
-                    });
-
-            // Fill vectors in sorted order
-            for (const auto& [index, et] : truthWZJetEtWithIndex) {
-                const auto& jet = (*AntiKt4TruthDressedWZJets)[index];
-                truthAntiKt4WZSRJEtIndexValues.push_back(static_cast<unsigned int>(index));
-                truthAntiKt4WZSRJEtValues.push_back(et);
-                truthAntiKt4WZSRJEtaValues.push_back(jet->eta());
-                truthAntiKt4WZSRJPhiValues.push_back(jet->phi());
-            }
-
-            // Leading jet
-            if (!truthWZJetEtWithIndex.empty()) {
-                const auto& leading = (*AntiKt4TruthDressedWZJets)[truthWZJetEtWithIndex[0].first];
-                truthAntiKt4WZSRJLeadingEtValues.push_back(truthAntiKt4WZSRJEtValues[0]);
-                truthAntiKt4WZSRJLeadingEtaValues.push_back(leading->eta());
-                truthAntiKt4WZSRJLeadingPhiValues.push_back(leading->phi());
-            }
-
-            // Subleading jet
-            if (truthWZJetEtWithIndex.size() > 1) {
-                const auto& subleading = (*AntiKt4TruthDressedWZJets)[truthWZJetEtWithIndex[1].first];
-                truthAntiKt4WZSRJSubleadingEtValues.push_back(truthAntiKt4WZSRJEtValues[1]);
-                truthAntiKt4WZSRJSubleadingEtaValues.push_back(subleading->eta());
-                truthAntiKt4WZSRJSubleadingPhiValues.push_back(subleading->phi());
-            }
+            
             if(higgsPtCutsPassed){
                 truthbTree->Fill();
                 truthHiggsTree->Fill();

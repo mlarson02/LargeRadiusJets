@@ -168,7 +168,7 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
     """
     if objectType == "topo422" or objectType == "caloTopoTowers" and len(max_gfex_srjs) > 0:
         max_gfex_srjs.sort(reverse=True)  # sort by Et descending
-        for _, eta, phi in max_gfex_srjs[:6]:
+        for _, eta, phi in max_gfex_srjs[:8]:
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='black',
                                     facecolor='none', lw=1.2, linestyle='--')
             #plt.gca().add_patch(circle)
@@ -182,7 +182,7 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='yellow',
                                     facecolor='none', lw=1.2, linestyle='--') 
             plt.gca().add_patch(circle)
-        for _, eta, phi in max_jfex_srjs[2:6]: 
+        for _, eta, phi in max_jfex_srjs[2:8]: 
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='orange',
                                     facecolor='none', lw=1.2, linestyle='--') 
             plt.gca().add_patch(circle)
@@ -272,6 +272,7 @@ ROOT.xAOD.Init()
 if signalBool:
     if vbfBool:
         fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/mc21_14TeV/"
+        fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130/"
     else:
         fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.recon.AOD.e8564_s4422_r16130"
 else: 
@@ -408,7 +409,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
             with open(output_file_jfex, "w") as f_jfex:
                 
                 for fileName in fileNames:
-                    if fileIt > 49:
+                    if fileIt > 0:
                         break
                     print(f"Processing file: {fileName}")
 
@@ -525,6 +526,8 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                             print("gFex phi min:", el.phiMin())
                             print("gFex phi max:", el.phiMax())
                         """
+                        print("----------------------------------")
+                        print("iEvt:", iEvt)
                         for el in t.HLT_AntiKt4EMTopoJets_subjesIS:
                             hlt_jet_pt_values.append(el.pt() / 1000.0)
                             hlt_jet_total_p = el.pt() * math.cosh(el.eta())
@@ -633,6 +636,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                                     higgs_1_pt = el.pt()/1000
                                     higgs_1_eta = el.eta()
                                     higgs_1_phi = el.phi()
+                                    print("higgs 1 pt:", higgs_1_pt)
                                     b1_list = find_non_higgs_daughters(el)
                                     #print("len(b1_list):", len(b1_list))
                                     (b1_Et_1, b1_eta_1, b1_phi_1) = b1_list[0]
@@ -648,12 +652,14 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 if higgs_counter == 2:
                                     total_p = el.pt() * math.cosh(el.eta())
+                                    
                                     ptoverp = el.pt() / total_p
                                     #print(' Higgs 2 PDG ID = %d, Eta = %g, Phi = %g, Et [GeV] = %g, Pt [GeV] = %g, iEvt = %g, status = %g' %  
                                     #(el.pdgId(), el.eta(), el.phi(), (el.e() * ptoverp )/1000.0, el.pt()/1000, iEvt, el.status()))
                                     higgs_2_pt = el.pt()/1000
                                     higgs_2_eta = el.eta()
                                     higgs_2_phi = el.phi()
+                                    print("higgs 2 pt:", higgs_2_pt)
                                     b2_list = find_non_higgs_daughters(el)
                                     #print("len(b2_list):", len(b2_list))
                                     (b1_Et_2, b1_eta_2, b1_phi_2) = b2_list[0]
@@ -670,6 +676,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 higgs_average_pt = (higgs_1_pt + higgs_2_pt) / 2.0
                                 higgs_pt_values.append(el.pt()/1000)
+                                
                                 higgs_pt_values_by_event.append(el.pt()/1000)
                             truthIt += 1
                             
@@ -718,7 +725,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                                 higgs_passes_cut = True
                                 for (b_Et, b_eta, b_phi) in allb_list:
                                     b_Et_values_after_higgs_cut.append(b_Et)    
-                        
+                            print("higgs pt cut value:", higgs_passes_cut)
                             if not higgs_passes_cut:
                                 eventCounter -= 1
                                 continue
@@ -729,7 +736,7 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                         # Loop over the CaloCalTopoClusters collection
                         topotower_it = 0
                         for el in t.CaloCalAllTopoTowers:
-                            print("caloTopoTowers eta, phi, et:", el.eta(), el.phi(), el.et()/1000.0)
+                            #print("caloTopoTowers eta, phi, et:", el.eta(), el.phi(), el.et()/1000.0)
                             caloTopoTowers_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[el.et()/1000])[0]
                             caloTopoTowers_log_heatmap += np.histogram2d([el.eta()], [el.phi()], bins=[eta_bins, phi_bins], weights=[np.log10(el.et() / 1000)])[0]
                             if el.et() >= 0:
@@ -793,13 +800,24 @@ with open(output_file_calotopotowers, "w") as f_topotower:
                                 #print("eta_bit_length:", eta_bit_length)
                                 #print("phi_bit_length:", phi_bit_length)
                                 #print("topo422 et: ", el.et() / 1000.0)
+
+                                
                                 
                                 et_bin = digitize(el.et() / (et_granularity * 1000), et_bit_length, et_min / et_granularity, et_max / et_granularity)
+                                
                                 #print("topo422 et_bin: ", et_bin)
                                 #print("topo422 phi_bin, eta_bin, et_bin:", phi_bin, eta_bin, et_bin)
 
                                 # Create binary word
                                 binary_word = f"{et_bin:0{et_bit_length}b}|{eta_bin:0{eta_bit_length}b}|{phi_bin:0{phi_bit_length}b}"
+                                if (iEvt < 10 and fileIt == 0):
+                                    print("topo phi:", el.phi())
+                                    print("topo phi_bin:", phi_bin)
+                                    print("topo et:", el.et() / 1000.0)
+                                    print("topo et_bin:", et_bin)
+                                    print("topo eta:", el.eta())
+                                    print("topo eta-bin:", eta_bin)
+                                    print("topo binary_word:", binary_word)
 
                                 # Create hex word
                                 hex_word = f"{(et_bin << (eta_bit_length + phi_bit_length)) | (eta_bin << phi_bit_length) | phi_bin:08x}"
@@ -876,6 +894,14 @@ with open(output_file_calotopotowers, "w") as f_topotower:
 
                                 # Create hex word
                                 hex_word = f"{(et_bin << (eta_bit_length + phi_bit_length)) | (eta_bin << phi_bit_length) | phi_bin:08x}"
+                                if(iEvt < 10 and fileIt == 0):
+                                    print("jFex phi:", el.phi())
+                                    print("jFex phi_bin:", phi_bin)
+                                    print("jFex et:", el.et() / 1000.0)
+                                    print("jFex et_bin:", et_bin)
+                                    print("jFex eta:", el.eta())
+                                    print("jFex eta-bin:", eta_bin)
+                                    print("jFex binary_word:", binary_word)
 
                                 # Write to file
                                 if jfex_it == 0:

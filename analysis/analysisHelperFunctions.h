@@ -119,7 +119,7 @@ void SetPlotStyle() {
     // set the paper & margin sizes
     gStyle->SetPaperSize(20, 26);
     gStyle->SetPadTopMargin(0.05);
-    //gStyle->SetPadRightMargin(0.05);
+    gStyle->SetPadRightMargin(0.15);
     gStyle->SetPadBottomMargin(0.16);
     gStyle->SetPadLeftMargin(0.16);
 
