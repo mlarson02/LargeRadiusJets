@@ -14,16 +14,16 @@
 // Define constants used by testbench
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
-const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_3p5back";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_2p0back";
 constexpr bool signalBool_ = false;
 
-const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
+const unsigned int maxEvent_ = signalBool_ ? 2500 : 2500;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
 void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
     //std::cout << "SORTING BY ET!" << std::endl;
-    for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+    /*for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
         //std::cout << "i: " << i << std::endl;
         for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
             ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
@@ -34,7 +34,7 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput
                 seedValues[j + 1] = temp;
             }
         }
-    }
+    }*/
     for (int j = 0; j < nSeedsInput_; ++j){
         //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
         //std::cout << "after sort j: " << std::dec << j << std::endl;

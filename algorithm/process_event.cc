@@ -23,7 +23,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
     
     
 
-
+    
     // FIXME make this entire process more dynamic to account for nSeedsOutput_ != 2 (progressively do this for highest Et seeds rather than for 1st 2 seeds immediately)
     // NEW PRE-PROCESSING OF SEEDS - SELECT IN BETWEEN LEADING, SUBLEADING JFEX SRJ, CLOSEST OF 3rd - 6th highest ENERGY JFEX SRJS as NEW SEEDS
     ap_uint<deltaRBits_> deltaRValuesSeed[nSeedsOutput_][nSeedsDeltaR_]; // FIXME replace 8 with constant from constants.h, easy
@@ -126,9 +126,14 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
        //std::cout << "-------------- calcing mid point -----------------" << "\n"; 
         //std::cout << "iSeed: " << iSeed << "\n";
         //fflush(stdout);
-        // Raw eta/phi values as received from digitized format (unsigned)
-        ap_uint<eta_bit_length_> eta1_raw, eta2_raw;
-        ap_uint<phi_bit_length_> phi1_raw, phi2_raw;
+
+        // Get Et values for the two seeds (assumed already extracted)
+        ap_uint<et_bit_length_> et1 = seedValues[iSeed].range(et_high_, et_low_);
+        ap_uint<et_bit_length_> et2 = seedValues[indices[iSeed] + nSeedsOutput_].range(et_high_, et_low_);
+
+        // Promote to wider type to avoid overflow
+        ap_uint<et_bit_length_ + 1> etSum = et1 + et2;
+        if (etSum == 0) etSum = 1; // avoid divide-by-zero
 
         // Convert eta to signed integers centered at 0
         ap_int<eta_bit_length_ + 1> eta1 = seedValues[iSeed].range(eta_high_, eta_low_) - (1 << (eta_bit_length_ - 1));
@@ -139,23 +144,33 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
         ap_int<phi_bit_length_ + 1> phi2 = seedValues[indices[iSeed] + nSeedsOutput_].range(phi_high_, phi_low_) - (1 << (phi_bit_length_ - 1));
 
         // --- Compute midpoint in signed domain ---
-        ap_int<eta_bit_length_ + 1> eta_mid = (eta1 + eta2) >> 1; // Integer division by 2
-        ap_int<phi_bit_length_ + 1> phi_mid = (phi1 + phi2) >> 1;
+        //ap_int<eta_bit_length_ + 1> eta_mid = (eta1 + eta2) >> 1; // Integer division by 2
+        //ap_int<phi_bit_length_ + 1> phi_mid = (phi1 + phi2) >> 1;
+        ap_int<eta_bit_length_ + 3> eta_mid_weighted = (et2 * eta2 + et1 * eta1) / etSum;
+        ap_int<phi_bit_length_ + 3> phi_mid_weighted = (et2 * phi2 + et1 * phi1) / etSum;
 
        //std::cout << "eta 1 : " << eta1 << " eta 2 : " << eta2 << "\n";
        //std::cout << "phi1 : " << phi1 << " phi 2  : " << phi2 << "\n";
         
         // --- Optional: re-wrap phi midpoint to [-π, π) range if needed ---
+        /*
         if (phi_mid > pi_digitized_in_phi_) 
             phi_mid -= (1 << phi_bit_length_);
         if (phi_mid < -(pi_digitized_in_phi_ + 1)) 
             phi_mid += (1 << phi_bit_length_);
+        */
+        if (phi_mid_weighted > pi_digitized_in_phi_)
+            phi_mid_weighted -= (1 << phi_bit_length_);
+        if (phi_mid_weighted < -(pi_digitized_in_phi_ + 1))
+            phi_mid_weighted += (1 << phi_bit_length_);
 
        //std::cout << "eta mid : " << eta_mid << " phi_mid: " << phi_mid << "\n";
 
         // --- Convert midpoints back to digitized unsigned format ---
-        ap_uint<eta_bit_length_> eta_mid_digitized = eta_mid + (1 << (eta_bit_length_ - 1));
-        ap_uint<phi_bit_length_> phi_mid_digitized = phi_mid + (1 << (phi_bit_length_ - 1));
+        ap_uint<eta_bit_length_> eta_mid_digitized = eta_mid_weighted + (1 << (eta_bit_length_ - 1));
+        ap_uint<phi_bit_length_> phi_mid_digitized = phi_mid_weighted + (1 << (phi_bit_length_ - 1));
+        //ap_uint<eta_bit_length_> eta_mid_digitized = eta_mid + (1 << (eta_bit_length_ - 1));
+        //ap_uint<phi_bit_length_> phi_mid_digitized = phi_mid + (1 << (phi_bit_length_ - 1));
         //std::cout << "eta_mid_digitized: " << eta_mid_digitized << " phi_mid_digitized: " << phi_mid_digitized << "\n";
         seedValues[iSeed].range(eta_high_, eta_low_) = eta_mid_digitized;
         seedValues[iSeed].range(phi_high_, phi_low_) = phi_mid_digitized;
@@ -179,6 +194,8 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
         //fflush(stdout);
         numMergedIO = 0;
         outputJetEt = 0;//seedValues[iSeed].range(et_high_, et_low_); // reset outputjet values for each seed, to values of seed
+        //std::cout << "seedValues[iSeed]: " << std::hex << seedValues[iSeed] << "\n";
+        //std::cout << "seed et: " << std::dec << seedValues[iSeed].range(et_high_, et_low_) << " eta: " << seedValues[iSeed].range(eta_high_, eta_low_) << " phi: " << seedValues[iSeed].range(phi_high_, phi_low_) << "\n";
         //std::cout << "before" << "\n";
         //fflush(stdout);
         //outputJetValues[iSeed] = input(0);
@@ -193,11 +210,10 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
             if (inputObjectValues[iInput].range(et_high_, et_low_) <= inputEnergyCut_) continue; // skip past input objects below some minimum energy cut, if enabled 
             #endif
             
-            //std::cout << "iInput: " << iInput << "\n";
+           // std::cout << "iInput: " << iInput << "\n";
            //std::cout << "inputObjectValues[iInput]: " << std::hex << inputObjectValues[iInput] << "\n";
            //std::cout << "input et: " << std::dec << inputObjectValues[iInput].range(et_high_, et_low_) << " eta: " << inputObjectValues[iInput].range(eta_high_, eta_low_) << " phi: " << inputObjectValues[iInput].range(phi_high_, phi_low_) << "\n";
-           //std::cout << "seedValues[iSeed]: " << std::hex << seedValues[iSeed] << "\n";
-           //std::cout << "seed et: " << std::dec << seedValues[iSeed].range(et_high_, et_low_) << " eta: " << seedValues[iSeed].range(eta_high_, eta_low_) << " phi: " << seedValues[iSeed].range(phi_high_, phi_low_) << "\n";
+           
 
             // Calculate signed differences (deltaEta and deltaPhi)
             ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - inputObjectValues[iInput].range(eta_high_, eta_low_);
@@ -207,7 +223,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
             ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
             ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
             
-            //std::cout << "deltaPhi: " << deltaPhi << " uDeltaPhi: " << uDeltaPhi << "\n";
+            //std::cout << "deltaPhi: " << std::dec <<  deltaPhi << " uDeltaPhi: " << uDeltaPhi << "\n";
             //std::cout << "uDeltaEta: " << uDeltaEta << " uDeltaPhi: " << uDeltaPhi << "\n";
             ap_uint<phi_bit_length_ - 1> corrDeltaPhi; // for fixing delta phi calculation
             if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
@@ -217,7 +233,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
             //int phiLength = 1 << (phi_bit_length_);
             //std::cout << "phiLength: " << phiLength << " and uDeltaEta * philength: " << uDeltaEta * (1 << phi_bit_length_) << "\n";
             ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
-            //std::cout << "lut_index: " << lut_index << "\n";
+            //std::cout << "lut_index: " << std::dec << lut_index << "\n";
             //volatile unsigned int lut_index = 
             //bool passesCut = !(lut_index >= max_lut_size_) && lut_[lut_index];
             //volatile bool readoutPassesCut = passesCut;
@@ -225,6 +241,7 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
                 outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
                 numMergedIO++; 
                 //std::cout << "merged!" << "\n";
+                //std::cout << "new output jet Et: " << outputJetEt << "\n";
             }
         }
         /*
@@ -248,6 +265,8 @@ void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxOb
       //std::cout << "test if it gets here" << "\n";
        fflush(stdout);*/
         // FOR IMPLEMENTATION ONLY
+        //std::cout << "final numMergedIO: " << numMergedIO << "\n";
+        //std::cout << "final outputJetEt: " << outputJetEt << "\n";
         outputJetValues[iSeed].range(io_high_, io_low_) = numMergedIO / 2; 
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
         outputJetValues[iSeed].range(eta_high_, eta_low_) = seedValues[iSeed].range(eta_high_, eta_low_);

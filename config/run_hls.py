@@ -152,13 +152,13 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
 
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
+const unsigned int maxEvent_ = signalBool_ ? 2500 : 2500;
 const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
 
 
 void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
     //std::cout << "SORTING BY ET!" << std::endl;
-    for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
+    /*for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
         //std::cout << "i: " << i << std::endl;
         for (int j = 0; j < nTotalSeeds_ - i - 1; ++j) {
             ap_uint<et_bit_length_> et1 = seedValues[j].range(et_high_, et_low_);
@@ -169,7 +169,7 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput
                 seedValues[j + 1] = temp;
             }
         }
-    }
+    }*/
     for (int j = 0; j < nSeedsInput_; ++j){
         //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
         //std::cout << "after sort j: " << std::dec << j << std::endl;
@@ -347,13 +347,13 @@ if __name__ == "__main__":
     #r2Cut_options = [0.8, 0.9, 1.0, 1.1, 1.2]
     #r2Cut_options = [1.0, 1.21, 1.44, 1.69, 1.96]
     #r2Cut_options = [1.69]
-    r2Cut_options = [0.81, 1.0, 1.44]
+    r2Cut_options = [1.0]
     #r2Cut_options = [1.44]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    maxObjectsConsidered_options = [128, 256, 512]
+    maxObjectsConsidered_options = [128]
     #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
-    rMergeCut_options = [1.5, 2.5, 3.5, 4.5]
+    rMergeCut_options = [1.25, 1.5, 1.75, 2.0]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
     signalBool_options = [True, False]
     #inputEnergyCut_options = [False]

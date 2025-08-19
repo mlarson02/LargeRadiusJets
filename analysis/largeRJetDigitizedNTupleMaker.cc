@@ -25,10 +25,10 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     
     TString outputFileName; 
     if (signalBool){
-        if (vbfBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh.root";
-        else outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC.root";
+        if (vbfBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhhAOD.root";
+        else outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHCAOD.root";
     } 
-    else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3.root";
+    else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3AOD.root";
 
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
@@ -205,7 +205,7 @@ void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
     std::string fileName;
 
     
-    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/";
+    fileName = "/home/larsonma/LargeRadiusJets/data/MemPrintsAOD/CaloTopo_422/";
     if (signalBool){
         if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
         else fileName += "mc21_14TeV_HHbbbb_HLLHC_topo422.dat";
@@ -213,7 +213,7 @@ void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
     else fileName += "mc21_14TeV_jj_JZ3_topo422.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/";
+    fileName = "/home/larsonma/LargeRadiusJets/data/MemPrintsAOD/CaloTopoTowers/";
     if (signalBool){
         if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
         else fileName += "mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";
@@ -221,7 +221,7 @@ void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
     else fileName += "mc21_14TeV_jj_JZ3_calotopotowers.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/";
+    fileName = "/home/larsonma/LargeRadiusJets/data/MemPrintsAOD/gFex/";
     if (signalBool){
         if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
         else fileName += "mc21_14TeV_HHbbbb_HLLHC_gfex_smallrj.dat";
@@ -229,7 +229,7 @@ void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
     else fileName += "mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/";
+    fileName = "/home/larsonma/LargeRadiusJets/data/MemPrintsAOD/jFex/";
     if (signalBool){
         if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
         else fileName += "mc21_14TeV_HHbbbb_HLLHC_jfex_smallrj.dat";

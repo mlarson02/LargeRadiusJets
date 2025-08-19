@@ -15,6 +15,16 @@
 #include <TMath.h>
 //#include "../algorithm/constants.h"
 
+
+// Constants for Event Display Generation
+constexpr unsigned int evDisplayMin_ = 10;
+constexpr unsigned int evDisplay0_ = evDisplayMin_ + 1;
+constexpr unsigned int evDisplay1_ = evDisplay0_ + 1;
+constexpr unsigned int evDisplay2_ = evDisplay1_ + 1;
+constexpr unsigned int evDisplay3_ = evDisplay2_ + 1;
+constexpr unsigned int evDisplay4_ = evDisplay3_ + 1;
+constexpr unsigned int evDisplayMax_ = evDisplay4_;
+
 constexpr double et_granularity_ = 0.25;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;

@@ -29,7 +29,7 @@ int main() {
     std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsrMergeScan/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsjFexWeightedSeedPosition/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -48,8 +48,8 @@ int main() {
             std::cout << "outputJetValues[i] after: " << outputJetValues[i] << "\n";
         }*/
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        //std::cout << " ---------------------------------- " << "\n";
-        //std::cout << "event: " << iEvt << "\n";
+        std::cout << " ---------------------------------- " << "\n";
+        std::cout << "event: " << iEvt << "\n";
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
         //for (unsigned int i = 0; i < nTotalSeeds_; i++){
         //    std::cout << "seedValues.et: " << seedValues[i].et << " seedValues.phi: " << seedValues[i].phi << " and seedValues.eta: " << seedValues[i].eta << "\n";
