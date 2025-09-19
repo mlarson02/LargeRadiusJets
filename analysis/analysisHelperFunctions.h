@@ -13,6 +13,7 @@
 #include "TFile.h"
 #include <cmath>
 #include <TMath.h>
+#include <unordered_map>
 //#include "../algorithm/constants.h"
 
 
@@ -24,6 +25,14 @@ constexpr unsigned int evDisplay2_ = evDisplay1_ + 1;
 constexpr unsigned int evDisplay3_ = evDisplay2_ + 1;
 constexpr unsigned int evDisplay4_ = evDisplay3_ + 1;
 constexpr unsigned int evDisplayMax_ = evDisplay4_;
+
+bool displayEv0_ = false;
+bool displayEv1_ = false;
+bool displayEv2_ = false;
+bool displayEv3_ = false;
+bool displayEv4_ = false;
+
+const double mH_ = 125.0;
 
 constexpr double et_granularity_ = 0.25;
 constexpr unsigned int et_bit_length_ = 13;
@@ -54,7 +63,7 @@ inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
 }
 
 inline double undigitize_nmio(const std::bitset<io_bit_length_>& nmio_bits) {
-    return nmio_bits.to_ulong() * 2;
+    return nmio_bits.to_ulong() * 0.03125;
 }
 
 // Function to scale and digitize a value, returning the result as a binary string

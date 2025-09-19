@@ -19,11 +19,12 @@ base_constants = {
     "useInputEnergyCut_": "false", 
     "et_granularity_": 0.25,
     "r2Cut_": 1.0,
+    "rCut_": 1.0,
     "rMergeCut_": 5.0,
     "et_bit_length_": 13,
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
-    "io_bit_length_": 5, 
+    "diam_bit_length_": 5, 
     "deltaRBits_": 8,
     "phi_min_": -3.2,
     "phi_max_": 3.2,
@@ -122,7 +123,7 @@ def extract_hls_report(xml_path):
 
 import os
 
-def write_file_read_header(file_path, file_suffix, signal_bool):
+def write_file_read_header(file_path, file_suffix, signal_bool, jzSlice):
     # Remove existing constants.h if it exists
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -150,10 +151,18 @@ const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cu
     # Now create the signalBool_ line dynamically
     signal_bool_line = f'constexpr bool signalBool_ = {"true" if signal_bool else "false"};\n'
 
+    jzSlice_line = f'constexpr unsigned int jzSlice_ = {jzSlice};\n'
+
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 2500 : 2500;
-const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
+const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
+const std::string fileName_ =
+    signalBool_        ? "mc21_14TeV_hh_bbbb_vbf_novhh" :
+    (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
+    (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
+    (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
+                         "unknown_sample";
+
 
 
 void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
@@ -223,6 +232,8 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             std::string index, bin, hex_word;
             ss >> index >> bin >> hex_word;
 
+            //std::cout << "hex_word: " << hex_word << std::endl;
+
             size_t first_pipe = bin.find('|');
             size_t second_pipe = bin.rfind('|');
             if (first_pipe == std::string::npos || second_pipe == std::string::npos || first_pipe == second_pipe) {
@@ -234,12 +245,14 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
             //std::cout << "et_bin : " << et_bin << std::endl;
+            //std::cout << "eta_bin : " << eta_bin << std::endl;
+            //std::cout << "phi_bin : " << phi_bin << std::endl;
 
             // Prepend 5 zero bits (as MSB) to represent num_io = 0
             std::string num_io_bin = "00000";
 
             // Final bitstring in MSB to LSB order: num_io | et | eta | phi
-            std::string full_bin = phi_bin + eta_bin + et_bin + num_io_bin;
+            std::string full_bin = num_io_bin + et_bin + eta_bin + phi_bin;
 
             //std::cout << "full_bin: " << full_bin << std::endl;
 
@@ -269,6 +282,7 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
         f.write(header_content)
         f.write(suffix_line)
         f.write(signal_bool_line)
+        f.write(jzSlice_line)
         f.write(remaining_content)
 
     print(f"File {file_path} written successfully with the file suffix.")
@@ -309,17 +323,21 @@ def write_constants_h(constants: dict, output_file: str, unroll: int, ii: int):
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
 
-constexpr unsigned int total_bits_ = io_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_ = diam_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 typedef ap_uint<total_bits_> input;
 
-constexpr unsigned int io_low_ = 0; 
-constexpr unsigned int io_high_ = io_bit_length_ - 1; 
-constexpr unsigned int et_low_ = io_high_ + 1;
-constexpr unsigned int et_high_ = et_low_ + et_bit_length_ - 1; 
-constexpr unsigned int eta_low_ = et_high_ + 1; 
-constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1; 
-constexpr unsigned int phi_low_ = eta_high_ + 1; 
-constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1; 
+constexpr unsigned int phi_low_  = 0;
+constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;
+
+constexpr unsigned int eta_low_  = phi_high_ + 1;
+constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
+
+constexpr unsigned int et_low_   = eta_high_ + 1;
+constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
+
+constexpr unsigned int diam_low_  = et_high_ + 1;
+constexpr unsigned int diam_high_ = diam_low_ + diam_bit_length_ - 1;
+
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
@@ -331,10 +349,17 @@ static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] =
 #include "../data/LUTs/deltaR.h"
 ;
 
+static const ap_uint<diam_bit_length_ > lutR_32b_[max_R_32b_lut_size_] = 
+#include "../data/LUTs/deltaR_32b.h"
+;
+
 #endif
-constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 64
-constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.039
+constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 256
+constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.041
 constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
+
+constexpr unsigned int diam_levels_ = (1 << diam_bit_length_); // 32
+constexpr float diam_step_ = r2Cut_ / (diam_levels_ - 1); // ~0.041
         ''')
 
         f.write("\n#endif // CONSTANTS_H\n")
@@ -353,104 +378,125 @@ if __name__ == "__main__":
     maxObjectsConsidered_options = [128]
     #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
-    rMergeCut_options = [1.25, 1.5, 1.75, 2.0]
+    rMergeCut_options = [2.5, 3.5]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
-    signalBool_options = [True, False]
+    signalBool_options = [False]
     #inputEnergyCut_options = [False]
     inputEnergyCut_options = [False]
+    jzSlices = [2, 4]
     #inputEnergyCutValues_options = [0.5, 1.0, 1.5, 2.0] # only use these if inputEnergyCutOption is true
     inputEnergyCutValues_options = [4] # note 4 == 1 GeV (0.25 GeV granularity for inputobjectvalues)
-    for rMergeCut in rMergeCut_options:
-        for nSeeds in nSeeds_options:
-            for r2Cut in r2Cut_options:
-                for maxObjectsConsidered in maxObjectsConsidered_options:
-                    for sortSeeds in sortSeeds_options:
-                        for inputEnergyCutBool in inputEnergyCut_options:
-                            for inputEnergyCutValues in inputEnergyCutValues_options:
-                                for signalBool in signalBool_options:
-                                    # Copy base constants
-                                    constants = base_constants.copy()
-                                    constants["nSeeds_"] = nSeeds
-                                    constants["r2Cut_"] = r2Cut
-                                    constants["rMergeCut_"] = rMergeCut
-                                    constants["maxObjectsConsidered_"] = maxObjectsConsidered
-                                    constants["sortSeeds_"] = sortSeeds
-                                    constants["useInputEnergyCut_"] = inputEnergyCutBool
-                                    print("nSeeds:", nSeeds)
-                                    print("r2Cut:", r2Cut)
-                                    print("rMergeCut:", rMergeCut)
-                                    print("maxobjectsconsidered:", maxObjectsConsidered)
-                                    if inputEnergyCutBool:
-                                        constants["inputEnergyCut_"] = inputEnergyCutValues
+    for jzSlice in jzSlices:
+        for maxObjectsConsidered in maxObjectsConsidered_options:
+            for rMergeCut in rMergeCut_options:
+                for nSeeds in nSeeds_options:
+                    for r2Cut in r2Cut_options:
+                        for sortSeeds in sortSeeds_options:
+                            for inputEnergyCutBool in inputEnergyCut_options:
+                                for inputEnergyCutValues in inputEnergyCutValues_options:
+                                    for signalBool in signalBool_options:
+                                        # Copy base constants
+                                        constants = base_constants.copy()
+                                        constants["nSeeds_"] = nSeeds
+                                        constants["r2Cut_"] = r2Cut
+                                        constants["rMergeCut_"] = rMergeCut
+                                        constants["maxObjectsConsidered_"] = maxObjectsConsidered
+                                        constants["sortSeeds_"] = sortSeeds
+                                        constants["useInputEnergyCut_"] = inputEnergyCutBool
+                                        print("nSeeds:", nSeeds)
+                                        print("r2Cut:", r2Cut)
+                                        print("rMergeCut:", rMergeCut)
+                                        print("maxobjectsconsidered:", maxObjectsConsidered)
+                                        if inputEnergyCutBool:
+                                            constants["inputEnergyCut_"] = inputEnergyCutValues
 
-                                    # Calculate phi and eta granularities from base constants
-                                    phi_range = base_constants["phi_max_"] - base_constants["phi_min_"]
-                                    phi_granularity = phi_range / (1 << base_constants["phi_bit_length_"])
-                                    constants["phi_granularity_"] = phi_granularity
+                                        # Calculate phi and eta granularities from base constants
+                                        phi_range = base_constants["phi_max_"] - base_constants["phi_min_"]
+                                        phi_granularity = phi_range / (1 << base_constants["phi_bit_length_"])
+                                        constants["phi_granularity_"] = phi_granularity
 
-                                    eta_range = base_constants["eta_max_"] - base_constants["eta_min_"]
-                                    eta_granularity = eta_range / (1 << base_constants["eta_bit_length_"])
-                                    constants["eta_granularity_"] = eta_granularity
+                                        eta_range = base_constants["eta_max_"] - base_constants["eta_min_"]
+                                        eta_granularity = eta_range / (1 << base_constants["eta_bit_length_"])
+                                        constants["eta_granularity_"] = eta_granularity
 
-                                    lut_max_size = calculate_lutR2_max_size(
-                                        r2Cut=constants["r2Cut_"],
-                                        eta_bit_length=constants["eta_bit_length_"],
-                                        phi_bit_length=constants["phi_bit_length_"],
-                                        eta_granularity=eta_granularity,
-                                        phi_granularity=phi_granularity
-                                    )
+                                        lut_max_size = calculate_lutR2_max_size(
+                                            r2Cut=constants["r2Cut_"],
+                                            eta_bit_length=constants["eta_bit_length_"],
+                                            phi_bit_length=constants["phi_bit_length_"],
+                                            eta_granularity=eta_granularity,
+                                            phi_granularity=phi_granularity
+                                        )
 
-                                    lutR_max_size = calculate_lutR_max_size(
-                                        rCut=constants["rMergeCut_"],
-                                        eta_bit_length=constants["eta_bit_length_"],
-                                        phi_bit_length=constants["phi_bit_length_"],
-                                        eta_granularity=eta_granularity,
-                                        phi_granularity=phi_granularity
-                                    )
+                                        lutR_max_size = calculate_lutR_max_size(
+                                            rCut=constants["rMergeCut_"],
+                                            eta_bit_length=constants["eta_bit_length_"],
+                                            phi_bit_length=constants["phi_bit_length_"],
+                                            eta_granularity=eta_granularity,
+                                            phi_granularity=phi_granularity
+                                        )
 
-                                    constants["max_R2lut_size_"] = lut_max_size  # Add it to constants.h!
-                                    constants["max_Rlut_size_"] = lutR_max_size  # Add it to constants.h!
+                                        lutR_32b_max_size = calculate_lutR_max_size(
+                                            rCut=constants["rCut_"],
+                                            eta_bit_length=constants["eta_bit_length_"],
+                                            phi_bit_length=constants["phi_bit_length_"],
+                                            eta_granularity=eta_granularity,
+                                            phi_granularity=phi_granularity
+                                        )
 
-                                    # Update derived values
-                                    constants = compute_derived(constants)
+                                        constants["max_R2lut_size_"] = lut_max_size  # Add it to constants.h!
+                                        constants["max_Rlut_size_"] = lutR_max_size  # Add it to constants.h!
+                                        constants["max_R_32b_lut_size_"] = lutR_32b_max_size
 
-                                    # Clean up float formatting for r2Cut and inputEnergyCutValues
-                                    r2Cut_str = str(r2Cut).replace('.', 'p')
-                                    rMergeCut_str = str(rMergeCut).replace('.', 'p')
-                                    energyCut_str = str(inputEnergyCutValues).replace('.', 'p')
+                                        # Update derived values
+                                        constants = compute_derived(constants)
 
-                                    # Bool formatting for sortSeeds and inputEnergyCut
-                                    signal_str = 'sig' if signalBool else 'back'
-                                    energyCutBool_str = 'ecut' if inputEnergyCutBool else 'noecut'
-                                    constsFilename = f"../algorithm/constants.h"
+                                        # Clean up float formatting for r2Cut and inputEnergyCutValues
+                                        r2Cut_str = str(r2Cut).replace('.', 'p')
+                                        rMergeCut_str = str(rMergeCut).replace('.', 'p')
+                                        energyCut_str = str(inputEnergyCutValues).replace('.', 'p')
 
-                                    # File name based on parameter values
-                                    file_suffix = (
-                                        f"nSeeds{nSeeds}_"
-                                        f"r2Cut{r2Cut_str}_"
-                                        f"maxObj{maxObjectsConsidered}_"
-                                        f"{rMergeCut_str}"
-                                        f"{signal_str}"
-                                        
-                                        #f"{energyCutBool_str}_"
-                                        #f"ecutVal{energyCut_str}"
-                                    )
+                                        # Bool formatting for sortSeeds and inputEnergyCut
+                                        if signalBool:
+                                            signal_str = 'sig'  
+                                        else:
+                                            if (jzSlice == 2):
+                                                signal_str = 'back_JZ2'
+                                            elif (jzSlice == 3):
+                                                signal_str = 'back_JZ3'
+                                            elif (jzSlice == 4):
+                                                signal_str = 'back_JZ4'
 
-                                    unroll = int(maxObjectsConsidered/8)
+                                        energyCutBool_str = 'ecut' if inputEnergyCutBool else 'noecut'
+                                        constsFilename = f"../algorithm/constants.h"
 
-                                    ii = 3
+                                        # File name based on parameter values
+                                        file_suffix = (
+                                            f"nSeeds{nSeeds}_"
+                                            f"r2Cut{r2Cut_str}_"
+                                            f"maxObj{maxObjectsConsidered}_"
+                                            f"{rMergeCut_str}"
+                                            f"{signal_str}"
+                                            "_SeedPosRecalcWeighted"
+                                            #f"{energyCutBool_str}_"
+                                            #f"ecutVal{energyCut_str}"
+                                        )
+                                        print(f"Launching HLS with project name: {file_suffix}")
 
-                                    # Write to file
-                                    write_constants_h(constants, constsFilename, unroll, ii)
-                                    fileReadPath = "/home/larsonma/LargeRadiusJets/algorithm/fileRead.h"  # Path to save the file
-                                    write_file_read_header(fileReadPath, file_suffix, signalBool)
+                                        unroll = int(maxObjectsConsidered/8)
 
-                                    print(f" Wrote {constsFilename}")
-                                    run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT.cc")
-                                    print(f"Launching HLS with project name: {file_suffix}")
-                                    subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "0"], check=True)
-                                    xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
-                                    print("xml_report_path,", xml_report_path)
-                                    #resources, latency = extract_hls_report(xml_report_path)
-                                    #print(f"Run {file_suffix}: Resources {resources}, Latency {latency}")
+                                        ii = 3
+
+                                        # Write to file
+                                        write_constants_h(constants, constsFilename, unroll, ii)
+                                        fileReadPath = "/home/larsonma/LargeRadiusJets/algorithm/fileRead.h"  # Path to save the file
+                                        write_file_read_header(fileReadPath, file_suffix, signalBool, jzSlice)
+
+                                        print(f" Wrote {constsFilename}")
+                                        run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT.cc")
+
+                                        subprocess.run(["vitis", "-s", "jet_tagger_hls.py", file_suffix, "1"], check=True)
+                                        xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
+                                        print("xml_report_path,", xml_report_path)
+                                        #resources, latency = extract_hls_report(xml_report_path)
+                                        #print(f"Run {file_suffix}: Resources {resources}, Latency {latency}")
                             

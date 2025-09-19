@@ -24,12 +24,13 @@ int main() {
     //const std::string fileName = signalBool ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
     //const std::string seedFile = memPrintsPath_ + "gFex/" + fileName_ + "_gfex_smallrj.dat";
     const std::string seedFile = memPrintsPath_ + "jFex/" + fileName_ + "_jfex_smallrj.dat";
-    const std::string inputObjectFile = memPrintsPath_ + "CaloTopo_422/" + fileName_ + "_topo422.dat";
+    //const std::string inputObjectFile = memPrintsPath_ + "CaloTopo_422/" + fileName_ + "_topo422.dat";
+    const std::string inputObjectFile = memPrintsPath_ + "GEPBasicClusters/" + fileName_ + "_gepbasicclusters.dat";
     std::cout << "inputObjectFile: " << inputObjectFile << "\n";
     std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsjFexWeightedSeedPosition/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClustersSeedPosRecalc/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -40,7 +41,7 @@ int main() {
     }
     std::cout << "rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n";
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-        //if (iEvt > 1) break;
+        //if (iEvt > 5) break;
         //std::cout << "processing event: " << iEvt << "\n";
         /*for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
             std::cout << "outputJetValues[i] before: " << outputJetValues[i] << "\n";
@@ -48,8 +49,8 @@ int main() {
             std::cout << "outputJetValues[i] after: " << outputJetValues[i] << "\n";
         }*/
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        std::cout << " ---------------------------------- " << "\n";
-        std::cout << "event: " << iEvt << "\n";
+        //std::cout << " ---------------------------------- " << "\n";
+        //std::cout << "processing event: " << std::dec << iEvt << "\n";
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
         //for (unsigned int i = 0; i < nTotalSeeds_; i++){
         //    std::cout << "seedValues.et: " << seedValues[i].et << " seedValues.phi: " << seedValues[i].phi << " and seedValues.eta: " << seedValues[i].eta << "\n";
@@ -60,9 +61,22 @@ int main() {
         sortByEt(seedValues, sortedSeedValues); // FIXME don't need to sort seeds anymore - pre-sorted in LRJNTupler.cc
         //std::cout << "after sort!!!" << "\n";
         //fflush(stdout);
-        //for (unsigned int i = 0; i < nSeedsInput_; i++){
-        //    std::cout << "sorted seedValues et: " << sortedSeedValues[i].range(et_high_, et_low_) << "\n";
-        //}
+        /*
+        for (unsigned i = 0; i < nSeedsInput_; ++i) {
+            uint32_t w = static_cast<uint32_t>(sortedSeedValues[i]);   // or (w & 0xFFFFFFFFu)
+            std::cout << "seedValues: 0x"
+                    << std::setw(8) << std::setfill('0') << std::uppercase
+                    << std::hex << w
+                    << std::dec << std::setfill(' ') << "\n";
+        }
+
+        for (unsigned j = 0; j < maxObjectsConsidered_; ++j) {
+            uint32_t w = static_cast<uint32_t>(inputObjectValues[j]);
+            std::cout << "input object value: 0x"
+                    << std::setw(8) << std::setfill('0') << std::uppercase
+                    << std::hex << w
+                    << std::dec << std::setfill(' ') << "\n";
+        }*/
         input outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
         //    outputJetValues[i] = 0;
@@ -72,7 +86,7 @@ int main() {
         //std::cout << "TB outputJetValues[1]:   " << static_cast<void*>(&outputJetValues[1]) << "\n";
         process_event(sortedSeedValues, inputObjectValues, outputJetValues); // top function 
         for (unsigned int iOutput = 0; iOutput < nSeedsOutput_; iOutput++){
-            unsigned long long numio_value = outputJetValues[iOutput].range(io_high_, io_low_).to_uint64();
+            unsigned long long diam_value = outputJetValues[iOutput].range(diam_high_, diam_low_).to_uint64();
             unsigned long long et_value = outputJetValues[iOutput].range(et_high_, et_low_).to_uint64();  // Convert to unsigned long long
             unsigned long long eta_value = outputJetValues[iOutput].range(eta_high_, eta_low_).to_uint64();
             unsigned long long phi_value = outputJetValues[iOutput].range(phi_high_, phi_low_).to_uint64();
@@ -85,16 +99,16 @@ int main() {
             //std::cout << "et_value : " << et_value << "\n";
      
             // Convert to ap_uint
-            std::bitset<io_bit_length_> io_bitset(numio_value); 
+            std::bitset<diam_bit_length_> io_bitset(diam_value); 
             std::bitset<et_bit_length_ > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
-            ap_uint<io_bit_length_> io_apuint(numio_value);
+            ap_uint<diam_bit_length_> diam_apuint(diam_value);
             ap_uint<et_bit_length_> et_apuint(et_value);
             //std::cout << "et_apuint : " << et_apuint << "\n";
             ap_uint<eta_bit_length_> eta_apuint(eta_value);
             ap_uint<phi_bit_length_> phi_apuint(phi_value);
-            ap_uint<total_bits_> combined_value = (ap_uint<total_bits_>(io_apuint) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_ ) | ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(et_apuint) << (eta_bit_length_ + phi_bit_length_)) | (ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(eta_apuint) << phi_bit_length_) | phi_apuint;
+            ap_uint<total_bits_> combined_value = (ap_uint<total_bits_>(diam_apuint) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_ ) | ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(et_apuint) << (eta_bit_length_ + phi_bit_length_)) | (ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(eta_apuint) << phi_bit_length_) | phi_apuint;
             // Convert to hexadecimal (for the last field)
             std::stringstream hex_stream;
             hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
@@ -106,15 +120,15 @@ int main() {
             << " " << io_bitset.to_string() << "|" << et_bitset.to_string() << "|" << eta_bitset.to_string() << "|" << phi_bitset.to_string()
             << " 0x" << hexValue << std::endl; 
 
-            totalOutputJetMergedIO[iOutput] += numio_value; 
-            if (iOutput == 0) allOutputJetMergedIOLeading.push_back(numio_value);
-            if (iOutput == 1) allOutputJetMergedIOSubLeading.push_back(numio_value);
+            //totalOutputJetMergedIO[iOutput] += numio_value; 
+            //if (iOutput == 0) allOutputJetMergedIOLeading.push_back(numio_value);
+            //if (iOutput == 1) allOutputJetMergedIOSubLeading.push_back(numio_value);
         }
     }   
 
     //std::cout << "average merged IO for leading seed: " << float(totalOutputJetMergedIO[0] / maxEvent_) << " and for sub-leading seed: " << float(totalOutputJetMergedIO[1] / maxEvent_) << "\n";
-    unsigned int maxValueLeading = *std::max_element(allOutputJetMergedIOLeading.begin(), allOutputJetMergedIOLeading.end());
-    unsigned int maxValueSubLeading = *std::max_element(allOutputJetMergedIOSubLeading.begin(), allOutputJetMergedIOSubLeading.end());
+    //unsigned int maxValueLeading = *std::max_element(allOutputJetMergedIOLeading.begin(), allOutputJetMergedIOLeading.end());
+    //unsigned int maxValueSubLeading = *std::max_element(allOutputJetMergedIOSubLeading.begin(), allOutputJetMergedIOSubLeading.end());
     //std::cout << "max number of merged input objects (leading): " << maxValueLeading << " and for sub-leading: " << maxValueSubLeading << " for n input objects: " << maxObjectsConsidered_ << "\n";
     
     //std::cout << "Test bench completed." << std::endl;

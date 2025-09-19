@@ -14,11 +14,18 @@
 // Define constants used by testbench
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
-const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_2p0back";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_3p5back_JZ4_SeedPosRecalcWeighted";
 constexpr bool signalBool_ = false;
+constexpr unsigned int jzSlice_ = 4;
 
-const unsigned int maxEvent_ = signalBool_ ? 2500 : 2500;
-const std::string fileName_ = signalBool_ ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
+const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
+const std::string fileName_ =
+    signalBool_        ? "mc21_14TeV_hh_bbbb_vbf_novhh" :
+    (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
+    (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
+    (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
+                         "unknown_sample";
+
 
 
 void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
@@ -88,6 +95,8 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             std::string index, bin, hex_word;
             ss >> index >> bin >> hex_word;
 
+            //std::cout << "hex_word: " << hex_word << std::endl;
+
             size_t first_pipe = bin.find('|');
             size_t second_pipe = bin.rfind('|');
             if (first_pipe == std::string::npos || second_pipe == std::string::npos || first_pipe == second_pipe) {
@@ -99,12 +108,14 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             std::string eta_bin = bin.substr(first_pipe + 1, second_pipe - first_pipe - 1);
             std::string phi_bin = bin.substr(second_pipe + 1);
             //std::cout << "et_bin : " << et_bin << std::endl;
+            //std::cout << "eta_bin : " << eta_bin << std::endl;
+            //std::cout << "phi_bin : " << phi_bin << std::endl;
 
             // Prepend 5 zero bits (as MSB) to represent num_io = 0
             std::string num_io_bin = "00000";
 
             // Final bitstring in MSB to LSB order: num_io | et | eta | phi
-            std::string full_bin = phi_bin + eta_bin + et_bin + num_io_bin;
+            std::string full_bin = num_io_bin + et_bin + eta_bin + phi_bin;
 
             //std::cout << "full_bin: " << full_bin << std::endl;
 
