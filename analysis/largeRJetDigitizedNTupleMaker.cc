@@ -25,23 +25,35 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     
     TString outputFileName; 
     if (signalBool){
+<<<<<<< Updated upstream
         if (vbfBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhhAOD.root";
         else outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHCAOD.root";
     } 
     else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3AOD.root";
+=======
+        if (vbfBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_DIGITIZED.root";
+        else outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_DIGITIZED.root";
+    } 
+    else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_DIGITIZED.root";
+>>>>>>> Stashed changes
 
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
 
     // Create a TTree
     TTree* topoTree = new TTree("topoTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* gepBasicClusterTree = new TTree("gepBasicClusterTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* caloTopoTree = new TTree("caloTopoTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexTree = new TTree("gFexTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* jFexTree = new TTree("jFexTree", "Tree storing event-wise Et, Eta, Phi");
 
+    topoTree->SetAutoSave(0);
+    caloTopoTree->SetAutoSave(0);
+
     // Variables to store data
-    int topoEventNumber, caloTopoEventNumber, gFexEventNumber, jFexEventNumber;
+    int topoEventNumber, gepBasicClusterEventNumber, caloTopoEventNumber, gFexEventNumber, jFexEventNumber;
     std::vector<double> topoEtValues, topoEtaValues, topoPhiValues;
+    std::vector<double> gepBasicClusterEtValues, gepBasicClusterEtaValues, gepBasicClusterPhiValues;
     std::vector<double> caloTopoEtValues, caloTopoEtaValues, caloTopoPhiValues;
     std::vector<double> gFexEtValues, gFexEtaValues, gFexPhiValues;
     std::vector<double> jFexEtValues, jFexEtaValues, jFexPhiValues;
@@ -51,6 +63,11 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     topoTree->Branch("Et", &topoEtValues);
     topoTree->Branch("Eta", &topoEtaValues);
     topoTree->Branch("Phi", &topoPhiValues);
+
+    gepBasicClusterTree->Branch("eventNumber", &gepBasicClusterEventNumber, "eventNumber/I");
+    gepBasicClusterTree->Branch("Et", &gepBasicClusterEtValues);
+    gepBasicClusterTree->Branch("Eta", &gepBasicClusterEtaValues);
+    gepBasicClusterTree->Branch("Phi", &gepBasicClusterPhiValues);
 
     caloTopoTree->Branch("eventNumber", &caloTopoEventNumber, "eventNumber/I");
     caloTopoTree->Branch("Et", &caloTopoEtValues);
@@ -70,17 +87,25 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
     // Open input file
 
     for (std::string fileName : fileNames){
+        std::cout << "fileName processed: " << fileName << "\n";
         int current_event = -1;
         std::string line;
         // Bools determining which file being processed
         bool topo = false;
+        bool gepBasicCluster = false;
         bool gFex = false;
         bool jFex = false;
         bool caloTopo = false;
         if (fileName.find("topo422") != std::string::npos) topo = true;
+        if (fileName.find("gepbasicclusters") != std::string::npos) gepBasicCluster = true;
         if (fileName.find("calotopo") != std::string::npos) caloTopo = true;
         if (fileName.find("gfex") != std::string::npos) gFex = true;
         if (fileName.find("jfex") != std::string::npos) jFex = true;
+        std::cout << "topo bool: " << topo << "\n";
+        std::cout << "gepBasicCluster bool: " << gepBasicCluster << "\n";
+        std::cout << "gFex bool: " << gFex << "\n";
+        std::cout << "jFex bool: " << jFex << "\n";
+        std::cout << "caloTopo bool: " << caloTopo << "\n";
         std::ifstream infile(fileName);
         if (!infile.is_open()) {
             std::cerr << "Error: Could not open file " << fileName << std::endl;
@@ -98,6 +123,13 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
                         topoEtValues.clear();
                         topoEtaValues.clear();
                         topoPhiValues.clear();
+                    }
+                    if (gepBasicCluster){
+                        gepBasicClusterEventNumber = current_event;
+                        gepBasicClusterTree->Fill();
+                        gepBasicClusterEtValues.clear();
+                        gepBasicClusterEtaValues.clear();
+                        gepBasicClusterPhiValues.clear();
                     }
                     if (caloTopo){
                         caloTopoEventNumber = current_event;
@@ -126,7 +158,7 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
                 std::stringstream ss(line);
                 std::string dummy, event_label;
                 ss >> dummy >> event_label >> current_event;
-                std::cout << "Processing Event: " << current_event << std::endl;
+                //std::cout << "Processing Event: " << current_event << std::endl;
                 continue;
             }
             //if (current_event > 9) break;
@@ -162,6 +194,12 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
                 topoEtaValues.push_back(undigitized_eta);
                 topoPhiValues.push_back(undigitized_phi);
             }
+            if (gepBasicCluster){
+                // Store values in vectors
+                gepBasicClusterEtValues.push_back(undigitized_et);
+                gepBasicClusterEtaValues.push_back(undigitized_eta);
+                gepBasicClusterPhiValues.push_back(undigitized_phi);
+            }
             if (caloTopo){
                 // Store values in vectors
                 caloTopoEtValues.push_back(undigitized_et);
@@ -183,15 +221,18 @@ void analyze_file(const std::vector<std::string> fileNames, const bool signalBoo
         }
 
         // Fill the last event
+        std::cout << "filling tree" << "\n";
         if (topo) topoTree->Fill();
         if (caloTopo) caloTopoTree->Fill();
+        if (gepBasicCluster) gepBasicClusterTree->Fill();
         else if (gFex) gFexTree->Fill();
         else if (jFex) jFexTree->Fill();
         infile.close();
-
     }
+    std::cout << "writing tree" << "\n";
     // Write and close the file
     topoTree->Write();
+    gepBasicClusterTree->Write();
     caloTopoTree->Write();
     gFexTree->Write();
     jFexTree->Write();
@@ -213,7 +254,15 @@ void callNTupleMaker(const bool signalBool, const bool vbfBool = true) {
     else fileName += "mc21_14TeV_jj_JZ3_topo422.dat";
     fileNames.push_back(fileName);
 
-    fileName = "/home/larsonma/LargeRadiusJets/data/MemPrintsAOD/CaloTopoTowers/";
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/";
+    if (signalBool){
+        if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_gepbasicclusters.dat";
+        else fileName += "mc21_14TeV_HHbbbb_HLLHC_gepbasicclusters.dat";
+    } 
+    else fileName += "mc21_14TeV_jj_JZ3_gepbasicclusters.dat";
+    fileNames.push_back(fileName);
+
+    fileName = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/";
     if (signalBool){
         if (vbfBool) fileName += "mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
         else fileName += "mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";

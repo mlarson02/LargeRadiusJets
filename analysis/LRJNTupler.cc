@@ -76,83 +76,93 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 
 
 // Main function
-void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
+void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
     string fileDir;
     if (vbfBool){
-        if (daodBool){
-            if(signalBool){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAOD_100kEv/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
-            }
-            else{
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
-            }
-            
+        if(signalBool){
+            fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Signal_HHbbbb_VBF";
         }
         else{
-            if (signalBool) {
-                fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
-                    "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
-            } else {
-                fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658" :
-                    "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            if(jzSlice == 2){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ2";
+            }
+            else if (jzSlice == 3){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ3";
+            }
+            else if (jzSlice == 4){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ4";
             }
         }
     }
     else{
-        if (daodBool){
-            if (signalBool){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/ggF/mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.deriv.DAOD_JETM42.e8564_s4422_r16130_p6658";
-            }
-            else{
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
-            }
+        if (signalBool){
+            fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/ggF/mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.deriv.DAOD_JETM42.e8564_s4422_r16130_p6658";
         }
         else{
-            if (signalBool) {
-                fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130":
-                    "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
-            } else {
-                fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130" :
-                    "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
+            if(jzSlice == 2){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ2";
+            }
+            else if (jzSlice == 3){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ3";
+            }
+            else if (jzSlice == 4){
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ4";
             }
         }
     }
 
     std::string output_file_topo422;
     std::string output_file_calotopotowers;
+    std::string output_file_gepbasicclusters;
     std::string output_file_gfex;
     std::string output_file_jfex;
 
     if (signalBool) {
         if (vbfBool) {
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422_100k.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers_100k.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj_100k.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj_100k.dat";
+            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
+            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
+            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_gepbasicclusters.dat";
+            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
+            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
         } else {
             output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_HHbbbb_HLLHC_topo422.dat";
             output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";
+            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_HHbbbb_HLLHC_gepbasicclusters.dat";
             output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_HHbbbb_HLLHC_gfex_smallrj.dat";
             output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_HHbbbb_HLLHC_jfex_smallrj.dat";
         }
     } else {
-        output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat";
-        output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat";
-        output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
-        output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat";
+        if(jzSlice == 2){
+            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ2_topo422.dat";
+            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ2_calotopotowers.dat";
+            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ2_gepbasicclusters.dat";
+            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ2_gfex_smallrj.dat";
+            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ2_jfex_smallrj.dat";
+        }
+        else if(jzSlice == 3){
+            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat";
+            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat";
+            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ3_gepbasicclusters.dat";
+            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
+            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat";
+        }
+        else if(jzSlice == 4){
+            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ4_topo422.dat";
+            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ4_calotopotowers.dat";
+            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ4_gepbasicclusters.dat";
+            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ4_gfex_smallrj.dat";
+            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ4_jfex_smallrj.dat";
+        }
     }
 
     std::ofstream f_topotower(output_file_calotopotowers);
+    std::ofstream f_gepbasicclusters(output_file_gepbasicclusters);
     std::ofstream f_topo(output_file_topo422);
     std::ofstream f_gfex(output_file_gfex);
     std::ofstream f_jfex(output_file_jfex);
 
-    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open()) {
+    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open()) {
         std::cerr << "Error: One or more output files could not be opened for writing!" << std::endl;
         // handle error or return
     }
@@ -160,24 +170,32 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
 
     TString outputFileName; 
     if (vbfBool){
-        if (daodBool){
-            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_DAOD_NTUPLE_HIGGSPTCUT.root";
-            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_DAOD_NTUPLE.root";
-        }
+        if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
         else{
-            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_AOD_NTUPLE.root";
-            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE.root";
-        }
+            if(jzSlice == 2){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ2_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+            else if(jzSlice == 3){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+            else if(jzSlice == 4){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ4_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+        } 
     }
     else{
-        if (daodBool){
-            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_DAOD_NTUPLE.root"; // FIXME change these files 
-            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_DAOD_NTUPLE.root";
-        }
+        if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root"; // FIXME change these files 
         else{
-            if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_AOD_NTUPLE.root";
-            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE.root";
-        }
+            if(jzSlice == 2){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ2_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+            else if(jzSlice == 3){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+            else if(jzSlice == 4){
+                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ4_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            }
+        } 
     }
     
     
@@ -191,6 +209,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     TTree* truthHiggsTree = new TTree("truthHiggsTree", "Tree storing event-wise information about truth particles");
     //TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
     TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* gepBasicClustersTree = new TTree("gepBasicClustersTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* topo422Tree = new TTree("topo422Tree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexSRJTree = new TTree("gFexSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexLeadingSRJTree = new TTree("gFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
@@ -233,6 +252,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
 
     // Tower / cluster vectors
     std::vector<double> caloTopoTowerEtValues, caloTopoTowerEtaValues, caloTopoTowerPhiValues;
+    std::vector<double> gepBasicClustersEtValues, gepBasicClustersEtaValues, gepBasicClustersPhiValues;
     std::vector<double> topo422EtValues, topo422EtaValues, topo422PhiValues;
 
     // L1Calo jets vectors
@@ -262,15 +282,15 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
 
     // Reco offline jets vectors
     std::vector<unsigned int> recoAntiKt10LRJEtIndexValues;
-    std::vector<double> recoAntiKt10LRJEtValues, recoAntiKt10LRJEtaValues, recoAntiKt10LRJPhiValues;
-    std::vector<double> recoAntiKt10LRJLeadingEtValues, recoAntiKt10LRJLeadingEtaValues, recoAntiKt10LRJLeadingPhiValues;
-    std::vector<double> recoAntiKt10LRJSubleadingEtValues, recoAntiKt10LRJSubleadingEtaValues, recoAntiKt10LRJSubleadingPhiValues;
+    std::vector<double> recoAntiKt10LRJEtValues, recoAntiKt10LRJEtaValues, recoAntiKt10LRJPhiValues, recoAntiKt10LRJMassValues;
+    std::vector<double> recoAntiKt10LRJLeadingEtValues, recoAntiKt10LRJLeadingEtaValues, recoAntiKt10LRJLeadingPhiValues, recoAntiKt10LRJLeadingMassValues;
+    std::vector<double> recoAntiKt10LRJSubleadingEtValues, recoAntiKt10LRJSubleadingEtaValues, recoAntiKt10LRJSubleadingPhiValues, recoAntiKt10LRJSubleadingMassValues;
 
     // Truth WZ Antikt4 jets vectors
     std::vector<unsigned int> truthAntiKt4WZSRJEtIndexValues;
-    std::vector<double> truthAntiKt4WZSRJEtValues, truthAntiKt4WZSRJEtaValues, truthAntiKt4WZSRJPhiValues;
-    std::vector<double> truthAntiKt4WZSRJLeadingEtValues, truthAntiKt4WZSRJLeadingEtaValues, truthAntiKt4WZSRJLeadingPhiValues;
-    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues, truthAntiKt4WZSRJSubleadingEtaValues, truthAntiKt4WZSRJSubleadingPhiValues;
+    std::vector<double> truthAntiKt4WZSRJEtValues, truthAntiKt4WZSRJEtaValues, truthAntiKt4WZSRJPhiValues, truthAntiKt4WZSRJMassValues;
+    std::vector<double> truthAntiKt4WZSRJLeadingEtValues, truthAntiKt4WZSRJLeadingEtaValues, truthAntiKt4WZSRJLeadingPhiValues, truthAntiKt4WZSRJLeadingMassValues;
+    std::vector<double> truthAntiKt4WZSRJSubleadingEtValues, truthAntiKt4WZSRJSubleadingEtaValues, truthAntiKt4WZSRJSubleadingPhiValues, truthAntiKt4WZSRJSubleadingMassValues;
 
     // In time anti-kt 4 truth jets vectors
     std::vector<unsigned int> inTimeAntiKt4TruthSRJEtIndexValues;
@@ -328,6 +348,12 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     caloTopoTowerTree->Branch("Et", &caloTopoTowerEtValues);
     caloTopoTowerTree->Branch("Eta", &caloTopoTowerEtaValues);
     caloTopoTowerTree->Branch("Phi", &caloTopoTowerPhiValues);
+
+    // gepBasicClustersTree
+    gepBasicClustersTree->Branch("Et", &gepBasicClustersEtValues);
+    gepBasicClustersTree->Branch("Eta", &gepBasicClustersEtaValues);
+    gepBasicClustersTree->Branch("Phi", &gepBasicClustersPhiValues);
+
 
     // topo422Tree
     topo422Tree->Branch("Et", &topo422EtValues);
@@ -435,32 +461,40 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     recoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJEtValues);
     recoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJEtaValues);
     recoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJPhiValues);
+    recoAntiKt10UFOCSSKJets->Branch("Mass", &recoAntiKt10LRJMassValues);
 
     // leadingRecoAntiKt10UFOCSSKJets
     leadingRecoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJLeadingEtValues);
     leadingRecoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJLeadingEtaValues);
     leadingRecoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJLeadingPhiValues);
+    leadingRecoAntiKt10UFOCSSKJets->Branch("Mass", &recoAntiKt10LRJLeadingMassValues);
 
     // subleadingRecoAntiKt10UFOCSSKJets
     subleadingRecoAntiKt10UFOCSSKJets->Branch("Et", &recoAntiKt10LRJSubleadingEtValues);
     subleadingRecoAntiKt10UFOCSSKJets->Branch("Eta", &recoAntiKt10LRJSubleadingEtaValues);
     subleadingRecoAntiKt10UFOCSSKJets->Branch("Phi", &recoAntiKt10LRJSubleadingPhiValues);
+    subleadingRecoAntiKt10UFOCSSKJets->Branch("Mass", &recoAntiKt10LRJSubleadingMassValues);
 
     // truthAntiKt4TruthDressedWZJets
     truthAntiKt4TruthDressedWZJets->Branch("EtIndex", &truthAntiKt4WZSRJEtIndexValues);
     truthAntiKt4TruthDressedWZJets->Branch("Et", &truthAntiKt4WZSRJEtValues);
     truthAntiKt4TruthDressedWZJets->Branch("Eta", &truthAntiKt4WZSRJEtaValues);
     truthAntiKt4TruthDressedWZJets->Branch("Phi", &truthAntiKt4WZSRJPhiValues);
+    truthAntiKt4TruthDressedWZJets->Branch("Mass", &truthAntiKt4WZSRJMassValues);
 
     // leadingTruthAntiKt4TruthDressedWZJets
     leadingTruthAntiKt4TruthDressedWZJets->Branch("Et", &truthAntiKt4WZSRJLeadingEtValues);
     leadingTruthAntiKt4TruthDressedWZJets->Branch("Eta", &truthAntiKt4WZSRJLeadingEtaValues);
     leadingTruthAntiKt4TruthDressedWZJets->Branch("Phi", &truthAntiKt4WZSRJLeadingPhiValues);
+    leadingTruthAntiKt4TruthDressedWZJets->Branch("Mass", &truthAntiKt4WZSRJLeadingMassValues);
 
     // subleadingTruthAntiKt4TruthDressedWZJets
     subleadingTruthAntiKt4TruthDressedWZJets->Branch("Et", &truthAntiKt4WZSRJSubleadingEtValues);
     subleadingTruthAntiKt4TruthDressedWZJets->Branch("Eta", &truthAntiKt4WZSRJSubleadingEtaValues);
     subleadingTruthAntiKt4TruthDressedWZJets->Branch("Phi", &truthAntiKt4WZSRJSubleadingPhiValues);
+    subleadingTruthAntiKt4TruthDressedWZJets->Branch("Mass", &truthAntiKt4WZSRJSubleadingMassValues);
+
+    
 
     // recoAntiKt10LCTopoJets - unsure if want to use these at all?? 
     /*
@@ -483,11 +517,34 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
     gFexRhoRoI->Branch("Eta", &gFexRhoRoIEtaValues);
     gFexRhoRoI->Branch("Phi", &gFexRhoRoIPhiValues);*/
     int higgsPassEventCounter = 0;
+    namespace fs = std::filesystem;
     // Collect input file names
-    vector<string> fileNames;
-    for (const auto& entry : filesystem::directory_iterator(fileDir)) {
-        if (entry.path().extension() == ".1") { // Ends with .1
+    std::vector<std::string> fileNames;     // DAOD_JETM42*.root
+    std::vector<std::string> gepFileNames;  // GEP*.root
+
+    auto has_prefix = [](const std::string& s, const std::string& p) {
+        return s.rfind(p, 0) == 0; // starts with
+    };
+    auto has_suffix = [](const std::string& s, const std::string& suf) {
+        return s.size() >= suf.size() &&
+            s.compare(s.size() - suf.size(), suf.size(), suf) == 0; // ends with
+    };
+
+    // Loop 1: DAOD_JETM42*.root (from derivation of an AOD)
+    for (const auto& entry : fs::directory_iterator(fileDir)) {
+        if (!entry.is_regular_file()) continue;
+        const std::string fn = entry.path().filename().string();
+        if (has_prefix(fn, "DAOD_JETM42") && has_suffix(fn, ".root")) {
             fileNames.push_back(entry.path().string());
+        }
+    }
+
+    // Loop 2: GEP*.root - load TrigGepPerf output ROOT file
+    for (const auto& entry : fs::directory_iterator(fileDir)) {
+        if (!entry.is_regular_file()) continue;
+        const std::string fn = entry.path().filename().string();
+        if (has_prefix(fn, "GEP") && has_suffix(fn, ".root")) {
+            gepFileNames.push_back(entry.path().string());
         }
     }
 
@@ -504,6 +561,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
         fileIt++; 
         //if (fileIt > 9) break; 
         cout << "Processing file: " << fileName << endl;
+        std::cout << "Processing GEP file: " << gepFileNames[fileIt - 1] << "\n";
 
         TFile* f = TFile::Open(fileName.c_str());
         if (!f || f->IsZombie()) {
@@ -511,19 +569,54 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             continue;
         }
 
+        // Open the DAOD file
         xAOD::TEvent event(xAOD::TEvent::kClassAccess);
         if (!event.readFrom(f).isSuccess()) {
             cerr << "Cannot read xAOD from file." << endl;
             continue;
         }
 
+        // --- Open GEP ROOT (non-xAOD) ---
+        TFile* gf = TFile::Open(gepFileNames[fileIt - 1].c_str());
+        if (!gf || gf->IsZombie()) {
+            std::cerr << "Could not open GEP file: " << gepFileNames[fileIt - 1] << "\n";
+            if (gf) { gf->Close(); delete gf; }
+            f->Close(); delete f;
+            continue;
+        }
+
+        TTree* gt = nullptr;
+        gf->GetObject("ntuple", gt);
+        if (!gt) {
+            std::cerr << "GEP file has no TTree named 'ntuple'\n";
+            gf->Close(); delete gf;
+            f->Close(); delete f;
+            continue;
+        }
+
+        // Only enable the branches we need
+        gt->SetBranchStatus("*", 0);
+        gt->SetBranchStatus("GEPBasicClusters_et",  1);
+        gt->SetBranchStatus("GEPBasicClusters_eta", 1);
+        gt->SetBranchStatus("GEPBasicClusters_phi", 1);
+
+        // Assume std::vector<float>; if these are double, change to std::vector<double>
+        std::vector<float>* gepBasicClustersEt  = nullptr;
+        std::vector<float>* gepBasicClustersEta = nullptr;
+        std::vector<float>* gepBasicClustersPhi = nullptr;
+
+        gt->SetBranchAddress("GEPBasicClusters_et",  &gepBasicClustersEt);
+        gt->SetBranchAddress("GEPBasicClusters_eta", &gepBasicClustersEta);
+        gt->SetBranchAddress("GEPBasicClusters_phi", &gepBasicClustersPhi);
+
         std::cout << "  Number of events: " << event.getEntries() << endl;
 
         
         
-        for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) {
+        for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
             //if (iEvt > 10) continue;
-            event.getEntry(iEvt);
+            event.getEntry(iEvt);               // DAOD event iEvt
+            gt->GetEntry(iEvt);                 // GEP event iEvt
 
             if ((iEvt % 100) == 0) std::cout << "iEvt: " << iEvt << "\n";
             
@@ -631,22 +724,28 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             recoAntiKt10LRJEtValues.clear();
             recoAntiKt10LRJEtaValues.clear();
             recoAntiKt10LRJPhiValues.clear();
+            recoAntiKt10LRJMassValues.clear();
             recoAntiKt10LRJLeadingEtValues.clear();
             recoAntiKt10LRJLeadingEtaValues.clear();
             recoAntiKt10LRJLeadingPhiValues.clear();
+            recoAntiKt10LRJLeadingMassValues.clear();
             recoAntiKt10LRJSubleadingEtValues.clear();
             recoAntiKt10LRJSubleadingEtaValues.clear();
             recoAntiKt10LRJSubleadingPhiValues.clear();
+            recoAntiKt10LRJSubleadingMassValues.clear();
             truthAntiKt4WZSRJEtIndexValues.clear();
             truthAntiKt4WZSRJEtValues.clear();
             truthAntiKt4WZSRJEtaValues.clear();
             truthAntiKt4WZSRJPhiValues.clear();
+            truthAntiKt4WZSRJMassValues.clear();
             truthAntiKt4WZSRJLeadingEtValues.clear();
             truthAntiKt4WZSRJLeadingEtaValues.clear();
             truthAntiKt4WZSRJLeadingPhiValues.clear();
+            truthAntiKt4WZSRJLeadingMassValues.clear();
             truthAntiKt4WZSRJSubleadingEtValues.clear();
             truthAntiKt4WZSRJSubleadingEtaValues.clear();
             truthAntiKt4WZSRJSubleadingPhiValues.clear();
+            truthAntiKt4WZSRJSubleadingMassValues.clear();
             
             gFexLRJEtValues.clear();
             gFexLRJEtaValues.clear();
@@ -694,6 +793,9 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             caloTopoTowerEtValues.clear();
             caloTopoTowerEtaValues.clear();
             caloTopoTowerPhiValues.clear();
+            gepBasicClustersEtValues.clear();
+            gepBasicClustersEtaValues.clear();
+            gepBasicClustersPhiValues.clear();
             truthHiggsInvMassValues.clear();
             truthHiggsEtValues.clear();
             truthHiggsEtaValues.clear();
@@ -824,6 +926,67 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
             } // loop through truth bosons with decay particles
             bool higgsPtCutsPassed = higgsPtCutPassed[0] || higgsPtCutPassed[1];
             if (higgsPtCutsPassed) higgsPassEventCounter++;
+
+            unsigned int gepbasicclusters_it = 0;
+            for (unsigned int i = 0; i < gepBasicClustersEt->size(); ++i) {
+                float gepBasicClusterEt  = (*gepBasicClustersEt)[i] / 1000.0;
+                float gepBasicClusterEta = (*gepBasicClustersEta)[i];
+                float gepBasicClusterPhi = (*gepBasicClustersPhi)[i];
+
+                gepBasicClustersEtValues.push_back(gepBasicClusterEt);
+                gepBasicClustersEtaValues.push_back(gepBasicClusterEta);
+                gepBasicClustersPhiValues.push_back(gepBasicClusterPhi);
+
+
+                if (gepBasicClusterEt < 0) continue; // don't store to digitized memories
+
+
+                // Digitize each variable
+                int phi_bin = digitize(gepBasicClusterPhi, phi_bit_length_, phi_min_, phi_max_);
+                int eta_bin = digitize(gepBasicClusterEta, eta_bit_length_, eta_min_, eta_max_);
+                int et_bin  = digitize(gepBasicClusterEt, et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                                        
+                // 2. Build binary string (for debug or text output)
+                std::stringstream binary_ss;
+                binary_ss << std::bitset<et_bit_length_>(et_bin) << "|"
+                        << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                        << std::bitset<phi_bit_length_>(phi_bin);
+                std::string binary_word = binary_ss.str();
+
+                // 3. Pack into 27-bit word (stored as uint32_t)
+                uint32_t packed_word = (et_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                    (eta_bin << phi_bit_length_) |
+                                    (phi_bin);
+                                    
+                
+                if (higgsPtCutsPassed || !signalBool){
+                    if (gepbasicclusters_it == 0) {
+                        f_gepbasicclusters << "Event : " << std::dec << iEvt << "\n";
+                    }
+                    // 4. Write to output file
+                    f_gepbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusters_it
+                                << " " << binary_word
+                                << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    gepbasicclusters_it++;
+                }
+
+
+
+
+
+
+
+
+
+                // ... your processing with (et, eta, phi) ...
+            }
+
+
+
+
+
+
 
             // Loop over clusters and fill Et, Eta, Phi
             unsigned int topotower_it = 0;
@@ -1256,6 +1419,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 recoAntiKt10LRJEtValues.push_back(et);
                 recoAntiKt10LRJEtaValues.push_back(jet->eta());
                 recoAntiKt10LRJPhiValues.push_back(jet->phi());
+                recoAntiKt10LRJMassValues.push_back(jet->m() / 1000.0);
             }
 
             // Leading jet
@@ -1264,6 +1428,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 recoAntiKt10LRJLeadingEtValues.push_back(recoAntiKt10LRJEtValues[0]);
                 recoAntiKt10LRJLeadingEtaValues.push_back(leading->eta());
                 recoAntiKt10LRJLeadingPhiValues.push_back(leading->phi());
+                recoAntiKt10LRJLeadingMassValues.push_back(leading->m() / 1000.0);
             }
 
             // Subleading jet
@@ -1272,6 +1437,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 recoAntiKt10LRJSubleadingEtValues.push_back(recoAntiKt10LRJEtValues[1]);
                 recoAntiKt10LRJSubleadingEtaValues.push_back(subleading->eta());
                 recoAntiKt10LRJSubleadingPhiValues.push_back(subleading->phi());
+                recoAntiKt10LRJSubleadingMassValues.push_back(subleading->m() / 1000.0);
             }
 
 
@@ -1297,6 +1463,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 truthAntiKt4WZSRJEtValues.push_back(et);
                 truthAntiKt4WZSRJEtaValues.push_back(jet->eta());
                 truthAntiKt4WZSRJPhiValues.push_back(jet->phi());
+                truthAntiKt4WZSRJMassValues.push_back(jet->m() / 1000.0);
             }
 
             // Leading jet
@@ -1305,6 +1472,8 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 truthAntiKt4WZSRJLeadingEtValues.push_back(truthAntiKt4WZSRJEtValues[0]);
                 truthAntiKt4WZSRJLeadingEtaValues.push_back(leading->eta());
                 truthAntiKt4WZSRJLeadingPhiValues.push_back(leading->phi());
+                truthAntiKt4WZSRJLeadingMassValues.push_back(leading->m() / 1000.0);
+
             }
 
             // Subleading jet
@@ -1313,12 +1482,14 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 truthAntiKt4WZSRJSubleadingEtValues.push_back(truthAntiKt4WZSRJEtValues[1]);
                 truthAntiKt4WZSRJSubleadingEtaValues.push_back(subleading->eta());
                 truthAntiKt4WZSRJSubleadingPhiValues.push_back(subleading->phi());
+                truthAntiKt4WZSRJSubleadingMassValues.push_back(subleading->m() / 1000.0);
             }
-            if(higgsPtCutsPassed){
+            if(higgsPtCutsPassed || !signalBool){
                 truthbTree->Fill();
                 truthHiggsTree->Fill();
                 // truthVBFQuark->Fill();  // commented out as in your declaration
                 caloTopoTowerTree->Fill();
+                gepBasicClustersTree->Fill();
                 topo422Tree->Fill();
                 gFexSRJTree->Fill();
                 gFexLeadingSRJTree->Fill();
@@ -1346,14 +1517,17 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 subleadingTruthAntiKt4TruthDressedWZJets->Fill();
             }
         } // loop through events
-        
+        std::cout << "closing files" << "\n";
+        gf->Close();
         f->Close();
     } // loop through filenames
     outputFile->cd();
+    std::cout << "writing output file" << "\n";
     truthbTree->Write("", TObject::kOverwrite);
     truthHiggsTree->Write("", TObject::kOverwrite);
     // truthVBFQuark->Write();  // Optional, if used
     caloTopoTowerTree->Write("", TObject::kOverwrite);
+    gepBasicClustersTree->Write("", TObject::kOverwrite);
     topo422Tree->Write("", TObject::kOverwrite);
     gFexSRJTree->Write("", TObject::kOverwrite);
     gFexLeadingSRJTree->Write("", TObject::kOverwrite);

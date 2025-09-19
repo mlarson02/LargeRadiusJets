@@ -168,10 +168,10 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
     """
     if objectType == "topo422" or objectType == "caloTopoTowers" and len(max_gfex_srjs) > 0:
         max_gfex_srjs.sort(reverse=True)  # sort by Et descending
-        for _, eta, phi in max_gfex_srjs[:8]:
+        for _, eta, phi in max_gfex_srjs[:2]:
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='black',
                                     facecolor='none', lw=1.2, linestyle='--')
-            #plt.gca().add_patch(circle)
+            plt.gca().add_patch(circle)
             circle = patches.Circle((eta, phi), radius=1.2, edgecolor='black',
                                     facecolor='none', lw=1.2, linestyle=':') 
             #plt.gca().add_patch(circle)
@@ -185,7 +185,7 @@ def plot_heatmap(objectType, data, eta_bins, phi_bins, title, filename, gFexData
         for _, eta, phi in max_jfex_srjs[2:8]: 
             circle = patches.Circle((eta, phi), radius=1.0, edgecolor='orange',
                                     facecolor='none', lw=1.2, linestyle='--') 
-            plt.gca().add_patch(circle)
+            #plt.gca().add_patch(circle)
             circle = patches.Circle((eta, phi), radius=1.2, edgecolor='yellow',
                                     facecolor='none', lw=1.2, linestyle=':') 
             #plt.gca().add_patch(circle)

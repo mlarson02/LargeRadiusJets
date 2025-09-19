@@ -78,7 +78,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/VBF/mc21_14TeV.537536.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv0cv1.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
             }
             else{
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
+                fileDir = "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3_100kEv/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658";
             }
             
         }
@@ -89,7 +89,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                     "/home/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
             } else {
                 fileDir = afBool ?
-                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.deriv.DAOD_JETM42.e8557_s4422_r16130_p6658" :
+                    "/data/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3_100kEv/mc21_14TeV.801168.Py8EG_A14NNPDF23LO_jj_JZ3.recon.AOD.e8557_s4422_r16130" :
                     "/home/larsonma/LargeRadiusJets/datasets/Background_jj_JZ3/mc21_14TeV.537540.MGPy8EG_hh_bbbb_vbf_novhh_5fs_l1cvv1cv1.recon.AOD.e8557_s4422_r16130";
             }
         }
@@ -159,7 +159,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
         }
         else{
             if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_AOD_NTUPLE.root";
-            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE.root";
+            else outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_AOD_NTUPLE_100kEv.root";
         }
     }
     else{
@@ -802,7 +802,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                     } // if 2nd higgs in event
                 } // if higgs truth particle of interest
             } // loop through truth bosons with decay particles
-            bool higgsPtCutsPassed = higgsPtCutPassed[0] || higgsPtCutPassed[1];
+            bool higgsPtCutsPassed = (higgsPtCutPassed[0] || higgsPtCutPassed[1]) || !signalBool;
             if (higgsPtCutsPassed) higgsPassEventCounter++;
 
             // Loop over clusters and fill Et, Eta, Phi
@@ -867,7 +867,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
 
-                std::cout << "eta: " << cluster->eta() << " and eta_bin : " << eta_bin << "\n";
+                //std::cout << "eta: " << cluster->eta() << " and eta_bin : " << eta_bin << "\n";
                                         
                 // 2. Build binary string (for debug or text output)
                 std::stringstream binary_ss;
@@ -881,7 +881,7 @@ void nTupler(bool signalBool, bool daodBool, bool vbfBool) {
                                     (eta_bin << phi_bit_length_) |
                                     (phi_bin);
 
-                std::cout << "binary: " << binary_word << "\n";
+                //std::cout << "binary: " << binary_word << "\n";
 
                 // 4. Write to output file
                 
