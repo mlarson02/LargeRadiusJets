@@ -19,6 +19,11 @@
 //#include "../algorithm/constants.h"
 using namespace std;
 
+Int_t old = gErrorIgnoreLevel;
+gErrorIgnoreLevel = kError;  // hide <Warning>, show only <Error> and worse
+// ... code that would spam warnings ...
+gErrorIgnoreLevel = old; // ignore unnecessary warnings
+
 int colors[] = {
             
             
@@ -58,22 +63,22 @@ std::map<std::string, std::string> legendMap = {
         "R^{2}_{cut} = 1.0, N_{IO} = 256"},
 
 
-    {"Seeds2_r2Cut1p0_maxObj128_0p001back_SeedPosRecalcWeighted",
+    {"Seeds2_r2Cut1p0_maxObj128_0p001back_JZ3_SeedPosRecalcWeighted",
     "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut Disabled"},
 
-    {"Seeds2_r2Cut1p0_maxObj128_1p5back_SeedPosRecalcWeighted",
+    {"Seeds2_r2Cut1p0_maxObj128_1p5back_JZ3_SeedPosRecalcWeighted",
     "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 1.5"},
 
-    {"Seeds2_r2Cut1p0_maxObj128_2p0back_SeedPosRecalcWeighted",
+    {"Seeds2_r2Cut1p0_maxObj128_2p0back_JZ3_SeedPosRecalcWeighted",
+    "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 2.0"},
+
+    {"Seeds2_r2Cut1p0_maxObj128_2p5back_JZ3_SeedPosRecalcWeighted",
     "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 2.5"},
 
-    {"Seeds2_r2Cut1p0_maxObj128_2p5back_SeedPosRecalcWeighted",
-    "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 2.5"},
+    {"Seeds2_r2Cut1p0_maxObj128_3p0back_JZ3_SeedPosRecalcWeighted",
+    "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 3.0"},
 
-    {"Seeds2_r2Cut1p0_maxObj128_3p0back_SeedPosRecalcWeighted",
-    "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 3.5"},
-
-    {"Seeds2_r2Cut1p0_maxObj128_3p5back_SeedPosRecalcWeighted",
+    {"Seeds2_r2Cut1p0_maxObj128_3p5back_JZ3_SeedPosRecalcWeighted",
     "R^{2}_{cut} = 1.0, N_{IO} = 128, rMergeCut  = 3.5"},
 
     {"Seeds2_r2Cut1p0_maxObj256_0p001back_SeedPosRecalcWeighted",
@@ -1020,7 +1025,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
     subleadingInTimeAntiKt4TruthJetsTreeBack->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValuesBack);
     subleadingInTimeAntiKt4TruthJetsTreeBack->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValuesBack);
 
-    //gSystem->RedirectOutput("output5.log", "w");
+    gSystem->RedirectOutput("output5.log", "w");
     const int num_processed_events = 10000;
 
     // Variables to store data
@@ -1204,11 +1209,19 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         TH1F* sig_h_leading_LRJ_Et = new TH1F("sig_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 50 GeV", 16, 0, 800);
         TH1F* sig_h_subleading_LRJ_Et = new TH1F("sig_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 50 GeV", 16, 0, 800);
 
+    
+        // with deltaR metric
         TH2F *sigOfflineLeadingLRJEtvsPsi_R = new TH2F("sigOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
                             20, 0, 1 ); //y axis
+        TH2F *sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+                            20, 0, 1, // x axis
+                            20, 0, 1 ); //y axis
         TH2F *backOfflineLeadingLRJEtvsPsi_R = new TH2F("backOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("backOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+                            20, 0, 1, // x axis
                             20, 0, 1 ); //y axis
 
         TH2F *sigOfflineSubleadingLRJEtvsPsi_R = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
@@ -1217,12 +1230,71 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         TH2F *backOfflineSubleadingLRJEtvsPsi_R = new TH2F("backOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
                             20, 0, 1 ); //y axis
+        
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis                    
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis
+
+        // with deltaR^2 Metric
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+                            35, 0, 0.7, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R2 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+                            35, 0, 0.7, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis                    
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
 
         TH1F* sig_h_leading_LRJ_psi_R = new TH1F("sig_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_LRJ_psi_R_squared = new TH1F("sig_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* sig_h_LRJ_psi_R_12 = new TH1F("sig_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* sig_h_subleading_LRJ_psi_R = new TH1F("sig_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05 ", 20, 0, 1);
-
         TH1F* back_h_leading_LRJ_psi_R = new TH1F("back_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_LRJ_psi_R_squared = new TH1F("back_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* back_h_LRJ_psi_R_12 = new TH1F("back_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* back_h_subleading_LRJ_psi_R = new TH1F("back_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05", 20, 0, 1);
+
+        TH1F* sig_h_leading_LRJ_psi_R2 = new TH1F("sig_h_leading_LRJ_psi_R2", "Leading LRJ Et Distribution;#Psi_{R^{2}};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_LRJ_psi_R2_squared = new TH1F("sig_h_LRJ_psi_R2_squared", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading};% of Events / 0.01", 20, 0, 0.2);
+        TH1F* sig_h_LRJ_psi_R2_12 = new TH1F("sig_h_LRJ_psi_R2_12", "Leading LRJ Et Distribution; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}};% of Events / 0.2", 25, 0, 5);
+        TH1F* sig_h_subleading_LRJ_psi_R2 = new TH1F("sig_h_subleading_LRJ_psi_R2", "Subleading LRJ Et Distribution;#Psi_{R^{2}};% of Subleading LRJs / 0.05 ", 20, 0, 1);
+        TH1F* back_h_leading_LRJ_psi_R2 = new TH1F("back_h_leading_LRJ_psi_R2", "Leading LRJ Et Distribution;#Psi_{R^{2}};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_LRJ_psi_R2_squared = new TH1F("back_h_LRJ_psi_R2_squared", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading};% of Events / 0.01", 20, 0, 0.2);
+        TH1F* back_h_LRJ_psi_R2_12 = new TH1F("back_h_LRJ_psi_R2_12", "Leading LRJ Et Distribution; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}};% of Events / 0.2", 25, 0, 5);
+        TH1F* back_h_subleading_LRJ_psi_R2 = new TH1F("back_h_subleading_LRJ_psi_R2", "Subleading LRJ Et Distribution;#Psi_{R^{2}};% of Subleading LRJs / 0.05", 20, 0, 1);
 
         TH1F* sig_h_LRJ1_deltaEt_digitized_double = new TH1F("sig_h_LRJ1_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
         TH1F* sig_h_LRJ2_deltaEt_digitized_double = new TH1F("sig_h_LRJ2_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
@@ -1249,11 +1321,11 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         TH1F* sig_h_leading_LRJ_gFexLRJ_deltaR = new TH1F("sig_h_leading_LRJ_gFexLRJ_deltaR", "#Delta R Leading gFex LRJ, Output LRJ, ;#Delta R (gFex, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
         TH1F* sig_h_leading_LRJ_offlineLRJ_deltaR = new TH1F("sig_h_leading_LRJ_offlineLRJ_deltaR", "#Delta R Leading Offline LRJ, Output LRJ, ;#Delta R (Offline, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
 
-        TH1F* sig_h_first_LRJ_jFexSRJ_deltaR = new TH1F("sig_h_first_LRJ_jFexSRJ_deltaR", "#Delta R Leading jFex SRJ, Output LRJ, ;#Delta R (Lead. jFex SRJ, 1st JetTagger LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
-        TH1F* sig_h_second_LRJ_jFexSRJ_deltaR = new TH1F("sig_h_second_LRJ_jFexSRJ_deltaR", "#Delta R Subleading jFex SRJ, Output LRJ, ;#Delta R (Sublead. jFex SRJ, 2nd JetTagger LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
+        TH1F* sig_h_first_LRJ_jFexSRJ_deltaR = new TH1F("sig_h_first_LRJ_jFexSRJ_deltaR", "#Delta R Leading jFex SRJ, Output LRJ, ;#Delta R (Lead. jFex SRJ, 1st JetTagger LRJ);% of Leading LRJs / 0.5", 10, 0, 5);
+        TH1F* sig_h_second_LRJ_jFexSRJ_deltaR = new TH1F("sig_h_second_LRJ_jFexSRJ_deltaR", "#Delta R Subleading jFex SRJ, Output LRJ, ;#Delta R (Sublead. jFex SRJ, 2nd JetTagger LRJ);% of Leading LRJs / 0.1", 10, 0, 5);
 
         TH1F* sig_h_lead_sublead_LRJ_deltaR = new TH1F("sig_h_lead_sublead_LRJ_deltaR", "#Delta R Leading, Subleading LRJ, ;#Delta R (Lead., Sublead. Output LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
-
+        TH1F* sig_h_lead_sublead_LRJ_deltaEt = new TH1F("sig_h_lead_sublead_LRJ_deltaEt", "#Delta E_{T} Leading, Subleading LRJ, ;#Delta E_{T} (Lead., Sublead. JetTagger LRJ);% of Leading LRJs / 25 GeVs", 22, -50, 500);
         // Signal trigger efficiencies (gFex, JetTagger)
 
         TH1F* sig_h_offlineLRJ_Et_num50 = new TH1F("sig_h_offlineLRJ_Et_num50", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1718,10 +1790,11 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         TH1F* back_h_leading_LRJ_gFexLRJ_deltaR = new TH1F("back_h_leading_LRJ_gFexLRJ_deltaR", "#Delta R Leading gFex LRJ, Output LRJ, ;#Delta R (gFex, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
         TH1F* back_h_leading_LRJ_offlineLRJ_deltaR = new TH1F("back_h_leading_LRJ_offlineLRJ_deltaR", "#Delta R Leading Offline LRJ, Output LRJ, ;#Delta R (Offline, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
 
-        TH1F* back_h_first_LRJ_jFexSRJ_deltaR = new TH1F("back_h_first_LRJ_jFexSRJ_deltaR", "#Delta R Leading jFex SRJ, Output LRJ, ;#Delta R (Lead. jFex SRJ, JetTagger LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
-        TH1F* back_h_second_LRJ_jFexSRJ_deltaR = new TH1F("back_h_second_LRJ_jFexSRJ_deltaR", "#Delta R Subleading jFex SRJ, Output LRJ, ;#Delta R (Sublead. jFex SRJ, JetTagger LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
+        TH1F* back_h_first_LRJ_jFexSRJ_deltaR = new TH1F("back_h_first_LRJ_jFexSRJ_deltaR", "#Delta R Leading jFex SRJ, Output LRJ, ;#Delta R (Lead. jFex SRJ, JetTagger LRJ);% of Leading LRJs / 0.1", 10, 0, 5);
+        TH1F* back_h_second_LRJ_jFexSRJ_deltaR = new TH1F("back_h_second_LRJ_jFexSRJ_deltaR", "#Delta R Subleading jFex SRJ, Output LRJ, ;#Delta R (Sublead. jFex SRJ, JetTagger LRJ);% of Leading LRJs / 0.1", 10, 0, 5);
 
         TH1F* back_h_lead_sublead_LRJ_deltaR = new TH1F("back_h_lead_sublead_LRJ_deltaR", "#Delta R Leading, Subleading LRJ, ;#Delta R (Lead., Sublead. Output LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
+        TH1F* back_h_lead_sublead_LRJ_deltaEt = new TH1F("back_h_lead_sublead_LRJ_deltaEt", "#Delta E_{T} Leading, Subleading LRJ, ;#Delta E_{T} (Lead., Sublead. JetTagger LRJ);% of Leading LRJs / 25 GeVs", 22, -50, 500);
 
         TH1F* back_h_Mjj = new TH1F("back_h_Mjj", "Invariant Mass of 2 LRJs;Invariant Mass of 2 LRJs [GeV]; % Events / 20 GeV", 75, 0, 1500);
 
@@ -2030,49 +2103,116 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
             double psi_R_SigJet2 = 0.0;
             double psi_R_BackJet1 = 0.0;
             double psi_R_BackJet2 = 0.0;
+            double psi_R2_SigJet1 = 0.0;
+            double psi_R2_SigJet2 = 0.0;
+            double psi_R2_BackJet1 = 0.0;
+            double psi_R2_BackJet2 = 0.0;
             // Loop through and compute psi_R for each large-R jet
             for(auto idxSigJet1 : sigJet1MergedIndices){
                 psi_R_SigJet1 += (1.0/sigJet1Et) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * sqrt(calcDeltaR2(jFexSRJLeadingEtaValuesSignal->at(0), jFexSRJLeadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1)));
+                psi_R2_SigJet1 += (1.0/sigJet1Et) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesSignal->at(0), jFexSRJLeadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1));
                 //std::cout << "psi_R_SigJet1: " << psi_R_SigJet1 << "\n";
             }
             for(auto idxSigJet2 : sigJet2MergedIndices){
                 psi_R_SigJet2 += (1.0/sigJet2Et) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * sqrt(calcDeltaR2(jFexSRJSubleadingEtaValuesSignal->at(0), jFexSRJSubleadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2)));
+                psi_R2_SigJet2 += (1.0/sigJet2Et) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesSignal->at(0), jFexSRJSubleadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2));
             }
             for(auto idxBackJet1 : backJet1MergedIndices){
                 psi_R_BackJet1 += (1.0/backJet1Et) * gepBasicClustersEtValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1)));
+                psi_R2_BackJet1 += (1.0/backJet1Et) * gepBasicClustersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1));
             }
             for(auto idxBackJet2 : backJet2MergedIndices){
                 psi_R_BackJet2 += (1.0/backJet2Et) * gepBasicClustersEtValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2)));
+                psi_R2_BackJet2 += (1.0/backJet2Et) * gepBasicClustersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2));
             }
 
             // Fill psi_R for leading, subleading, signal, background
+            sig_h_LRJ_psi_R_squared->Fill(psi_R_SigJet1 * psi_R_SigJet2);
+            back_h_LRJ_psi_R_squared->Fill(psi_R_BackJet1 * psi_R_BackJet2);
+            sigOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            backOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2);
+            backOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2);
+
+            sig_h_LRJ_psi_R2_squared->Fill(psi_R2_SigJet1 * psi_R2_SigJet2);
+            back_h_LRJ_psi_R2_squared->Fill(psi_R2_BackJet1 * psi_R2_BackJet2);
+            sigOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
+            backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2);
+            std::cout << "psi_R2_BackJet1 * psi_R2_BackJet2: " << psi_R2_BackJet1 * psi_R2_BackJet2 << "\n";
+            std::cout << "std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]): " << std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]) << "\n";
+            backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2);
             if(sigJet1Et >= sigJet2Et){
+                // Fill with regular deltaR metric
                 sig_h_leading_LRJ_psi_R->Fill(psi_R_SigJet1);
                 sig_h_subleading_LRJ_psi_R->Fill(psi_R_SigJet2);
+                sig_h_LRJ_psi_R_12->Fill(psi_R_SigJet1 / psi_R_SigJet2);
                 sigOfflineLeadingLRJEtvsPsi_R->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1);
                 sigOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet2);
+                sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet2, psi_R_SigJet1); // subleading filled to x-axis
+
+                // Fill with deltaR^2 metric
+                //std::cout << "psi_R2_SigJet1: " << psi_R2_SigJet1 << "\n";
+                //std::cout << "psi_R2_SigJet2 : " << psi_R2_SigJet2 << "\n";
+                sig_h_leading_LRJ_psi_R2->Fill(psi_R2_SigJet1);
+                sig_h_subleading_LRJ_psi_R2->Fill(psi_R2_SigJet2);
+                sig_h_LRJ_psi_R2_12->Fill(psi_R2_SigJet1 / psi_R2_SigJet2);
+                sigOfflineLeadingLRJEtvsPsi_R2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1);
+                sigOfflineSubleadingLRJEtvsPsi_R2->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet2);
+                sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_SigJet2, psi_R2_SigJet1); 
                 //std::cout << "SIGNAL final psi1_R: " << psi_R_SigJet1 << " and final psi_R_SigJet2 : " << psi_R_SigJet2 << "\n";
                 //std::cout << "filling 1 sig" << "\n";
             }
             else{
+                // Fill with regular deltaR metric
                 sig_h_leading_LRJ_psi_R->Fill(psi_R_SigJet2);
                 sig_h_subleading_LRJ_psi_R->Fill(psi_R_SigJet1);
+                sig_h_LRJ_psi_R_12->Fill(psi_R_SigJet2 / psi_R_SigJet1);
                 sigOfflineLeadingLRJEtvsPsi_R->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet2);
                 sigOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1);
+                sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet1, psi_R_SigJet2);
+
+                // Fill with deltaR^2 metric
+                sig_h_leading_LRJ_psi_R2->Fill(psi_R2_SigJet2);
+                sig_h_subleading_LRJ_psi_R2->Fill(psi_R2_SigJet1);
+                sig_h_LRJ_psi_R2_12->Fill(psi_R2_SigJet2 / psi_R2_SigJet1);
+                sigOfflineLeadingLRJEtvsPsi_R2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet2);
+                sigOfflineSubleadingLRJEtvsPsi_R2->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1);
+                sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_SigJet1, psi_R2_SigJet2);
                 //std::cout << "filling 2 sig" << "\n";
             }
 
             if(backJet1Et >= backJet2Et){
+                // Fill with regular deltaR metric
                 back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1);
                 back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2);
+                back_h_LRJ_psi_R_12->Fill(psi_R_BackJet1 / psi_R_BackJet2);
                 backOfflineLeadingLRJEtvsPsi_R->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1);
                 backOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet2);
+                backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_BackJet2, psi_R_BackJet1); // subleading filled to x-axis
+                // Fill with deltaR^2 metric
+                back_h_leading_LRJ_psi_R2->Fill(psi_R2_BackJet1);
+                back_h_subleading_LRJ_psi_R2->Fill(psi_R2_BackJet2);
+                back_h_LRJ_psi_R2_12->Fill(psi_R2_BackJet1 / psi_R2_BackJet2);
+                backOfflineLeadingLRJEtvsPsi_R2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1);
+                backOfflineSubleadingLRJEtvsPsi_R2->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet2);
+                backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_BackJet2, psi_R2_BackJet1); // subleading filled to x-axis
             }
             else{
+                // Fill with regular deltaR metric
                 back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet2);
                 back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet1);
+                back_h_LRJ_psi_R_12->Fill(psi_R_BackJet2 / psi_R_BackJet1);
                 backOfflineLeadingLRJEtvsPsi_R->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet2);
                 backOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1);
+                backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_BackJet1, psi_R_BackJet2); // subleading filled to x-axis
+                // Fill with deltaR^2 metric
+                back_h_leading_LRJ_psi_R2->Fill(psi_R2_BackJet2);
+                back_h_subleading_LRJ_psi_R2->Fill(psi_R2_BackJet1);
+                back_h_LRJ_psi_R2_12->Fill(psi_R2_BackJet2 / psi_R2_BackJet1);
+                backOfflineLeadingLRJEtvsPsi_R2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet2);
+                backOfflineSubleadingLRJEtvsPsi_R2->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1);
+                backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R_BackJet1, psi_R_BackJet2); // subleading filled to x-axis
             }
 
 
@@ -2236,6 +2376,12 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
             
             sig_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0], sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1])));
             back_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(back_LRJ_Eta[i][0], back_LRJ_Phi[i][0], back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])));
+            
+            if (sig_LRJ_Et[i][0] >= sig_LRJ_Et[i][1]) sig_h_lead_sublead_LRJ_deltaEt->Fill(sig_LRJ_Et[i][0] - sig_LRJ_Et[i][1]);
+            else sig_h_lead_sublead_LRJ_deltaEt->Fill(sig_LRJ_Et[i][1] - sig_LRJ_Et[i][0]);
+            if (back_LRJ_Et[i][0] >= back_LRJ_Et[i][1]) back_h_lead_sublead_LRJ_deltaEt->Fill(back_LRJ_Et[i][0] - back_LRJ_Et[i][1]);
+            else back_h_lead_sublead_LRJ_deltaEt->Fill(back_LRJ_Et[i][1] - back_LRJ_Et[i][0]);
+            
 
             // Dijet efficiencies
             if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0){
@@ -3321,12 +3467,13 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         // Start drawing and saving histograms and plots
         TString outputFileDir;
         if (jzSlice == 2) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ2/";
-        if (jzSlice == 3) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ3/";
+        if (jzSlice == 3) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersPosRecalcUnweightedFIXED_JZ3/";
         if (jzSlice == 4) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ4/";
-        
+        gSystem->mkdir(outputFileDir);
+
         TString modifiedOutputFileDir;
         if (jzSlice == 2) modifiedOutputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ2_" + algorithmConfigurations[fileIt] + "/";
-        if (jzSlice == 3) modifiedOutputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ3_" + algorithmConfigurations[fileIt] + "/";
+        if (jzSlice == 3) modifiedOutputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersSeedPosRecalcUnweightedFIXED_JZ3_" + algorithmConfigurations[fileIt] + "/";
         if (jzSlice == 4) modifiedOutputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ4_" + algorithmConfigurations[fileIt] + "/";
         gSystem->mkdir(modifiedOutputFileDir);
 
@@ -3378,6 +3525,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         //gSystem->RedirectOutput(0); // back to normal
         // Save histograms
         TCanvas c;
+        TCanvas cLogRSquared;
+        //cLogRSquared.SetLogy();
         TCanvas cSigEffb;
         TCanvas cSigEffLRJ;
         TCanvas cSigEffLRJ_Mass100to150;
@@ -3482,6 +3631,29 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_JetTagger.pdf");
+        
+        
+        sig_h_LRJ_psi_R_12->Scale(1.0 / sig_h_LRJ_psi_R_12->Integral());
+        back_h_LRJ_psi_R_12->Scale(1.0 / back_h_LRJ_psi_R_12->Integral());
+        sig_h_LRJ_psi_R_12->SetLineColor(kRed);
+        back_h_LRJ_psi_R_12->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R_12->Draw("HIST");
+        sig_h_LRJ_psi_R_12->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R_Leading_over_Subleading.pdf");
+
+        sig_h_LRJ_psi_R_squared->Scale(1.0 / sig_h_LRJ_psi_R_squared->Integral());
+        back_h_LRJ_psi_R_squared->Scale(1.0 / back_h_LRJ_psi_R_squared->Integral());
+        sig_h_LRJ_psi_R_squared->SetLineColor(kRed);
+        back_h_LRJ_psi_R_squared->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R_squared->Draw("HIST");
+        sig_h_LRJ_psi_R_squared->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_squared_JetTagger.pdf");
 
         sig_h_subleading_LRJ_psi_R->Scale(1.0 / sig_h_subleading_LRJ_psi_R->Integral());
         back_h_subleading_LRJ_psi_R->Scale(1.0 / back_h_subleading_LRJ_psi_R->Integral());
@@ -3493,6 +3665,55 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "subleading_LRJ_psi_R_JetTagger.pdf");
+
+
+        sig_h_leading_LRJ_psi_R2->Scale(1.0 / sig_h_leading_LRJ_psi_R2->Integral());
+        back_h_leading_LRJ_psi_R2->Scale(1.0 / back_h_leading_LRJ_psi_R2->Integral());
+        sig_h_leading_LRJ_psi_R2->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R2->SetLineColor(kBlue);
+        
+        back_h_leading_LRJ_psi_R2->Draw("HIST");
+        sig_h_leading_LRJ_psi_R2->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R2_JetTagger.pdf");
+        
+        
+        sig_h_LRJ_psi_R2_12->Scale(1.0 / sig_h_LRJ_psi_R2_12->Integral());
+        back_h_LRJ_psi_R2_12->Scale(1.0 / back_h_LRJ_psi_R2_12->Integral());
+        sig_h_LRJ_psi_R2_12->SetLineColor(kRed);
+        back_h_LRJ_psi_R2_12->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R2_12->Draw("HIST");
+        sig_h_LRJ_psi_R2_12->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R2_Leading_over_Subleading.pdf");
+
+        sig_h_LRJ_psi_R2_squared->Scale(1.0 / sig_h_LRJ_psi_R2_squared->Integral());
+        back_h_LRJ_psi_R2_squared->Scale(1.0 / back_h_LRJ_psi_R2_squared->Integral());
+        sig_h_LRJ_psi_R2_squared->SetLineColor(kRed);
+        back_h_LRJ_psi_R2_squared->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R2_squared->Draw("HIST");
+        sig_h_LRJ_psi_R2_squared->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R2_squared_JetTagger.pdf");
+
+        sig_h_subleading_LRJ_psi_R2->Scale(1.0 / sig_h_subleading_LRJ_psi_R2->Integral());
+        back_h_subleading_LRJ_psi_R2->Scale(1.0 / back_h_subleading_LRJ_psi_R2->Integral());
+        sig_h_subleading_LRJ_psi_R2->SetLineColor(kRed);
+        back_h_subleading_LRJ_psi_R2->SetLineColor(kBlue);
+        back_h_subleading_LRJ_psi_R2->Draw("HIST");
+        sig_h_subleading_LRJ_psi_R2->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "subleading_LRJ_psi_R2_JetTagger.pdf");
+
+
 
         sig_h_LRJ1_deltaEt_digitized_double->Scale(1.0 / sig_h_LRJ1_deltaEt_digitized_double->Integral());
         back_h_LRJ1_deltaEt_digitized_double->Scale(1.0 / back_h_LRJ1_deltaEt_digitized_double->Integral());
@@ -3812,6 +4033,19 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "lead_sublead_LRJ_deltaR.pdf");
 
+        sig_h_lead_sublead_LRJ_deltaEt->Scale(1.0 / sig_h_lead_sublead_LRJ_deltaEt->Integral());
+        back_h_lead_sublead_LRJ_deltaEt->Scale(1.0 / back_h_lead_sublead_LRJ_deltaEt->Integral());
+        sig_h_lead_sublead_LRJ_deltaEt->SetLineColor(kRed);
+        back_h_lead_sublead_LRJ_deltaEt->SetLineColor(kBlue);
+        back_h_lead_sublead_LRJ_deltaEt->Draw("HIST");
+        sig_h_lead_sublead_LRJ_deltaEt->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "lead_sublead_LRJ_deltaEt.pdf");
+
+        
+        
+
         std::cout << "Leading signal mean: " << sig_h_leading_LRJ_Et->GetMean() << " and leading background mean: " << back_h_leading_LRJ_Et->GetMean() << "\n";
         sig_h_leading_LRJ_Et->Scale(1.0 / sig_h_leading_LRJ_Et->Integral());
         back_h_leading_LRJ_Et->Scale(1.0 / back_h_leading_LRJ_Et->Integral());
@@ -3884,7 +4118,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
 
         
-
+        // Computed with deltaR metric
         sigOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
         sigOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R->Integral());
         c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R.pdf");
@@ -3893,6 +4127,34 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         sigOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R->Integral());
         c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R.pdf");
 
+        cLogRSquared.cd();
+
+        sigOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_squared.pdf");
+
+        sigOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_squared.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+
+        c.cd();
+        
+        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+
+        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+
         backOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
         backOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R->Integral());
         c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R.pdf");
@@ -3900,6 +4162,51 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         backOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
         backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
         c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
+
+        cLogRSquared.cd();
+
+        // Computed with deltaR^2 metric
+        sigOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2.pdf");
+
+        sigOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2.pdf");
+
+        sigOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+
+        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+
+        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
+
+        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2->Integral());
+        cLogRSquared.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2.pdf");
+
+        c.cd();
 
 
         sigOfflineLeadingLRJMassvsEt->Draw("COLZ");
@@ -7998,9 +8305,10 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
 
     TString outputFileDir;
     if (jzSlice == 2) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ2/";
-    if (jzSlice == 3) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ3/";
+    if (jzSlice == 3) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersPosRecalcUnweightedFIXED_JZ3/";
     if (jzSlice == 4) outputFileDir = "overlayLargeRJetHistogramsGEPBasicClustersVariableInputObjects_JZ4/";
-
+    gSystem->mkdir(outputFileDir);
+    
     if (overlayThreeFiles){
         // -----------------------------
         // Colors for thresholds (pick from your palette)
@@ -8090,8 +8398,8 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         if (!back_eff_300.empty()) { auto h = back_eff_300.front(); h->SetLineColor(bcol300); bLegThresh->AddEntry(h, "E_{T} > 300 GeV", "l"); }
 
         // Draw legends
-        //bLegFiles->Draw();
-        //bLegThresh->Draw();
+        bLegFiles->Draw();
+        bLegThresh->Draw();
 
         // Save
         cBack.SaveAs(outputFileDir + "back_eff_overlay_all_files_100_200_300.pdf");
@@ -8266,7 +8574,7 @@ void analyze_files(std::vector<std::string > backgroundFileNames, std::vector<st
         gr->SetMarkerSize(0.25);
         gr->GetXaxis()->SetLabelSize(0);  // remove x-axis labels
         gr->GetXaxis()->SetTitleSize(0);  // remove x-axis title
-        //legend1->AddEntry(gr, legendMap[algorithmConfigurations[fileIt]].c_str(), "l");
+        legend1->AddEntry(gr, legendMap[algorithmConfigurations[fileIt]].c_str(), "l");
         roc_graphs.push_back(gr);
 
         if (fileIt == 0) gr->Draw("AL");
@@ -8495,9 +8803,27 @@ void callAnalyzer(unsigned int jzSlice = 3, bool overlayThreeFiles = false){
                                                  "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_1p5sig_SeedPosRecalcWeighted.dat",
                                                  "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_2p5sig_SeedPosRecalcWeighted.dat",
                                                  "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_3p5sig_SeedPosRecalcWeighted.dat"*/
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj64_0p001sig.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_0p001sig.dat",
-                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_0p001sig.dat"
+
+
+                                                // Files without seedPosRecalc
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj64_0p001sig.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_0p001sig.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj256_0p001sig.dat"
+                                                // Files with seedPosRecalc
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_0p001sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_1p5sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_2p0sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_3p5sig_SeedPosRecalcWeighted.dat"
+
+                                                // Files with fixed seedPosRecalc
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_0p001sig_SeedPosRecalcWeighted.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_1p5sig_SeedPosRecalcWeighted.dat",
+                                                "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_2p0sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_2p5sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_3p0sig_SeedPosRecalcWeighted.dat",
+                                                //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_3p5sig_SeedPosRecalcWeighted.dat"
+
+
                                                 //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_1p5sig.dat"
                                                 //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_2p5sig.dat",
                                                 //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_largeRnSeeds2_r2Cut1p0_maxObj128_3p0sig.dat"
@@ -8564,10 +8890,27 @@ void callAnalyzer(unsigned int jzSlice = 3, bool overlayThreeFiles = false){
                                                      "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_1p5back_SeedPosRecalcWeighted.dat",
                                                      "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_2p5back_SeedPosRecalcWeighted.dat",
                                                      "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcWeighted/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_3p5back_SeedPosRecalcWeighted.dat"*/
-        
-                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj64_0p001back.dat",
-                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_0p001back.dat",
-                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_0p001back.dat"
+                                                    
+                                                    
+                                                     // Files without seedPosRecalc
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj64_0p001back.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_0p001back.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj256_0p001back.dat"
+
+                                                    // Files with seedPosRecalc
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_0p001back_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_1p5back_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_2p0back_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalc/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_3p5back_SeedPosRecalcWeighted.dat"
+
+                                                    // Files with fixed seedPosRecalc
+                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_0p001back_JZ3_SeedPosRecalcWeighted.dat",
+                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_1p5back_JZ3_SeedPosRecalcWeighted.dat",
+                                                    "/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_2p0back_JZ3_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_2p5back_JZ3_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_3p0back_JZ3_SeedPosRecalcWeighted.dat",
+                                                    //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClustersSeedPosRecalcFIXED/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_3p5back_JZ3_SeedPosRecalcWeighted.dat"
+
                                                     //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_1p5back.dat"
                                                     //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_2p5back.dat",
                                                     //"/home/larsonma/LargeRadiusJets/data/MemPrints/largeRJetsGEPBasicClusters/mc21_14TeV_jj_JZ3_largeRnSeeds2_r2Cut1p0_maxObj128_3p0back.dat",

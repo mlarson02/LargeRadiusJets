@@ -30,7 +30,7 @@ int main() {
     std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClustersSeedPosRecalc/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClustersSeedPosRecalcFIXED/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -49,8 +49,8 @@ int main() {
             std::cout << "outputJetValues[i] after: " << outputJetValues[i] << "\n";
         }*/
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        //std::cout << " ---------------------------------- " << "\n";
-        //std::cout << "processing event: " << std::dec << iEvt << "\n";
+        std::cout << " ---------------------------------- " << "\n";
+        std::cout << "processing event: " << std::dec << iEvt << "\n";
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
         //for (unsigned int i = 0; i < nTotalSeeds_; i++){
         //    std::cout << "seedValues.et: " << seedValues[i].et << " seedValues.phi: " << seedValues[i].phi << " and seedValues.eta: " << seedValues[i].eta << "\n";
@@ -61,7 +61,7 @@ int main() {
         sortByEt(seedValues, sortedSeedValues); // FIXME don't need to sort seeds anymore - pre-sorted in LRJNTupler.cc
         //std::cout << "after sort!!!" << "\n";
         //fflush(stdout);
-        /*
+        
         for (unsigned i = 0; i < nSeedsInput_; ++i) {
             uint32_t w = static_cast<uint32_t>(sortedSeedValues[i]);   // or (w & 0xFFFFFFFFu)
             std::cout << "seedValues: 0x"
@@ -76,7 +76,7 @@ int main() {
                     << std::setw(8) << std::setfill('0') << std::uppercase
                     << std::hex << w
                     << std::dec << std::setfill(' ') << "\n";
-        }*/
+        }
         input outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
         //    outputJetValues[i] = 0;

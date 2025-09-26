@@ -98,5 +98,3 @@ elif hls_exec == 3:
     comp.run(operation='SYNTHESIS')
     comp.run(operation='CO_SIMULATION')
     comp.run(operation='IMPLEMENTATION')
-else:
-    comp.run(operation='C_SIMULATION')

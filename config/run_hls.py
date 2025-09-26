@@ -378,23 +378,33 @@ if __name__ == "__main__":
     maxObjectsConsidered_options = [128]
     #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
-    rMergeCut_options = [2.5, 3.5]
+    rMergeCut_options = [0.001, 1.5, 2.0, 2.5, 3.0, 3.5]
+    #rMergeCut_options = [3.5]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
-    signalBool_options = [False]
+    signalBool_options = [True, False]
     #inputEnergyCut_options = [False]
     inputEnergyCut_options = [False]
-    jzSlices = [2, 4]
+    jzSlices = [3]
     #inputEnergyCutValues_options = [0.5, 1.0, 1.5, 2.0] # only use these if inputEnergyCutOption is true
     inputEnergyCutValues_options = [4] # note 4 == 1 GeV (0.25 GeV granularity for inputobjectvalues)
     for jzSlice in jzSlices:
+        print("jzSlice processed:", jzSlice)
         for maxObjectsConsidered in maxObjectsConsidered_options:
+            print("maxObjectsConsidered processed:", maxObjectsConsidered)
             for rMergeCut in rMergeCut_options:
+                print("rMergeCut processed:", rMergeCut)
                 for nSeeds in nSeeds_options:
+                    print("nSeeds processed:", nSeeds)
                     for r2Cut in r2Cut_options:
+                        print("r2Cut processed:", r2Cut)
                         for sortSeeds in sortSeeds_options:
+                            print("sortSeeds processed:", sortSeeds)
                             for inputEnergyCutBool in inputEnergyCut_options:
+                                print("inputEnergyCutBool processed:", inputEnergyCutBool)
                                 for inputEnergyCutValues in inputEnergyCutValues_options:
+                                    print("inputEnergyCutValues processed:", inputEnergyCutValues)
                                     for signalBool in signalBool_options:
+                                        print("signalBool processed:", signalBool)
                                         # Copy base constants
                                         constants = base_constants.copy()
                                         constants["nSeeds_"] = nSeeds
