@@ -1,5 +1,6 @@
 // Constants used by JetTagger Emulation
 
+static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
 constexpr unsigned int nSeedsInput_ = 6;
 constexpr unsigned int nSeedsOutput_ = 2;
 constexpr unsigned int maxObjectsConsidered_ = 128;
@@ -23,7 +24,7 @@ constexpr double phi_granularity_ = 0.1;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 2048;
 constexpr unsigned int max_R2lut_size_ = 803;
-constexpr unsigned int max_Rlut_size_ = 2853;
+constexpr unsigned int max_Rlut_size_ = 1;
 constexpr double deltaR_max_ = 10.48187;
 constexpr unsigned int nSeeds_ = 2;
 constexpr unsigned int max_R_5b_lut_size_ = 803;

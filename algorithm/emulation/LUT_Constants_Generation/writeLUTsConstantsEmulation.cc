@@ -7,7 +7,7 @@
 
 
 int main() {
-
+    gSystem->RedirectOutput("debuglog.log", "w");
     const double etaGranularity = 0.0390625;
     const double phiGranularity = 0.1;
     const unsigned int phiBitLength = 6;
@@ -171,6 +171,6 @@ int main() {
         }
     }
 
-
+    gSystem->Exit(0);
     return 0;
 }

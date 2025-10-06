@@ -28,17 +28,23 @@ int wrapSym(int phi){
     if(phi < - PI_D) phiWrapped = phi + TWO_PI_D;
     return phiWrapped;
 }
-
+/*
 // Function to scale and digitize a value, returning the result as a binary string
 template <int bit_length>
-inline std::bitset<bit_length > digitize(double value, double min_val, double max_val) {
+inline std::bitset<bit_length > digitize(double value, double min_val, double max_val, std::string type) {
     // Ensure the value is within range
+    if(value < min_val) value = min_val;
+    if(value > max_val) value = max_val;
     if (value < min_val || value > max_val) {
-        std::cerr << "Value is out of range" << "\n";
+        std::cout << "value that is out of range; " << value << "\n";
+        std::cout << "for min val : " << min_val << " and max val: " << max_val << "\n";
+        std::cout << "for type: " << type << "\n";
+        std::cout << "Value is out of range for bitlength: " << bit_length << "\n";
     }
 
     // Calculate scale factor
     double scale = (std::pow(2, bit_length)) / (max_val - min_val);
+    std::cout << "scale: " << scale << "\n";
     
     // Calculate the digitized value and round it
     int digitized_value = static_cast<int>(std::round((value - min_val) * scale));
@@ -47,6 +53,25 @@ inline std::bitset<bit_length > digitize(double value, double min_val, double ma
     std::bitset<bit_length > bin(digitized_value);
 
     return bin; // Extract only the relevant bits
+}*/
+
+unsigned int digitize(double value, int bit_length, double min_val, double max_val) {
+    // Check if value is in range
+    if (value < min_val) {
+        value = min_val;
+        std::cout << "Warning: Value " << value
+          << " is out of range (" << min_val
+          << ", " << max_val << ")\n";
+    }
+    if (value > max_val){
+        value = max_val;
+        std::cout << "Warning: Value " << value
+          << " is out of range (" << min_val
+          << ", " << max_val << ")\n";
+    }
+
+    double scale = (std::pow(2, bit_length) - 1) / (max_val - min_val);
+    return static_cast<unsigned int>(std::round((value - min_val) * scale));
 }
 
 double calcDeltaR2(double eta1, double phi1, double eta2, double phi2) {
@@ -98,26 +123,33 @@ unsigned int calculate_lut_max_size(double rCut,
             double phiSquared = std::pow(phiIt * phi_granularity, 2);
 
             double deltaR = std::sqrt(etaSquared + phiSquared);
-
+            
             if (deltaR < rCut) {
                 last_one_index = idx;
+                if(rCut == 0.001){
+                    std::cout << "idx: " << idx << " and last_one_index: " << last_one_index << "\n";
+                }
             }
             ++idx;
         }
     }
-
+    
     unsigned int lut_max_size = last_one_index + 1;
+    if(rCut == 0.001){
+        std::cout << "lut_max_size: " << lut_max_size << "\n";
+    }
+    
     return lut_max_size;
 }
 
 // Returns input NTuple file name given parameters
-std::string makeInputFileName(bool signalBool, unsigned int jzSlice,
+std::string makeInputFileName(bool signalBool,
                               std::string inputRootFilePath = "/home/larsonma/LargeRadiusJets/data/inputNTuples/") {
     std::ostringstream ss;
     if (signalBool) {
         ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
     } else {
-        ss << inputRootFilePath << "mc21_14TeV_jj_JZ" << jzSlice << "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        ss << inputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
     }
     return ss.str();
 }
@@ -128,13 +160,12 @@ std::string makeOutputFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
-                               unsigned int jzSlice,
                                std::string outputRootFilePath = "/home/larsonma/LargeRadiusJets/data/outputNTuples/") {
     std::ostringstream ss;
     if (signalBool) {
         ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
     } else {
-        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ" << jzSlice << "_e8557_s4422_r16130";
+        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
@@ -149,13 +180,12 @@ std::string makeOutputTextFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
-                               unsigned int jzSlice,
                                std::string outputRootFilePath = "/home/larsonma/LargeRadiusJets/data/MemPrintsEmulation/") {
     std::ostringstream ss;
     if (signalBool) {
         ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
     } else {
-        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ" << jzSlice << "_e8557_s4422_r16130";
+        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130";
     }
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
@@ -215,6 +245,7 @@ void write_constants_header(const std::string& header_path,
     out << "// Constants used by JetTagger Emulation\n\n";
 
     // Fixed (from your template)
+    out << "static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }\n";
     out << "constexpr unsigned int nSeedsInput_ = 6;\n";
     out << "constexpr unsigned int nSeedsOutput_ = " << nSeedsOutput << ";\n";
     out << "constexpr unsigned int maxObjectsConsidered_ = " << maxObjectsConsidered << ";\n";
@@ -237,11 +268,11 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr double phi_granularity_ = 0.1;\n";
     out << "constexpr unsigned int et_min_ = 0;\n";
     out << "constexpr unsigned int et_max_ = 2048;\n";
-    out << "constexpr unsigned int max_R2lut_size_ = 803;\n";
-    out << "constexpr unsigned int max_Rlut_size_ = 2853;\n";
+    out << "constexpr unsigned int max_R2lut_size_ = " << max_R2lut_size << ";\n";
+    out << "constexpr unsigned int max_Rlut_size_ = " << max_Rlut_size << ";\n";
     out << "constexpr double deltaR_max_ = 10.48187;\n";
-    out << "constexpr unsigned int nSeeds_ = 2;\n";
-    out << "constexpr unsigned int max_R_5b_lut_size_ = 803;\n";
+    out << "constexpr unsigned int nSeeds_ = " << nSeedsOutput << ";\n";
+    out << "constexpr unsigned int max_R_5b_lut_size_ = " << max_R_5b_lut_size << ";\n";
     out << "constexpr double phi_range_ = phi_max_ - phi_min_;\n\n";
 
     out << "constexpr unsigned int lut_size_ = (1u << (eta_bit_length_ + phi_bit_length_));\n";

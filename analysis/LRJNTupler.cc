@@ -9,18 +9,134 @@
 #include <filesystem> // C++17
 #include <algorithm>
 #include <stdexcept>  // for std::runtime_error
-
+//#include "xAODCutFlow/CutBookkeeperContainer.h"
+//#include "xAODCutFlow/CutBookkeeper.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TSystem.h"
 #include "TH2F.h"
 #include "analysisHelperFunctions.h"
 
-#define PROCESS_DAOD true
+// Used for digitized data writing
+struct OutputFiles {
+    std::string topo422;
+    std::string caloTopoTowers;
+    std::string gepBasicClusters;
+    std::string gFex;
+    std::string jFex;
+};
 
 // Settings
 const bool afBool = true;
 const bool vbfBool = true;
+const unsigned int nJZSlices = 10;
+
+// Constants required for reweighting
+
+// In barns - 7.5*10^34 cm^-2 s^-1 * 1 s (HL-LHC 200 PU inst. lumi * 1 second) - use 1 second to make rates plots easy
+const double reweightLuminosity = 7.5e10;
+
+// Filter efficiencies from AMI [in b]
+const double filterEffienciesByJZSlice[nJZSlices] = {0.9716436,    // JZ0
+                                                     0.03777559,   // JZ1
+                                                     0.01136654,   // JZ2
+                                                     0.01367042,   // JZ3
+                                                     0.01628158,   // JZ4
+                                                     0.01905588,   // JZ5
+                                                     0.01352844,   // JZ6
+                                                     0.01764909,   // JZ7
+                                                     0.01887484,   // JZ8
+                                                     0.02827565};  // JZ9
+r
+// Cross sections from AMI [in b]
+const double crossSectionsByJZSlice[nJZSlices] = {0.07893,      // JZ0
+                                                  0.09679,      // JZ1
+                                                  0.0026805,    // JZ2
+                                                  0.000029984,  // JZ3
+                                                  2.972e-7,     // JZ4
+                                                  5.5384e-09,   // JZ5
+                                                  3.2616e-10,   // JZ6
+                                                  2.1734e-11,   // JZ7
+                                                  9.2995e-13,   // JZ8
+                                                  3.4519e-14};  // JZ9
+
+// From CutBookkeeper printed from python script
+const double sumOfEventWeightsByJZSlice[nJZSlices] = {10000.0,                // JZ0
+                                                      467.7515499125784,      // JZ1
+                                                      3.9288560244923474,     // JZ2
+                                                      0.08040490627634789,    // JZ3
+                                                      0.0025011268072319126,  // JZ4
+                                                      0.00019515390387392362, // JZ5
+                                                      3.325120293798389e-05,  // JZ6
+                                                      9.518299562145949e-06,  // JZ7 
+                                                      2.8526936132339253e-06, // JZ8
+                                                      3.274964361399163e-09}; // JZ9 
+
+// Helper to construct memprint / test vector filenames
+inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSlice) {
+    static const std::string base = "/data/larsonma/LargeRadiusJets/MemPrints/";
+
+    std::string tag;
+    if (signalBool) {
+        tag = vbfBool ? "mc21_14TeV_hh_bbbb_vbf_novhh"
+                      : "mc21_14TeV_HHbbbb_HLLHC";
+    } else {
+        // generic: works for all slices 0..9 etc
+        tag = "mc21_14TeV_jj_JZ" + std::to_string(jzSlice);
+    }
+
+    OutputFiles out;
+    out.topo422         = base + "CaloTopo_422/"    + tag + "_topo422.dat";
+    out.caloTopoTowers  = base + "CaloTopoTowers/"  + tag + "_calotopotowers.dat";
+    out.gepBasicClusters= base + "GEPBasicClusters/"+ tag + "_gepbasicclusters.dat";
+    out.gFex            = base + "gFex/"            + tag + "_gfex_smallrj.dat";
+    out.jFex            = base + "jFex/"            + tag + "_jfex_smallrj.dat";
+    return out;
+}
+
+// Helper to get input DAOD + GEP ntuple file names
+std::string makeFileDir(bool vbfBool, bool signalBool, int jzSlice) {
+    static const std::string kRoot = "/data/larsonma/LargeRadiusJets/datasets";
+
+    if (signalBool) {
+        return vbfBool
+            ? kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_VBF"
+            : kRoot + "/Signal_HHbbbb_DAODAOD/DAOD/ggF/"
+              "mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.deriv.DAOD_JETM42.e8564_s4422_r16130_p6658";
+    }
+
+    // background path
+    if (jzSlice < 0 || jzSlice > 9) {
+        throw std::out_of_range("jzSlice must be in [0, 9]");
+    }
+    return kRoot + "/DAOD_TrigGepPerf/Background_jj_JZ" + std::to_string(jzSlice);
+}
+
+// Helper function to get output ntuple file name
+TString makeOutputFileName(bool vbfBool, bool signalBool, int jzSlice) {
+    static const TString outDir = "outputRootFiles/";
+
+    if (vbfBool) {
+        if (signalBool) {
+            return outDir + "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+            
+        } else {
+            if (jzSlice < 0 || jzSlice > 9)
+                throw std::out_of_range("jzSlice must be between 0 and 9");
+            return outDir + "mc21_14TeV_jj_JZ" + TString(std::to_string(jzSlice))
+                + "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        }
+    } else {
+        if (signalBool) {
+            return outDir + "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        } else {
+            if (jzSlice < 0 || jzSlice > 9)
+                throw std::out_of_range("jzSlice must be between 0 and 9");
+            return outDir + "mc21_14TeV_jj_JZ" + TString(std::to_string(jzSlice))
+                + "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        }
+    }
+}
 
 
 unsigned int digitize(double value, int bit_length, double min_val, double max_val) {
@@ -76,135 +192,36 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 
 
 // Main function
-void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
+void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
+    //ServiceHandle<StoreGateSvc> inputMetaStore("StoreGateSvc/InputMetaDataStore","");
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
-    string fileDir;
-    if (vbfBool){
-        if(signalBool){
-            fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Signal_HHbbbb_VBF";
-        }
-        else{
-            if(jzSlice == 2){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ2";
-            }
-            else if (jzSlice == 3){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ3";
-            }
-            else if (jzSlice == 4){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ4";
-            }
-        }
-    }
-    else{
-        if (signalBool){
-            fileDir = "/data/larsonma/LargeRadiusJets/datasets/Signal_HHbbbb_DAODAOD/DAOD/ggF/mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.deriv.DAOD_JETM42.e8564_s4422_r16130_p6658";
-        }
-        else{
-            if(jzSlice == 2){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ2";
-            }
-            else if (jzSlice == 3){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ3";
-            }
-            else if (jzSlice == 4){
-                fileDir = "/data/larsonma/LargeRadiusJets/datasets/DAOD_TrigGepPerf/Background_jj_JZ4";
-            }
-        }
-    }
+    std::string fileDir = makeFileDir(vbfBool, signalBool, jzSlice);
 
-    std::string output_file_topo422;
-    std::string output_file_calotopotowers;
-    std::string output_file_gepbasicclusters;
-    std::string output_file_gfex;
-    std::string output_file_jfex;
+    //xAOD::Init().ignore();
 
-    if (signalBool) {
-        if (vbfBool) {
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_hh_bbbb_vbf_novhh_topo422.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_hh_bbbb_vbf_novhh_calotopotowers.dat";
-            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_hh_bbbb_vbf_novhh_gepbasicclusters.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_hh_bbbb_vbf_novhh_jfex_smallrj.dat";
-        } else {
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_HHbbbb_HLLHC_topo422.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_HHbbbb_HLLHC_calotopotowers.dat";
-            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_HHbbbb_HLLHC_gepbasicclusters.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_HHbbbb_HLLHC_gfex_smallrj.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_HHbbbb_HLLHC_jfex_smallrj.dat";
-        }
-    } else {
-        if(jzSlice == 2){
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ2_topo422.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ2_calotopotowers.dat";
-            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ2_gepbasicclusters.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ2_gfex_smallrj.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ2_jfex_smallrj.dat";
-        }
-        else if(jzSlice == 3){
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ3_topo422.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ3_calotopotowers.dat";
-            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ3_gepbasicclusters.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ3_jfex_smallrj.dat";
-        }
-        else if(jzSlice == 4){
-            output_file_topo422 = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopo_422/mc21_14TeV_jj_JZ4_topo422.dat";
-            output_file_calotopotowers = "/data/larsonma/LargeRadiusJets/MemPrints/CaloTopoTowers/mc21_14TeV_jj_JZ4_calotopotowers.dat";
-            output_file_gepbasicclusters = "/data/larsonma/LargeRadiusJets/MemPrints/GEPBasicClusters/mc21_14TeV_jj_JZ4_gepbasicclusters.dat";
-            output_file_gfex = "/data/larsonma/LargeRadiusJets/MemPrints/gFex/mc21_14TeV_jj_JZ4_gfex_smallrj.dat";
-            output_file_jfex = "/data/larsonma/LargeRadiusJets/MemPrints/jFex/mc21_14TeV_jj_JZ4_jfex_smallrj.dat";
-        }
-    }
+    // pick filenames
+    OutputFiles out = makeMemPrintFilenames(signalBool, vbfBool, jzSlice);
 
-    std::ofstream f_topotower(output_file_calotopotowers);
-    std::ofstream f_gepbasicclusters(output_file_gepbasicclusters);
-    std::ofstream f_topo(output_file_topo422);
-    std::ofstream f_gfex(output_file_gfex);
-    std::ofstream f_jfex(output_file_jfex);
+    // open streams
+    std::ofstream f_topotower(out.caloTopoTowers);
+    std::ofstream f_gepbasicclusters(out.gepBasicClusters);
+    std::ofstream f_topo(out.topo422);
+    std::ofstream f_gfex(out.gFex);
+    std::ofstream f_jfex(out.jFex);
 
     if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open()) {
         std::cerr << "Error: One or more output files could not be opened for writing!" << std::endl;
         // handle error or return
     }
-    
 
-    TString outputFileName; 
-    if (vbfBool){
-        if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        else{
-            if(jzSlice == 2){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ2_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-            else if(jzSlice == 3){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-            else if(jzSlice == 4){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ4_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-        } 
-    }
-    else{
-        if (signalBool) outputFileName = "outputRootFiles/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root"; // FIXME change these files 
-        else{
-            if(jzSlice == 2){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ2_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-            else if(jzSlice == 3){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ3_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-            else if(jzSlice == 4){
-                outputFileName = "outputRootFiles/mc21_14TeV_jj_JZ4_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            }
-        } 
-    }
+    TString outputFileName = makeOutputFileName(vbfBool, signalBool, jzSlice);
     
-    
-
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
 
     // Create TTrees - commented out trees that cannot be filled with DAOD information.
     //TTree* truthParticleTree = new TTree("truthParticleTree", "Tree storing event-wise information about truth particles");
+    TTree* eventInfoTree = new TTree("eventInfoTree", "Tree storing event information (e.g., mcEventWeight) required for rate computation");
     TTree* truthbTree = new TTree("truthbTree", "Tree storing event-wise information about truth particles");
     TTree* truthHiggsTree = new TTree("truthHiggsTree", "Tree storing event-wise information about truth particles");
     //TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
@@ -241,6 +258,12 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
     //TTree* gFexRhoRoI = new TTree("gFexRhoRoI", "Tree storing event-wise Et, Eta, Phi");
 
     // Variables to store data to be written to TTrees
+
+    // Event info vectors
+    std::vector<double> mcEventWeights;
+    double sumOfWeightsForSample;
+    int sampleJZSlice;
+    std::vector<double> eventWeights;
 
     // Truth Particle vectors
     //std::vector<int> truthParticlePDGId, truthParticleStatus; 
@@ -309,6 +332,12 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
     truthParticleTree->Branch("px", &truthParticlepxValues);
     truthParticleTree->Branch("py", &truthParticlepyValues);
     truthParticleTree->Branch("pz", &truthParticlepzValues);*/
+
+    // event info tree
+    eventInfoTree->Branch("mcEventWeight", &mcEventWeights);
+    eventInfoTree->Branch("sumOfWeightsForSample", &sumOfWeightsForSample);
+    eventInfoTree->Branch("eventWeights", &eventWeights);
+    eventInfoTree->Branch("sampleJZSlice", &sampleJZSlice);
 
     // truthbTree
     truthbTree->Branch("higgsIndex", &higgsIndexValues);
@@ -611,20 +640,59 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
 
         std::cout << "  Number of events: " << event.getEntries() << endl;
 
-        
-        
+        unsigned int passedEventsCounter = 0;
+        unsigned int skippedEventsEmptyTruth = 0;
+        unsigned int skippedEventsHSTP = 0;
         for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
-            //if (iEvt > 10) continue;
+            //std::cout << "iEvt: " << iEvt << "\n";
+            // Retrieve truth and in time pileup jets first to apply hard-scatter-softer-than-PU (HSTP) filter (described here: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/JetEtMissMCSamples#Dijet_normalization_procedure_HS)
+            // Also require that truth jet collection is not empty
             event.getEntry(iEvt);               // DAOD event iEvt
             gt->GetEntry(iEvt);                 // GEP event iEvt
+
+            const xAOD::JetContainer* AntiKt4TruthDressedWZJets = nullptr;
+            if (!event.retrieve(AntiKt4TruthDressedWZJets, "AntiKt4TruthDressedWZJets").isSuccess()) {
+                std::cout << "Failed to retrieve reco Antik4 Truth Dressed WZ jets" << endl;
+                skippedEventsEmptyTruth++;
+                continue;
+            }
+
+            if ( AntiKt4TruthDressedWZJets->size() == 0 ){
+                skippedEventsEmptyTruth++;
+                continue;
+            } 
+
+            
+
+            const xAOD::JetContainer* InTimeAntiKt4TruthJets = nullptr;
+            if (!event.retrieve(InTimeAntiKt4TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
+                std::cout << "Failed to retrieve Truth jets" << endl;
+                continue;
+            }
+
+            // Filter out events where hard scatter is softer than PU
+            if(AntiKt4TruthDressedWZJets->at(0)->pt() <= InTimeAntiKt4TruthJets->at(0)->pt()){
+                skippedEventsHSTP++;
+                continue; 
+            } 
+
+            passedEventsCounter++;
+            
+            
 
             if ((iEvt % 100) == 0) std::cout << "iEvt: " << iEvt << "\n";
             
 
-            // -- retrieve collections from DOAD ---
+            // -- retrieve collections from DAOD ---
+            const xAOD::EventInfo_v1* EventInfo = nullptr;
+            if (!event.retrieve(EventInfo, "EventInfo").isSuccess()) {
+                cerr << "Cannot access EventInfo" << endl;
+                continue;
+            }
+            
             const xAOD::TruthParticleContainer* TruthBosonsWithDecayParticles = nullptr;
             if (!event.retrieve(TruthBosonsWithDecayParticles, "TruthBosonsWithDecayParticles").isSuccess()) {
-                cerr << "Cannot access TruthParticles" << endl;
+                cerr << "Cannot access TruthBosonsWithDecayParticles" << endl;
                 continue;
             }
 
@@ -665,23 +733,13 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
                 continue;
             }*/
 
-            const xAOD::JetContainer* InTimeAntiKt4TruthJets = nullptr;
-            if (!event.retrieve(InTimeAntiKt4TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
-                cerr << "Failed to retrieve Truth jets" << endl;
-                continue;
-            }
-
             const xAOD::JetContainer* AntiKt10UFOCSSKJets = nullptr;
             if (!event.retrieve(AntiKt10UFOCSSKJets, "AntiKt10UFOCSSKJets").isSuccess()) {
                 cerr << "Failed to retrieve reco Antik10 UFOCSSK jets" << endl;
                 continue;
             }
 
-            const xAOD::JetContainer* AntiKt4TruthDressedWZJets = nullptr;
-            if (!event.retrieve(AntiKt4TruthDressedWZJets, "AntiKt4TruthDressedWZJets").isSuccess()) {
-                cerr << "Failed to retrieve reco Antik4 Truth Dressed WZ jets" << endl;
-                continue;
-            }
+            
 
 
             // Retrieve the CaloTopoClusters422 container
@@ -815,6 +873,24 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
             truthbquarkspyValues.clear();
             truthbquarkspzValues.clear();
             truthbquarksEnergyValues.clear();
+            mcEventWeights.clear();
+            eventWeights.clear();
+            sumOfWeightsForSample = 0;
+            sampleJZSlice = 0;
+            
+            // Get sum of weights for sample, individual Monte Carlo event weight, and compute event weight used later for reweighting histograms
+            sumOfWeightsForSample = sumOfEventWeightsByJZSlice[jzSlice];
+            
+            if (signalBool) sampleJZSlice = -1; 
+            float mcEventWeight = EventInfo->mcEventWeight();
+            //std::cout << "iEvt: " << iEvt << " and event weight: " << eventWeight << "\n";
+            mcEventWeights.push_back(mcEventWeight);
+
+            // Compute weight for histograms 
+            double eventWeight = mcEventWeight * crossSectionsByJZSlice[jzSlice] * filterEffienciesByJZSlice[jzSlice] * reweightLuminosity / (sumOfEventWeightsByJZSlice[jzSlice]);
+            eventWeights.push_back(eventWeight);
+
+
 
             // Initialize per-event counters
             unsigned int higgs_counter = -1;
@@ -1485,6 +1561,8 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
                 truthAntiKt4WZSRJSubleadingMassValues.push_back(subleading->m() / 1000.0);
             }
             if(higgsPtCutsPassed || !signalBool){
+                sampleJZSlice = jzSlice;
+                eventInfoTree->Fill();
                 truthbTree->Fill();
                 truthHiggsTree->Fill();
                 // truthVBFQuark->Fill();  // commented out as in your declaration
@@ -1517,12 +1595,15 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
                 subleadingTruthAntiKt4TruthDressedWZJets->Fill();
             }
         } // loop through events
+        std::cout << "for jz: " << jzSlice << " these many events passed: " << passedEventsCounter << " out of: " << event.getEntries() << "\n";
+        std::cout << " these many events skipped due to empty truth container: " << skippedEventsEmptyTruth << " these many events skipped due to pt hard < pt pileup: " << skippedEventsHSTP << "\n";
         std::cout << "closing files" << "\n";
         gf->Close();
         f->Close();
     } // loop through filenames
     outputFile->cd();
     std::cout << "writing output file" << "\n";
+    eventInfoTree->Write("", TObject::kOverwrite);
     truthbTree->Write("", TObject::kOverwrite);
     truthHiggsTree->Write("", TObject::kOverwrite);
     // truthVBFQuark->Write();  // Optional, if used
@@ -1557,3 +1638,31 @@ void nTupler(bool signalBool, bool vbfBool, unsigned int jzSlice = 3) {
     std::cout << "Processing complete." << endl;
     std::cout << "higgsPassEventCounter: " << higgsPassEventCounter << "\n";
 } // ntupler function
+
+// processes all jzSlices + signal
+void callNTupler(){
+    gSystem->RedirectOutput("NTupler.log", "w");
+    std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    //std::vector<unsigned int > jzSlices = {3};
+    std::vector<std::string > jzOutputFilenames;
+    for(auto jzSlice : jzSlices){
+        nTupler(false, true, jzSlice); // call for each background jzSlice
+        TString out = makeOutputFileName(false, false, jzSlice);
+        jzOutputFilenames.push_back(out.Data());
+    }
+
+    // FIXME allow hadd to work automatically 
+    //std::ostringstream cmd;
+    //cmd << "hadd -f -k outputRootFiles/background_merged_nojz7or9.root";
+    //for (const auto& f : jzOutputFilenames) cmd << " '" << f << "'";
+    //int rc = gSystem->Exec(cmd.str().c_str());
+    //if (rc != 0) {
+    //    Error("callNTupler", "hadd failed with code %d", rc);
+    //}
+
+    nTupler(true, true); // call for signal
+    for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing for now
+        std::cout << jzOutputFileName << "\n";
+    }
+    gSystem->Exit(0);
+}
