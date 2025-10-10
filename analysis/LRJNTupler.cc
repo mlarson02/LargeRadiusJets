@@ -33,7 +33,7 @@ const unsigned int nJZSlices = 10;
 
 // Constants required for reweighting
 
-// In barns - 7.5*10^34 cm^-2 s^-1 * 1 s (HL-LHC 200 PU inst. lumi * 1 second) - use 1 second to make rates plots easy
+// In barns^-1 - 7.5*10^34 cm^-2 s^-1 * 1 s (HL-LHC 200 PU inst. lumi * 1 second) - use 1 second to make rates plots easy
 const double reweightLuminosity = 7.5e10;
 
 // Filter efficiencies from AMI [in b]

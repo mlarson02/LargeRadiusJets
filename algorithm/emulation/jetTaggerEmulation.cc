@@ -27,6 +27,8 @@
 // then writing output large radius jets to a new TTree & text files
 void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::string outputTextFilePath){
 
+    //std::cout << "test 1 " << "\n";
+
     // Relevant data for algorithm read from inputNTuple
 
     // CaloTopoTowers
@@ -58,21 +60,26 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
     // Output JetTagger large radius jets
     std::vector<double>* jetTaggerLRJDiamValues = nullptr;
+    std::vector<unsigned int >* jetTaggerLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerLRJEtValues = nullptr;
     std::vector<double>* jetTaggerLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerLRJPhiValues = nullptr;
 
     // Output JetTagger leading large radius jets
     std::vector<double>* jetTaggerLeadingLRJDiamValues = nullptr;
+    std::vector<unsigned int >* jetTaggerLeadingLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJEtValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJPhiValues = nullptr;
 
     // Output JetTagger subleading large radius jets
     std::vector<double>* jetTaggerSubleadingLRJDiamValues = nullptr;
+    std::vector<unsigned int >* jetTaggerSubleadingLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJEtValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJPhiValues = nullptr;
+
+    //std::cout << "test 2 " << "\n";
 
     // Open input ROOT file
     TFile* inputFile = TFile::Open(inputNTuplePath.c_str(), "READ");
@@ -88,6 +95,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         return;
     }
 
+    //std::cout << "test 3 " << "\n";
+
     // TTrees and branches required as input to algorithm
     TTree* caloTopoTowerTree = (TTree*)inputFile->Get("caloTopoTowerTree");
     TTree* topo422Tree = (TTree*)inputFile->Get("topo422Tree");
@@ -99,18 +108,21 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     // Create new output TTrees to be written to the output file
     TTree* jetTaggerLRJs = new TTree("jetTaggerLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
     jetTaggerLRJs->Branch("Diam", &jetTaggerLRJDiamValues);
+    jetTaggerLRJs->Branch("MergedIndices", &jetTaggerLRJMergedIndicesValues);
     jetTaggerLRJs->Branch("Et", &jetTaggerLRJEtValues);
     jetTaggerLRJs->Branch("Eta", &jetTaggerLRJEtaValues);
     jetTaggerLRJs->Branch("Phi", &jetTaggerLRJPhiValues);
 
     TTree* jetTaggerLeadingLRJs = new TTree("jetTaggerLeadingLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
     jetTaggerLeadingLRJs->Branch("Diam", &jetTaggerLeadingLRJDiamValues);
+    jetTaggerLeadingLRJs->Branch("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValues);
     jetTaggerLeadingLRJs->Branch("Et", &jetTaggerLeadingLRJEtValues);
     jetTaggerLeadingLRJs->Branch("Eta", &jetTaggerLeadingLRJEtaValues);
     jetTaggerLeadingLRJs->Branch("Phi", &jetTaggerLeadingLRJPhiValues);
 
     TTree* jetTaggerSubleadingLRJs = new TTree("jetTaggerSubleadingLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
     jetTaggerSubleadingLRJs->Branch("Diam", &jetTaggerSubleadingLRJDiamValues);
+    jetTaggerSubleadingLRJs->Branch("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValues);
     jetTaggerSubleadingLRJs->Branch("Et", &jetTaggerSubleadingLRJEtValues);
     jetTaggerSubleadingLRJs->Branch("Eta", &jetTaggerSubleadingLRJEtaValues);
     jetTaggerSubleadingLRJs->Branch("Phi", &jetTaggerSubleadingLRJPhiValues);
@@ -156,6 +168,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         // Write event header to output text files
         f_output << "Event : " << std::dec << iEvt << "\n";
 
+        //std::cout << "procesing event: " << std::dec << iEvt << "\n";
+
         std::bitset<diam_bit_length_> diam_bitset_array[nSeedsOutput_];
         std::bitset<et_bit_length_  > et_bitset_array[nSeedsOutput_];
         std::bitset<eta_bit_length_ > eta_bitset_array[nSeedsOutput_];
@@ -163,16 +177,19 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
         // Clear vectors for branches
         jetTaggerLRJDiamValues->clear();
+        jetTaggerLRJMergedIndicesValues->clear();
         jetTaggerLRJEtValues->clear();
         jetTaggerLRJEtaValues->clear();
         jetTaggerLRJPhiValues->clear();
 
         jetTaggerLeadingLRJDiamValues->clear();
+        jetTaggerLeadingLRJMergedIndicesValues->clear();
         jetTaggerLeadingLRJEtValues->clear();
         jetTaggerLeadingLRJEtaValues->clear();
         jetTaggerLeadingLRJPhiValues->clear();
 
         jetTaggerSubleadingLRJDiamValues->clear();
+        jetTaggerSubleadingLRJMergedIndicesValues->clear();
         jetTaggerSubleadingLRJEtValues->clear();
         jetTaggerSubleadingLRJEtaValues->clear();
         jetTaggerSubleadingLRJPhiValues->clear();
@@ -187,6 +204,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         //std::cout << "rMergeConsiderCutDigitized_ : " << rMergeConsiderCutDigitized_ << "\n";
         // Digitize and format data in same way expected for running in HLS
         for(unsigned int iSeed = 0; iSeed < nSeedsInput_; iSeed++){
+            //std::cout << "iSeed :" << iSeed << "\n";
+            //std::cout << "jFexSRJEtValues->size(): " << jFexSRJEtValues->size() << "\n";
             if(jFexSRJEtValues->size() < nSeedsInput_){
                 if(iSeed >= jFexSRJEtValues->size()){
                     seedValues[iSeed][0] = 0;
@@ -196,15 +215,18 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 }
             }
             seedValues[iSeed][0] = digitize(jFexSRJEtValues->at(iSeed), et_bit_length_,
-                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                            static_cast<double>(et_min_), static_cast<double>(et_max_));
             seedValues[iSeed][1] = digitize(jFexSRJEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
             seedValues[iSeed][2] = digitize(jFexSRJPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
+            
             if (iSeed < 2){
                 //std::cout << "seed et: " << std::dec << seedValues[iSeed][0] << " eta: " << seedValues[iSeed][1] << " phi: " << seedValues[iSeed][2] << "\n";
                 //std::cout << "UNDIGITIZED Et: " << jFexSRJEtValues->at(iSeed) << " eta: " << jFexSRJEtaValues->at(iSeed) << " and phi: " << jFexSRJPhiValues->at(iSeed) << "\n";
             }
         }
-        for(unsigned int iIO = 0; iIO < maxObjectsConsidered_; iIO++){
+        unsigned int objectsProcessed = maxObjectsConsidered_;
+        if (maxObjectsConsidered_ > gepBasicClustersEtValues->size()) objectsProcessed = gepBasicClustersEtValues->size();
+        for(unsigned int iIO = 0; iIO < objectsProcessed; iIO++){
             inputObjectValues[iIO][0] = digitize(gepBasicClustersEtValues->at(iIO), et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
             inputObjectValues[iIO][1] = digitize(gepBasicClustersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
@@ -355,6 +377,9 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             seedValues[iSeed][1] = eta_mid_digitized; // FIXME replace 1, 2 with etaIndexInput, phiIndexInput
             seedValues[iSeed][2] = phi_mid_digitized;
         }
+
+        std::vector<unsigned int > jet1MergedIndices;
+        std::vector<unsigned int > jet2MergedIndices;
         
         for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
             unsigned int outputJetEt = 0;
@@ -381,7 +406,11 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 unsigned int lut_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
 
                 if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False)
-                    outputJetEt += inputObjectValues[iInput][0]; // add input object Et to seed Et for resultant output jet Et
+                    if(outputJetEt + inputObjectValues[iInput][0] >= int(et_max_/et_granularity_ - 1)) outputJetEt = int(et_max_/et_granularity_ - 1);
+                    else outputJetEt += inputObjectValues[iInput][0]; // add input object Et to seed Et for resultant output jet Et
+                    jetTaggerLRJMergedIndicesValues->push_back(iInput);
+                    if(iSeed == 0) jet1MergedIndices.push_back(iInput);
+                    if(iSeed == 1) jet2MergedIndices.push_back(iInput);
                     if(numMergedIO <= 1){
                         highestEtMergedIOEta[numMergedIO] = inputObjectValues[iInput][1];
                         highestEtMergedIOPhi[numMergedIO] = inputObjectValues[iInput][2];
@@ -443,7 +472,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
                 ( phi_value  & maskN(phi_bit_length_ ));
 
-                std::cout << "combined_value : " << std::hex << combined_value << "\n";
+                //std::cout << "combined_value : " << std::hex << combined_value << "\n";
             // Hex string with width = total_bits_/4 (=8 for 32 bits)
             std::stringstream hex_stream;
             hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_ / 4) << combined_value;
@@ -464,6 +493,12 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         // Write data to leading, subleading jet branches
         if(outputJetValues[0][1] >= outputJetValues[1][1]){ // to ensure leading, subleading sorted correctly
             jetTaggerLeadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[0]));
+            for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
+                jetTaggerLeadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
+            }
+            for(unsigned int j = 0; j < jet2MergedIndices.size(); j++){
+                jetTaggerSubleadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
+            }
             jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
             jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
             jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
@@ -478,6 +513,12 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[1]));
             jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[1]));
             jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[1]));
+            for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
+                jetTaggerSubleadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
+            }
+            for(unsigned int j = 0; j < jet2MergedIndices.size(); j++){
+                jetTaggerLeadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
+            }
 
             jetTaggerSubleadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[0]));
             jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
@@ -496,6 +537,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     } // Loop through events
     // Close output files
     outputFile->cd();
+    std::cout << "writing output file" << "\n";
     jetTaggerLRJs->Write("", TObject::kOverwrite);
     jetTaggerLeadingLRJs->Write("", TObject::kOverwrite);
     jetTaggerSubleadingLRJs->Write("", TObject::kOverwrite);
@@ -529,7 +571,7 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
     } catch (std::filesystem::filesystem_error& e) {
         std::cerr << "Copy failed: " << e.what() << '\n';
     }            
-    gSystem->RedirectOutput("debuglog.log", "w");
+    //gSystem->RedirectOutput("debuglog.log", "w");
     eventLoop(infile, outntuplefile, outtextfile);
     gSystem->Exit(0);
 } 

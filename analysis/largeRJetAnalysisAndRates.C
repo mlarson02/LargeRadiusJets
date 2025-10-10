@@ -269,188 +269,9 @@ std::map<std::string, std::string> legendMap = {
     "R^{2}_{cut} = 1.44, N_{IO} = 512, No IO E_{cut}"}
 };
 
-// ---------- Data container for one event ----------
-struct EventDisplayInputs {
-  TH2* heatmap = nullptr;  // e.g. sigTopo422Highest128SeedPositionsEvX
-  std::vector<std::pair<double,double>> jFexSeeds;        // red, dashed
-  std::vector<std::pair<double,double>> additionalSRJs;   // azure, dashed
-  std::vector<std::pair<double,double>> newSeeds;         // green, solid
-  std::vector<double>                  newSeedsEt;         // same size as newSeeds (for labels)
-  TString outFile;                                         // output path
-};
-
-// Structure to store histograms used to generate background rate vs. signal efficiency plots
-struct RateEffOut {
-  TH1* hEff_vsThr;   // efficiency vs threshold (optional)
-  TH1* hRate_vsThr;  // rate vs threshold in Hz (optional)
-  TGraph* gRate_vsEff; // main output: y(rate) vs x(eff)
-};
-
-// Function to generate background rate vs. signal efficiency plots
-RateEffOut MakeRateVsEff(TH1* hSig, TH1* hBkg) {
-  // 1) cumulative from HIGH -> LOW threshold
-  auto* hSigCum = hSig->GetCumulative(/*forward=*/false, (std::string(hSig->GetName())+"_cumul").c_str());
-  auto* hBkgCum = hBkg->GetCumulative(/*forward=*/false, (std::string(hBkg->GetName())+"_cumul").c_str());
-
-  // 2) signal efficiency vs threshold
-  const int nb = hSig->GetNbinsX();
-  const double totalSig = hSig->Integral(1, nb);  // unweighted total signal events
-  auto* hEff = (TH1*)hSigCum->Clone((std::string(hSig->GetName())+"_eff_vs_thr").c_str());
-  hEff->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV]; Signal (hh->4b) Efficiency");
-  for (int ib = 1; ib <= nb; ++ib) {
-    double eff = (totalSig > 0 ? hSigCum->GetBinContent(ib)/totalSig : 0.0);
-    hEff->SetBinContent(ib, std::clamp(eff, 0.0, 1.0));
-    hEff->SetBinError  (ib, 0.0); // (optional: compute binomial errors if you want)
-  }
-
-  // 3) background rate vs threshold (already in Hz because you weighted on fill)
-  auto* hRate = (TH1*)hBkgCum->Clone((std::string(hBkg->GetName())+"_rate_vs_thr").c_str());
-  hRate->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Estimated Background Rate [Hz]");
-
-  // 4) build Rate vs Efficiency curve (one point per threshold bin)
-  auto* g = new TGraphErrors(nb);
-  g->SetName("gRate_vsEff");
-  g->SetTitle("Trigger Rate vs Signal Efficiency; Signal (hh->4b) Efficiency;Estimated Background Rate [Hz]");
-  for (int ib = 1; ib <= nb; ++ib) {
-    const double eff  = hEff ->GetBinContent(ib);
-    const double rate = hRate->GetBinContent(ib);
-    double xerr = 0.0;              // no threshold uncertainty here
-    double yerr = hRate->GetBinError(ib);  // background stat. error
-    g->SetPoint(ib-1, eff, rate);
-    g->SetPointError(ib-1, xerr, yerr);
-  }
-
-  return {hEff, hRate, g};
-}
-
-// ---------- Draw ONE event to a canvas and save ----------
-void DrawEventDisplay(const EventDisplayInputs& ev,
-                      TCanvas& c,
-                      double circleR = 1.0,
-                      double labelDy  = 0.6) {
-  if (!ev.heatmap) return;
-
-  c.Clear();   // reuse the same canvas safely
-  c.cd();
-
-  // Heatmap
-  ev.heatmap->GetZaxis()->SetTitle("E_{T} [GeV]");
-  ev.heatmap->Draw("COLZ");
-
-  // jFEX seeds: red, dashed
-  for (const auto& p : ev.jFexSeeds) {
-    TEllipse* e = new TEllipse(p.first, p.second, circleR, circleR);
-    e->SetLineColor(kRed);
-    e->SetLineWidth(2);
-    e->SetFillStyle(0);
-    e->SetLineStyle(2);   // dashed
-    e->Draw("same");
-  }
-
-  // Additional SRJs: azure, dashed
-  for (const auto& p : ev.additionalSRJs) {
-    TEllipse* e = new TEllipse(p.first, p.second, circleR, circleR);
-    e->SetLineColor(kAzure+2);
-    e->SetLineWidth(2);
-    e->SetFillStyle(0);
-    e->SetLineStyle(2);   // dashed
-    e->Draw("same");
-  }
-
-  // New seeds: green, solid + labels
-  const size_t nlab = std::min(ev.newSeeds.size(), ev.newSeedsEt.size());
-  for (size_t i = 0; i < ev.newSeeds.size(); ++i) {
-    const auto& p = ev.newSeeds[i];
-    TEllipse* e = new TEllipse(p.first, p.second, circleR, circleR);
-    e->SetLineColor(kGreen+2);
-    e->SetLineWidth(2);
-    e->SetFillStyle(0);
-    e->SetLineStyle(1);   // solid
-    e->Draw("same");
-
-    if (i < nlab) {
-      TString lab = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", p.first, p.second, ev.newSeedsEt[i]);
-      TLatex lat;
-      lat.SetTextSize(0.025);
-      lat.SetTextColor(kBlack);
-      lat.DrawLatex(p.first, p.second + labelDy, lab);
-    }
-  }
-
-  c.Modified(); c.Update();
-  if (!ev.outFile.IsNull()) c.SaveAs(ev.outFile);
-}
-
-// ---------- Draw MANY events (loop) ----------
-void DrawManyEventDisplays(const std::vector<EventDisplayInputs>& events,
-                           TCanvas& c,
-                           double circleR = 1.0,
-                           double labelDy  = 0.6) {
-  for (const auto& ev : events) {
-    DrawEventDisplay(ev, c, circleR, labelDy);
-  }
-}
-
-
-// ---------- Standalone top ROC (no subplot), same styling, with legend + x-axis ----------
-void SaveStandaloneROC(const char* cname,
-                       const std::vector<TGraph*>& graphs,
-                       TLegend* srcLegend,
-                       const TString& outpath,
-                       double ymin = 1.0, double ymax = 1e4) {
-    if (graphs.empty() || !graphs[0]) return;
-
-    TCanvas* c = new TCanvas(cname, cname, 700, 650);
-    c->SetLogy();
-    c->SetTicks(1, 1);
-
-    // Margins: give more space for labels/titles
-    c->SetLeftMargin(0.16);
-    c->SetBottomMargin(0.16);
-    c->SetRightMargin(0.05);
-    c->SetTopMargin(0.05);
-
-    // First graph
-    TGraph* g0 = (TGraph*)graphs[0]->Clone(TString(cname) + "_g0");
-    g0->SetTitle("ROC Curve;Signal Efficiency;Background Rejection (1/FPR)");
-    g0->GetXaxis()->SetRangeUser(0.0, 1.0);
-    //g0->GetYaxis()->SetRangeUser(ymin, ymax);
-
-    // Axis label/title sizes
-    g0->GetXaxis()->SetLabelSize(0.045);
-    g0->GetXaxis()->SetTitleSize(0.055);
-    g0->GetYaxis()->SetLabelSize(0.045);
-    g0->GetYaxis()->SetTitleSize(0.055);
-    g0->GetYaxis()->CenterTitle(true);
-
-    g0->Draw("AL");
-
-    for (size_t i = 1; i < graphs.size(); ++i) {
-        if (!graphs[i]) continue;
-        TGraph* gi = (TGraph*)graphs[i]->Clone(TString(cname) + Form("_g%zu", i));
-        gi->Draw("L SAME");
-    }
-
-    // Legend: smaller, moved slightly down/left
-    if (srcLegend) {
-        TLegend* leg = (TLegend*)srcLegend->Clone(TString(cname) + "_legend");
-        leg->SetX1NDC(0.58); leg->SetY1NDC(0.58);
-        leg->SetX2NDC(0.88); leg->SetY2NDC(0.83);
-        leg->SetTextSize(0.032);
-        leg->SetBorderSize(0);   // cleaner look
-        leg->SetFillStyle(0);    // transparent
-        leg->Draw();
-    }
-
-    c->Modified(); c->Update();
-    c->SaveAs(outpath);
-}
-
-    
-
-
 void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<std::string > backgroundRootFileNames, bool overlayThreeFiles) {
     SetPlotStyle();
+    
     // Vectors to hold per-file histograms
     std::vector<TH1F*> sig_num100, sig_denom100;
     std::vector<TH1F*> sig_num250, sig_denom250;
@@ -480,9 +301,20 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
     vector<vector<double> > efficiency_curve_points_y2(backgroundRootFileNames.size());
     vector<double > tprMinMaxCut(backgroundRootFileNames.size());
     vector<double > fprMinMaxCut(backgroundRootFileNames.size());
-
+    std::cout << "Processing : " << backgroundRootFileNames.size() << " files. " << "\n";
     std::vector<std::string > algorithmConfigurations;
     for (int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt){
+        unsigned int nInputObjectsAlgorithmConfiguration;
+        std::regex re("_IOs_(\\d+)_");
+        std::smatch match;
+
+        if (std::regex_search(signalRootFileNames[fileIt], match, re)) {
+            nInputObjectsAlgorithmConfiguration = std::stoi(match[1]);  // Convert to integer
+            std::cout << "Extracted number of input objects for this algorithm configuration: " << nInputObjectsAlgorithmConfiguration << std::endl;
+        } else {
+            std::cout << "No match found." << std::endl;
+        }
+
         // Open input ROOT file
         TFile* signalInputFile = TFile::Open(signalRootFileNames[fileIt].c_str(), "READ");
         TFile* backgroundInputFile = TFile::Open(backgroundRootFileNames[fileIt].c_str(), "READ");
@@ -561,14 +393,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<double>* eventWeightsValuesSignal = nullptr;
         int* sampleJZSliceValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJDiamValuesSignal = nullptr;
+        std::vector<unsigned int>* jetTaggerLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJEtaValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJPhiValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJDiamValuesSignal = nullptr;
+        std::vector<unsigned int>* jetTaggerLeadingLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtaValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJPhiValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJDiamValuesSignal = nullptr;
+        std::vector<unsigned int>* jetTaggerSubleadingLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtaValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJPhiValuesSignal = nullptr;
@@ -707,18 +542,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<double>* truthHiggsPhiValuesBack = nullptr;
         std::vector<double>* truthHiggsInvMassValuesBack = nullptr;
         std::vector<double>* mcEventWeightsValuesBack = nullptr;
-        double* sumOfWeightsForSampleValuesBack = nullptr;
+        double sumOfWeightsForSampleValuesBack = 0.0;
         std::vector<double>* eventWeightsValuesBack = nullptr;
-        int* sampleJZSliceValuesBack = nullptr;
+        int sampleJZSliceValuesBack = -1;
         std::vector<double>* jetTaggerLRJDiamValuesBack = nullptr;
+        std::vector<unsigned int>* jetTaggerLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJEtaValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJPhiValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJDiamValuesBack = nullptr;
+        std::vector<double>* jetTaggerLeadingLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtaValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJPhiValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJDiamValuesBack = nullptr;
+        std::vector<double>* jetTaggerSubleadingLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtaValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJPhiValuesBack = nullptr;
@@ -823,18 +661,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // === jetTaggerLRJsSignal ===
         jetTaggerLRJsSignal->SetBranchAddress("Diam", &jetTaggerLRJDiamValuesSignal);
+        jetTaggerLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerLRJMergedIndicesValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Et", &jetTaggerLRJEtValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Eta", &jetTaggerLRJEtaValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Phi", &jetTaggerLRJPhiValuesSignal);
 
         // === jetTaggerLeadingLRJsSignal ===
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Diam", &jetTaggerLeadingLRJDiamValuesSignal);
+        jetTaggerLeadingLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Et", &jetTaggerLeadingLRJEtValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Eta", &jetTaggerLeadingLRJEtaValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Phi", &jetTaggerLeadingLRJPhiValuesSignal);
 
         // === jetTaggerSubleadingLRJsSignal ===
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Diam", &jetTaggerSubleadingLRJDiamValuesSignal);
+        jetTaggerSubleadingLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Et", &jetTaggerSubleadingLRJEtValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Eta", &jetTaggerSubleadingLRJEtaValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Phi", &jetTaggerSubleadingLRJPhiValuesSignal);
@@ -1020,18 +861,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // === jetTaggerLRJsBack ===
         jetTaggerLRJsBack->SetBranchAddress("Diam", &jetTaggerLRJDiamValuesBack);
+        jetTaggerLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerLRJMergedIndicesValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Et", &jetTaggerLRJEtValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Eta", &jetTaggerLRJEtaValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Phi", &jetTaggerLRJPhiValuesBack);
 
         // === jetTaggerLeadingLRJsBack ===
         jetTaggerLeadingLRJsBack->SetBranchAddress("Diam", &jetTaggerLeadingLRJDiamValuesBack);
+        jetTaggerLeadingLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Et", &jetTaggerLeadingLRJEtValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Eta", &jetTaggerLeadingLRJEtaValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Phi", &jetTaggerLeadingLRJPhiValuesBack);
 
         // === jetTaggerSubleadingLRJsBack ===
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Diam", &jetTaggerSubleadingLRJDiamValuesBack);
+        jetTaggerSubleadingLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Et", &jetTaggerSubleadingLRJEtValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Eta", &jetTaggerSubleadingLRJEtaValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Phi", &jetTaggerSubleadingLRJPhiValuesBack);
@@ -1185,8 +1029,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         //gSystem->RedirectOutput("output5.log", "w");
         const int num_processed_events_background = eventInfoTreeBack->GetEntries();
         const int num_processed_events_signal = eventInfoTreeSignal->GetEntries();
-
-        const int num_processed_events = 10000;
+        std::cout << "num_processed_events_background: " << num_processed_events_background << "\n";
+        std::cout << "num_processed_events_signal: " <<  num_processed_events_signal << "\n";
 
         // Variables to store data
         std::vector<double> backgroundEtValues, backgroundEtaValues, backgroundPhiValues;
@@ -1275,6 +1119,86 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         back_num300.push_back(h_back_num300);
         back_denom300.push_back(h_back_denom300);
 
+
+        // Arrays to store JZ slice copies of histograms:
+        TH1F* back_h_leading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_subleading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_gFEX_leading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_gFEX_subleading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_jFEX_leading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_jFEX_subleading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_leading_offlineLRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_subleading_offlineLRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_leading_truthSRJs_Et_arr[nJZSlices_];
+        TH1F* back_h_subleading_truthSRJs_Et_arr[nJZSlices_];
+
+        for (int i = 0; i < nJZSlices_; ++i) {
+            back_h_leading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_leading_LRJ_Et_%d", i),
+                "Leading LRJ Et Distribution; Leading JetTagger LRJ E_{T} [GeV]; Events / 10 GeV",
+                210, 0, 2100);
+
+            back_h_subleading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_subleading_LRJ_Et_%d", i),
+                "Subleading LRJ Et Distribution;Subleading JetTagger LRJ E_{T} [GeV]; Events / 10 GeV",
+                210, 0, 2100);
+
+            back_h_gFEX_leading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_gFEX_leading_LRJ_Et_%d", i),
+                "Leading gFEX LRJ Et Distribution;Leading gFEX LRJ E_{T} [GeV]; Events / 10 GeV",
+                85, 0, 850);
+
+            back_h_gFEX_subleading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_gFEX_subleading_LRJ_Et_%d", i),
+                "Subleading gFEX LRJ Et Distribution;Subleading gFEX LRJ E_{T} [GeV]; Events / 10 GeV",
+                85, 0, 850);
+
+            back_h_jFEX_leading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_jFEX_leading_LRJ_Et_%d", i),
+                "Leading jFEX LRJ Et Distribution;Leading jFEX LRJ E_{T} [GeV]; Events / 10 GeV",
+                170, 0, 1700);
+
+            back_h_jFEX_subleading_LRJ_Et_arr[i] = new TH1F(
+                Form("back_h_jFEX_subleading_LRJ_Et_%d", i),
+                "Subleading jFEX LRJ Et Distribution;Subleading jFEX LRJ E_{T} [GeV]; Events / 10 GeV",
+                170, 0, 1700);
+
+            back_h_leading_offlineLRJ_Et_arr[i] = new TH1F(
+                Form("back_h_leading_offlineLRJ_Et_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV]; Events / 25 GeV",
+                160, 0, 4000);
+
+            back_h_subleading_offlineLRJ_Et_arr[i] = new TH1F(
+                Form("back_h_subleading_offlineLRJ_Et_%d", i),
+                "Subleading Offline LRJ Et Distribution;Subleading Offline LRJ E_{T} [GeV]; Events / 25 GeV",
+                160, 0, 4000);
+
+            back_h_leading_truthSRJs_Et_arr[i] = new TH1F(
+                Form("back_h_leading_truthSRJs_Et_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading Truth SRJ E_{T} [GeV]; Events / 25 GeV",
+                160, 0, 4000);
+
+            back_h_subleading_truthSRJs_Et_arr[i] = new TH1F(
+                Form("back_h_subleading_truthSRJs_Et_%d", i),
+                "Subleading Offline LRJ Et Distribution;E_{T} [GeV];Subleading Truth SRJs / 25 GeV",
+                160, 0, 4000);
+        }
+
+        // Variable binning: 0–400 GeV in 10 GeV steps, 400–800 GeV in 25 GeV steps
+        std::vector<Double_t> rateVsEffBins;
+
+        // 0 → 400 GeV in 10 GeV steps
+        for (int i = 0; i <= 40; ++i) rateVsEffBins.push_back(i * 10.0);
+
+        // 425 → 800 GeV in 25 GeV steps
+        //for (int i = 17; i <= 32; ++i) rateVsEffBins.push_back(400.0 + (i - 16) * 50.0);
+        // (above loop adds 425, 450, …, 800; total continuous sequence)
+
+        
+        // 450 → 800 GeV in 50 GeV steps
+        for (int i = 1; i <= 8; ++i)
+            rateVsEffBins.push_back(400.0 + i * 50.0);  // 450, 500, ..., 800
+
         // ---------------- Histograms / Profiles ----------------
         const double ptMin = 25., ptMax = 500.;
         const int    nPtBins = 19;   // 20 GeV per bin like the screenshot
@@ -1296,7 +1220,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         prof_AvgDR_vs_HpT->SetLineColor(kBlack);
         prof_AvgDR_vs_HpT->SetMarkerColor(kBlack);
 
-        TH1F* sig_h_LRJ_nmio = new TH1F("sig_h_LRJ_nmio", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
+        TH1F* sig_h_LRJ_substruct = new TH1F("sig_h_LRJ_substruct", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
         TH2F *sigDiamvsEt = new TH2F("sigDiamvsEt", "Sum of Topo422 E_{T} in Each Bin; LRJ E_{T} [GeV];LRJ 'Diameter'", 
                             20, 0, 800,   // 100 bins from -5 to 5 on eta axis
                             32, 0, 1.0);  // 64 bins from -3.2 to 3.2 on phi axis
@@ -1335,14 +1259,27 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_LeadingOfflineLRJ_SubjetEt = new TH1F("back_h_LeadingOfflineLRJ_SubjetEt", "LRJ Et Distribution;Subjet E_{T}; (# of Leading Offline LRJs Subjets / Event) / 20 GeV", 20, 0, 400);
 
         TH1F* sig_h_LRJ_Et = new TH1F("sig_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of LRJs / 50 GeV", 16, 0, 800);
-        TH1F* sig_h_leading_LRJ_Et = new TH1F("sig_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", 48, 0, 1200);
-        TH1F* sig_h_subleading_LRJ_Et = new TH1F("sig_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", 40, 0, 1000);
+        TH1F* sig_h_leading_LRJ_Et = new TH1F("sig_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* sig_h_subleading_LRJ_Et = new TH1F("sig_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
 
+        TH1F* sig_h_gFEX_leading_LRJ_Et = new TH1F("sig_h_gFEX_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* sig_h_gFEX_subleading_LRJ_Et = new TH1F("sig_h_gFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+
+        TH1F* sig_h_jFEX_leading_LRJ_Et = new TH1F("sig_h_jFEX_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* sig_h_jFEX_subleading_LRJ_Et = new TH1F("sig_h_jFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+
+        // with deltaR metric
         TH2F *sigOfflineLeadingLRJEtvsPsi_R = new TH2F("sigOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
                             20, 0, 1 ); //y axis
+        TH2F *sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+                            20, 0, 1, // x axis
+                            20, 0, 1 ); //y axis
         TH2F *backOfflineLeadingLRJEtvsPsi_R = new TH2F("backOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("backOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+                            20, 0, 1, // x axis
                             20, 0, 1 ); //y axis
 
         TH2F *sigOfflineSubleadingLRJEtvsPsi_R = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
@@ -1351,12 +1288,84 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH2F *backOfflineSubleadingLRJEtvsPsi_R = new TH2F("backOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
                             35, 0, 700, // x axis
                             20, 0, 1 ); //y axis
+        
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.6); //y axis                    
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.4); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            35, 0, 700, // x axis
+                            20, 0, 0.6); //y axis
+
+        // with deltaR^2 Metric
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+                            35, 0, 0.7, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R2 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+                            35, 0, 0.7, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            35, 0, 700, // x axis
+                            20, 0, 1 ); //y axis
+        
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis                    
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            35, 0, 700, // x axis
+                            30, 0, 0.3); //y axis
+        TH2F *sigOfflineLeadingLRJEtvsPsi_12 = new TH2F("sigOfflineLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_12 = new TH2F("backOfflineLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_12 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_12 = new TH2F("backOfflineSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
 
         TH1F* sig_h_leading_LRJ_psi_R = new TH1F("sig_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_LRJ_psi_R_squared = new TH1F("sig_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* sig_h_LRJ_psi_R_12 = new TH1F("sig_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* sig_h_subleading_LRJ_psi_R = new TH1F("sig_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05 ", 20, 0, 1);
-
         TH1F* back_h_leading_LRJ_psi_R = new TH1F("back_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_LRJ_psi_R_squared = new TH1F("back_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* back_h_LRJ_psi_R_12 = new TH1F("back_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* back_h_subleading_LRJ_psi_R = new TH1F("back_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05", 20, 0, 1);
+
+        TH1F* sig_h_leading_LRJ_psi_R2 = new TH1F("sig_h_leading_LRJ_psi_R2", "Leading LRJ Et Distribution;#Psi_{R^{2}};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_LRJ_psi_R2_squared = new TH1F("sig_h_LRJ_psi_R2_squared", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading};% of Events / 0.01", 20, 0, 0.2);
+        TH1F* sig_h_LRJ_psi_R2_12 = new TH1F("sig_h_LRJ_psi_R2_12", "Leading LRJ Et Distribution; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}};% of Events / 0.2", 25, 0, 5);
+        TH1F* sig_h_subleading_LRJ_psi_R2 = new TH1F("sig_h_subleading_LRJ_psi_R2", "Subleading LRJ Et Distribution;#Psi_{R^{2}};% of Subleading LRJs / 0.05 ", 20, 0, 1);
+        TH1F* back_h_leading_LRJ_psi_R2 = new TH1F("back_h_leading_LRJ_psi_R2", "Leading LRJ Et Distribution;#Psi_{R^{2}};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_LRJ_psi_R2_squared = new TH1F("back_h_LRJ_psi_R2_squared", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading};% of Events / 0.01", 20, 0, 0.2);
+        TH1F* back_h_LRJ_psi_R2_12 = new TH1F("back_h_LRJ_psi_R2_12", "Leading LRJ Et Distribution; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}};% of Events / 0.2", 25, 0, 5);
+        TH1F* back_h_subleading_LRJ_psi_R2 = new TH1F("back_h_subleading_LRJ_psi_R2", "Subleading LRJ Et Distribution;#Psi_{R^{2}};% of Subleading LRJs / 0.05", 20, 0, 1);
 
         TH1F* sig_h_LRJ1_deltaEt_digitized_double = new TH1F("sig_h_LRJ1_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
         TH1F* sig_h_LRJ2_deltaEt_digitized_double = new TH1F("sig_h_LRJ2_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
@@ -1366,7 +1375,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
 
         TH1F* sig_h_offlineLRJ_Et = new TH1F("sig_h_offlineLRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of Offline LRJs / 50 GeV", 16, 0, 800);
-        TH1F* sig_h_leading_offlineLRJ_Et = new TH1F("sig_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 16, 0, 800);
+        TH1F* sig_h_leading_offlineLRJ_Et = new TH1F("sig_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 24, 0, 1200);
         TH1F* sig_h_subleading_offlineLRJ_Et = new TH1F("sig_h_subleading_offlineLRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading Offline LRJs / 50 GeV", 16, 0, 800);
 
         TH1F* sig_h_LRJ_E = new TH1F("sig_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];% of LRJs / 10 GeV", 100, 0, 1000);
@@ -1379,6 +1388,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_leading_offlineLRJ_gFexLRJ_deltaEt = new TH1F("sig_h_leading_offlineLRJ_gFexLRJ_deltaEt", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (gFex - JetTagger) [GeV];% of Leading LRJs / 10 GeV", 50, -150, 350);
         TH1F* sig_h_leading_offlineLRJ_jFexLRJ_deltaEt = new TH1F("sig_h_leading_offlineLRJ_jFexLRJ_deltaEt", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (gFex - JetTagger) [GeV];% of Leading LRJs / 10 GeV", 50, -150, 350);
+
+        TH1F* sig_h_leading_LRJ_gFexLRJ_Et_resolution = new TH1F("sig_h_leading_LRJ_gFexLRJ_Et_resolution", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (gFex - JetTagger) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 40, -2, 2);
+        TH1F* sig_h_leading_LRJ_offlineLRJ_Et_resolution = new TH1F("sig_h_leading_LRJ_offlineLRJ_Et_resolution", "#Delta E_{T} Leading Offline LRJ, Output LRJ, ;#Delta E_{T} (Offline - JetTagger) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 20, -1, 1);
+
+        TH1F* sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution = new TH1F("sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution", "#Delta E_{T} Leading gFEX LRJ, Output LRJ, ;#Delta E_{T} (Offline - gFEX) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 50, -3.5, 1.5);
+        TH1F* sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution = new TH1F("sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution", "#Delta E_{T} Leading jFEX LRJ, Output LRJ, ;#Delta E_{T} (Offline - jFEX) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 40, -3, 1);
 
         TH1F* sig_h_leading_LRJ_gFexLRJ_deltaR = new TH1F("sig_h_leading_LRJ_gFexLRJ_deltaR", "#Delta R Leading gFex LRJ, Output LRJ, ;#Delta R (gFex, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
         TH1F* sig_h_leading_LRJ_offlineLRJ_deltaR = new TH1F("sig_h_leading_LRJ_offlineLRJ_deltaR", "#Delta R Leading Offline LRJ, Output LRJ, ;#Delta R (Offline, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
@@ -1828,16 +1843,22 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<double > siggFexLRJEtEv4;
         std::vector<double > sigOfflineLRJEtEv4;
 
-        TH1F* back_h_LRJ_nmio = new TH1F("back_h_LRJ_nmio", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
+        TH1F* back_h_LRJ_substruct = new TH1F("back_h_LRJ_substruct", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
         TH2F *backDiamvsEt = new TH2F("backDiamvsEt", "Sum of Topo422 E_{T} in Each Bin; LRJ E_{T} [GeV];LRJ 'Diameter'", 
                             20, 0, 800,   // 100 bins from -5 to 5 on eta axis
                             32, 0, 1.0);  // 64 bins from -3.2 to 3.2 on phi axis
         TH1F* back_h_LRJ_Et = new TH1F("back_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of LRJs / 50 GeV", 16, 0, 800);
-        TH1F* back_h_leading_LRJ_Et = new TH1F("back_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", 48, 0, 1200);
-        TH1F* back_h_subleading_LRJ_Et = new TH1F("back_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 50 GeV", 40, 0, 1000);
+        TH1F* back_h_leading_LRJ_Et = new TH1F("back_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* back_h_subleading_LRJ_Et = new TH1F("back_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+
+        TH1F* back_h_gFEX_leading_LRJ_Et = new TH1F("back_h_gFEX_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* back_h_gFEX_subleading_LRJ_Et = new TH1F("back_h_gFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+
+        TH1F* back_h_jFEX_leading_LRJ_Et = new TH1F("back_h_jFEX_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
+        TH1F* back_h_jFEX_subleading_LRJ_Et = new TH1F("back_h_jFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
 
         TH1F* back_h_offlineLRJ_Et = new TH1F("back_h_offlineLRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of Offline LRJs / 50 GeV", 16, 0, 800);
-        TH1F* back_h_leading_offlineLRJ_Et = new TH1F("back_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 16, 0, 800);
+        TH1F* back_h_leading_offlineLRJ_Et = new TH1F("back_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 24, 0, 1200);
         TH1F* back_h_subleading_offlineLRJ_Et = new TH1F("back_h_subleading_offlineLRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading Offline LRJs / 50 GeV", 16, 0, 800);
         TH1F* back_h_LRJ_E = new TH1F("back_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];% of LRJs / 10 GeV", 100, 0, 1000);
         TH1F* back_h_LRJ_eta = new TH1F("back_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
@@ -1848,6 +1869,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* back_h_leading_offlineLRJ_gFexLRJ_deltaEt = new TH1F("back_h_leading_offlineLRJ_gFexLRJ_deltaEt", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (Offline - gFEX) [GeV];% of Leading LRJs / 10 GeV", 50, -150, 350);
         TH1F* back_h_leading_offlineLRJ_jFexLRJ_deltaEt = new TH1F("back_h_leading_offlineLRJ_jFexLRJ_deltaEt", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (Offline - gFEX) [GeV];% of Leading LRJs / 10 GeV", 50, -150, 350);
+
+        TH1F* back_h_leading_LRJ_gFexLRJ_Et_resolution = new TH1F("back_h_leading_LRJ_gFexLRJ_Et_resolution", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (gFEX - JetTagger) / E_{T, gFEX} [GeV];% of Leading LRJs / 0.1", 40, -2, 2);
+        TH1F* back_h_leading_LRJ_offlineLRJ_Et_resolution = new TH1F("back_h_leading_LRJ_offlineLRJ_Et_resolution", "#Delta E_{T} Leading Offline LRJ, Output LRJ, ;#Delta E_{T} (Offline - JetTagger) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 20, -1, 1);
+
+        TH1F* back_h_leading_offlineLRJ_gFexLRJ_Et_resolution = new TH1F("back_h_leading_offlineLRJ_gFexLRJ_Et_resolution", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (Offline - gFEX) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 50, -3.5, 1.5);
+        TH1F* back_h_leading_offlineLRJ_jFexLRJ_Et_resolution = new TH1F("back_h_leading_offlineLRJ_jFexLRJ_Et_resolution", "#Delta E_{T} Leading gFex LRJ, Output LRJ, ;#Delta E_{T} (Offline - jFEX) / E_{T, Offline} [GeV];% of Leading LRJs / 0.1", 40, -3, 1);
 
         TH1F* back_h_leading_LRJ_gFexLRJ_deltaR = new TH1F("back_h_leading_LRJ_gFexLRJ_deltaR", "#Delta R Leading gFex LRJ, Output LRJ, ;#Delta R (gFex, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
         TH1F* back_h_leading_LRJ_offlineLRJ_deltaR = new TH1F("back_h_leading_LRJ_offlineLRJ_deltaR", "#Delta R Leading Offline LRJ, Output LRJ, ;#Delta R (Offline, JetTagger);% of Leading LRJs / 0.1", 50, 0, 5);
@@ -1958,16 +1985,27 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             return;
         }
 
-        for(unsigned int iEvt = 0; iEvt < num_processed_events_signal; iEvt ++ ){ // FIXME no need for a separate event loop - easier for now to avoid rewriting code. 
+        for(unsigned int iEvt = 0; iEvt < num_processed_events_signal; iEvt ++ ){
             jetTaggerLRJsSignal->GetEntry(iEvt);
             jetTaggerLeadingLRJsSignal->GetEntry(iEvt);
             jetTaggerSubleadingLRJsSignal->GetEntry(iEvt);
+            gFexLeadingLRJTreeSignal->GetEntry(iEvt);
+            gFexSubleadingLRJTreeSignal->GetEntry(iEvt);
+            jFexLeadingLRJTreeSignal->GetEntry(iEvt);
+            jFexSubleadingLRJTreeSignal->GetEntry(iEvt);
+
 
             sig_h_leading_LRJ_Et->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
             sig_h_subleading_LRJ_Et->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0));
+
+            sig_h_gFEX_leading_LRJ_Et->Fill(gFexLRJLeadingEtValuesSignal->at(0)); 
+            sig_h_gFEX_subleading_LRJ_Et->Fill(gFexLRJSubleadingEtValuesSignal->at(0)); 
+
+            if(jFexLRJLeadingEtValuesSignal->size() > 0) sig_h_jFEX_leading_LRJ_Et->Fill(jFexLRJLeadingEtValuesSignal->at(0)); 
+            if(jFexLRJSubleadingEtValuesSignal->size() > 0) sig_h_jFEX_subleading_LRJ_Et->Fill(jFexLRJSubleadingEtValuesSignal->at(0));
             
             for(unsigned int iSigLRJ = 0; iSigLRJ < jetTaggerLRJDiamValuesSignal->size(); iSigLRJ++){
-                sig_h_LRJ_nmio->Fill(jetTaggerLRJDiamValuesSignal->at(iSigLRJ)); // FIXME rename from nmio
+                sig_h_LRJ_substruct->Fill(jetTaggerLRJDiamValuesSignal->at(iSigLRJ)); 
                 sigDiamvsEt->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ), jetTaggerLRJDiamValuesSignal->at(iSigLRJ));
                 sig_h_LRJ_Et->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ));
                 sig_h_LRJ_E->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ) * cosh(jetTaggerLRJEtaValuesSignal->at(iSigLRJ)));
@@ -1981,10 +2019,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             
         }
 
-        for(unsigned int iEvt = 0; iEvt < num_processed_events_background; iEvt ++ ){ // FIXME no need for a separate event loop - easier for now to avoid rewriting code. 
+        for(unsigned int iEvt = 0; iEvt < num_processed_events_background; iEvt ++ ){ 
             jetTaggerLRJsBack->GetEntry(iEvt);
             jetTaggerLeadingLRJsBack->GetEntry(iEvt);
             jetTaggerSubleadingLRJsBack->GetEntry(iEvt);
+            gFexLeadingLRJTreeBack->GetEntry(iEvt);
+            gFexSubleadingLRJTreeBack->GetEntry(iEvt);
+            jFexLeadingLRJTreeBack->GetEntry(iEvt);
+            jFexSubleadingLRJTreeBack->GetEntry(iEvt);
 
             eventInfoTreeBack->GetEntry(iEvt);
 
@@ -1993,8 +2035,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_leading_LRJ_Et->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight); 
             back_h_subleading_LRJ_Et->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
 
+            back_h_gFEX_leading_LRJ_Et->Fill(gFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight); 
+            back_h_gFEX_subleading_LRJ_Et->Fill(gFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight); 
+
+            if(jFexLRJLeadingEtValuesBack->size() > 0) back_h_jFEX_leading_LRJ_Et->Fill(jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight); 
+            if(jFexLRJSubleadingEtValuesBack->size() > 0) back_h_jFEX_subleading_LRJ_Et->Fill(jFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight); 
+
             for(unsigned int iBackLRJ = 0; iBackLRJ < jetTaggerLRJDiamValuesBack->size(); iBackLRJ++){
-                back_h_LRJ_nmio->Fill(jetTaggerLRJDiamValuesBack->at(iBackLRJ), backgroundEventWeight);
+                back_h_LRJ_substruct->Fill(jetTaggerLRJDiamValuesBack->at(iBackLRJ), backgroundEventWeight);
                 backDiamvsEt->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ), jetTaggerLRJDiamValuesBack->at(iBackLRJ), backgroundEventWeight);
                 back_h_LRJ_Et->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ), backgroundEventWeight);
                 back_h_LRJ_E->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ) * cosh(jetTaggerLRJEtaValuesBack->at(iBackLRJ)), backgroundEventWeight);
@@ -2004,38 +2052,501 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 back_h_LRJ_eta->Fill(jetTaggerLRJPhiValuesBack->at(iBackLRJ), backgroundEventWeight);
                 back_h_LRJ_phi->Fill(jetTaggerLRJEtaValuesBack->at(iBackLRJ), backgroundEventWeight);
             }
-            
         }
             
-        // Generate background rate vs. signal efficiency plot
+        // ---- helpers --------------------------------------------------------------
+        auto SetAxes = [](TAxis* ax, const char* title) {
+        ax->SetTitle(title);
+        ax->SetTitleFont(42);
+        ax->SetLabelFont(42);
+        ax->SetTitleSize(0.05);
+        ax->SetLabelSize(0.05);
+        ax->SetTitleColor(kBlack);
+        ax->SetLabelColor(kBlack);
+        ax->SetNdivisions(510);
+        ax->SetTitleOffset(1.25);
+        };
+
+        TString rateVsEffFileDir = "rateVsEff_" + algorithmConfigurations[fileIt] + "/";
+
+        gSystem->mkdir(rateVsEffFileDir);
+
+        // ---- LEADING --------------------------------------------------------------
         auto out = MakeRateVsEff(sig_h_leading_LRJ_Et, back_h_leading_LRJ_Et);
-        // Optional: inspect vs-threshold plots
+
+        // Titles & colors for TH1s
+        SetAxes(out.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Titles & colors for TGraph
+        SetAxes(out.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
         auto c1 = new TCanvas("c1","vs threshold",1200,500);
         c1->Divide(2,1);
-        c1->cd(1); out.hEff_vsThr->Draw("AP");
-        c1->cd(2); gPad->SetLogy(); out.hRate_vsThr->Draw("AP");
-        c1->SaveAs("ratevseff/threshold_views.pdf");
+        c1->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out.hRate_vsThr->Draw("HIST");
+        c1->SaveAs(rateVsEffFileDir + "threshold_views.pdf");
 
-        // Main plot: rate vs efficiency
+        // Main plot: rate vs efficiency (graph)
         auto c2 = new TCanvas("c2","Rate vs Eff",700,600);
-        c2->SetLogy();   // rates span orders of magnitude
-        out.gRate_vsEff->Draw("AP");   // A=axis, P=points with errors
-        c2->SaveAs("ratevseff/rate_vs_eff.pdf");
+        c2->SetLeftMargin(0.16); c2->SetBottomMargin(0.16); c2->SetTicks(1,1);
+        c2->SetLogy();
+        out.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2->SaveAs(rateVsEffFileDir + "rate_vs_eff.pdf");
 
-        // Generate background rate vs. signal efficiency plot
+        // ---- SUBLEADING -----------------------------------------------------------
         auto out_subleading = MakeRateVsEff(sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et);
-        // Optional: inspect vs-threshold plots
+
+        // TH1s
+        SetAxes(out_subleading.hEff_vsThr ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_subleading.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_subleading.hRate_vsThr->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_subleading.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Graph
+        SetAxes(out_subleading.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_subleading.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
         auto c1_subleading = new TCanvas("c1_subleading","vs threshold",1200,500);
         c1_subleading->Divide(2,1);
-        c1_subleading->cd(1); out_subleading.hEff_vsThr->Draw("AP");
-        c1_subleading->cd(2); gPad->SetLogy(); out_subleading.hRate_vsThr->Draw("AP");
-        c1_subleading->SaveAs("ratevseff/threshold_views_subleading.pdf");
+        c1_subleading->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_subleading.hEff_vsThr->Draw("HIST");
+        c1_subleading->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_subleading.hRate_vsThr->Draw("HIST");
+        c1_subleading->SaveAs(rateVsEffFileDir + "threshold_views_subleading.pdf");
 
-        // Main plot: rate vs efficiency
+        // Main plot
         auto c2_subleading = new TCanvas("c2_subleading","Rate vs Eff",700,600);
-        c2_subleading->SetLogy();   // rates span orders of magnitude
-        out_subleading.gRate_vsEff->Draw("AP");   // A=axis, P=points with errors
-        c2_subleading->SaveAs("ratevseff/rate_vs_eff_subleading.pdf");
+        c2_subleading->SetLeftMargin(0.16); c2_subleading->SetBottomMargin(0.16); c2_subleading->SetTicks(1,1);
+        c2_subleading->SetLogy();
+        out_subleading.gRate_vsEff->Draw("AP");
+        c2_subleading->SaveAs(rateVsEffFileDir + "rate_vs_eff_subleading.pdf");
+
+
+
+        // ---- gFEX LEADING --------------------------------------------------------------
+        auto out_gFEX_leading = MakeRateVsEff(sig_h_gFEX_leading_LRJ_Et, back_h_gFEX_leading_LRJ_Et);
+
+        // Titles & colors for TH1s
+        SetAxes(out_gFEX_leading.hEff_vsThr ->GetXaxis(), "Leading gFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_gFEX_leading.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_gFEX_leading.hRate_vsThr->GetXaxis(), "Leading gFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_gFEX_leading.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_gFEX_leading.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_gFEX_leading.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
+        auto c1_gFEX_leading = new TCanvas("c1_gFEX_leading","vs threshold",1200,500);
+        c1_gFEX_leading->Divide(2,1);
+        c1_gFEX_leading->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_gFEX_leading.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_gFEX_leading->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_gFEX_leading.hRate_vsThr->Draw("HIST");
+        c1_gFEX_leading->SaveAs(rateVsEffFileDir + "threshold_views_gfex_leading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_gFEX_leading = new TCanvas("c2_gFEX_leading","Rate vs Eff",700,600);
+        c2_gFEX_leading->SetLeftMargin(0.16); c2_gFEX_leading->SetBottomMargin(0.16); c2_gFEX_leading->SetTicks(1,1);
+        c2_gFEX_leading->SetLogy();
+        out_gFEX_leading.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_gFEX_leading->SaveAs(rateVsEffFileDir + "rate_vs_eff_gfex_leading.pdf");
+
+
+        // ---- jFEX LEADING --------------------------------------------------------------
+        auto out_jFEX_leading = MakeRateVsEff(sig_h_jFEX_leading_LRJ_Et, back_h_jFEX_leading_LRJ_Et);
+
+        // Titles & colors for TH1s
+        SetAxes(out_jFEX_leading.hEff_vsThr ->GetXaxis(), "Leading jFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_jFEX_leading.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_jFEX_leading.hRate_vsThr->GetXaxis(), "Leading jFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_jFEX_leading.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_jFEX_leading.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_jFEX_leading.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
+        auto c1_jFEX_leading = new TCanvas("c1_jFEX_leading","vs threshold",1200,500);
+        c1_jFEX_leading->Divide(2,1);
+        c1_jFEX_leading->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_jFEX_leading.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_jFEX_leading->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_jFEX_leading.hRate_vsThr->Draw("HIST");
+        c1_jFEX_leading->SaveAs(rateVsEffFileDir + "threshold_views_jFEX_leading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_jFEX_leading = new TCanvas("c2_jFEX_leading","Rate vs Eff",700,600);
+        c2_jFEX_leading->SetLeftMargin(0.16); c2_jFEX_leading->SetBottomMargin(0.16); c2_jFEX_leading->SetTicks(1,1);
+        c2_jFEX_leading->SetLogy();
+        out_jFEX_leading.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_jFEX_leading->SaveAs(rateVsEffFileDir + "rate_vs_eff_jFEX_leading.pdf");
+
+
+        // ---- gFEX SUBLEADING --------------------------------------------------------------
+        auto out_gFEX_subleading = MakeRateVsEff(sig_h_gFEX_subleading_LRJ_Et, back_h_gFEX_subleading_LRJ_Et);
+
+        // Titles & colors for TH1s
+        SetAxes(out_gFEX_subleading.hEff_vsThr ->GetXaxis(), "Subleading gFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_gFEX_subleading.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_gFEX_subleading.hRate_vsThr->GetXaxis(), "Subleading gFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_gFEX_subleading.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_gFEX_subleading.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_gFEX_subleading.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
+        auto c1_gFEX_subleading = new TCanvas("c1_gFEX_subleading","vs threshold",1200,500);
+        c1_gFEX_subleading->Divide(2,1);
+        c1_gFEX_subleading->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_gFEX_subleading.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_gFEX_subleading->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_gFEX_subleading.hRate_vsThr->Draw("HIST");
+        c1_gFEX_subleading->SaveAs(rateVsEffFileDir + "threshold_views_gfex_subleading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_gFEX_subleading = new TCanvas("c2_gFEX_subleading","Rate vs Eff",700,600);
+        c2_gFEX_subleading->SetLeftMargin(0.16); c2_gFEX_subleading->SetBottomMargin(0.16); c2_gFEX_subleading->SetTicks(1,1);
+        c2_gFEX_subleading->SetLogy();
+        out_gFEX_subleading.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_gFEX_subleading->SaveAs(rateVsEffFileDir + "rate_vs_eff_gfex_subleading.pdf");
+
+        // ---- jFEX SUBLEADING --------------------------------------------------------------
+        auto out_jFEX_subleading = MakeRateVsEff(sig_h_jFEX_subleading_LRJ_Et, back_h_jFEX_subleading_LRJ_Et);
+
+        // Titles & colors for TH1s
+        SetAxes(out_jFEX_subleading.hEff_vsThr ->GetXaxis(), "Subleading jFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_jFEX_subleading.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_jFEX_subleading.hRate_vsThr->GetXaxis(), "Subleading jFEX LRJ E_{T} threshold [GeV]");
+        SetAxes(out_jFEX_subleading.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_jFEX_subleading.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out_jFEX_subleading.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // Optional: vs-threshold views
+        auto c1_jFEX_subleading = new TCanvas("c1_jFEX_subleading","vs threshold",1200,500);
+        c1_jFEX_subleading->Divide(2,1);
+        c1_jFEX_subleading->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_jFEX_subleading.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_jFEX_subleading->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_jFEX_subleading.hRate_vsThr->Draw("HIST");
+        c1_jFEX_subleading->SaveAs(rateVsEffFileDir + "threshold_views_jFEX_subleading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_jFEX_subleading = new TCanvas("c2_jFEX_subleading","Rate vs Eff",700,600);
+        c2_jFEX_subleading->SetLeftMargin(0.16); c2_jFEX_subleading->SetBottomMargin(0.16); c2_jFEX_subleading->SetTicks(1,1);
+        c2_jFEX_subleading->SetLogy();
+        out_jFEX_subleading.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_jFEX_subleading->SaveAs(rateVsEffFileDir + "rate_vs_eff_jFEX_subleading.pdf");
+
+
+        // ******************** OVERLAYS (LEADING only): JetTagger vs gFEX vs jFEX ********************
+        // Colors/markers per algorithm
+        const Int_t cols[3]    = { kBlack, kRed+1, kBlue+1 };
+        const Int_t mstyles[3] = { 20, 21, 22 };
+        const char* labels[3]  = { "JetTagger LRJ", "gFEX LRJ", "jFEX LRJ" };
+
+        // Convenience handles
+        TH1*   effH [3] = { out.hEff_vsThr,        out_gFEX_leading.hEff_vsThr,        out_jFEX_leading.hEff_vsThr };
+        TH1*   rateH[3] = { out.hRate_vsThr,       out_gFEX_leading.hRate_vsThr,       out_jFEX_leading.hRate_vsThr };
+        TGraph* rocG[3] = { out.gRate_vsEff,       out_gFEX_leading.gRate_vsEff,       out_jFEX_leading.gRate_vsEff };
+
+        // ---------- Overlay: Efficiency/Rate vs Threshold ----------
+        auto cLeadThrOverlay = new TCanvas("cLeadThrOverlay","Leading: thresholds overlay",1200,500);
+        cLeadThrOverlay->Divide(2,1);
+
+        // Left pad: efficiency vs threshold
+        cLeadThrOverlay->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+
+        for (int i=0;i<3;++i) {
+            effH[i]->SetLineColor(cols[i]);
+            effH[i]->SetLineWidth(2);
+        }
+        // draw first to create axes with titles already set on JetTagger hist
+        effH[0]->GetXaxis()->SetTitle("Leading LRJ E_{T} Threshold [GeV]");
+        effH[0]->Draw("HIST");
+        effH[1]->Draw("HIST SAME");
+        effH[2]->Draw("HIST SAME");
+
+        // legend (eff)
+        auto legEff = new TLegend(0.55,0.72,0.88,0.88);
+        legEff->SetBorderSize(0); legEff->SetFillStyle(0); legEff->SetTextSize(0.04);
+        legEff->AddEntry(effH[0], labels[0], "l");
+        legEff->AddEntry(effH[1], labels[1], "l");
+        legEff->AddEntry(effH[2], labels[2], "l");
+        legEff->Draw();
+
+        // Right pad: rate vs threshold
+        cLeadThrOverlay->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+
+        for (int i=0;i<3;++i) {
+            rateH[i]->SetLineColor(cols[i]);
+            rateH[i]->SetLineWidth(2);
+        }
+        rateH[0]->GetXaxis()->SetTitle("Leading LRJ E_{T} Threshold [GeV]");
+        rateH[0]->Draw("HIST");
+        rateH[1]->Draw("HIST SAME");
+        rateH[2]->Draw("HIST SAME");
+
+        // legend (rate)
+        auto legRate = new TLegend(0.55,0.72,0.88,0.88);
+        legRate->SetBorderSize(0); legRate->SetFillStyle(0); legRate->SetTextSize(0.04);
+        legRate->AddEntry(rateH[0], labels[0], "l");
+        legRate->AddEntry(rateH[1], labels[1], "l");
+        legRate->AddEntry(rateH[2], labels[2], "l");
+        legRate->Draw();
+
+        cLeadThrOverlay->SaveAs(rateVsEffFileDir + "leading_threshold_overlays.pdf");
+
+        // ---------- Overlay: Rate vs Efficiency (ROC-like) ----------
+        auto cLeadRocOverlay = new TCanvas("cLeadRocOverlay","Leading: rate vs eff overlay",700,600);
+        cLeadRocOverlay->SetLeftMargin(0.16); cLeadRocOverlay->SetBottomMargin(0.16);
+        cLeadRocOverlay->SetTicks(1,1);
+        cLeadRocOverlay->SetLogy();
+
+        // style graphs
+        for (int i=0;i<3;++i) {
+            rocG[i]->SetMarkerStyle(mstyles[i]);
+            rocG[i]->SetMarkerSize(1.1);
+            rocG[i]->SetMarkerColor(cols[i]);
+            rocG[i]->SetLineColor(cols[i]);
+            rocG[i]->SetLineWidth(2);
+        }
+
+        // draw first one with axes, others with SAME
+        rocG[0]->Draw("AP");     // axes + points
+        rocG[1]->Draw("P SAME");
+        rocG[2]->Draw("P SAME");
+
+        // legend (roc)
+        auto legROC = new TLegend(0.53,0.37,0.86,0.53);
+        legROC->SetBorderSize(0); legROC->SetFillStyle(0); legROC->SetTextSize(0.04);
+        legROC->AddEntry(rocG[0], labels[0], "lp");
+        legROC->AddEntry(rocG[1], labels[1], "lp");
+        legROC->AddEntry(rocG[2], labels[2], "lp");
+        legROC->Draw();
+
+        cLeadRocOverlay->SaveAs(rateVsEffFileDir + "leading_rate_vs_eff_overlay.pdf");
+
+        // ******************** OVERLAYS (SUBLEADING): JetTagger vs gFEX vs jFEX ********************
+        // Convenience handles (SUBLEADING)
+        TH1*    effH_sub [3] = { out_subleading.hEff_vsThr,        out_gFEX_subleading.hEff_vsThr,        out_jFEX_subleading.hEff_vsThr };
+        TH1*    rateH_sub[3] = { out_subleading.hRate_vsThr,       out_gFEX_subleading.hRate_vsThr,       out_jFEX_subleading.hRate_vsThr };
+        TGraph* rocG_sub [3] = { out_subleading.gRate_vsEff,       out_gFEX_subleading.gRate_vsEff,       out_jFEX_subleading.gRate_vsEff };
+
+        // ---------- Overlay: Efficiency/Rate vs Threshold ----------
+        auto cSubLeadThrOverlay = new TCanvas("cSubLeadThrOverlay","Subleading: thresholds overlay",1200,500);
+        cSubLeadThrOverlay->Divide(2,1);
+
+        // Left pad: efficiency vs threshold
+        cSubLeadThrOverlay->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+
+        for (int i=0;i<3;++i) {
+        effH_sub[i]->SetLineColor(cols[i]);
+        effH_sub[i]->SetLineWidth(2);
+        }
+        // draw first to set axes; override X title to emphasize subleading
+        effH_sub[0]->GetXaxis()->SetTitle("Subleading LRJ E_{T} Threshold [GeV]");
+        effH_sub[0]->GetYaxis()->SetTitle("Signal (hh#rightarrow4b) Efficiency");
+        effH_sub[0]->Draw("HIST");
+        effH_sub[1]->Draw("HIST SAME");
+        effH_sub[2]->Draw("HIST SAME");
+
+        // legend (eff)
+        auto legEff_sub = new TLegend(0.55,0.72,0.88,0.88);
+        legEff_sub->SetBorderSize(0); legEff_sub->SetFillStyle(0); legEff_sub->SetTextSize(0.04);
+        legEff_sub->AddEntry(effH_sub[0], labels[0], "l");
+        legEff_sub->AddEntry(effH_sub[1], labels[1], "l");
+        legEff_sub->AddEntry(effH_sub[2], labels[2], "l");
+        legEff_sub->Draw();
+
+        // Right pad: rate vs threshold
+        cSubLeadThrOverlay->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+
+        for (int i=0;i<3;++i) {
+        rateH_sub[i]->SetLineColor(cols[i]);
+        rateH_sub[i]->SetLineWidth(2);
+        }
+        rateH_sub[0]->GetXaxis()->SetTitle("Subleading LRJ E_{T} Threshold [GeV]");
+        rateH_sub[0]->GetYaxis()->SetTitle("Estimated Background Rate [Hz]");
+        rateH_sub[0]->Draw("HIST");
+        rateH_sub[1]->Draw("HIST SAME");
+        rateH_sub[2]->Draw("HIST SAME");
+
+        // legend (rate)
+        auto legRate_sub = new TLegend(0.55,0.72,0.88,0.88);
+        legRate_sub->SetBorderSize(0); legRate_sub->SetFillStyle(0); legRate_sub->SetTextSize(0.04);
+        legRate_sub->AddEntry(rateH_sub[0], labels[0], "l");
+        legRate_sub->AddEntry(rateH_sub[1], labels[1], "l");
+        legRate_sub->AddEntry(rateH_sub[2], labels[2], "l");
+        legRate_sub->Draw();
+
+        cSubLeadThrOverlay->SaveAs(rateVsEffFileDir + "subleading_threshold_overlays.pdf");
+
+        // ---------- Overlay: Rate vs Efficiency (ROC-like) ----------
+        auto cSubLeadRocOverlay = new TCanvas("cSubLeadRocOverlay","Subleading: rate vs eff overlay",700,600);
+        cSubLeadRocOverlay->SetLeftMargin(0.16); cSubLeadRocOverlay->SetBottomMargin(0.16);
+        cSubLeadRocOverlay->SetTicks(1,1);
+        cSubLeadRocOverlay->SetLogy();
+
+        // style graphs
+        for (int i=0;i<3;++i) {
+        rocG_sub[i]->SetMarkerStyle(mstyles[i]);
+        rocG_sub[i]->SetMarkerSize(1.1);
+        rocG_sub[i]->SetMarkerColor(cols[i]);
+        rocG_sub[i]->SetLineColor(cols[i]);
+        rocG_sub[i]->SetLineWidth(2);
+        }
+
+        // draw first one with axes, others with SAME; set axes titles for clarity
+        rocG_sub[0]->Draw("AP");
+        rocG_sub[0]->GetXaxis()->SetTitle("Signal (hh#rightarrow4b) Efficiency");
+        rocG_sub[0]->GetYaxis()->SetTitle("Estimated Background Rate [Hz]");
+        rocG_sub[1]->Draw("P SAME");
+        rocG_sub[2]->Draw("P SAME");
+
+        // legend (roc)
+        auto legROC_sub = new TLegend(0.53,0.37,0.86,0.53);
+        legROC_sub->SetBorderSize(0); legROC_sub->SetFillStyle(0); legROC_sub->SetTextSize(0.04);
+        legROC_sub->AddEntry(rocG_sub[0], labels[0], "lp");
+        legROC_sub->AddEntry(rocG_sub[1], labels[1], "lp");
+        legROC_sub->AddEntry(rocG_sub[2], labels[2], "lp");
+        legROC_sub->Draw();
+
+        cSubLeadRocOverlay->SaveAs(rateVsEffFileDir + "subleading_rate_vs_eff_overlay.pdf");
+
+        // ================== COMBINED OVERLAY: Rate vs Efficiency (all 6) ==================
+        // Curves: (JetTagger, gFEX, jFEX) × (Leading, Subleading)
+        // Uses: out, out_subleading, out_gFEX_leading, out_gFEX_subleading, out_jFEX_leading, out_jFEX_subleading
+
+        // ---- Style palette ----
+        // Colors per algorithm
+        const Int_t algoCols[3] = { kBlack, kRed+1, kBlue+1 }; // JetTagger, gFEX, jFEX
+
+        // Marker styles: leading vs subleading per algorithm
+        const Int_t mLead [3] = { 20, 21, 22 };  // solid markers
+        const Int_t mSub  [3] = { 24, 25, 26 };  // open markers
+
+        // Line styles: leading=solid, subleading=dashed
+        const Int_t lLead = 1;
+        const Int_t lSub  = 2;
+
+        // Labels
+        const char* algoNames[3] = { "JetTagger LRJ", "gFEX LRJ", "jFEX LRJ" };
+
+        // Convenience handles (rate vs eff graphs)
+        TGraph* gLead[3] = { out.gRate_vsEff,            out_gFEX_leading.gRate_vsEff,      out_jFEX_leading.gRate_vsEff      };
+        TGraph* gSub [3] = { out_subleading.gRate_vsEff, out_gFEX_subleading.gRate_vsEff,   out_jFEX_subleading.gRate_vsEff   };
+
+        // ---- Canvas ----
+        auto cAllROC = new TCanvas("cAllROC","Rate vs Efficiency: Leading & Subleading (All Algos)",800,650);
+        cAllROC->SetLeftMargin(0.16); 
+        cAllROC->SetBottomMargin(0.16);
+        cAllROC->SetTicks(1,1);
+        cAllROC->SetLogy();
+
+        // ---- Style & draw ----
+        // We’ll draw the first curve with axes ("AP"), then all others as "P SAME"
+        bool firstDrawn = false;
+
+        // (A) Leading first (solid)
+        for (int i=0; i<3; ++i) {
+            if (!gLead[i]) continue;
+            gLead[i]->SetMarkerStyle(mLead[i]);
+            gLead[i]->SetMarkerSize(1.1);
+            gLead[i]->SetMarkerColor(algoCols[i]);
+            gLead[i]->SetLineColor(algoCols[i]);
+            gLead[i]->SetLineStyle(lLead);
+            gLead[i]->SetLineWidth(2);
+
+            if (!firstDrawn) {
+                gLead[i]->Draw("AP"); // axes + points for the very first
+                gLead[i]->GetXaxis()->SetTitle("Signal (hh#rightarrow4b) Efficiency");
+                gLead[i]->GetYaxis()->SetTitle("Estimated Background Rate [Hz]");
+                // Optional axis cosmetics
+                gLead[i]->GetXaxis()->SetTitleOffset(1.2);
+                gLead[i]->GetYaxis()->SetTitleOffset(1.6);
+
+                // (optional) Y-range on log axis for clarity — adjust as needed
+                gLead[i]->SetMinimum(1e-1); // show down to 0.1 Hz
+                // gLead[i]->SetMaximum(1e5); // uncomment/adjust if you want an explicit ceiling
+
+                firstDrawn = true;
+            } else {
+                gLead[i]->Draw("P SAME");
+            }
+        }
+
+        // (B) Subleading next (dashed)
+        for (int i=0; i<3; ++i) {
+        if (!gSub[i]) continue;
+        gSub[i]->SetMarkerStyle(mSub[i]);
+        gSub[i]->SetMarkerSize(1.1);
+        gSub[i]->SetMarkerColor(algoCols[i]);
+        gSub[i]->SetLineColor(algoCols[i]);
+        gSub[i]->SetLineStyle(lSub);
+        gSub[i]->SetLineWidth(2);
+        gSub[i]->Draw("P SAME");
+        }
+
+        // ---- Legend ----
+        // Two-column legend grouping by algorithm, showing leading vs subleading
+        auto legAll = new TLegend(0.38, 0.20, 0.78, 0.42); // adjust position if needed
+        legAll->SetBorderSize(0);
+        legAll->SetFillStyle(0);
+        legAll->SetTextSize(0.035);
+
+        // Add algorithm-specific entries
+        for (int i=0; i<3; ++i) {
+        // Leading entry
+        auto eL = legAll->AddEntry(gLead[i], Form("%s (leading)",   algoNames[i]), "lp");
+        // Subleading entry
+        auto eS = legAll->AddEntry(gSub[i],  Form("%s (subleading)",algoNames[i]), "lp");
+        }
+        legAll->Draw();
+
+        // (optional) Extra label (e.g., experiment/run label)
+        // TLatex lat; lat.SetNDC(); lat.SetTextSize(0.04); 
+        // lat.DrawLatex(0.18,0.92,"#bf{ATLAS} Internal   #scale[0.9]{Run-3, #sqrt{s}=13.6 TeV}");
+
+        // ---- Save ----
+        gPad->RedrawAxis();
+        cAllROC->SaveAs(rateVsEffFileDir + "all_algos_leading_subleading_rate_vs_eff_overlay.pdf");
+
 
         for (int i = 0; i < num_processed_events_signal; i++) {
             jetTaggerLRJsSignal->GetEntry(i);
@@ -2074,7 +2585,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
              
             double jFEXSRJSubleadingEta; 
             double jFEXSRJSubleadingPhi;
-            if(jFexSRJSubleadingEtaValuesSignal->size() > 0){ // Account for the case when there aren't any jFEX subleading jets FIXME do this in the ntupler!
+            if(jFexSRJSubleadingEtaValuesSignal->size() > 0){ // Account for the case when there aren't any jFEX subleading jets FIXME do this in the ntupler potentially?
                 jFEXSRJSubleadingEta = jFexSRJSubleadingEtaValuesSignal->at(0);
                 jFEXSRJSubleadingPhi = jFexSRJSubleadingPhiValuesSignal->at(0);
             }   
@@ -2083,90 +2594,60 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 jFEXSRJSubleadingPhi = 0.0;
             }
 
-            std::vector<unsigned int > sigJet1MergedIndices;
-            std::vector<unsigned int > sigJet2MergedIndices;
-
-        }
-
-        for (int i = 0; i < num_processed_events_background; i++) { // FIXME need to separate signal, background loops
-            jetTaggerLRJsBack->GetEntry(i);
-            jetTaggerLeadingLRJsBack->GetEntry(i);
-            jetTaggerSubleadingLRJsBack->GetEntry(i);
-            
-            eventInfoTreeBack->GetEntry(i);
-            
-            truthAntiKt4TruthDressedWZJetsBack->GetEntry(i);
-            leadingRecoAntiKt10UFOCSSKJetsBack->GetEntry(i);
-            
-            jFexLeadingLRJTreeBack->GetEntry(i);
-            
-            gFexLeadingLRJTreeBack->GetEntry(i);
-            
-            jFexLeadingSRJTreeBack->GetEntry(i);
-            jFexSubleadingSRJTreeBack->GetEntry(i);
-            
-            jFexSRJTreeBack->GetEntry(i);
-            
-            topo422TreeBack->GetEntry(i);
-            gepBasicClustersTreeBack->GetEntry(i);
-            
-            double backgroundEventWeight = eventWeightsValuesBack->at(0);
-
-            
-            unsigned int highestEtIndexLRJBack = -1;
-            
-            if(back_LRJ_Et[i][0] >= back_LRJ_Et[i][1]) highestEtIndexLRJBack = 0;
-            else highestEtIndexLRJBack = 1;
-
-            std::cout << "test 3" << "\n";
-
-            std::vector<unsigned int > backJet1MergedIndices;
-            std::vector<unsigned int > backJet2MergedIndices;
-
-            
-
             double psi_R_SigJet1 = 0.0;
             double psi_R_SigJet2 = 0.0;
-            double psi_R_BackJet1 = 0.0;
-            double psi_R_BackJet2 = 0.0;
+            double psi_R2_SigJet1 = 0.0;
+            double psi_R2_SigJet2 = 0.0;
+
             // Loop through and compute psi_R for each large-R jet
-            for(auto idxSigJet1 : sigJet1MergedIndices){ // FIXME store merged indices of input objects in ntupler!!
+            for(auto& idxSigJet1 : *jetTaggerLeadingLRJMergedIndicesValuesSignal){ // FIXME need to add in all the pSI_R and psi_R^2 computations!!
                 psi_R_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1)));
+                psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesSignal->at(0), jFexSRJLeadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1));
                 //std::cout << "psi_R_SigJet1: " << psi_R_SigJet1 << "\n";
             }
-            for(auto idxSigJet2 : sigJet2MergedIndices){
+            for(auto& idxSigJet2 : *jetTaggerSubleadingLRJMergedIndicesValuesSignal){
                 psi_R_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2)));
+                psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesSignal->at(0), jFexSRJSubleadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2));
             }
-            for(auto idxBackJet1 : backJet1MergedIndices){
-                psi_R_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1)));
-            }
-            for(auto idxBackJet2 : backJet2MergedIndices){
-                psi_R_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2)));
-            }
-             std::cout << "test 6" << "\n";
+
+            sig_h_LRJ_psi_R_squared->Fill(psi_R_SigJet1 * psi_R_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            sig_h_LRJ_psi_R2_squared->Fill(psi_R2_SigJet1 * psi_R2_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
 
             // Fill psi_R for leading, subleading, signal, background
             sig_h_leading_LRJ_psi_R->Fill(psi_R_SigJet1);
             sig_h_subleading_LRJ_psi_R->Fill(psi_R_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1);
-            sigOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1);
+            sigOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_SigJet2);
+
+            // Fill with regular deltaR metric
+            sig_h_leading_LRJ_psi_R->Fill(psi_R_SigJet1);
+            sig_h_subleading_LRJ_psi_R->Fill(psi_R_SigJet2);
+            sig_h_LRJ_psi_R_12->Fill(psi_R_SigJet1 / psi_R_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1);
+            sigOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_SigJet2);
+            sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet2, psi_R_SigJet1); // subleading filled to x-axis
+
+            // Fill with deltaR^2 metric
+            //std::cout << "psi_R2_SigJet1: " << psi_R2_SigJet1 << "\n";
+            //std::cout << "psi_R2_SigJet2 : " << psi_R2_SigJet2 << "\n";
+            sig_h_leading_LRJ_psi_R2->Fill(psi_R2_SigJet1);
+            sig_h_subleading_LRJ_psi_R2->Fill(psi_R2_SigJet2);
+            sig_h_LRJ_psi_R2_12->Fill(psi_R2_SigJet1 / psi_R2_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1);
+            sigOfflineSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_SigJet2);
+            sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_SigJet2, psi_R2_SigJet1); 
             //std::cout << "SIGNAL final psi1_R: " << psi_R_SigJet1 << " and final psi_R_SigJet2 : " << psi_R_SigJet2 << "\n";
-                //std::cout << "filling 1 sig" << "\n";
-            
-
-            back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1, backgroundEventWeight);
-            back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet2, backgroundEventWeight);
-             std::cout << "test 7" << "\n";
-
+            //std::cout << "filling 1 sig" << "\n";
 
             // Fill deltaEt for digitized, undigitized algorithm configuration (can also serve to compare for using seed position recalculation algorithm version)
-            sig_h_LRJ1_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesSignal->at(0)));
+            sig_h_LRJ1_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesSignal->at(0))); // FIXME this is no longer useful....
             sig_h_LRJ2_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][1] - jetTaggerSubleadingLRJEtValuesSignal->at(0)));
-
-            back_h_LRJ1_deltaEt_digitized_double->Fill((back_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesBack->at(0)), backgroundEventWeight);
-            back_h_LRJ2_deltaEt_digitized_double->Fill((back_LRJ_Et[i][1] - jetTaggerSubleadingLRJEtValuesBack->at(0)), backgroundEventWeight);
 
             // Map: Higgs index -> list of b-quark indices
             std::unordered_map<int, std::vector<int>> higgsToB;
@@ -2199,25 +2680,28 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 h2_DR_vs_HpT     ->Fill(hpT, dR);
             }
 
+            // FIXME don't want to skip over all these events??
+            if(recoAntiKt10LRJLeadingEtValuesSignal->size() == 0) continue;
 
-
-
-
-
-
-            if(recoAntiKt10LRJLeadingEtValuesSignal->size() == 0 || recoAntiKt10LRJLeadingEtValuesBack->size() == 0 ) continue; // FIXME don't want to skip over allllll these events
             // Mass vs. Et for Leading Offline LRJ 
             sigOfflineLeadingLRJMassvsEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0), recoAntiKt10LRJLeadingMassValuesSignal->at(0));
-            backOfflineLeadingLRJMassvsEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
             sigOfflineLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0));
-            backOfflineLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
             sig_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-            back_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+
+            // ------------------- SIGNAL -------------------
+            // Subjet plots 
+            const auto& etSig  = *truthAntiKt4WZSRJEtValuesSignal;
+            const auto& etaSig = *truthAntiKt4WZSRJEtaValuesSignal;
+            const auto& phiSig = *truthAntiKt4WZSRJPhiValuesSignal;
+
+            const double lrjEtaSig = recoAntiKt10LRJLeadingEtaValuesSignal->at(0);
+            const double lrjPhiSig = recoAntiKt10LRJLeadingPhiValuesSignal->at(0);
 
             // ---- Tunable parameters ----
             const double subjetEtCutoff           = 25.0;  // as before
             const double drMatchToLRJ             = 1.0;   // match truth subjets to leading large-R jet
             const double drMinBetweenSubjets      = 0.4;   // NEW: minimum deltaR separation between counted subjets
+
             // ---- Utility: select non-overlapping subjets (greedy by Et desc) ----
             auto selectNonOverlappingSubjets = [&](const std::vector<double>& et,
                                                 const std::vector<double>& eta,
@@ -2257,74 +2741,37 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
                 return selected.size(); // this is the multiplicity you want to Fill(...)
             };
-            // ------------------- SIGNAL -------------------
-            // Convert your pointer-to-vector handles to references for convenience
-            const auto& etSig  = *truthAntiKt4WZSRJEtValuesSignal;
-            const auto& etaSig = *truthAntiKt4WZSRJEtaValuesSignal;
-            const auto& phiSig = *truthAntiKt4WZSRJPhiValuesSignal;
-
-            const double lrjEtaSig = recoAntiKt10LRJLeadingEtaValuesSignal->at(0);
-            const double lrjPhiSig = recoAntiKt10LRJLeadingPhiValuesSignal->at(0);
-
+            
             const unsigned int signalSubjetCounter =
                 selectNonOverlappingSubjets(etSig, etaSig, phiSig, lrjEtaSig, lrjPhiSig,
                                             sig_h_LeadingOfflineLRJ_SubjetEt);
 
             sig_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(signalSubjetCounter);
-
-            // ------------------- BACKGROUND -------------------
-            const auto& etBkg  = *truthAntiKt4WZSRJEtValuesBack;
-            const auto& etaBkg = *truthAntiKt4WZSRJEtaValuesBack;
-            const auto& phiBkg = *truthAntiKt4WZSRJPhiValuesBack;
-
-            const double lrjEtaBkg = recoAntiKt10LRJLeadingEtaValuesBack->at(0);
-            const double lrjPhiBkg = recoAntiKt10LRJLeadingPhiValuesBack->at(0);
-
-            const unsigned int backgroundSubjetCounter =
-                selectNonOverlappingSubjets(etBkg, etaBkg, phiBkg, lrjEtaBkg, lrjPhiBkg,
-                                            back_h_LeadingOfflineLRJ_SubjetEt);
-
-            back_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounter, backgroundEventWeight);
-
-
             sigOfflineLeadingLRJEtvsSubjetMult->Fill(signalSubjetCounter, recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-            backOfflineLeadingLRJEtvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
-
             sigOfflineLeadingLRJMassvsSubjetMult->Fill(signalSubjetCounter, recoAntiKt10LRJLeadingMassValuesSignal->at(0));
-            backOfflineLeadingLRJMassvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
-
 
             // Delta R, delta Et for leading gFEX, jFEX SRJ (seeds), Offline LRJs
-            sig_h_leading_LRJ_gFexLRJ_deltaEt->Fill(gFexLRJLeadingEtValuesSignal->at(0) - std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]));
-            back_h_leading_LRJ_gFexLRJ_deltaEt->Fill(gFexLRJLeadingEtValuesBack->at(0) - std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), backgroundEventWeight);
-
+            sig_h_leading_LRJ_gFexLRJ_deltaEt->Fill(gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0));
             sig_h_leading_offlineLRJ_gFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - gFexLRJLeadingEtValuesSignal->at(0));
-            back_h_leading_offlineLRJ_gFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - gFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
             sig_h_leading_offlineLRJ_jFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jFexLRJLeadingEtValuesSignal->at(0));
-            back_h_leading_offlineLRJ_jFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-            
-            sig_h_leading_LRJ_gFexLRJ_deltaR->Fill(sqrt(calcDeltaR2(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0), sig_LRJ_Eta[i][highestEtIndexLRJSig], sig_LRJ_Phi[i][highestEtIndexLRJSig])));
-            back_h_leading_LRJ_gFexLRJ_deltaR->Fill(sqrt(calcDeltaR2(gFexLRJLeadingEtaValuesBack->at(0), gFexLRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
+            sig_h_leading_LRJ_offlineLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0));   
 
+            // Fill Et "resolution"]
+            //std::cout << "(gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) /gFexLRJLeadingEtValuesSignal->at(0): " << (gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) /gFexLRJLeadingEtValuesSignal->at(0) << "\n";
+            sig_h_leading_LRJ_gFexLRJ_Et_resolution->Fill((gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) /gFexLRJLeadingEtValuesSignal->at(0));
+            sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Fill((recoAntiKt10LRJLeadingEtValuesSignal->at(0) - gFexLRJLeadingEtValuesSignal->at(0))/recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Fill((recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jFexLRJLeadingEtValuesSignal->at(0))/recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            sig_h_leading_LRJ_offlineLRJ_Et_resolution->Fill((recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) / recoAntiKt10LRJLeadingEtValuesSignal->at(0)); 
+
+            sig_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0], sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1])));
+            sig_h_leading_LRJ_gFexLRJ_deltaR->Fill(sqrt(calcDeltaR2(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0), sig_LRJ_Eta[i][highestEtIndexLRJSig], sig_LRJ_Phi[i][highestEtIndexLRJSig])));
             sig_h_first_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFEXSRJLeadingEta, jFEXSRJLeadingPhi, sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0])));
             sig_h_second_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFEXSRJSubleadingEta, jFEXSRJSubleadingPhi, sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1])));
-
-            sig_h_leading_LRJ_offlineLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]));
-            back_h_leading_LRJ_offlineLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), backgroundEventWeight);
-
             sig_h_leading_LRJ_offlineLRJ_deltaR->Fill(sqrt(calcDeltaR2(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0), sig_LRJ_Eta[i][highestEtIndexLRJSig], sig_LRJ_Phi[i][highestEtIndexLRJSig])));
-            back_h_leading_LRJ_offlineLRJ_deltaR->Fill(sqrt(calcDeltaR2(recoAntiKt10LRJLeadingEtaValuesBack->at(0), recoAntiKt10LRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
 
-            back_h_first_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][0], back_LRJ_Phi[i][0])));
-            back_h_second_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])), backgroundEventWeight);
-            
-            sig_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0], sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1])));
-            back_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(back_LRJ_Eta[i][0], back_LRJ_Phi[i][0], back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])), backgroundEventWeight);
-
-            // Dijet efficiencies
+            // Dijet efficiencies (signal)
             if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0){
+                sig_h_subleading_offlineLRJ_Et->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
                 if(sig_LRJ_Et[i][0] >= 50.0 && sig_LRJ_Et[i][1] >= 50.0){
                     sig_h_offlineLRJ_Et_num50_Dijet->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
                 }
@@ -2376,10 +2823,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 sig_h_offlineLRJ_Et_denom500_Dijet->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
             }
             
-
-
-
-
             // Subjet requirement efficiencies
             if(signalSubjetCounter == 1){
                 if(sig_LRJ_Et[i][0] >= 50.0 || sig_LRJ_Et[i][1] >= 50.0){
@@ -2484,44 +2927,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 sig_h_offlineLRJ_Et_denom500_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
             }
-
-            if(backgroundSubjetCounter == 1){
-                if(back_LRJ_Et[i][0] >= 100.0 || back_LRJ_Et[i][1] >= 100.0){
-                    back_h_offlineLRJ_Et_num100_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom100_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
-                if(back_LRJ_Et[i][0] >= 200.0 || back_LRJ_Et[i][1] >= 200.0){
-                    back_h_offlineLRJ_Et_num200_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom200_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
-                if(back_LRJ_Et[i][0] >= 300.0 || back_LRJ_Et[i][1] >= 300.0){
-                    back_h_offlineLRJ_Et_num300_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom300_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-            }
-
-            if(backgroundSubjetCounter >= 2){
-                if(back_LRJ_Et[i][0] >= 100.0 || back_LRJ_Et[i][1] >= 100.0){
-                    back_h_offlineLRJ_Et_num100_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom100_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
-                if(back_LRJ_Et[i][0] >= 200.0 || back_LRJ_Et[i][1] >= 200.0){
-                    back_h_offlineLRJ_Et_num200_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom200_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-
-
-                if(back_LRJ_Et[i][0] >= 300.0 || back_LRJ_Et[i][1] >= 300.0){
-                    back_h_offlineLRJ_Et_num300_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-                }
-                back_h_offlineLRJ_Et_denom300_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-            }
-
-
-
             // Mass window efficiencies
             if(recoAntiKt10LRJLeadingMassValuesSignal->at(0) >= 100.0 && recoAntiKt10LRJLeadingMassValuesSignal->at(0) <= 150.0){
                 if(sig_LRJ_Et[i][0] >= 50.0 || sig_LRJ_Et[i][1] >= 50.0){
@@ -2574,9 +2979,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 sig_h_offlineLRJ_Et_denom500_mass100to150->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
             }
-            
-
-
 
             if(sig_LRJ_Et[i][0] >= 50.0 || sig_LRJ_Et[i][1] >= 50.0){
                 sig_h_offlineLRJ_Et_num50->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
@@ -2809,6 +3211,421 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 sig_h_offlineLRJ_Et_denom500_gFexLRJ_Dijet->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
             }
 
+            if(i == evDisplay0Sig_){
+                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6){
+                    displayEv0Sig_ = true;
+                    jFexSeedPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
+                    jFexSeedPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
+                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
+                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
+                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
+                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
+                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
+                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
+                    }
+                    else{
+                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
+                    }
+                    gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
+                    gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
+                    siggFexLRJEtEv0.push_back(gFexLRJLeadingEtValuesSignal->at(0));
+                    siggFexLRJEtEv0.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
+                    offlineLRJPositionSigEv0.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
+                    offlineLRJPositionSigEv0.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
+                    sigOfflineLRJEtEv0.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    sigOfflineLRJEtEv0.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    std::cout << "Event 0 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
+                    std::cout << "Event 0 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+                }
+            }
+            if(i == evDisplay1Sig_){
+                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6){
+                    displayEv1Sig_ = true;
+                    jFexSeedPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
+                    jFexSeedPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
+                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
+                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
+                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
+                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
+                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
+                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
+                    }
+                    else{
+                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
+                    }
+                    gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
+                    gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
+                    siggFexLRJEtEv1.push_back(gFexLRJLeadingEtValuesSignal->at(0));
+                    siggFexLRJEtEv1.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
+                    
+                    offlineLRJPositionSigEv1.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
+                    offlineLRJPositionSigEv1.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
+                    sigOfflineLRJEtEv1.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    sigOfflineLRJEtEv1.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    std::cout << "Event 1 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
+                    std::cout << "Event 1 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+                
+                }
+            }
+            if(i == evDisplay2Sig_){
+                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6){
+                    displayEv2Sig_ = true;
+                    jFexSeedPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
+                    jFexSeedPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
+                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
+                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
+                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
+                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
+                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
+                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
+                    }
+                    else{
+                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
+                    }
+                    gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
+                    gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
+                    siggFexLRJEtEv2.push_back(gFexLRJLeadingEtValuesSignal->at(0));
+                    siggFexLRJEtEv2.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
+                    offlineLRJPositionSigEv2.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
+                    offlineLRJPositionSigEv2.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
+                    sigOfflineLRJEtEv2.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    sigOfflineLRJEtEv2.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    std::cout << "Event 2 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
+                    std::cout << "Event 2 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+                }
+                
+            }
+            if(i == evDisplay3Sig_){
+                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6){
+                    displayEv3Sig_ = true;
+                    jFexSeedPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
+                    jFexSeedPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
+                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
+                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
+                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
+                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
+                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
+                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
+                    }
+                    else{
+                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
+                    }
+                    gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
+                    gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
+                    siggFexLRJEtEv3.push_back(gFexLRJLeadingEtValuesSignal->at(0));
+                    siggFexLRJEtEv3.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
+                    offlineLRJPositionSigEv3.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
+                    offlineLRJPositionSigEv3.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
+                    sigOfflineLRJEtEv3.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    sigOfflineLRJEtEv3.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    std::cout << "Event 3 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
+                    std::cout << "Event 3 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+                }
+                
+            }
+            if(i == evDisplay4Sig_){
+                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6){
+                    displayEv4Sig_ = true;
+                    jFexSeedPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
+                    jFexSeedPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
+                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
+                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
+                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
+                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
+                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
+                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
+                    }
+                    else{
+                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
+                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
+                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
+                    }
+                    gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
+                    gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
+                    siggFexLRJEtEv4.push_back(gFexLRJLeadingEtValuesSignal->at(0));
+                    siggFexLRJEtEv4.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
+                    offlineLRJPositionSigEv4.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
+                    offlineLRJPositionSigEv4.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
+                    sigOfflineLRJEtEv4.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    sigOfflineLRJEtEv4.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    std::cout << "Event 4 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
+                    std::cout << "Event 4 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+                }
+            }
+            if(i <= evDisplayMaxSig_){
+                for(unsigned int iTopo = 0; iTopo < nInputObjectsAlgorithmConfiguration; iTopo++){
+                    if(i == evDisplay0Sig_){
+                        sigTopo422Highest128SeedPositionsEv0->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    } 
+                    if(i == evDisplay1Sig_){
+                        sigTopo422Highest128SeedPositionsEv1->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    } 
+                    if(i == evDisplay2Sig_){
+                        sigTopo422Highest128SeedPositionsEv2->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    } 
+                    if(i == evDisplay3Sig_){
+                        sigTopo422Highest128SeedPositionsEv3->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    } 
+                    if(i == evDisplay4Sig_){
+                        sigTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    } 
+                }
+            }
+
+            // try computing invariant mass, signal, background using jet tagger jets
+            double sigDeltaEta = sig_LRJ_Eta[i][0] - sig_LRJ_Eta[i][1];
+            double sigDeltaPhi = std::abs(sig_LRJ_Phi[i][0] - sig_LRJ_Phi[i][1]);
+            // Ensure Δφ is within [-π, π] range
+            if (sigDeltaPhi > M_PI) {
+                sigDeltaPhi = 2 * M_PI - sigDeltaPhi;
+            }
+
+            double sigCoshDeltaEta = cosh(sigDeltaEta);
+            double sigCosDeltaPhi = cos(sigDeltaPhi);
+            double sigMjj = sqrt(2.0 * sig_LRJ_Et[i][0] * sig_LRJ_Et[i][1] * sigCoshDeltaEta - sigCosDeltaPhi);
+            //std::cout << "sigMjj: " << sigMjj << "\n";
+
+            sig_h_Mjj->Fill(sigMjj);
+        } // loop through signal events
+
+        for (int i = 0; i < num_processed_events_background; i++) {
+            jetTaggerLRJsBack->GetEntry(i);
+            jetTaggerLeadingLRJsBack->GetEntry(i);
+            jetTaggerSubleadingLRJsBack->GetEntry(i);
+            eventInfoTreeBack->GetEntry(i);
+            truthAntiKt4TruthDressedWZJetsBack->GetEntry(i);
+            leadingTruthAntiKt4TruthDressedWZJetsBack->GetEntry(i);
+            subleadingTruthAntiKt4TruthDressedWZJetsBack->GetEntry(i);
+            leadingRecoAntiKt10UFOCSSKJetsBack->GetEntry(i);
+            subleadingRecoAntiKt10UFOCSSKJetsBack->GetEntry(i);
+            jFexLeadingLRJTreeBack->GetEntry(i);
+            gFexLeadingLRJTreeBack->GetEntry(i);
+            jFexSubleadingLRJTreeBack->GetEntry(i);
+            gFexSubleadingLRJTreeBack->GetEntry(i);
+            jFexLeadingSRJTreeBack->GetEntry(i);
+            jFexSubleadingSRJTreeBack->GetEntry(i);
+            jFexSRJTreeBack->GetEntry(i);
+            topo422TreeBack->GetEntry(i);
+            gepBasicClustersTreeBack->GetEntry(i);
+
+            double backgroundEventWeight = eventWeightsValuesBack->at(0);
+
+            back_h_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            back_h_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            back_h_gFEX_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_gFEX_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            if(jFexLRJLeadingEtValuesBack->size() > 0) back_h_jFEX_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            if(jFexLRJSubleadingEtValuesBack->size() > 0) back_h_jFEX_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            if(recoAntiKt10LRJLeadingEtValuesBack->size() > 0) back_h_leading_offlineLRJ_Et_arr[sampleJZSliceValuesBack]->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0) back_h_subleading_offlineLRJ_Et_arr[sampleJZSliceValuesBack]->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            if(truthAntiKt4WZSRJLeadingEtValuesBack->size() > 0) back_h_leading_truthSRJs_Et_arr[sampleJZSliceValuesBack]->Fill(truthAntiKt4WZSRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            if(truthAntiKt4WZSRJSubleadingEtValuesBack->size() > 0) back_h_subleading_truthSRJs_Et_arr[sampleJZSliceValuesBack]->Fill(truthAntiKt4WZSRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            unsigned int highestEtIndexLRJBack = -1;
+            
+            if(back_LRJ_Et[i][0] >= back_LRJ_Et[i][1]) highestEtIndexLRJBack = 0;
+            else highestEtIndexLRJBack = 1;
+
+            double psi_R_BackJet1 = 0.0;
+            double psi_R_BackJet2 = 0.0;
+            double psi_R2_BackJet1 = 0.0;
+            double psi_R2_BackJet2 = 0.0;
+            
+            for(auto& idxBackJet1 : *jetTaggerLeadingLRJMergedIndicesValuesBack){
+                psi_R_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1)));
+                psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1));
+            }
+            for(auto& idxBackJet2 : *jetTaggerSubleadingLRJMergedIndicesValuesBack){
+                psi_R_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2)));
+                psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2));
+            }
+
+            back_h_LRJ_psi_R_squared->Fill(psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
+            back_h_LRJ_psi_R2_squared->Fill(psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1, backgroundEventWeight);
+            back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
+            back_h_LRJ_psi_R2_squared->Fill(psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+
+            // Fill with regular deltaR metric
+            back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1, backgroundEventWeight);
+            back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
+            back_h_LRJ_psi_R_12->Fill(psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            
+            backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_BackJet2, psi_R_BackJet1, backgroundEventWeight); // subleading filled to x-axis
+            // Fill with deltaR^2 metric
+            back_h_leading_LRJ_psi_R2->Fill(psi_R2_BackJet1, backgroundEventWeight);
+            back_h_subleading_LRJ_psi_R2->Fill(psi_R2_BackJet2, backgroundEventWeight);
+            back_h_LRJ_psi_R2_12->Fill(psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_BackJet2, psi_R2_BackJet1, backgroundEventWeight); // subleading filled to x-axis
+
+
+            back_h_LRJ1_deltaEt_digitized_double->Fill((back_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesBack->at(0)), backgroundEventWeight);
+            back_h_LRJ2_deltaEt_digitized_double->Fill((back_LRJ_Et[i][1] - jetTaggerSubleadingLRJEtValuesBack->at(0)), backgroundEventWeight);
+
+            if(recoAntiKt10LRJLeadingEtValuesBack->size() == 0) continue;
+            // Mass vs. Et for Leading Offline LRJ 
+            backOfflineLeadingLRJMassvsEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+            backOfflineLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            
+            if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0) back_h_subleading_offlineLRJ_Et->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            
+            // ------------------- BACKGROUND -------------------
+            const auto& etBkg  = *truthAntiKt4WZSRJEtValuesBack;
+            const auto& etaBkg = *truthAntiKt4WZSRJEtaValuesBack;
+            const auto& phiBkg = *truthAntiKt4WZSRJPhiValuesBack;
+
+            const double lrjEtaBkg = recoAntiKt10LRJLeadingEtaValuesBack->at(0);
+            const double lrjPhiBkg = recoAntiKt10LRJLeadingPhiValuesBack->at(0);
+
+            // ---- Tunable parameters ----
+            const double subjetEtCutoff           = 25.0;  // as before
+            const double drMatchToLRJ             = 1.0;   // match truth subjets to leading large-R jet
+            const double drMinBetweenSubjets      = 0.4;   // NEW: minimum deltaR separation between counted subjets
+
+// ---- Utility: select non-overlapping subjets (greedy by Et desc) ----
+            auto selectNonOverlappingSubjets = [&](const std::vector<double>& et,
+                                                const std::vector<double>& eta,
+                                                const std::vector<double>& phi,
+                                                double lrjEta, double lrjPhi,
+                                                TH1* etHist)
+            {
+                const size_t n = et.size();
+
+                // 1) First, collect candidates within drMatchToLRJ to the leading LRJ (for plotting) 
+                //    and build a list of indices that ALSO pass the Et cut (for counting).
+                std::vector<size_t> candidates; candidates.reserve(n);
+                for (size_t i = 0; i < n; ++i) {
+                    const double dR = std::sqrt(calcDeltaR2(eta[i], phi[i], lrjEta, lrjPhi));
+                    if (dR < drMatchToLRJ) {
+                        if (etHist) etHist->Fill(et[i]);          // unchanged behavior for plotting
+                        if (et[i] >= subjetEtCutoff) {
+                            candidates.push_back(i);              // for counting (subject to overlap removal)
+                        }
+                    }
+                }
+
+                // 2) Sort candidates by Et descending so we keep the highest-Et subjets when enforcing separation
+                std::sort(candidates.begin(), candidates.end(),
+                        [&](size_t a, size_t b){ return et[a] > et[b]; });
+
+                // 3) Greedily select non-overlapping subjets (ΔR > drMinBetweenSubjets)
+                std::vector<size_t> selected; selected.reserve(candidates.size());
+                for (size_t idx : candidates) {
+                    bool overlaps = false;
+                    for (size_t jdx : selected) {
+                        const double dR = std::sqrt(calcDeltaR2(eta[idx], phi[idx], eta[jdx], phi[jdx]));
+                        if (dR <= drMinBetweenSubjets) { overlaps = true; break; }
+                    }
+                    if (!overlaps) selected.push_back(idx);
+                }
+
+                return selected.size(); // this is the multiplicity you want to Fill(...)
+            };
+            
+            const unsigned int backgroundSubjetCounter =
+                selectNonOverlappingSubjets(etBkg, etaBkg, phiBkg, lrjEtaBkg, lrjPhiBkg,
+                                            back_h_LeadingOfflineLRJ_SubjetEt);
+
+            back_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounter, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            backOfflineLeadingLRJMassvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+
+            // Delta R, delta Et for leading gFEX, jFEX SRJ (seeds), Offline LRJs
+            back_h_leading_LRJ_gFexLRJ_deltaEt->Fill(gFexLRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_offlineLRJ_gFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - gFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_offlineLRJ_jFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_LRJ_offlineLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            // Fill "resolution"
+            back_h_leading_LRJ_gFexLRJ_Et_resolution->Fill(((gFexLRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0))/ gFexLRJLeadingEtValuesBack->at(0)), backgroundEventWeight);
+            back_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Fill((recoAntiKt10LRJLeadingEtValuesBack->at(0) - gFexLRJLeadingEtValuesBack->at(0))/recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Fill((recoAntiKt10LRJLeadingEtValuesBack->at(0) - jFexLRJLeadingEtValuesBack->at(0))/recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_leading_LRJ_offlineLRJ_Et_resolution->Fill(((recoAntiKt10LRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0))/ recoAntiKt10LRJLeadingEtValuesBack->at(0)), backgroundEventWeight);
+
+            back_h_leading_LRJ_gFexLRJ_deltaR->Fill(sqrt(calcDeltaR2(gFexLRJLeadingEtaValuesBack->at(0), gFexLRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
+            
+            back_h_leading_LRJ_offlineLRJ_deltaR->Fill(sqrt(calcDeltaR2(recoAntiKt10LRJLeadingEtaValuesBack->at(0), recoAntiKt10LRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
+            back_h_first_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][0], back_LRJ_Phi[i][0])));
+            back_h_second_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])), backgroundEventWeight);
+            back_h_lead_sublead_LRJ_deltaR->Fill(sqrt(calcDeltaR2(back_LRJ_Eta[i][0], back_LRJ_Phi[i][0], back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])), backgroundEventWeight);
+
+            // Dijet efficiencies (background)
+            if(backgroundSubjetCounter == 1){
+                if(back_LRJ_Et[i][0] >= 100.0 || back_LRJ_Et[i][1] >= 100.0){
+                    back_h_offlineLRJ_Et_num100_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom100_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+
+                if(back_LRJ_Et[i][0] >= 200.0 || back_LRJ_Et[i][1] >= 200.0){
+                    back_h_offlineLRJ_Et_num200_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom200_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+
+                if(back_LRJ_Et[i][0] >= 300.0 || back_LRJ_Et[i][1] >= 300.0){
+                    back_h_offlineLRJ_Et_num300_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom300_1Subjet->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            }
+
+            if(backgroundSubjetCounter >= 2){
+                if(back_LRJ_Et[i][0] >= 100.0 || back_LRJ_Et[i][1] >= 100.0){
+                    back_h_offlineLRJ_Et_num100_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom100_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+
+                if(back_LRJ_Et[i][0] >= 200.0 || back_LRJ_Et[i][1] >= 200.0){
+                    back_h_offlineLRJ_Et_num200_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom200_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+
+
+                if(back_LRJ_Et[i][0] >= 300.0 || back_LRJ_Et[i][1] >= 300.0){
+                    back_h_offlineLRJ_Et_num300_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+                }
+                back_h_offlineLRJ_Et_denom300_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            }
+
             // Fill background jFEX trigger efficiencies (1 jet) 
             if(jFexLRJLeadingEtValuesBack->at(0) >= 50.0){
                 back_h_offlineLRJ_Et_num50_jFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
@@ -2954,37 +3771,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_offlineLRJ_Et_denom450->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
 
             
-            if(i == evDisplay0_){
-                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6 && jFexSRJEtaValuesBack->size() >= 6){
-                    displayEv0_ = true;
-                    jFexSeedPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
-                    jFexSeedPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
-                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
-                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
-                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
-                    jFexAdditionalSRJPositionsSigEv0.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
-                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
-                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
-                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
-                    }
-                    else{
-                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
-                        sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
-                    }
-                    gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
-                    gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
-                    siggFexLRJEtEv0.push_back(gFexLRJLeadingEtValuesSignal->at(0));
-                    siggFexLRJEtEv0.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
-                    offlineLRJPositionSigEv0.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
-                    offlineLRJPositionSigEv0.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
-                    sigOfflineLRJEtEv0.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-                    sigOfflineLRJEtEv0.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
-                    std::cout << "Event 0 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
-                    std::cout << "Event 0 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+            if(i == evDisplay0Back_){
+                if(jFexSRJEtaValuesBack->size() >= 6){
+                    displayEv0Back_ = true;
                     jFexSeedPositionsBackEv0.push_back(std::make_pair(jFexSRJEtaValuesBack->at(0), jFexSRJPhiValuesBack->at(0)));
                     jFexSeedPositionsBackEv0.push_back(std::make_pair(jFexSRJEtaValuesBack->at(1), jFexSRJPhiValuesBack->at(1)));
                     jFexAdditionalSRJPositionsBackEv0.push_back(std::make_pair(jFexSRJEtaValuesBack->at(2), jFexSRJPhiValuesBack->at(2)));
@@ -2998,38 +3787,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 
             }
-            if(i == evDisplay1_){
-                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6 && jFexSRJEtaValuesBack->size() >= 6){
-                    displayEv1_ = true;
-                    jFexSeedPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
-                    jFexSeedPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
-                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
-                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
-                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
-                    jFexAdditionalSRJPositionsSigEv1.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
-                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
-                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
-                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
-                    }
-                    else{
-                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
-                        sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
-                    }
-                    gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
-                    gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
-                    siggFexLRJEtEv1.push_back(gFexLRJLeadingEtValuesSignal->at(0));
-                    siggFexLRJEtEv1.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
-                    
-                    offlineLRJPositionSigEv1.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
-                    offlineLRJPositionSigEv1.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
-                    sigOfflineLRJEtEv1.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-                    sigOfflineLRJEtEv1.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
-                    std::cout << "Event 1 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
-                    std::cout << "Event 1 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+            if(i == evDisplay1Back_){
+                if(jFexSRJEtaValuesBack->size() >= 6){
+                    displayEv1Back_ = true;
                     jFexSeedPositionsBackEv1.push_back(std::make_pair(jFexSRJEtaValuesBack->at(0), jFexSRJPhiValuesBack->at(0)));
                     jFexSeedPositionsBackEv1.push_back(std::make_pair(jFexSRJEtaValuesBack->at(1), jFexSRJPhiValuesBack->at(1)));
                     jFexAdditionalSRJPositionsBackEv1.push_back(std::make_pair(jFexSRJEtaValuesBack->at(2), jFexSRJPhiValuesBack->at(2)));
@@ -3043,37 +3803,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 
             }
-            if(i == evDisplay2_){
-                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6 && jFexSRJEtaValuesBack->size() >= 6){
-                    displayEv2_ = true;
-                    jFexSeedPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
-                    jFexSeedPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
-                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
-                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
-                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
-                    jFexAdditionalSRJPositionsSigEv2.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
-                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
-                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
-                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
-                    }
-                    else{
-                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
-                        sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
-                    }
-                    gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
-                    gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
-                    siggFexLRJEtEv2.push_back(gFexLRJLeadingEtValuesSignal->at(0));
-                    siggFexLRJEtEv2.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
-                    offlineLRJPositionSigEv2.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
-                    offlineLRJPositionSigEv2.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
-                    sigOfflineLRJEtEv2.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-                    sigOfflineLRJEtEv2.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
-                    std::cout << "Event 2 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
-                    std::cout << "Event 2 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+            if(i == evDisplay2Back_){
+                if(jFexSRJEtaValuesBack->size() >= 6){
+                    displayEv2Back_ = true;
                     jFexSeedPositionsBackEv2.push_back(std::make_pair(jFexSRJEtaValuesBack->at(0), jFexSRJPhiValuesBack->at(0)));
                     jFexSeedPositionsBackEv2.push_back(std::make_pair(jFexSRJEtaValuesBack->at(1), jFexSRJPhiValuesBack->at(1)));
                     jFexAdditionalSRJPositionsBackEv2.push_back(std::make_pair(jFexSRJEtaValuesBack->at(2), jFexSRJPhiValuesBack->at(2)));
@@ -3087,37 +3819,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 
             }
-            if(i == evDisplay3_){
-                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6 && jFexSRJEtaValuesBack->size() >= 6){
-                    displayEv3_ = true;
-                    jFexSeedPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
-                    jFexSeedPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
-                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
-                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
-                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
-                    jFexAdditionalSRJPositionsSigEv3.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
-                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
-                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
-                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
-                    }
-                    else{
-                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
-                        sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
-                    }
-                    gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
-                    gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
-                    siggFexLRJEtEv3.push_back(gFexLRJLeadingEtValuesSignal->at(0));
-                    siggFexLRJEtEv3.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
-                    offlineLRJPositionSigEv3.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
-                    offlineLRJPositionSigEv3.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
-                    sigOfflineLRJEtEv3.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-                    sigOfflineLRJEtEv3.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
-                    std::cout << "Event 3 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
-                    std::cout << "Event 3 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+            if(i == evDisplay3Back_){
+                if(jFexSRJEtaValuesBack->size() >= 6){
+                    displayEv3Back_ = true;
                     jFexSeedPositionsBackEv3.push_back(std::make_pair(jFexSRJEtaValuesBack->at(0), jFexSRJPhiValuesBack->at(0)));
                     jFexSeedPositionsBackEv3.push_back(std::make_pair(jFexSRJEtaValuesBack->at(1), jFexSRJPhiValuesBack->at(1)));
                     jFexAdditionalSRJPositionsBackEv3.push_back(std::make_pair(jFexSRJEtaValuesBack->at(2), jFexSRJPhiValuesBack->at(2)));
@@ -3131,37 +3835,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 
             }
-            if(i == evDisplay4_){
-                if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0 && jFexSRJEtaValuesSignal->size() >= 6 && jFexSRJEtaValuesBack->size() >= 6){
-                    displayEv4_ = true;
-                    jFexSeedPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(0), jFexSRJPhiValuesSignal->at(0)));
-                    jFexSeedPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(1), jFexSRJPhiValuesSignal->at(1)));
-                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(2), jFexSRJPhiValuesSignal->at(2)));
-                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(3), jFexSRJPhiValuesSignal->at(3)));
-                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(4), jFexSRJPhiValuesSignal->at(4)));
-                    jFexAdditionalSRJPositionsSigEv4.push_back(std::make_pair(jFexSRJEtaValuesSignal->at(5), jFexSRJPhiValuesSignal->at(5)));
-                    if(sig_LRJ_Et[i][0] > sig_LRJ_Et[i][1]){
-                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
-                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
-                    }
-                    else{
-                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
-                        newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
-                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
-                        sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
-                    }
-                    gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
-                    gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
-                    siggFexLRJEtEv4.push_back(gFexLRJLeadingEtValuesSignal->at(0));
-                    siggFexLRJEtEv4.push_back(gFexLRJSubleadingEtValuesSignal->at(0));
-                    offlineLRJPositionSigEv4.push_back(std::make_pair(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0)));
-                    offlineLRJPositionSigEv4.push_back(std::make_pair(recoAntiKt10LRJSubleadingEtaValuesSignal->at(0), recoAntiKt10LRJSubleadingPhiValuesSignal->at(0)));
-                    sigOfflineLRJEtEv4.push_back(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
-                    sigOfflineLRJEtEv4.push_back(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
-                    std::cout << "Event 4 Sig LRJ 1 Et, Eta, Phi: " << sig_LRJ_Et[i][0] << " , " << sig_LRJ_Eta[i][0] << " , " << sig_LRJ_Phi[i][0] << "\n";
-                    std::cout << "Event 4 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
+            if(i == evDisplay4Back_){
+                if(jFexSRJEtaValuesBack->size() >= 6){
+                    displayEv4Back_ = true; 
                     jFexSeedPositionsBackEv4.push_back(std::make_pair(jFexSRJEtaValuesBack->at(0), jFexSRJPhiValuesBack->at(0)));
                     jFexSeedPositionsBackEv4.push_back(std::make_pair(jFexSRJEtaValuesBack->at(1), jFexSRJPhiValuesBack->at(1)));
                     jFexAdditionalSRJPositionsBackEv4.push_back(std::make_pair(jFexSRJEtaValuesBack->at(2), jFexSRJPhiValuesBack->at(2)));
@@ -3174,47 +3850,27 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     backLRJEtEv4.push_back(back_LRJ_Et[i][1]);
                 }
             }
-            if(i <= evDisplayMax_){
-                for(unsigned int iTopo = 0; iTopo < 128; iTopo++){
-                    if(i == evDisplay0_){
-                        sigTopo422Highest128SeedPositionsEv0->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+            if(i <= evDisplayMaxBack_){
+                for(unsigned int iTopo = 0; iTopo < nInputObjectsAlgorithmConfiguration; iTopo++){
+                    if(i == evDisplay0Back_){
                         backTopo422Highest128SeedPositionsEv0->Fill(gepBasicClustersEtaValuesBack->at(iTopo), gepBasicClustersPhiValuesBack->at(iTopo), gepBasicClustersEtValuesBack->at(iTopo));
                     } 
-                    if(i == evDisplay1_){
-                        sigTopo422Highest128SeedPositionsEv1->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    if(i == evDisplay1Back_){
                         backTopo422Highest128SeedPositionsEv1->Fill(gepBasicClustersEtaValuesBack->at(iTopo), gepBasicClustersPhiValuesBack->at(iTopo), gepBasicClustersEtValuesBack->at(iTopo));
                     } 
-                    if(i == evDisplay2_){
-                        sigTopo422Highest128SeedPositionsEv2->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    if(i == evDisplay2Back_){
                         backTopo422Highest128SeedPositionsEv2->Fill(gepBasicClustersEtaValuesBack->at(iTopo), gepBasicClustersPhiValuesBack->at(iTopo), gepBasicClustersEtValuesBack->at(iTopo));
                     } 
-                    if(i == evDisplay3_){
-                        sigTopo422Highest128SeedPositionsEv3->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    if(i == evDisplay3Back_){
                         backTopo422Highest128SeedPositionsEv3->Fill(gepBasicClustersEtaValuesBack->at(iTopo), gepBasicClustersPhiValuesBack->at(iTopo), gepBasicClustersEtValuesBack->at(iTopo));
                     } 
-                    if(i == evDisplay4_){
-                        sigTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                    if(i == evDisplay4Back_){
                         backTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesBack->at(iTopo), gepBasicClustersPhiValuesBack->at(iTopo), gepBasicClustersEtValuesBack->at(iTopo));
                     } 
                 }
             }
 
-            
-            // try computing invariant mass, signal, background
-            double sigDeltaEta = sig_LRJ_Eta[i][0] - sig_LRJ_Eta[i][1];
-            double sigDeltaPhi = std::abs(sig_LRJ_Phi[i][0] - sig_LRJ_Phi[i][1]);
-            // Ensure Δφ is within [-π, π] range
-            if (sigDeltaPhi > M_PI) {
-                sigDeltaPhi = 2 * M_PI - sigDeltaPhi;
-            }
-
-            double sigCoshDeltaEta = cosh(sigDeltaEta);
-            double sigCosDeltaPhi = cos(sigDeltaPhi);
-            double sigMjj = sqrt(2.0 * sig_LRJ_Et[i][0] * sig_LRJ_Et[i][1] * sigCoshDeltaEta - sigCosDeltaPhi);
-            //std::cout << "sigMjj: " << sigMjj << "\n";
-
-            sig_h_Mjj->Fill(sigMjj);
-
+            // Compute invariant mass using JetTagger LRJs for background
             double backDeltaEta = back_LRJ_Eta[i][0] - back_LRJ_Eta[i][1];
             double backDeltaPhi = std::abs(back_LRJ_Phi[i][0] - back_LRJ_Phi[i][1]);
             // Ensure Δφ is within [-π, π] range
@@ -3228,80 +3884,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             double backMjj = sqrt(2.0 * back_LRJ_Et[i][0] * back_LRJ_Et[i][1] * backCoshDeltaEta - backCosDeltaPhi);
 
             back_h_Mjj->Fill(backMjj, backgroundEventWeight);
-            
-           //std::cout << "backMjj: " << backMjj << "\n";
-            /*
-           // ===== Signal Jets =====
-            double sig_et1 = sig_LRJ_Et[i][0];
-            double sig_et2 = sig_LRJ_Et[i][1];
-            double sig_eta1 = sig_LRJ_Eta[i][0];
-            double sig_eta2 = sig_LRJ_Eta[i][1];
-            double sig_phi1 = sig_LRJ_Phi[i][0];
-            double sig_phi2 = sig_LRJ_Phi[i][1];
-            double sig_m1 = 125.0;
-            double sig_m2 = 125.0;
-
-            double sig_e1 = sqrt(pow(sig_et1 * cosh(sig_eta1), 2) + sig_m1 * sig_m1);
-            double sig_e2 = sqrt(pow(sig_et2 * cosh(sig_eta2), 2) + sig_m2 * sig_m2);
-
-            double sig_px1 = sig_et1 * cos(sig_phi1);
-            double sig_px2 = sig_et2 * cos(sig_phi2);
-            double sig_py1 = sig_et1 * sin(sig_phi1);
-            double sig_py2 = sig_et2 * sin(sig_phi2);
-            double sig_pz1 = sig_et1 * sinh(sig_eta1);
-            double sig_pz2 = sig_et2 * sinh(sig_eta2);
-
-            double sig_mjj2 = pow(sig_e1 + sig_e2, 2)
-                            - pow(sig_px1 + sig_px2, 2)
-                            - pow(sig_py1 + sig_py2, 2)
-                            - pow(sig_pz1 + sig_pz2, 2);
-
-            if (sig_mjj2 > 0)
-                sig_h_Mjj->Fill(sqrt(sig_mjj2));
-            else
-                sig_h_Mjj->Fill(0);  // or skip/log
-
-
-            // ===== Background Jets =====
-            double back_et1 = back_LRJ_Et[i][0];
-            double back_et2 = back_LRJ_Et[i][1];
-            double back_eta1 = back_LRJ_Eta[i][0];
-            double back_eta2 = back_LRJ_Eta[i][1];
-            double back_phi1 = back_LRJ_Phi[i][0];
-            double back_phi2 = back_LRJ_Phi[i][1];
-            double back_m1 = 2.0;
-            double back_m2 = 2.0;
-
-            double back_e1 = sqrt(pow(back_et1 * cosh(back_eta1), 2) + back_m1 * back_m1);
-            double back_e2 = sqrt(pow(back_et2 * cosh(back_eta2), 2) + back_m2 * back_m2);
-
-            double back_px1 = back_et1 * cos(back_phi1);
-            double back_px2 = back_et2 * cos(back_phi2);
-            double back_py1 = back_et1 * sin(back_phi1);
-            double back_py2 = back_et2 * sin(back_phi2);
-            double back_pz1 = back_et1 * sinh(back_eta1);
-            double back_pz2 = back_et2 * sinh(back_eta2);
-
-            double back_mjj2 = pow(back_e1 + back_e2, 2)
-                            - pow(back_px1 + back_px2, 2)
-                            - pow(back_py1 + back_py2, 2)
-                            - pow(back_pz1 + back_pz2, 2);
-
-            if (back_mjj2 > 0)
-                back_h_Mjj->Fill(sqrt(back_mjj2));
-            else
-                back_h_Mjj->Fill(0);  // or skip/log
-            */
-
-
-
-
 
         }
-
-
-
-
 
         double det_cutoff = 1.0;
         for (double et_cutoff = det_cutoff; et_cutoff < 500.0; et_cutoff += det_cutoff) {
@@ -3312,7 +3896,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             int numTruePositive = 0;
             int numTruePositive2 = 0;
             
-            for (int i = 0; i < num_processed_events; i++) {
+            for (int i = 0; i < num_processed_events_signal; i++) {
                 //std::cout << "i: " << i << "\n";
                 //std::cout << "i:  " << i << "\n";
                 //for (int j = 0; j < sig_LRJ_Et[current_event]; j++){
@@ -3325,14 +3909,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 if(sig_LRJ_Et[i][0] >= et_cutoff && sig_LRJ_Et[i][1] >= et_cutoff){
                     numTruePositive2++;
                 }
-                    //if (energyMin(sig_LRJ_Et->at(i),
-                    //                    et_cutoff)) {
-                    //numTruePositive++;
-                    //}
             }
+        
 
-            double truePositiveRate = ((double)numTruePositive)/(num_processed_events);
-            double truePositiveRate2 = ((double)numTruePositive2)/(num_processed_events);
+            double truePositiveRate = ((double)numTruePositive)/(num_processed_events_signal);
+            double truePositiveRate2 = ((double)numTruePositive2)/(num_processed_events_signal);
             //std::cout << "truePositiveRate: " << truePositiveRate << " for et_cutoff: " << et_cutoff << "\n";
             roc_curve_points_x[fileIt].emplace_back(truePositiveRate);
             roc_curve_points_x2[fileIt].emplace_back(truePositiveRate2);
@@ -3343,7 +3924,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
             int numFalsePositive = 0;
             int numFalsePositive2 = 0;
-            for (int i = 0; i < num_processed_events; i++) {
+            for (int i = 0; i < num_processed_events_background; i++) {
                 //std::cout << "back_LRJ_Et[i][0]: " << back_LRJ_Et[i][0] << " and i : " << i << "\n";
                 if(back_LRJ_Et[i][0] >= et_cutoff || back_LRJ_Et[i][1] >= et_cutoff){
                     numFalsePositive++;
@@ -3351,31 +3932,18 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 if(back_LRJ_Et[i][0] >= et_cutoff && back_LRJ_Et[i][1] >= et_cutoff){
                     numFalsePositive2++;
                 }
-                /*if (useMax_){
-                    if (energyMax(back_LRJ_Et->at(i),
-                                        et_cutoff)) {
-                    numFalsePositive++;
-                    }
-                }
-                else{
-                    if (energyMin(back_LRJ_Et->at(i),
-                                        et_cutoff)) {
-                    numFalsePositive++;
-                    }
-                }*/
-                
             }
 
-            double falsePositiveRate = ((double)numFalsePositive)/((double) num_processed_events);
-            double falsePositiveRate2 = ((double)numFalsePositive2)/((double) num_processed_events);
+            double falsePositiveRate = ((double)numFalsePositive)/((double) num_processed_events_background);
+            double falsePositiveRate2 = ((double)numFalsePositive2)/((double) num_processed_events_background);
             if (falsePositiveRate == 0){
                 //std::cout << "FPR IS 0!!" << "\n";
-                falsePositiveRate = 1.0/num_processed_events; // /10
+                falsePositiveRate = 1.0/num_processed_events_background; // /10
                 //std::cout << "FPR WHEN FPR IS 0: " << falsePositiveRate << "\n";
             } 
             if (falsePositiveRate2 == 0){
                 //std::cout << "FPR2 IS 0!!" << "\n";
-                falsePositiveRate2 = 1.0/num_processed_events; 
+                falsePositiveRate2 = 1.0/num_processed_events_background; 
             } 
             double backgroundRejection = 1.0 / falsePositiveRate;
             double backgroundRejection2 = 1.0 / falsePositiveRate2;
@@ -3391,18 +3959,18 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
         int numTruePositiveMinMaxCut = 0;
         int numFalsePositiveMinMaxCut = 0;
-        for (int i = 0; i < num_processed_events; i++) {
+        for (int i = 0; i < num_processed_events_signal; i++) {
             if ((sig_LRJ_Et[i][0] > 100 && sig_LRJ_Et[i][0] < 200) && (sig_LRJ_Et[i][1] > 100 && sig_LRJ_Et[i][1] < 200)){
                 numTruePositiveMinMaxCut++;
             }
         }
-        for (int i = 0; i < num_processed_events; i++) {
+        for (int i = 0; i < num_processed_events_background; i++) {
             if ((back_LRJ_Et[i][0] > 100 && back_LRJ_Et[i][0] < 200) && (back_LRJ_Et[i][1] > 100 && back_LRJ_Et[i][1] < 200)){
                 numFalsePositiveMinMaxCut++;
             }
         }
-        tprMinMaxCut[fileIt] = double(numTruePositiveMinMaxCut)/ double(num_processed_events );
-        fprMinMaxCut[fileIt] = double(numFalsePositiveMinMaxCut)/ double(num_processed_events);
+        tprMinMaxCut[fileIt] = double(numTruePositiveMinMaxCut)/ double(num_processed_events_signal );
+        fprMinMaxCut[fileIt] = double(numFalsePositiveMinMaxCut)/ double(num_processed_events_background);
 
         // Start drawing and saving histograms and plots
         TString outputFileDir = "overlayLargeRJetHistograms/";
@@ -3564,6 +4132,28 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_JetTagger.pdf");
 
+        sig_h_LRJ_psi_R_12->Scale(1.0 / sig_h_LRJ_psi_R_12->Integral());
+        back_h_LRJ_psi_R_12->Scale(1.0 / back_h_LRJ_psi_R_12->Integral());
+        sig_h_LRJ_psi_R_12->SetLineColor(kRed);
+        back_h_LRJ_psi_R_12->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R_12->Draw("HIST");
+        sig_h_LRJ_psi_R_12->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R_Leading_over_Subleading.pdf");
+
+        sig_h_LRJ_psi_R_squared->Scale(1.0 / sig_h_LRJ_psi_R_squared->Integral());
+        back_h_LRJ_psi_R_squared->Scale(1.0 / back_h_LRJ_psi_R_squared->Integral());
+        sig_h_LRJ_psi_R_squared->SetLineColor(kRed);
+        back_h_LRJ_psi_R_squared->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R_squared->Draw("HIST");
+        sig_h_LRJ_psi_R_squared->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_squared_JetTagger.pdf");
+
         sig_h_subleading_LRJ_psi_R->Scale(1.0 / sig_h_subleading_LRJ_psi_R->Integral());
         back_h_subleading_LRJ_psi_R->Scale(1.0 / back_h_subleading_LRJ_psi_R->Integral());
         sig_h_subleading_LRJ_psi_R->SetLineColor(kRed);
@@ -3620,9 +4210,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         sig_h_LeadingOfflineLRJ_SubjetEt->SetLineColor(kRed);
         back_h_LeadingOfflineLRJ_SubjetEt->SetLineColor(kBlue);
-        back_h_LeadingOfflineLRJ_SubjetEt->Scale(1.0 / num_processed_events);
+        back_h_LeadingOfflineLRJ_SubjetEt->Scale(1.0 / num_processed_events_background);
         back_h_LeadingOfflineLRJ_SubjetEt->Draw("HIST");
-        sig_h_LeadingOfflineLRJ_SubjetEt->Scale(1.0 / num_processed_events);
+        sig_h_LeadingOfflineLRJ_SubjetEt->Scale(1.0 / num_processed_events_signal);
         sig_h_LeadingOfflineLRJ_SubjetEt->Draw("HIST SAME");
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "LeadingOfflineLRJ_SubjetEt.pdf");
@@ -3668,6 +4258,51 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "leading_LRJ_offlineLRJ_deltaEt.pdf");
+        
+        // Resolution plots
+        sig_h_leading_LRJ_gFexLRJ_Et_resolution->Scale(1.0 / sig_h_leading_LRJ_gFexLRJ_Et_resolution->Integral());
+        back_h_leading_LRJ_gFexLRJ_Et_resolution->Scale(1.0 / back_h_leading_LRJ_gFexLRJ_Et_resolution->Integral());
+        sig_h_leading_LRJ_gFexLRJ_Et_resolution->SetLineColor(kRed);
+        back_h_leading_LRJ_gFexLRJ_Et_resolution->SetLineColor(kBlue);
+        sig_h_leading_LRJ_gFexLRJ_Et_resolution->Draw("HIST");
+        back_h_leading_LRJ_gFexLRJ_Et_resolution->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_gFexLRJ_Et_resolution.pdf");
+
+        sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Scale(1.0 / sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Integral());
+        back_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Scale(1.0 / back_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Integral());
+        sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution->SetLineColor(kRed);
+        back_h_leading_offlineLRJ_gFexLRJ_Et_resolution->SetLineColor(kBlue);
+        sig_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Draw("HIST");
+        back_h_leading_offlineLRJ_gFexLRJ_Et_resolution->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_offlineLRJ_gFexLRJ_Et_resolution.pdf");
+
+        sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Scale(1.0 / sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Integral());
+        back_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Scale(1.0 / back_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Integral());
+        sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution->SetLineColor(kRed);
+        back_h_leading_offlineLRJ_jFexLRJ_Et_resolution->SetLineColor(kBlue);
+        sig_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Draw("HIST");
+        back_h_leading_offlineLRJ_jFexLRJ_Et_resolution->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_offlineLRJ_jFexLRJ_Et_resolution.pdf");
+
+        sig_h_leading_LRJ_offlineLRJ_Et_resolution->Scale(1.0 / sig_h_leading_LRJ_offlineLRJ_Et_resolution->Integral());
+        back_h_leading_LRJ_offlineLRJ_Et_resolution->Scale(1.0 / back_h_leading_LRJ_offlineLRJ_Et_resolution->Integral());
+        sig_h_leading_LRJ_offlineLRJ_Et_resolution->SetLineColor(kRed);
+        back_h_leading_LRJ_offlineLRJ_Et_resolution->SetLineColor(kBlue);
+        sig_h_leading_LRJ_offlineLRJ_Et_resolution->Draw("HIST");
+        back_h_leading_LRJ_offlineLRJ_Et_resolution->Draw("HIST SAME");
+        
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_offlineLRJ_Et_resolution.pdf");
 
 
 
@@ -3893,8 +4528,49 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "lead_sublead_LRJ_deltaR.pdf");
 
+        TString overlayedJZSliceDir = "overlayJZSliceHistograms_" + algorithmConfigurations[fileIt] + "/";
+
+        gSystem->mkdir(overlayedJZSliceDir); 
+
+        back_h_leading_LRJ_Et_arr[0]->Draw("HIST");
+        c.SaveAs(overlayedJZSliceDir + "JZ0_jettagger_leading_LRJ_Et.pdf");
+
+        back_h_leading_LRJ_Et_arr[4]->Draw("HIST");
+        c.SaveAs(overlayedJZSliceDir + "JZ4_jettagger_leading_LRJ_Et.pdf");
+
+        back_h_leading_LRJ_Et_arr[9]->Draw("HIST");
+        c.SaveAs(overlayedJZSliceDir + "JZ9_jettagger_leading_LRJ_Et.pdf");
+
+        OverlayAndSave(back_h_leading_LRJ_Et_arr,  nJZSlices_, "c_leadLRJ", overlayedJZSliceDir + "overlay_leading_LRJ_Et.pdf");
+        OverlayAndSave(back_h_subleading_LRJ_Et_arr, nJZSlices_, "c_subleadLRJ", overlayedJZSliceDir + "overlay_subleading_LRJ_Et.pdf");
+
+        OverlayAndSave(back_h_gFEX_leading_LRJ_Et_arr, nJZSlices_, "c_gFEX_leadLRJ", overlayedJZSliceDir + "overlay_gFEX_leading_LRJ_Et.pdf");
+        OverlayAndSave(back_h_gFEX_subleading_LRJ_Et_arr, nJZSlices_, "c_gFEX_subLRJ", overlayedJZSliceDir + "overlay_gFEX_subleading_LRJ_Et.pdf");
+
+        OverlayAndSave(back_h_jFEX_leading_LRJ_Et_arr, nJZSlices_, "c_jFEX_leadLRJ",   overlayedJZSliceDir + "overlay_jFEX_leading_LRJ_Et.pdf");
+        OverlayAndSave(back_h_jFEX_subleading_LRJ_Et_arr, nJZSlices_, "c_jFEX_subLRJ", overlayedJZSliceDir + "overlay_jFEX_subleading_LRJ_Et.pdf");
+
+        OverlayAndSave(back_h_leading_offlineLRJ_Et_arr, nJZSlices_, "c_off_leadLRJ", overlayedJZSliceDir + "overlay_offline_leading_LRJ_Et.pdf");
+        OverlayAndSave(back_h_subleading_offlineLRJ_Et_arr,nJZSlices_, "c_off_subLRJ", overlayedJZSliceDir + "overlay_offline_subleading_LRJ_Et.pdf");
+
+        OverlayAndSave(back_h_leading_truthSRJs_Et_arr, nJZSlices_, "c_truth_leadSRJ", overlayedJZSliceDir + "overlay_truth_leading_SRJs_Et.pdf");
+        OverlayAndSave(back_h_subleading_truthSRJs_Et_arr, nJZSlices_, "c_truth_subSRJ", overlayedJZSliceDir + "overlay_truth_subleading_SRJs_Et.pdf");
+
+        TCanvas cLog;
+        cLog.SetLogy();
+        cLog.cd();
         back_h_leading_LRJ_Et->Draw("HIST");
-        c.SaveAs(modifiedOutputFileDir + "back_leading_LRJ_Et_events.pdf");
+        cLog.SaveAs(modifiedOutputFileDir + "back_leading_LRJ_Et_events.pdf");
+
+        back_h_gFEX_leading_LRJ_Et->Draw("HIST");
+        cLog.SaveAs(modifiedOutputFileDir + "back_h_gFEX_leading_LRJ_Et_events.pdf");
+
+        back_h_jFEX_leading_LRJ_Et->Draw("HIST");
+        cLog.SaveAs(modifiedOutputFileDir + "back_h_jFEX_leading_LRJ_Et_events.pdf");
+
+        back_h_leading_offlineLRJ_Et->Draw("HIST");
+        cLog.SaveAs(modifiedOutputFileDir + "back_leading_offline_LRJ_Et_events.pdf");
+
 
         std::cout << "Leading signal mean: " << sig_h_leading_LRJ_Et->GetMean() << " and leading background mean: " << back_h_leading_LRJ_Et->GetMean() << "\n";
         sig_h_leading_LRJ_Et->Scale(1.0 / sig_h_leading_LRJ_Et->Integral());
@@ -3905,7 +4581,30 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sig_h_leading_LRJ_Et->Draw("HIST SAME");
         
         leg->Draw();
-        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_Et.pdf");
+        cLog.SaveAs(modifiedOutputFileDir + "leading_LRJ_Et.pdf");
+
+
+        
+
+        sig_h_gFEX_leading_LRJ_Et->Scale(1.0 / sig_h_gFEX_leading_LRJ_Et->Integral());
+        back_h_gFEX_leading_LRJ_Et->Scale(1.0 / back_h_gFEX_leading_LRJ_Et->Integral());
+        sig_h_gFEX_leading_LRJ_Et->SetLineColor(kRed);
+        back_h_gFEX_leading_LRJ_Et->SetLineColor(kBlue);
+        back_h_gFEX_leading_LRJ_Et->Draw("HIST");
+        sig_h_gFEX_leading_LRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+        cLog.SaveAs(modifiedOutputFileDir + "leading_gFEX_LRJ_Et.pdf");
+
+        sig_h_jFEX_leading_LRJ_Et->Scale(1.0 / sig_h_jFEX_leading_LRJ_Et->Integral());
+        back_h_jFEX_leading_LRJ_Et->Scale(1.0 / back_h_jFEX_leading_LRJ_Et->Integral());
+        sig_h_jFEX_leading_LRJ_Et->SetLineColor(kRed);
+        back_h_jFEX_leading_LRJ_Et->SetLineColor(kBlue);
+        back_h_jFEX_leading_LRJ_Et->Draw("HIST");
+        sig_h_jFEX_leading_LRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+        cLog.SaveAs(modifiedOutputFileDir + "leading_jFEX_LRJ_Et.pdf");
 
         std::cout << "Subleading signal mean: " << sig_h_subleading_LRJ_Et->GetMean() << " and subleading background mean: " << back_h_subleading_LRJ_Et->GetMean() << "\n";
         sig_h_subleading_LRJ_Et->Scale(1.0 / sig_h_subleading_LRJ_Et->Integral());
@@ -3915,10 +4614,28 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         back_h_subleading_LRJ_Et->Draw("HIST");
         sig_h_subleading_LRJ_Et->Draw("HIST SAME");
         
-        
+        leg->Draw();
+        cLog.SaveAs(modifiedOutputFileDir + "subleading_LRJ_Et.pdf");
+
+        sig_h_gFEX_subleading_LRJ_Et->Scale(1.0 / sig_h_gFEX_subleading_LRJ_Et->Integral());
+        back_h_gFEX_subleading_LRJ_Et->Scale(1.0 / back_h_gFEX_subleading_LRJ_Et->Integral());
+        sig_h_gFEX_subleading_LRJ_Et->SetLineColor(kRed);
+        back_h_gFEX_subleading_LRJ_Et->SetLineColor(kBlue);
+        back_h_gFEX_subleading_LRJ_Et->Draw("HIST");
+        sig_h_gFEX_subleading_LRJ_Et->Draw("HIST SAME");
         
         leg->Draw();
-        c.SaveAs(modifiedOutputFileDir + "subleading_LRJ_Et.pdf");
+        cLog.SaveAs(modifiedOutputFileDir + "subleading_gFEX_LRJ_Et.pdf");
+
+        sig_h_jFEX_subleading_LRJ_Et->Scale(1.0 / sig_h_jFEX_subleading_LRJ_Et->Integral());
+        back_h_jFEX_subleading_LRJ_Et->Scale(1.0 / back_h_jFEX_subleading_LRJ_Et->Integral());
+        sig_h_jFEX_subleading_LRJ_Et->SetLineColor(kRed);
+        back_h_jFEX_subleading_LRJ_Et->SetLineColor(kBlue);
+        back_h_jFEX_subleading_LRJ_Et->Draw("HIST");
+        sig_h_jFEX_subleading_LRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+        cLog.SaveAs(modifiedOutputFileDir + "subleading_jFEX_LRJ_Et.pdf");
 
 
         sig_h_LRJ_E->Scale(1.0 / sig_h_LRJ_E->Integral());
@@ -3929,14 +4646,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         back_h_LRJ_E->Draw("HIST SAME");
         
         leg->Draw();
-        c.SaveAs(modifiedOutputFileDir + "LRJ_Energy.pdf");
-
-
-        // --- compute % of signal entries in overflow (> upper edge) BEFORE scaling ---
-        const int nb = sig_h_leading_offlineLRJ_Et->GetNbinsX();
-        const double sig_overflow = sig_h_leading_offlineLRJ_Et->GetBinContent(nb + 1);      // overflow bin
-        const double sig_total_all = sig_h_leading_offlineLRJ_Et->Integral(0, nb + 1);       // include under/overflow
-        const double sig_overflow_pct = (sig_total_all > 0.0) ? (100.0 * sig_overflow / sig_total_all) : 0.0;
+        cLog.SaveAs(modifiedOutputFileDir + "LRJ_Energy.pdf");
 
         sig_h_leading_offlineLRJ_Et->Scale(1.0 / sig_h_leading_offlineLRJ_Et->Integral());
         back_h_leading_offlineLRJ_Et->Scale(1.0 / back_h_leading_offlineLRJ_Et->Integral());
@@ -3948,17 +4658,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         leg->Draw();
 
-        // --- annotate overflow % for signal in the top-right (NDC coords) ---
-        char overflow_label[128];
-        // 1 decimal place
-        snprintf(overflow_label, sizeof(overflow_label),
-                "Signal overflow: %.1f%%",
-                sig_overflow_pct);
+        cLog.SaveAs(modifiedOutputFileDir + "leading_offline_LRJ_Et.pdf");
 
-        // tweak the NDC position if needed
-        mySmallText(0.52, 0.66, kBlack, overflow_label);
+        sig_h_subleading_offlineLRJ_Et->Scale(1.0 / sig_h_subleading_offlineLRJ_Et->Integral());
+        back_h_subleading_offlineLRJ_Et->Scale(1.0 / back_h_subleading_offlineLRJ_Et->Integral());
+        sig_h_subleading_offlineLRJ_Et->SetLineColor(kRed);
+        back_h_subleading_offlineLRJ_Et->SetLineColor(kBlue);
         
-        c.SaveAs(modifiedOutputFileDir + "leading_offline_LRJ_Et.pdf");
+        back_h_subleading_offlineLRJ_Et->Draw("HIST");
+        sig_h_subleading_offlineLRJ_Et->Draw("HIST SAME");
+        
+        leg->Draw();
+
+        cLog.SaveAs(modifiedOutputFileDir + "subleading_offline_LRJ_Et.pdf");
+
+        c.cd();
 
         sigDiamvsEt->Draw("COLZ");
         c.SaveAs(modifiedOutputFileDir + "EtvsDiamSignal.pdf");
@@ -3985,16 +4699,120 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
         c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
 
+        sigOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_squared.pdf");
 
-        sigOfflineLeadingLRJMassvsEt->Draw("COLZ");
-        sigOfflineLeadingLRJMassvsEt->Scale(1.0 / sigOfflineLeadingLRJMassvsEt->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsEt.pdf");
+        sigOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+
+        TCanvas cLogZ;
+        cLogZ.SetLogz();
+
+        cLogZ.cd();
+
+        backOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        //backOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_squared.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        //backOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+
+        c.cd();
         
+        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+
+        cLogZ.cd();
+
+        backOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
+        //backOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_12.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
+        //backOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_12.pdf");
+
+        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        //backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
+        //backOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
+        //backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
+
+        c.cd();
+
+        // Computed with deltaR^2 metric
+        sigOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2.pdf");
+
+        sigOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2.pdf");
+
+        sigOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+        
+        cLogZ.cd();
+        sigOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_12.pdf");
+        
+        sigOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_12.pdf");
+
+        c.cd();
+        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+
+        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
+
+        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2.pdf");
+
+        backOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2.pdf");
+
+        
+        cLogZ.cd();
+        sigOfflineLeadingLRJMassvsEt->Scale(1.0 / sigOfflineLeadingLRJMassvsEt->Integral());
+        sigOfflineLeadingLRJMassvsEt->Draw("COLZ");
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsEt.pdf");
+
+
         backOfflineLeadingLRJMassvsEt->Draw("COLZ");
         backOfflineLeadingLRJMassvsEt->Scale(1.0 / backOfflineLeadingLRJMassvsEt->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJMassvsEt.pdf");
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJMassvsEt.pdf");
 
-        
+        c.cd();
         sigOfflineLeadingLRJMassvsSubjetMult->Draw("COLZ");
         c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsSubjetMult.pdf");
 
@@ -4017,14 +4835,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         c.SaveAs(modifiedOutputFileDir + "leadingOfflineLRJMass.pdf");
 
 
-        sig_h_LRJ_nmio->Scale(1.0 / sig_h_LRJ_nmio->Integral());
-        back_h_LRJ_nmio->Scale(1.0 / back_h_LRJ_nmio->Integral());
-        sig_h_LRJ_nmio->SetLineColor(kRed);
-        back_h_LRJ_nmio->SetLineColor(kBlue);
+        sig_h_LRJ_substruct->Scale(1.0 / sig_h_LRJ_substruct->Integral());
+        back_h_LRJ_substruct->Scale(1.0 / back_h_LRJ_substruct->Integral());
+        sig_h_LRJ_substruct->SetLineColor(kRed);
+        back_h_LRJ_substruct->SetLineColor(kBlue);
         
         
-        sig_h_LRJ_nmio->Draw("HIST");
-        back_h_LRJ_nmio->Draw("HIST SAME");
+        sig_h_LRJ_substruct->Draw("HIST");
+        back_h_LRJ_substruct->Draw("HIST SAME");
         leg_diam->Draw();
         c.SaveAs(modifiedOutputFileDir + "LRJ_diam.pdf");
 
@@ -5494,11 +6312,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
 
 
-        if(displayEv0_){
+        if(displayEv0Sig_){
             sigTopo422Highest128SeedPositionsEv0->GetZaxis()->SetTitle("E_{T} [GeV]");
             sigTopo422Highest128SeedPositionsEv0->Draw("COLZ");
 
-            TEllipse *sigCircle0_Ev0 = new TEllipse(jFexSeedPositionsSigEv0[0].first, jFexSeedPositionsSigEv0[0].second, 1.0, 1.0); // R in both x and y // FIXME allow R to change?
+            TEllipse *sigCircle0_Ev0 = new TEllipse(jFexSeedPositionsSigEv0[0].first, jFexSeedPositionsSigEv0[0].second, 1.0, 1.0); // R in both x and y
             sigCircle0_Ev0->SetLineColor(kRed);
             sigCircle0_Ev0->SetLineWidth(2);
             sigCircle0_Ev0->SetFillStyle(0); // no fill
@@ -5578,7 +6396,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         
         
-        if(displayEv1_){
+        if(displayEv1Sig_){
             sigTopo422Highest128SeedPositionsEv1->GetZaxis()->SetTitle("E_{T} [GeV]");
             sigTopo422Highest128SeedPositionsEv1->Draw("COLZ");
 
@@ -5660,7 +6478,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
         
         
-        if(displayEv2_){
+        if(displayEv2Sig_){
             sigTopo422Highest128SeedPositionsEv2->GetZaxis()->SetTitle("E_{T} [GeV]");
             sigTopo422Highest128SeedPositionsEv2->Draw("COLZ");
 
@@ -5742,7 +6560,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             c.SaveAs(modifiedOutputFileDir + "sigTopo422_highest128Et_EtaPhi_Ev2.pdf");   
         }
         
-        if(displayEv3_){
+        if(displayEv3Sig_){
             sigTopo422Highest128SeedPositionsEv3->GetZaxis()->SetTitle("E_{T} [GeV]");
             sigTopo422Highest128SeedPositionsEv3->Draw("COLZ");
 
@@ -5825,7 +6643,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
         
         
-        if(displayEv4_){
+        if(displayEv4Sig_){
             sigTopo422Highest128SeedPositionsEv4->GetZaxis()->SetTitle("E_{T} [GeV]");
             sigTopo422Highest128SeedPositionsEv4->Draw("COLZ");
 
@@ -5916,7 +6734,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TCanvas cEventDisplays;
         cEventDisplays.cd();
 
-        if (displayEv0_) {
+        if (displayEv0Sig_) {
             
             // ---------------- MAIN EVENT DISPLAY (NO LEGEND HERE) ----------------
             // (No right-margin fiddling so the plot doesn't warp.)
@@ -6027,7 +6845,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             cLeg_Ev0.SaveAs(modifiedOutputFileDir + "sigTopo422_highest128Et_EtaPhi_Ev0_gFEX_Offline_JetTagger_LEGEND.pdf");
         }
 
-        if (displayEv1_) {
+        if (displayEv1Sig_) {
             cEventDisplays.cd();
             
             // ---------------- MAIN EVENT DISPLAY (NO LEGEND HERE) ----------------
@@ -6139,7 +6957,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             cLeg_Ev1.SaveAs(modifiedOutputFileDir + "sigTopo422_highest128Et_EtaPhi_Ev1_gFEX_Offline_JetTagger_LEGEND.pdf");
         }
 
-        if (displayEv2_) {
+        if (displayEv2Sig_) {
             cEventDisplays.cd();
             
             // ---------------- MAIN EVENT DISPLAY (NO LEGEND HERE) ----------------
@@ -6251,7 +7069,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             cLeg_Ev2.SaveAs(modifiedOutputFileDir + "sigTopo422_highest128Et_EtaPhi_Ev2_gFEX_Offline_JetTagger_LEGEND.pdf");
         }
 
-        if (displayEv3_) {
+        if (displayEv3Sig_) {
             cEventDisplays.cd();
             
             // ---------------- MAIN EVENT DISPLAY (NO LEGEND HERE) ----------------
@@ -6363,7 +7181,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             cLeg_Ev3.SaveAs(modifiedOutputFileDir + "sigTopo422_highest128Et_EtaPhi_Ev3_gFEX_Offline_JetTagger_LEGEND.pdf");
         }
 
-        if (displayEv4_) {
+        if (displayEv4Sig_) {
             cEventDisplays.cd();
             
             // ---------------- MAIN EVENT DISPLAY (NO LEGEND HERE) ----------------
@@ -6530,438 +7348,448 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigOfflineLRJEtEv4.clear();
         
 
-        // FIXME shouldn't be commented out
-        /*
-        backTopo422Highest128SeedPositionsEv0->GetZaxis()->SetTitle("E_{T} [GeV]");
-        backTopo422Highest128SeedPositionsEv0->Draw("COLZ");
+        // Draw background event displays //FIXME turn into a loop to reduce duplicate code
+        if(displayEv0Back_){
+            backTopo422Highest128SeedPositionsEv0->GetZaxis()->SetTitle("E_{T} [GeV]");
+            backTopo422Highest128SeedPositionsEv0->Draw("COLZ");
 
 
-        TEllipse *backCircle0_Ev0 = new TEllipse(jFexSeedPositionsBackEv0[0].first, jFexSeedPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y // FIXME allow R to change?
-        backCircle0_Ev0->SetLineColor(kRed);
-        backCircle0_Ev0->SetLineWidth(2);
-        backCircle0_Ev0->SetFillStyle(0); // no fill
-        backCircle0_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle0_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle0_Ev0 = new TEllipse(jFexSeedPositionsBackEv0[0].first, jFexSeedPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y
+            backCircle0_Ev0->SetLineColor(kRed);
+            backCircle0_Ev0->SetLineWidth(2);
+            backCircle0_Ev0->SetFillStyle(0); // no fill
+            backCircle0_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle0_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle1_Ev0 = new TEllipse(jFexSeedPositionsBackEv0[1].first, jFexSeedPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
-        backCircle1_Ev0->SetLineColor(kRed);
-        backCircle1_Ev0->SetLineWidth(2);
-        backCircle1_Ev0->SetFillStyle(0); // no fill
-        backCircle1_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle1_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle1_Ev0 = new TEllipse(jFexSeedPositionsBackEv0[1].first, jFexSeedPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
+            backCircle1_Ev0->SetLineColor(kRed);
+            backCircle1_Ev0->SetLineWidth(2);
+            backCircle1_Ev0->SetFillStyle(0); // no fill
+            backCircle1_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle1_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle2_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[0].first, jFexAdditionalSRJPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y
-        backCircle2_Ev0->SetLineColor(kAzure+2);
-        backCircle2_Ev0->SetLineWidth(2);
-        backCircle2_Ev0->SetFillStyle(0); // no fill
-        backCircle2_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle2_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle2_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[0].first, jFexAdditionalSRJPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y
+            backCircle2_Ev0->SetLineColor(kAzure+2);
+            backCircle2_Ev0->SetLineWidth(2);
+            backCircle2_Ev0->SetFillStyle(0); // no fill
+            backCircle2_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle2_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle3_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[1].first, jFexAdditionalSRJPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
-        backCircle3_Ev0->SetLineColor(kAzure+2);
-        backCircle3_Ev0->SetLineWidth(2);
-        backCircle3_Ev0->SetFillStyle(0); // no fill
-        backCircle3_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle3_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle3_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[1].first, jFexAdditionalSRJPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
+            backCircle3_Ev0->SetLineColor(kAzure+2);
+            backCircle3_Ev0->SetLineWidth(2);
+            backCircle3_Ev0->SetFillStyle(0); // no fill
+            backCircle3_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle3_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle4_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[2].first, jFexAdditionalSRJPositionsBackEv0[2].second, 1.0, 1.0); // R in both x and y
-        backCircle4_Ev0->SetLineColor(kAzure+2);
-        backCircle4_Ev0->SetLineWidth(2);
-        backCircle4_Ev0->SetFillStyle(0); // no fill
-        backCircle4_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle4_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle4_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[2].first, jFexAdditionalSRJPositionsBackEv0[2].second, 1.0, 1.0); // R in both x and y
+            backCircle4_Ev0->SetLineColor(kAzure+2);
+            backCircle4_Ev0->SetLineWidth(2);
+            backCircle4_Ev0->SetFillStyle(0); // no fill
+            backCircle4_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle4_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle5_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[3].first, jFexAdditionalSRJPositionsBackEv0[3].second, 1.0, 1.0); // R in both x and y
-        backCircle5_Ev0->SetLineColor(kAzure+2);
-        backCircle5_Ev0->SetLineWidth(2);
-        backCircle5_Ev0->SetFillStyle(0); // no fill
-        backCircle5_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle5_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle5_Ev0 = new TEllipse(jFexAdditionalSRJPositionsBackEv0[3].first, jFexAdditionalSRJPositionsBackEv0[3].second, 1.0, 1.0); // R in both x and y
+            backCircle5_Ev0->SetLineColor(kAzure+2);
+            backCircle5_Ev0->SetLineWidth(2);
+            backCircle5_Ev0->SetFillStyle(0); // no fill
+            backCircle5_Ev0->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle5_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle6_Ev0 = new TEllipse(newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y
-        backCircle6_Ev0->SetLineColor(kGreen+2);
-        backCircle6_Ev0->SetLineWidth(2);
-        backCircle6_Ev0->SetFillStyle(0); // no fill
-        backCircle6_Ev0->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle6_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle6_Ev0 = new TEllipse(newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, 1.0, 1.0); // R in both x and y
+            backCircle6_Ev0->SetLineColor(kGreen+2);
+            backCircle6_Ev0->SetLineWidth(2);
+            backCircle6_Ev0->SetFillStyle(0); // no fill
+            backCircle6_Ev0->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle6_Ev0->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle7_Ev0 = new TEllipse(newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
-        backCircle7_Ev0->SetLineColor(kGreen+2);
-        backCircle7_Ev0->SetLineWidth(2);
-        backCircle7_Ev0->SetFillStyle(0); // no fill
-        backCircle7_Ev0->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle7_Ev0->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle7_Ev0 = new TEllipse(newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, 1.0, 1.0); // R in both x and y
+            backCircle7_Ev0->SetLineColor(kGreen+2);
+            backCircle7_Ev0->SetLineWidth(2);
+            backCircle7_Ev0->SetFillStyle(0); // no fill
+            backCircle7_Ev0->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle7_Ev0->Draw("same");    // overlay on the existing plot
 
-        // Build the label text (1st LRJ)
-        TString backLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, backLRJEtEv0[0]);
+            // Build the label text (1st LRJ)
+            TString backLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, backLRJEtEv0[0]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat1Ev0;
-        backLat1Ev0.SetTextSize(0.025);     // Adjust size
-        backLat1Ev0.SetTextColor(kBlack); // Match backCircle color
-        backLat1Ev0.DrawLatex(newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second + 0.6, backLabel1Ev0); // Slightly above the backCircle
+            // Option 1: Use TLatex directly
+            TLatex backLat1Ev0;
+            backLat1Ev0.SetTextSize(0.025);     // Adjust size
+            backLat1Ev0.SetTextColor(kBlack); // Match backCircle color
+            backLat1Ev0.DrawLatex(newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second + 0.6, backLabel1Ev0); // Slightly above the backCircle
 
-        // Build the label text (2nd LRJ)
-        TString backLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, backLRJEtEv0[1]);
+            // Build the label text (2nd LRJ)
+            TString backLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, backLRJEtEv0[1]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat2Ev0;
-        backLat2Ev0.SetTextSize(0.025);     // Adjust size
-        backLat2Ev0.SetTextColor(kBlack); // Match backCircle color
-        backLat2Ev0.DrawLatex(newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second + 0.6, backLabel2Ev0); // Slightly above the backCircle\
+            // Option 1: Use TLatex directly
+            TLatex backLat2Ev0;
+            backLat2Ev0.SetTextSize(0.025);     // Adjust size
+            backLat2Ev0.SetTextColor(kBlack); // Match backCircle color
+            backLat2Ev0.DrawLatex(newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second + 0.6, backLabel2Ev0); // Slightly above the backCircle\
 
-        c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev0.pdf");   
+            c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev0.pdf");   
+
+            jFexSeedPositionsBackEv0.clear();
+            jFexAdditionalSRJPositionsBackEv0.clear();
+            newSeedPositionsBackEv0.clear();
+            backLRJEtEv0.clear();
+        }
         
+        if(displayEv1Back_){
+            backTopo422Highest128SeedPositionsEv1->GetZaxis()->SetTitle("E_{T} [GeV]");
+            backTopo422Highest128SeedPositionsEv1->Draw("COLZ");
+
+
+            TEllipse *backCircle0_Ev1 = new TEllipse(jFexSeedPositionsBackEv1[0].first, jFexSeedPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
+            backCircle0_Ev1->SetLineColor(kRed);
+            backCircle0_Ev1->SetLineWidth(2);
+            backCircle0_Ev1->SetFillStyle(0); // no fill
+            backCircle0_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle0_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle1_Ev1 = new TEllipse(jFexSeedPositionsBackEv1[1].first, jFexSeedPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
+            backCircle1_Ev1->SetLineColor(kRed);
+            backCircle1_Ev1->SetLineWidth(2);
+            backCircle1_Ev1->SetFillStyle(0); // no fill
+            backCircle1_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle1_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle2_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[0].first, jFexAdditionalSRJPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
+            backCircle2_Ev1->SetLineColor(kAzure+2);
+            backCircle2_Ev1->SetLineWidth(2);
+            backCircle2_Ev1->SetFillStyle(0); // no fill
+            backCircle2_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle2_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle3_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[1].first, jFexAdditionalSRJPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
+            backCircle3_Ev1->SetLineColor(kAzure+2);
+            backCircle3_Ev1->SetLineWidth(2);
+            backCircle3_Ev1->SetFillStyle(0); // no fill
+            backCircle3_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle3_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle4_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[2].first, jFexAdditionalSRJPositionsBackEv1[2].second, 1.0, 1.0); // R in both x and y
+            backCircle4_Ev1->SetLineColor(kAzure+2);
+            backCircle4_Ev1->SetLineWidth(2);
+            backCircle4_Ev1->SetFillStyle(0); // no fill
+            backCircle4_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle4_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle5_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[3].first, jFexAdditionalSRJPositionsBackEv1[3].second, 1.0, 1.0); // R in both x and y
+            backCircle5_Ev1->SetLineColor(kAzure+2);
+            backCircle5_Ev1->SetLineWidth(2);
+            backCircle5_Ev1->SetFillStyle(0); // no fill
+            backCircle5_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle5_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle6_Ev1 = new TEllipse(newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
+            backCircle6_Ev1->SetLineColor(kGreen+2);
+            backCircle6_Ev1->SetLineWidth(2);
+            backCircle6_Ev1->SetFillStyle(0); // no fill
+            backCircle6_Ev1->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle6_Ev1->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle7_Ev1 = new TEllipse(newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
+            backCircle7_Ev1->SetLineColor(kGreen+2);
+            backCircle7_Ev1->SetLineWidth(2);
+            backCircle7_Ev1->SetFillStyle(0); // no fill
+            backCircle7_Ev1->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle7_Ev1->Draw("same");    // overlay on the existing plot
+
+            // Build the label text (1st LRJ)
+            TString backLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, backLRJEtEv1[0]);
+
+            // Option 1: Use TLatex directly
+            TLatex backLat1Ev1;
+            backLat1Ev1.SetTextSize(0.025);     // Adjust size
+            backLat1Ev1.SetTextColor(kBlack); // Match backCircle color
+            backLat1Ev1.DrawLatex(newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second + 0.6, backLabel1Ev1); // Slightly above the backCircle
+
+            // Build the label text (2nd LRJ)
+            TString backLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, backLRJEtEv1[1]);
+
+            // Option 1: Use TLatex directly
+            TLatex backLat2Ev1;
+            backLat2Ev1.SetTextSize(0.025);     // Adjust size
+            backLat2Ev1.SetTextColor(kBlack); // Match backCircle color
+            backLat2Ev1.DrawLatex(newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second + 0.6, backLabel2Ev1); // Slightly above the backCircle\
+
+            c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev1.pdf");   
+            
+            
+            jFexSeedPositionsBackEv1.clear();
+            jFexAdditionalSRJPositionsBackEv1.clear();
+            newSeedPositionsBackEv1.clear();
+            backLRJEtEv1.clear();
+        }
         
-        jFexSeedPositionsBackEv0.clear();
-        jFexAdditionalSRJPositionsBackEv0.clear();
-        newSeedPositionsBackEv0.clear();
-        backLRJEtEv0.clear();
-
-        backTopo422Highest128SeedPositionsEv1->GetZaxis()->SetTitle("E_{T} [GeV]");
-        backTopo422Highest128SeedPositionsEv1->Draw("COLZ");
+        if(displayEv2Back_){
+            backTopo422Highest128SeedPositionsEv2->GetZaxis()->SetTitle("E_{T} [GeV]");
+            backTopo422Highest128SeedPositionsEv2->Draw("COLZ");
 
 
-        TEllipse *backCircle0_Ev1 = new TEllipse(jFexSeedPositionsBackEv1[0].first, jFexSeedPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
-        backCircle0_Ev1->SetLineColor(kRed);
-        backCircle0_Ev1->SetLineWidth(2);
-        backCircle0_Ev1->SetFillStyle(0); // no fill
-        backCircle0_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle0_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle0_Ev2 = new TEllipse(jFexSeedPositionsBackEv2[0].first, jFexSeedPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
+            backCircle0_Ev2->SetLineColor(kRed);
+            backCircle0_Ev2->SetLineWidth(2);
+            backCircle0_Ev2->SetFillStyle(0); // no fill
+            backCircle0_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle0_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle1_Ev1 = new TEllipse(jFexSeedPositionsBackEv1[1].first, jFexSeedPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
-        backCircle1_Ev1->SetLineColor(kRed);
-        backCircle1_Ev1->SetLineWidth(2);
-        backCircle1_Ev1->SetFillStyle(0); // no fill
-        backCircle1_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle1_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle1_Ev2 = new TEllipse(jFexSeedPositionsBackEv2[1].first, jFexSeedPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
+            backCircle1_Ev2->SetLineColor(kRed);
+            backCircle1_Ev2->SetLineWidth(2);
+            backCircle1_Ev2->SetFillStyle(0); // no fill
+            backCircle1_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle1_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle2_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[0].first, jFexAdditionalSRJPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
-        backCircle2_Ev1->SetLineColor(kAzure+2);
-        backCircle2_Ev1->SetLineWidth(2);
-        backCircle2_Ev1->SetFillStyle(0); // no fill
-        backCircle2_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle2_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle2_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[0].first, jFexAdditionalSRJPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
+            backCircle2_Ev2->SetLineColor(kAzure+2);
+            backCircle2_Ev2->SetLineWidth(2);
+            backCircle2_Ev2->SetFillStyle(0); // no fill
+            backCircle2_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle2_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle3_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[1].first, jFexAdditionalSRJPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
-        backCircle3_Ev1->SetLineColor(kAzure+2);
-        backCircle3_Ev1->SetLineWidth(2);
-        backCircle3_Ev1->SetFillStyle(0); // no fill
-        backCircle3_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle3_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle3_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[1].first, jFexAdditionalSRJPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
+            backCircle3_Ev2->SetLineColor(kAzure+2);
+            backCircle3_Ev2->SetLineWidth(2);
+            backCircle3_Ev2->SetFillStyle(0); // no fill
+            backCircle3_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle3_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle4_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[2].first, jFexAdditionalSRJPositionsBackEv1[2].second, 1.0, 1.0); // R in both x and y
-        backCircle4_Ev1->SetLineColor(kAzure+2);
-        backCircle4_Ev1->SetLineWidth(2);
-        backCircle4_Ev1->SetFillStyle(0); // no fill
-        backCircle4_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle4_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle4_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[2].first, jFexAdditionalSRJPositionsBackEv2[2].second, 1.0, 1.0); // R in both x and y
+            backCircle4_Ev2->SetLineColor(kAzure+2);
+            backCircle4_Ev2->SetLineWidth(2);
+            backCircle4_Ev2->SetFillStyle(0); // no fill
+            backCircle4_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle4_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle5_Ev1 = new TEllipse(jFexAdditionalSRJPositionsBackEv1[3].first, jFexAdditionalSRJPositionsBackEv1[3].second, 1.0, 1.0); // R in both x and y
-        backCircle5_Ev1->SetLineColor(kAzure+2);
-        backCircle5_Ev1->SetLineWidth(2);
-        backCircle5_Ev1->SetFillStyle(0); // no fill
-        backCircle5_Ev1->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle5_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle5_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[3].first, jFexAdditionalSRJPositionsBackEv2[3].second, 1.0, 1.0); // R in both x and y
+            backCircle5_Ev2->SetLineColor(kAzure+2);
+            backCircle5_Ev2->SetLineWidth(2);
+            backCircle5_Ev2->SetFillStyle(0); // no fill
+            backCircle5_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle5_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle6_Ev1 = new TEllipse(newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, 1.0, 1.0); // R in both x and y
-        backCircle6_Ev1->SetLineColor(kGreen+2);
-        backCircle6_Ev1->SetLineWidth(2);
-        backCircle6_Ev1->SetFillStyle(0); // no fill
-        backCircle6_Ev1->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle6_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle6_Ev2 = new TEllipse(newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
+            backCircle6_Ev2->SetLineColor(kGreen+2);
+            backCircle6_Ev2->SetLineWidth(2);
+            backCircle6_Ev2->SetFillStyle(0); // no fill
+            backCircle6_Ev2->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle6_Ev2->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle7_Ev1 = new TEllipse(newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, 1.0, 1.0); // R in both x and y
-        backCircle7_Ev1->SetLineColor(kGreen+2);
-        backCircle7_Ev1->SetLineWidth(2);
-        backCircle7_Ev1->SetFillStyle(0); // no fill
-        backCircle7_Ev1->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle7_Ev1->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle7_Ev2 = new TEllipse(newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
+            backCircle7_Ev2->SetLineColor(kGreen+2);
+            backCircle7_Ev2->SetLineWidth(2);
+            backCircle7_Ev2->SetFillStyle(0); // no fill
+            backCircle7_Ev2->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle7_Ev2->Draw("same");    // overlay on the existing plot
 
-        // Build the label text (1st LRJ)
-        TString backLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, backLRJEtEv1[0]);
+            // Build the label text (1st LRJ)
+            TString backLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, backLRJEtEv2[0]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat1Ev1;
-        backLat1Ev1.SetTextSize(0.025);     // Adjust size
-        backLat1Ev1.SetTextColor(kBlack); // Match backCircle color
-        backLat1Ev1.DrawLatex(newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second + 0.6, backLabel1Ev1); // Slightly above the backCircle
+            // Option 1: Use TLatex directly
+            TLatex backLat1Ev2;
+            backLat1Ev2.SetTextSize(0.025);     // Adjust size
+            backLat1Ev2.SetTextColor(kBlack); // Match backCircle color
+            backLat1Ev2.DrawLatex(newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second + 0.6, backLabel1Ev2); // Slightly above the backCircle
 
-        // Build the label text (2nd LRJ)
-        TString backLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, backLRJEtEv1[1]);
+            // Build the label text (2nd LRJ)
+            TString backLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, backLRJEtEv2[1]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat2Ev1;
-        backLat2Ev1.SetTextSize(0.025);     // Adjust size
-        backLat2Ev1.SetTextColor(kBlack); // Match backCircle color
-        backLat2Ev1.DrawLatex(newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second + 0.6, backLabel2Ev1); // Slightly above the backCircle\
+            // Option 1: Use TLatex directly
+            TLatex backLat2Ev2;
+            backLat2Ev2.SetTextSize(0.025);     // Adjust size
+            backLat2Ev2.SetTextColor(kBlack); // Match backCircle color
+            backLat2Ev2.DrawLatex(newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second + 0.6, backLabel2Ev2); // Slightly above the backCircle\
 
-        c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev1.pdf");   
+            c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev2.pdf");   
+            
+            
+            jFexSeedPositionsBackEv2.clear();
+            jFexAdditionalSRJPositionsBackEv2.clear();
+            newSeedPositionsBackEv2.clear();
+            backLRJEtEv2.clear();
+        }
         
+
+        if(displayEv3Back_){
+            backTopo422Highest128SeedPositionsEv3->GetZaxis()->SetTitle("E_{T} [GeV]");
+            backTopo422Highest128SeedPositionsEv3->Draw("COLZ");
+
+
+            TEllipse *backCircle0_Ev3 = new TEllipse(jFexSeedPositionsBackEv3[0].first, jFexSeedPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
+            backCircle0_Ev3->SetLineColor(kRed);
+            backCircle0_Ev3->SetLineWidth(2);
+            backCircle0_Ev3->SetFillStyle(0); // no fill
+            backCircle0_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle0_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle1_Ev3 = new TEllipse(jFexSeedPositionsBackEv3[1].first, jFexSeedPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
+            backCircle1_Ev3->SetLineColor(kRed);
+            backCircle1_Ev3->SetLineWidth(2);
+            backCircle1_Ev3->SetFillStyle(0); // no fill
+            backCircle1_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle1_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle2_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[0].first, jFexAdditionalSRJPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
+            backCircle2_Ev3->SetLineColor(kAzure+2);
+            backCircle2_Ev3->SetLineWidth(2);
+            backCircle2_Ev3->SetFillStyle(0); // no fill
+            backCircle2_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle2_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle3_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[1].first, jFexAdditionalSRJPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
+            backCircle3_Ev3->SetLineColor(kAzure+2);
+            backCircle3_Ev3->SetLineWidth(2);
+            backCircle3_Ev3->SetFillStyle(0); // no fill
+            backCircle3_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle3_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle4_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[2].first, jFexAdditionalSRJPositionsBackEv3[2].second, 1.0, 1.0); // R in both x and y
+            backCircle4_Ev3->SetLineColor(kAzure+2);
+            backCircle4_Ev3->SetLineWidth(2);
+            backCircle4_Ev3->SetFillStyle(0); // no fill
+            backCircle4_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle4_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle5_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[3].first, jFexAdditionalSRJPositionsBackEv3[3].second, 1.0, 1.0); // R in both x and y
+            backCircle5_Ev3->SetLineColor(kAzure+2);
+            backCircle5_Ev3->SetLineWidth(2);
+            backCircle5_Ev3->SetFillStyle(0); // no fill
+            backCircle5_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle5_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle6_Ev3 = new TEllipse(newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
+            backCircle6_Ev3->SetLineColor(kGreen+2);
+            backCircle6_Ev3->SetLineWidth(2);
+            backCircle6_Ev3->SetFillStyle(0); // no fill
+            backCircle6_Ev3->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle6_Ev3->Draw("same");    // overlay on the existing plot
+
+            TEllipse *backCircle7_Ev3 = new TEllipse(newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
+            backCircle7_Ev3->SetLineColor(kGreen+2);
+            backCircle7_Ev3->SetLineWidth(2);
+            backCircle7_Ev3->SetFillStyle(0); // no fill
+            backCircle7_Ev3->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle7_Ev3->Draw("same");    // overlay on the existing plot
+
+            // Build the label text (1st LRJ)
+            TString backLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, backLRJEtEv3[0]);
+
+            // Option 1: Use TLatex directly
+            TLatex backLat1Ev3;
+            backLat1Ev3.SetTextSize(0.025);     // Adjust size
+            backLat1Ev3.SetTextColor(kBlack); // Match backCircle color
+            backLat1Ev3.DrawLatex(newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second + 0.6, backLabel1Ev3); // Slightly above the backCircle
+
+            // Build the label text (2nd LRJ)
+            TString backLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, backLRJEtEv3[1]);
+
+            // Option 1: Use TLatex directly
+            TLatex backLat2Ev3;
+            backLat2Ev3.SetTextSize(0.025);     // Adjust size
+            backLat2Ev3.SetTextColor(kBlack); // Match backCircle color
+            backLat2Ev3.DrawLatex(newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second + 0.6, backLabel2Ev3); // Slightly above the backCircle
+
+            c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev3.pdf");   
+            
+            
+            jFexSeedPositionsBackEv3.clear();
+            jFexAdditionalSRJPositionsBackEv3.clear();
+            newSeedPositionsBackEv3.clear();
+            backLRJEtEv3.clear();
+        }
+
         
-        jFexSeedPositionsBackEv1.clear();
-        jFexAdditionalSRJPositionsBackEv1.clear();
-        newSeedPositionsBackEv1.clear();
-        backLRJEtEv1.clear();
 
-        backTopo422Highest128SeedPositionsEv2->GetZaxis()->SetTitle("E_{T} [GeV]");
-        backTopo422Highest128SeedPositionsEv2->Draw("COLZ");
+        if(displayEv4Back_){
+            backTopo422Highest128SeedPositionsEv4->GetZaxis()->SetTitle("E_{T} [GeV]");
+            backTopo422Highest128SeedPositionsEv4->Draw("COLZ");
 
 
-        TEllipse *backCircle0_Ev2 = new TEllipse(jFexSeedPositionsBackEv2[0].first, jFexSeedPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
-        backCircle0_Ev2->SetLineColor(kRed);
-        backCircle0_Ev2->SetLineWidth(2);
-        backCircle0_Ev2->SetFillStyle(0); // no fill
-        backCircle0_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle0_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle0_Ev4 = new TEllipse(jFexSeedPositionsBackEv4[0].first, jFexSeedPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
+            backCircle0_Ev4->SetLineColor(kRed);
+            backCircle0_Ev4->SetLineWidth(2);
+            backCircle0_Ev4->SetFillStyle(0); // no fill
+            backCircle0_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle0_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle1_Ev2 = new TEllipse(jFexSeedPositionsBackEv2[1].first, jFexSeedPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
-        backCircle1_Ev2->SetLineColor(kRed);
-        backCircle1_Ev2->SetLineWidth(2);
-        backCircle1_Ev2->SetFillStyle(0); // no fill
-        backCircle1_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle1_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle1_Ev4 = new TEllipse(jFexSeedPositionsBackEv4[1].first, jFexSeedPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
+            backCircle1_Ev4->SetLineColor(kRed);
+            backCircle1_Ev4->SetLineWidth(2);
+            backCircle1_Ev4->SetFillStyle(0); // no fill
+            backCircle1_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle1_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle2_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[0].first, jFexAdditionalSRJPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
-        backCircle2_Ev2->SetLineColor(kAzure+2);
-        backCircle2_Ev2->SetLineWidth(2);
-        backCircle2_Ev2->SetFillStyle(0); // no fill
-        backCircle2_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle2_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle2_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[0].first, jFexAdditionalSRJPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
+            backCircle2_Ev4->SetLineColor(kAzure+2);
+            backCircle2_Ev4->SetLineWidth(2);
+            backCircle2_Ev4->SetFillStyle(0); // no fill
+            backCircle2_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle2_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle3_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[1].first, jFexAdditionalSRJPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
-        backCircle3_Ev2->SetLineColor(kAzure+2);
-        backCircle3_Ev2->SetLineWidth(2);
-        backCircle3_Ev2->SetFillStyle(0); // no fill
-        backCircle3_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle3_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle3_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[1].first, jFexAdditionalSRJPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
+            backCircle3_Ev4->SetLineColor(kAzure+2);
+            backCircle3_Ev4->SetLineWidth(2);
+            backCircle3_Ev4->SetFillStyle(0); // no fill
+            backCircle3_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle3_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle4_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[2].first, jFexAdditionalSRJPositionsBackEv2[2].second, 1.0, 1.0); // R in both x and y
-        backCircle4_Ev2->SetLineColor(kAzure+2);
-        backCircle4_Ev2->SetLineWidth(2);
-        backCircle4_Ev2->SetFillStyle(0); // no fill
-        backCircle4_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle4_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle4_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[2].first, jFexAdditionalSRJPositionsBackEv4[2].second, 1.0, 1.0); // R in both x and y
+            backCircle4_Ev4->SetLineColor(kAzure+2);
+            backCircle4_Ev4->SetLineWidth(2);
+            backCircle4_Ev4->SetFillStyle(0); // no fill
+            backCircle4_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle4_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle5_Ev2 = new TEllipse(jFexAdditionalSRJPositionsBackEv2[3].first, jFexAdditionalSRJPositionsBackEv2[3].second, 1.0, 1.0); // R in both x and y
-        backCircle5_Ev2->SetLineColor(kAzure+2);
-        backCircle5_Ev2->SetLineWidth(2);
-        backCircle5_Ev2->SetFillStyle(0); // no fill
-        backCircle5_Ev2->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle5_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle5_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[3].first, jFexAdditionalSRJPositionsBackEv4[3].second, 1.0, 1.0); // R in both x and y
+            backCircle5_Ev4->SetLineColor(kAzure+2);
+            backCircle5_Ev4->SetLineWidth(2);
+            backCircle5_Ev4->SetFillStyle(0); // no fill
+            backCircle5_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle5_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle6_Ev2 = new TEllipse(newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, 1.0, 1.0); // R in both x and y
-        backCircle6_Ev2->SetLineColor(kGreen+2);
-        backCircle6_Ev2->SetLineWidth(2);
-        backCircle6_Ev2->SetFillStyle(0); // no fill
-        backCircle6_Ev2->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle6_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle6_Ev4 = new TEllipse(newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
+            backCircle6_Ev4->SetLineColor(kGreen+2);
+            backCircle6_Ev4->SetLineWidth(2);
+            backCircle6_Ev4->SetFillStyle(0); // no fill
+            backCircle6_Ev4->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle6_Ev4->Draw("same");    // overlay on the existing plot
 
-        TEllipse *backCircle7_Ev2 = new TEllipse(newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, 1.0, 1.0); // R in both x and y
-        backCircle7_Ev2->SetLineColor(kGreen+2);
-        backCircle7_Ev2->SetLineWidth(2);
-        backCircle7_Ev2->SetFillStyle(0); // no fill
-        backCircle7_Ev2->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle7_Ev2->Draw("same");    // overlay on the existing plot
+            TEllipse *backCircle7_Ev4 = new TEllipse(newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
+            backCircle7_Ev4->SetLineColor(kGreen+2);
+            backCircle7_Ev4->SetLineWidth(2);
+            backCircle7_Ev4->SetFillStyle(0); // no fill
+            backCircle7_Ev4->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
+            backCircle7_Ev4->Draw("same");    // overlay on the existing plot
 
-        // Build the label text (1st LRJ)
-        TString backLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, backLRJEtEv2[0]);
+            // Build the label text (1st LRJ)
+            TString backLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, backLRJEtEv4[0]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat1Ev2;
-        backLat1Ev2.SetTextSize(0.025);     // Adjust size
-        backLat1Ev2.SetTextColor(kBlack); // Match backCircle color
-        backLat1Ev2.DrawLatex(newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second + 0.6, backLabel1Ev2); // Slightly above the backCircle
+            // Option 1: Use TLatex directly
+            TLatex backLat1Ev4;
+            backLat1Ev4.SetTextSize(0.025);     // Adjust size
+            backLat1Ev4.SetTextColor(kBlack); // Match backCircle color
+            backLat1Ev4.DrawLatex(newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second + 0.6, backLabel1Ev4); // Slightly above the backCircle
 
-        // Build the label text (2nd LRJ)
-        TString backLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, backLRJEtEv2[1]);
+            // Build the label text (2nd LRJ)
+            TString backLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, backLRJEtEv4[1]);
 
-        // Option 1: Use TLatex directly
-        TLatex backLat2Ev2;
-        backLat2Ev2.SetTextSize(0.025);     // Adjust size
-        backLat2Ev2.SetTextColor(kBlack); // Match backCircle color
-        backLat2Ev2.DrawLatex(newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second + 0.6, backLabel2Ev2); // Slightly above the backCircle\
+            // Option 1: Use TLatex directly
+            TLatex backLat2Ev4;
+            backLat2Ev4.SetTextSize(0.025);     // Adjust size
+            backLat2Ev4.SetTextColor(kBlack); // Match backCircle color
+            backLat2Ev4.DrawLatex(newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second + 0.6, backLabel2Ev4); // Slightly above the backCircle
 
-        c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev2.pdf");   
-        
-        
-        jFexSeedPositionsBackEv2.clear();
-        jFexAdditionalSRJPositionsBackEv2.clear();
-        newSeedPositionsBackEv2.clear();
-        backLRJEtEv2.clear();
+            c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev4.pdf");   
+            
+            jFexSeedPositionsBackEv4.clear();
+            jFexAdditionalSRJPositionsBackEv4.clear();
+            newSeedPositionsBackEv4.clear();
+            backLRJEtEv4.clear();
+        }
 
-        backTopo422Highest128SeedPositionsEv3->GetZaxis()->SetTitle("E_{T} [GeV]");
-        backTopo422Highest128SeedPositionsEv3->Draw("COLZ");
-
-
-        TEllipse *backCircle0_Ev3 = new TEllipse(jFexSeedPositionsBackEv3[0].first, jFexSeedPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
-        backCircle0_Ev3->SetLineColor(kRed);
-        backCircle0_Ev3->SetLineWidth(2);
-        backCircle0_Ev3->SetFillStyle(0); // no fill
-        backCircle0_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle0_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle1_Ev3 = new TEllipse(jFexSeedPositionsBackEv3[1].first, jFexSeedPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
-        backCircle1_Ev3->SetLineColor(kRed);
-        backCircle1_Ev3->SetLineWidth(2);
-        backCircle1_Ev3->SetFillStyle(0); // no fill
-        backCircle1_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle1_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle2_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[0].first, jFexAdditionalSRJPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
-        backCircle2_Ev3->SetLineColor(kAzure+2);
-        backCircle2_Ev3->SetLineWidth(2);
-        backCircle2_Ev3->SetFillStyle(0); // no fill
-        backCircle2_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle2_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle3_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[1].first, jFexAdditionalSRJPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
-        backCircle3_Ev3->SetLineColor(kAzure+2);
-        backCircle3_Ev3->SetLineWidth(2);
-        backCircle3_Ev3->SetFillStyle(0); // no fill
-        backCircle3_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle3_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle4_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[2].first, jFexAdditionalSRJPositionsBackEv3[2].second, 1.0, 1.0); // R in both x and y
-        backCircle4_Ev3->SetLineColor(kAzure+2);
-        backCircle4_Ev3->SetLineWidth(2);
-        backCircle4_Ev3->SetFillStyle(0); // no fill
-        backCircle4_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle4_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle5_Ev3 = new TEllipse(jFexAdditionalSRJPositionsBackEv3[3].first, jFexAdditionalSRJPositionsBackEv3[3].second, 1.0, 1.0); // R in both x and y
-        backCircle5_Ev3->SetLineColor(kAzure+2);
-        backCircle5_Ev3->SetLineWidth(2);
-        backCircle5_Ev3->SetFillStyle(0); // no fill
-        backCircle5_Ev3->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle5_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle6_Ev3 = new TEllipse(newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, 1.0, 1.0); // R in both x and y
-        backCircle6_Ev3->SetLineColor(kGreen+2);
-        backCircle6_Ev3->SetLineWidth(2);
-        backCircle6_Ev3->SetFillStyle(0); // no fill
-        backCircle6_Ev3->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle6_Ev3->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle7_Ev3 = new TEllipse(newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, 1.0, 1.0); // R in both x and y
-        backCircle7_Ev3->SetLineColor(kGreen+2);
-        backCircle7_Ev3->SetLineWidth(2);
-        backCircle7_Ev3->SetFillStyle(0); // no fill
-        backCircle7_Ev3->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle7_Ev3->Draw("same");    // overlay on the existing plot
-
-        // Build the label text (1st LRJ)
-        TString backLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, backLRJEtEv3[0]);
-
-        // Option 1: Use TLatex directly
-        TLatex backLat1Ev3;
-        backLat1Ev3.SetTextSize(0.025);     // Adjust size
-        backLat1Ev3.SetTextColor(kBlack); // Match backCircle color
-        backLat1Ev3.DrawLatex(newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second + 0.6, backLabel1Ev3); // Slightly above the backCircle
-
-        // Build the label text (2nd LRJ)
-        TString backLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, backLRJEtEv3[1]);
-
-        // Option 1: Use TLatex directly
-        TLatex backLat2Ev3;
-        backLat2Ev3.SetTextSize(0.025);     // Adjust size
-        backLat2Ev3.SetTextColor(kBlack); // Match backCircle color
-        backLat2Ev3.DrawLatex(newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second + 0.6, backLabel2Ev3); // Slightly above the backCircle
-
-        c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev3.pdf");   
-        
-        
-        jFexSeedPositionsBackEv3.clear();
-        jFexAdditionalSRJPositionsBackEv3.clear();
-        newSeedPositionsBackEv3.clear();
-        backLRJEtEv3.clear();
-
-        backTopo422Highest128SeedPositionsEv4->GetZaxis()->SetTitle("E_{T} [GeV]");
-        backTopo422Highest128SeedPositionsEv4->Draw("COLZ");
-
-
-        TEllipse *backCircle0_Ev4 = new TEllipse(jFexSeedPositionsBackEv4[0].first, jFexSeedPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
-        backCircle0_Ev4->SetLineColor(kRed);
-        backCircle0_Ev4->SetLineWidth(2);
-        backCircle0_Ev4->SetFillStyle(0); // no fill
-        backCircle0_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle0_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle1_Ev4 = new TEllipse(jFexSeedPositionsBackEv4[1].first, jFexSeedPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
-        backCircle1_Ev4->SetLineColor(kRed);
-        backCircle1_Ev4->SetLineWidth(2);
-        backCircle1_Ev4->SetFillStyle(0); // no fill
-        backCircle1_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle1_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle2_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[0].first, jFexAdditionalSRJPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
-        backCircle2_Ev4->SetLineColor(kAzure+2);
-        backCircle2_Ev4->SetLineWidth(2);
-        backCircle2_Ev4->SetFillStyle(0); // no fill
-        backCircle2_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle2_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle3_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[1].first, jFexAdditionalSRJPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
-        backCircle3_Ev4->SetLineColor(kAzure+2);
-        backCircle3_Ev4->SetLineWidth(2);
-        backCircle3_Ev4->SetFillStyle(0); // no fill
-        backCircle3_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle3_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle4_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[2].first, jFexAdditionalSRJPositionsBackEv4[2].second, 1.0, 1.0); // R in both x and y
-        backCircle4_Ev4->SetLineColor(kAzure+2);
-        backCircle4_Ev4->SetLineWidth(2);
-        backCircle4_Ev4->SetFillStyle(0); // no fill
-        backCircle4_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle4_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle5_Ev4 = new TEllipse(jFexAdditionalSRJPositionsBackEv4[3].first, jFexAdditionalSRJPositionsBackEv4[3].second, 1.0, 1.0); // R in both x and y
-        backCircle5_Ev4->SetLineColor(kAzure+2);
-        backCircle5_Ev4->SetLineWidth(2);
-        backCircle5_Ev4->SetFillStyle(0); // no fill
-        backCircle5_Ev4->SetLineStyle(2);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle5_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle6_Ev4 = new TEllipse(newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, 1.0, 1.0); // R in both x and y
-        backCircle6_Ev4->SetLineColor(kGreen+2);
-        backCircle6_Ev4->SetLineWidth(2);
-        backCircle6_Ev4->SetFillStyle(0); // no fill
-        backCircle6_Ev4->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle6_Ev4->Draw("same");    // overlay on the existing plot
-
-        TEllipse *backCircle7_Ev4 = new TEllipse(newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, 1.0, 1.0); // R in both x and y
-        backCircle7_Ev4->SetLineColor(kGreen+2);
-        backCircle7_Ev4->SetLineWidth(2);
-        backCircle7_Ev4->SetFillStyle(0); // no fill
-        backCircle7_Ev4->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
-        backCircle7_Ev4->Draw("same");    // overlay on the existing plot
-
-        // Build the label text (1st LRJ)
-        TString backLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, backLRJEtEv4[0]);
-
-        // Option 1: Use TLatex directly
-        TLatex backLat1Ev4;
-        backLat1Ev4.SetTextSize(0.025);     // Adjust size
-        backLat1Ev4.SetTextColor(kBlack); // Match backCircle color
-        backLat1Ev4.DrawLatex(newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second + 0.6, backLabel1Ev4); // Slightly above the backCircle
-
-        // Build the label text (2nd LRJ)
-        TString backLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, backLRJEtEv4[1]);
-
-        // Option 1: Use TLatex directly
-        TLatex backLat2Ev4;
-        backLat2Ev4.SetTextSize(0.025);     // Adjust size
-        backLat2Ev4.SetTextColor(kBlack); // Match backCircle color
-        backLat2Ev4.DrawLatex(newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second + 0.6, backLabel2Ev4); // Slightly above the backCircle
-
-        c.SaveAs(modifiedOutputFileDir + "backTopo422_highest128Et_EtaPhi_Ev4.pdf");   
-        
-        
-        jFexSeedPositionsBackEv4.clear();
-        jFexAdditionalSRJPositionsBackEv4.clear();
-        newSeedPositionsBackEv4.clear();
-        backLRJEtEv4.clear();
-        */
         cSigEffLRJ.cd();
 
         // eff. vs. offline leading lrj Et overlay
@@ -8497,15 +9325,15 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             std::cout << "sbGraphs size = " << sbGraphs.size() << "\n";
             int gi = 0;
             for (auto g : sbGraphs) {
-            if (!g) { std::cout << "graph["<<gi<<"] is null\n"; ++gi; continue; }
-            std::cout << "graph["<<gi<<"] N=" << g->GetN() << "\n";
-            for (int i = 0; i < g->GetN(); ++i) {
-                double x,y; g->GetPoint(i,x,y);
-                if (!std::isfinite(x) || !std::isfinite(y)) {
-                std::cout << "  non-finite at " << i << " -> ("<<x<<","<<y<<")\n";
+                if (!g) { std::cout << "graph["<<gi<<"] is null\n"; ++gi; continue; }
+                std::cout << "graph["<<gi<<"] N=" << g->GetN() << "\n";
+                for (int i = 0; i < g->GetN(); ++i) {
+                    double x,y; g->GetPoint(i,x,y);
+                    if (!std::isfinite(x) || !std::isfinite(y)) {
+                        std::cout << "  non-finite at " << i << " -> ("<<x<<","<<y<<")\n";
+                    }
                 }
-            }
-            ++gi;
+                ++gi;
             }
 
             roc_plot_canvas->SaveAs(outputFileDir + "roc_curve_with_sb_ratio.pdf");
@@ -8549,11 +9377,10 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             legend2_2->Draw();
             eff_plot_canvas2->SaveAs(outputFileDir + "efficiency_curve_2LRJs.pdf");
         }
-    }
+    }// Loop through files to create ROC, efficiency curves
 
     
-}
-
+    } // loop through files?
 
 void callAnalyzer(bool overlayThreeFiles = false){
     //const std::string signalLargeRJetDataFileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/largeRJets/mc21_14TeV_hh_bbbb_vbf_novhh_largeR.dat";

@@ -8,7 +8,7 @@ set -euo pipefail
 #nSeeds=(2)
 #signals=(true false)
 
-rMergeCuts=(0.001)
+rMergeCuts=(0.001 1.5 2.0)
 rSquaredCuts=(1.0)
 nIOs=(128)
 nSeeds=(2)
