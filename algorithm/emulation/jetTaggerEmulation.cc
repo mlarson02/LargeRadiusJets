@@ -25,7 +25,7 @@
 
 // Function for processing provided number of loops with JetTagger algorithm,
 // then writing output large radius jets to a new TTree & text files
-void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::string outputTextFilePath){
+void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::string outputTextFilePath, std::string inputObjectType){
 
     //std::cout << "test 1 " << "\n";
 
@@ -41,10 +41,20 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     std::vector<double>* topo422EtaValues = nullptr;
     std::vector<double>* topo422PhiValues = nullptr;
 
+    // GEPCellsTowers
+    std::vector<double>* gepCellsTowersEtValues = nullptr;
+    std::vector<double>* gepCellsTowersEtaValues = nullptr;
+    std::vector<double>* gepCellsTowersPhiValues = nullptr;
+
     // GEPBasicClusters
     std::vector<double>* gepBasicClustersEtValues = nullptr;
     std::vector<double>* gepBasicClustersEtaValues = nullptr;
     std::vector<double>* gepBasicClustersPhiValues = nullptr;
+
+    // GEPBasicTopoTowers
+    std::vector<double>* gepBasicTopoTowersEtValues = nullptr;
+    std::vector<double>* gepBasicTopoTowersEtaValues = nullptr;
+    std::vector<double>* gepBasicTopoTowersPhiValues = nullptr;
 
     // gFEX small radius jets
     std::vector<unsigned int>* gFexSRJEtIndexValues = nullptr;
@@ -59,21 +69,21 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     std::vector<double>* jFexSRJPhiValues = nullptr;
 
     // Output JetTagger large radius jets
-    std::vector<double>* jetTaggerLRJDiamValues = nullptr;
+    std::vector<double>* jetTaggerLRJPsi_RValues = nullptr;
     std::vector<unsigned int >* jetTaggerLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerLRJEtValues = nullptr;
     std::vector<double>* jetTaggerLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerLRJPhiValues = nullptr;
 
     // Output JetTagger leading large radius jets
-    std::vector<double>* jetTaggerLeadingLRJDiamValues = nullptr;
+    std::vector<double>* jetTaggerLeadingLRJPsi_RValues = nullptr;
     std::vector<unsigned int >* jetTaggerLeadingLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJEtValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerLeadingLRJPhiValues = nullptr;
 
     // Output JetTagger subleading large radius jets
-    std::vector<double>* jetTaggerSubleadingLRJDiamValues = nullptr;
+    std::vector<double>* jetTaggerSubleadingLRJPsi_RValues = nullptr;
     std::vector<unsigned int >* jetTaggerSubleadingLRJMergedIndicesValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJEtValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJEtaValues = nullptr;
@@ -101,27 +111,29 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     TTree* caloTopoTowerTree = (TTree*)inputFile->Get("caloTopoTowerTree");
     TTree* topo422Tree = (TTree*)inputFile->Get("topo422Tree");
     TTree* gepBasicClustersTree = (TTree*)inputFile->Get("gepBasicClustersTree");
+    TTree* gepCellsTowersTree = (TTree*)inputFile->Get("gepCellsTowersTree");
+    TTree* gepBasicTopoTowersTree = (TTree*)inputFile->Get("gepBasicTopoTowersTree");
     TTree* gFexSRJTree = (TTree*)inputFile->Get("gFexSRJTree");
     TTree* jFexSRJTree = (TTree*)inputFile->Get("jFexSRJTree"); // Note that jFEX, gFEX trees are pre-sorted by Et in LRJNTupler.cc
 
     outputFile->cd();
     // Create new output TTrees to be written to the output file
     TTree* jetTaggerLRJs = new TTree("jetTaggerLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
-    jetTaggerLRJs->Branch("Diam", &jetTaggerLRJDiamValues);
+    jetTaggerLRJs->Branch("Psi_R", &jetTaggerLRJPsi_RValues);
     jetTaggerLRJs->Branch("MergedIndices", &jetTaggerLRJMergedIndicesValues);
     jetTaggerLRJs->Branch("Et", &jetTaggerLRJEtValues);
     jetTaggerLRJs->Branch("Eta", &jetTaggerLRJEtaValues);
     jetTaggerLRJs->Branch("Phi", &jetTaggerLRJPhiValues);
 
     TTree* jetTaggerLeadingLRJs = new TTree("jetTaggerLeadingLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
-    jetTaggerLeadingLRJs->Branch("Diam", &jetTaggerLeadingLRJDiamValues);
+    jetTaggerLeadingLRJs->Branch("Psi_R", &jetTaggerLeadingLRJPsi_RValues);
     jetTaggerLeadingLRJs->Branch("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValues);
     jetTaggerLeadingLRJs->Branch("Et", &jetTaggerLeadingLRJEtValues);
     jetTaggerLeadingLRJs->Branch("Eta", &jetTaggerLeadingLRJEtaValues);
     jetTaggerLeadingLRJs->Branch("Phi", &jetTaggerLeadingLRJPhiValues);
 
     TTree* jetTaggerSubleadingLRJs = new TTree("jetTaggerSubleadingLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
-    jetTaggerSubleadingLRJs->Branch("Diam", &jetTaggerSubleadingLRJDiamValues);
+    jetTaggerSubleadingLRJs->Branch("Psi_R", &jetTaggerSubleadingLRJPsi_RValues);
     jetTaggerSubleadingLRJs->Branch("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValues);
     jetTaggerSubleadingLRJs->Branch("Et", &jetTaggerSubleadingLRJEtValues);
     jetTaggerSubleadingLRJs->Branch("Eta", &jetTaggerSubleadingLRJEtaValues);
@@ -142,6 +154,16 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     gepBasicClustersTree->SetBranchAddress("Et", &gepBasicClustersEtValues);
     gepBasicClustersTree->SetBranchAddress("Eta", &gepBasicClustersEtaValues);
     gepBasicClustersTree->SetBranchAddress("Phi", &gepBasicClustersPhiValues);
+
+    // === gepCellsTowersTree ===
+    gepCellsTowersTree->SetBranchAddress("Et", &gepCellsTowersEtValues);
+    gepCellsTowersTree->SetBranchAddress("Eta", &gepCellsTowersEtaValues);
+    gepCellsTowersTree->SetBranchAddress("Phi", &gepCellsTowersPhiValues);
+
+    // === gepBasicTopoTowersTree ===
+    gepBasicTopoTowersTree->SetBranchAddress("Et", &gepBasicTopoTowersEtValues);
+    gepBasicTopoTowersTree->SetBranchAddress("Eta", &gepBasicTopoTowersEtaValues);
+    gepBasicTopoTowersTree->SetBranchAddress("Phi", &gepBasicTopoTowersPhiValues);
 
     // === gFexSRJTree ===
     gFexSRJTree->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues);
@@ -165,37 +187,49 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     // Event loop 
     unsigned int eventsToProcess = gepBasicClustersTree->GetEntries();
     for (unsigned int iEvt = 0; iEvt < eventsToProcess; iEvt++) {
+        if (iEvt % 100 == 0) std::cout << "iEvt: " << iEvt << "\n";
         // Write event header to output text files
         f_output << "Event : " << std::dec << iEvt << "\n";
 
         //std::cout << "procesing event: " << std::dec << iEvt << "\n";
 
-        std::bitset<diam_bit_length_> diam_bitset_array[nSeedsOutput_];
+        std::bitset<psi_R_bit_length_> psi_R_bitset_array[nSeedsOutput_];
         std::bitset<et_bit_length_  > et_bitset_array[nSeedsOutput_];
         std::bitset<eta_bit_length_ > eta_bitset_array[nSeedsOutput_];
         std::bitset<phi_bit_length_ > phi_bitset_array[nSeedsOutput_];
 
         // Clear vectors for branches
-        jetTaggerLRJDiamValues->clear();
+        jetTaggerLRJPsi_RValues->clear();
         jetTaggerLRJMergedIndicesValues->clear();
         jetTaggerLRJEtValues->clear();
         jetTaggerLRJEtaValues->clear();
         jetTaggerLRJPhiValues->clear();
 
-        jetTaggerLeadingLRJDiamValues->clear();
+        jetTaggerLeadingLRJPsi_RValues->clear();
         jetTaggerLeadingLRJMergedIndicesValues->clear();
         jetTaggerLeadingLRJEtValues->clear();
         jetTaggerLeadingLRJEtaValues->clear();
         jetTaggerLeadingLRJPhiValues->clear();
 
-        jetTaggerSubleadingLRJDiamValues->clear();
+        jetTaggerSubleadingLRJPsi_RValues->clear();
         jetTaggerSubleadingLRJMergedIndicesValues->clear();
         jetTaggerSubleadingLRJEtValues->clear();
         jetTaggerSubleadingLRJEtaValues->clear();
         jetTaggerSubleadingLRJPhiValues->clear();
 
-
-        gepBasicClustersTree->GetEntry(iEvt); // get input object data
+        if(inputObjectType == "gepBasicClusters"){
+            gepBasicClustersTree->GetEntry(iEvt); // get input object data
+        }
+        else if(inputObjectType == "gepCellsTowers"){
+            gepCellsTowersTree->GetEntry(iEvt); // get input object data
+        }
+        else if(inputObjectType == "gepTopoTowers"){
+            gepBasicTopoTowersTree->GetEntry(iEvt); // get input object data
+        }
+        else {
+            std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
+        }
+        
         jFexSRJTree->GetEntry(iEvt); // get seed data
 
         unsigned int seedValues[nSeedsInput_][3] = {0}; // 3 = number of data types (Et, Eta, Phi)
@@ -219,18 +253,49 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             seedValues[iSeed][1] = digitize(jFexSRJEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
             seedValues[iSeed][2] = digitize(jFexSRJPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
             
-            if (iSeed < 2){
+            //if (iSeed < 2){
                 //std::cout << "seed et: " << std::dec << seedValues[iSeed][0] << " eta: " << seedValues[iSeed][1] << " phi: " << seedValues[iSeed][2] << "\n";
                 //std::cout << "UNDIGITIZED Et: " << jFexSRJEtValues->at(iSeed) << " eta: " << jFexSRJEtaValues->at(iSeed) << " and phi: " << jFexSRJPhiValues->at(iSeed) << "\n";
-            }
+            //}
         }
         unsigned int objectsProcessed = maxObjectsConsidered_;
-        if (maxObjectsConsidered_ > gepBasicClustersEtValues->size()) objectsProcessed = gepBasicClustersEtValues->size();
+        if(inputObjectType == "gepBasicClusters"){
+            if (maxObjectsConsidered_ > gepBasicClustersEtValues->size()) objectsProcessed = gepBasicClustersEtValues->size();
+        }
+        else if(inputObjectType == "gepCellsTowers"){
+            if (maxObjectsConsidered_ > gepCellsTowersEtValues->size()) objectsProcessed = gepCellsTowersEtValues->size();
+        }
+        else if(inputObjectType == "gepTopoTowers"){
+            if (maxObjectsConsidered_ > gepBasicTopoTowersEtValues->size()) objectsProcessed = gepBasicTopoTowersEtValues->size();
+        }
+        
         for(unsigned int iIO = 0; iIO < objectsProcessed; iIO++){
-            inputObjectValues[iIO][0] = digitize(gepBasicClustersEtValues->at(iIO), et_bit_length_,
+            if(inputObjectType == "gepBasicClusters"){
+                inputObjectValues[iIO][0] = digitize(gepBasicClustersEtValues->at(iIO), et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
-            inputObjectValues[iIO][1] = digitize(gepBasicClustersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
-            inputObjectValues[iIO][2] = digitize(gepBasicClustersPhiValues->at(iIO), phi_bit_length_, phi_min_, phi_max_);
+                inputObjectValues[iIO][1] = digitize(gepBasicClustersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
+                inputObjectValues[iIO][2] = digitize(gepBasicClustersPhiValues->at(iIO), phi_bit_length_, phi_min_, phi_max_);
+            }
+            else if(inputObjectType == "gepCellsTowers"){
+
+                if(gepCellsTowersEtValues->at(iIO) > 10.0){
+                    std::cout << "gepCellsTowersEtValues->at(iIO): " << gepCellsTowersEtValues->at(iIO) << "\n";
+                    std::cout << "io index: " << iIO << "\n";
+                }
+                
+                inputObjectValues[iIO][0] = digitize(gepCellsTowersEtValues->at(iIO), et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                std::cout << "digitized et: " << inputObjectValues[iIO][0] << "\n";
+                inputObjectValues[iIO][1] = digitize(gepCellsTowersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
+                inputObjectValues[iIO][2] = digitize(gepCellsTowersPhiValues->at(iIO), phi_bit_length_, phi_min_, phi_max_);
+            }
+            else if(inputObjectType == "gepTopoTowers"){
+                inputObjectValues[iIO][0] = digitize(gepBasicTopoTowersEtValues->at(iIO), et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                inputObjectValues[iIO][1] = digitize(gepBasicTopoTowersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
+                inputObjectValues[iIO][2] = digitize(gepBasicTopoTowersPhiValues->at(iIO), phi_bit_length_, phi_min_, phi_max_);
+            }
+            
             //std::cout << "iInput: " << iIO << "\n";
             //std::cout << "input et: " << std::dec << inputObjectValues[iIO][0] << " eta: " << inputObjectValues[iIO][1] << " phi: " << inputObjectValues[iIO][2] << "\n";
             //std::cout << "UNDIGITIZED Et: " << gepBasicClustersEtValues->at(iIO) << " eta: " << gepBasicClustersEtaValues->at(iIO) << " and phi: " << gepBasicClustersPhiValues->at(iIO) << "\n";
@@ -384,6 +449,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
             unsigned int outputJetEt = 0;
             unsigned int numMergedIO = 0; 
+            unsigned int jet_psi_R = 0;
             unsigned int highestEtMergedIOEta[2];
             unsigned int highestEtMergedIOPhi[2];
 
@@ -415,12 +481,18 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                         highestEtMergedIOEta[numMergedIO] = inputObjectValues[iInput][1];
                         highestEtMergedIOPhi[numMergedIO] = inputObjectValues[iInput][2];
                     }
+                    // Compute psi_R using 8b 0,1 deltaR LUT
+                    unsigned int lut_index_mergedIO = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi;
+                    jet_psi_R += inputObjectValues[iInput][0] * lutR_8b_[lut_index_mergedIO];
                     numMergedIO++; 
                 }
             }
+            if(outputJetEt > 0) jet_psi_R = jet_psi_R / outputJetEt;
+            else jet_psi_R = 0;
+            std::cout << "jetpsi_R: " << jet_psi_R << "\n";
 
             // Compute delta R between the two highest Et topoclusters merged to a large R jet FIXME need to account for case when 0 or 1 input objects are merged! if statement should be fine for now?
-            unsigned int jet_diam = 0;
+            /*unsigned int jet_diam = 0;
             if(numMergedIO > 1){
                 int deltaEta_mergedIO = highestEtMergedIOEta[0] - highestEtMergedIOEta[1];
                 int deltaPhi_mergedIO = highestEtMergedIOPhi[0] - highestEtMergedIOPhi[1];
@@ -433,10 +505,10 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 unsigned int corrDeltaPhi_mergedIO = uDeltaPhi_mergedIO; // using corr delta phi saves 1 bit, unsure if necessary?
                 unsigned int lut_index_mergedIO = uDeltaEta_mergedIO * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi_mergedIO;
                 if(lut_index_mergedIO < max_R_5b_lut_size_) jet_diam = lutR_5b_[lut_index_mergedIO];
-            }
+            }*/
 
             // Values you already computed:
-            uint32_t diam_value = static_cast<uint32_t>(jet_diam)        & maskN(diam_bit_length_);
+            uint32_t psi_R_value = static_cast<uint32_t>(jet_psi_R)        & maskN(psi_R_bit_length_);
             //std::cout << "dim_value: " << diam_value << "\n";
             uint32_t et_value   = static_cast<uint32_t>(outputJetEt)      & maskN(et_bit_length_);
             // NOTE: this mirrors your original snippet exactly (eta_bitset took seedValues[iSeed][1] and phi_bitset took [2]).
@@ -447,27 +519,27 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         //std::cout << "output jet eta, phi: " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
 
             // Set output values (unchanged semantic layout)
-            outputJetValues[iSeed][0] = diam_value; // substructure
+            outputJetValues[iSeed][0] = psi_R_value; // substructure
             outputJetValues[iSeed][1] = et_value;   // Et
             outputJetValues[iSeed][2] = seedValues[iSeed][1]; // phi
             outputJetValues[iSeed][3] = seedValues[iSeed][2]; // eta
 
             // Bitset strings (unchanged)
-            std::bitset<diam_bit_length_> diam_bitset(diam_value);
+            std::bitset<psi_R_bit_length_> psi_R_bitset(psi_R_value);
             std::bitset<et_bit_length_  > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
 
             
 
-            diam_bitset_array[iSeed] = diam_bitset;
+            psi_R_bitset_array[iSeed] = psi_R_bitset;
             et_bitset_array[iSeed] = et_bitset;
             eta_bitset_array[iSeed] = eta_bitset;
             phi_bitset_array[iSeed] = phi_bitset;
 
             // Pack into one word: [diam | et | eta | phi] (same field order as your ap_uint expression)
             uint32_t combined_value =
-                ((diam_value & maskN(diam_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
+                ((psi_R_value & maskN(psi_R_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
                 ((et_value   & maskN(et_bit_length_  )) << (eta_bit_length_ + phi_bit_length_)) |
                 ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
                 ( phi_value  & maskN(phi_bit_length_ ));
@@ -480,19 +552,20 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
             // Final print (identical shape)
             f_output << "0x" << std::hex << std::setw(2) << std::setfill('0') << iSeed
-                    << " "  << diam_bitset.to_string() << "|" << et_bitset.to_string()
+                    << " "  << psi_R_bitset.to_string() << "|" << et_bitset.to_string()
                     << "|"  << eta_bitset.to_string()  << "|" << phi_bitset.to_string()
                     << " 0x" << hexValue << std::endl;
 
             // Write data to all LRJ branch
-            jetTaggerLRJDiamValues->push_back(undigitize_diam(diam_bitset));
+            jetTaggerLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset));
+            std::cout << "undigitized psi_R: " << undigitize_diam(psi_R_bitset) << "\n";
             jetTaggerLRJEtValues->push_back(undigitize_et(et_bitset));
             jetTaggerLRJEtaValues->push_back(undigitize_eta(eta_bitset));
             jetTaggerLRJPhiValues->push_back(undigitize_phi(phi_bitset));
         } // Loop through seeds 
         // Write data to leading, subleading jet branches
         if(outputJetValues[0][1] >= outputJetValues[1][1]){ // to ensure leading, subleading sorted correctly
-            jetTaggerLeadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[0]));
+            jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset_array[0]));
             for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
                 jetTaggerLeadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
             }
@@ -503,13 +576,13 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
             jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
 
-            jetTaggerSubleadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[1]));
+            jetTaggerSubleadingLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset_array[1]));
             jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[1]));
             jetTaggerSubleadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[1]));
             jetTaggerSubleadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[1]));
         }
         else{
-            jetTaggerLeadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[1]));
+            jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset_array[1]));
             jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[1]));
             jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[1]));
             jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[1]));
@@ -520,20 +593,15 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 jetTaggerLeadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
             }
 
-            jetTaggerSubleadingLRJDiamValues->push_back(undigitize_diam(diam_bitset_array[0]));
+            jetTaggerSubleadingLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset_array[0]));
             jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
             jetTaggerSubleadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
             jetTaggerSubleadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
         }
-        
-
         // Fill branch to output ntuple with 
         jetTaggerLRJs->Fill();
         jetTaggerLeadingLRJs->Fill();
         jetTaggerSubleadingLRJs->Fill();
-
-
-
     } // Loop through events
     // Close output files
     outputFile->cd();
@@ -556,15 +624,17 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
                       unsigned int nSeeds, // Number of seeds and consequently number of output jets
                       double RSquaredCut, // radius squared of output jets
                       bool signalBool,  // whether processing a signal or background process // FIXME add additional signal types for later
-                      bool condorBool ){ // whether running using condor batch job submission (requires change in filepaths)
+                      bool condorBool, // whether running using condor batch job submission (requires change in filepaths)
+                      std::string inputObjectType = "gepBasicClusters"){ 
     // Construct input and output ntuple, LUT paths based on configuration type
     auto infile = makeInputFileName(signalBool); // FIXME update this when running with condor.
-    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool);
-    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool);
+    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType);
+    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType);
     std::cout << "infile: " << infile << "\n";
     std::cout << "outntuplefile: " << outntuplefile << "\n"; 
     std::cout << "outtextfile: " << outtextfile << "\n";       
     try { // FIXME update this when running with condor.
+        std::cout << "why is this not working" << "\n";
         std::filesystem::copy_file(infile, outntuplefile, 
                       std::filesystem::copy_options::overwrite_existing);
         std::cout << "File copied successfully\n";
@@ -572,6 +642,6 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
         std::cerr << "Copy failed: " << e.what() << '\n';
     }            
     //gSystem->RedirectOutput("debuglog.log", "w");
-    eventLoop(infile, outntuplefile, outtextfile);
+    eventLoop(infile, outntuplefile, outtextfile, inputObjectType);
     gSystem->Exit(0);
 } 

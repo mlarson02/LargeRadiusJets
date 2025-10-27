@@ -18,8 +18,8 @@ inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * et_granularity_;
 }
 
-inline double undigitize_diam(const std::bitset<diam_bit_length_>& diam_bits) {
-    return diam_bits.to_ulong() * 0.03125;
+inline double undigitize_diam(const std::bitset<psi_R_bit_length_>& diam_bits) {
+    return diam_bits.to_ulong() * 0.00390625; // FIXME shouldn't be hard-coded
 }
 
 int wrapSym(int phi){
@@ -160,7 +160,8 @@ std::string makeOutputFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
-                               std::string outputRootFilePath = "/home/larsonma/LargeRadiusJets/data/outputNTuples/") {
+                               std::string inputObjectType,
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev/") {
     std::ostringstream ss;
     if (signalBool) {
         ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
@@ -170,7 +171,7 @@ std::string makeOutputFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << ".root";
+       << "R2_" << std::setprecision(2) << RSquaredCut << "_" << inputObjectType << ".root";
 
     return ss.str();
 }
@@ -180,6 +181,7 @@ std::string makeOutputTextFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
+                               std::string inputObjectType,
                                std::string outputRootFilePath = "/home/larsonma/LargeRadiusJets/data/MemPrintsEmulation/") {
     std::ostringstream ss;
     if (signalBool) {
@@ -190,7 +192,7 @@ std::string makeOutputTextFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << ".dat";
+       << "R2_" << std::setprecision(2) << RSquaredCut << "_" << inputObjectType << ".dat";
 
     return ss.str();
 }
@@ -229,7 +231,7 @@ void write_constants_header(const std::string& header_path,
                             unsigned int nSeedsOutput,
                             unsigned int max_R2lut_size,
                             unsigned int max_Rlut_size,
-                            unsigned int max_R_5b_lut_size)
+                            unsigned int max_R_8b_lut_size)
 {
     std::ofstream out(header_path);
     if (!out) {
@@ -249,13 +251,14 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int nSeedsInput_ = 6;\n";
     out << "constexpr unsigned int nSeedsOutput_ = " << nSeedsOutput << ";\n";
     out << "constexpr unsigned int maxObjectsConsidered_ = " << maxObjectsConsidered << ";\n";
-    out << "constexpr double et_granularity_ = 0.25;\n";
+    out << "constexpr double et_granularity_ = 0.125;\n";
     out << "constexpr double r2Cut_ = " << r2Cut << ";\n";
     out << "constexpr double rMergeCut_ = " << rMergeCut << ";\n";
     out << "constexpr unsigned int et_bit_length_ = 13;\n";
     out << "constexpr unsigned int eta_bit_length_ = 8;\n";
     out << "constexpr unsigned int phi_bit_length_ = 6;\n";
-    out << "constexpr unsigned int diam_bit_length_ = 5;\n";
+    out << "constexpr unsigned int psi_R_bit_length_ = 8;\n";
+    out << "constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_;\n";
     out << "constexpr unsigned int deltaRBits_ = 8;\n";
     out << "constexpr double phi_min_ = -3.2;\n";
     out << "constexpr double phi_max_ = 3.2;\n";
@@ -267,16 +270,16 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr double eta_granularity_ = 0.0390625;\n";
     out << "constexpr double phi_granularity_ = 0.1;\n";
     out << "constexpr unsigned int et_min_ = 0;\n";
-    out << "constexpr unsigned int et_max_ = 2048;\n";
+    out << "constexpr unsigned int et_max_ = 1024;\n";
     out << "constexpr unsigned int max_R2lut_size_ = " << max_R2lut_size << ";\n";
     out << "constexpr unsigned int max_Rlut_size_ = " << max_Rlut_size << ";\n";
     out << "constexpr double deltaR_max_ = 10.48187;\n";
     out << "constexpr unsigned int nSeeds_ = " << nSeedsOutput << ";\n";
-    out << "constexpr unsigned int max_R_5b_lut_size_ = " << max_R_5b_lut_size << ";\n";
+    out << "constexpr unsigned int max_R_8b_lut_size_ = " << max_R_8b_lut_size << ";\n";
     out << "constexpr double phi_range_ = phi_max_ - phi_min_;\n\n";
 
     out << "constexpr unsigned int lut_size_ = (1u << (eta_bit_length_ + phi_bit_length_));\n";
-    out << "constexpr unsigned int total_bits_ = diam_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;\n\n";
+    out << "constexpr unsigned int total_bits_ = padded_zeroes_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;\n\n";
 
     out << "constexpr unsigned int phi_low_  = 0;\n";
     out << "constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;\n\n";
@@ -287,8 +290,8 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int et_low_   = eta_high_ + 1;\n";
     out << "constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;\n\n";
 
-    out << "constexpr unsigned int diam_low_  = et_high_ + 1;\n";
-    out << "constexpr unsigned int diam_high_ = diam_low_ + diam_bit_length_ - 1;\n\n";
+    out << "constexpr unsigned int psi_R_low_  = et_high_ + 1;\n";
+    out << "constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;\n\n";
 
     out << "constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;\n\n";
 
@@ -300,17 +303,17 @@ void write_constants_header(const std::string& header_path,
     out << "#include \"deltaRLUT.h\"\n";
     out << ";\n\n";
 
-    out << "static const unsigned int lutR_5b_[max_R_5b_lut_size_] = \n";
-    out << "#include \"deltaRLUT_5b.h\"\n";
+    out << "static const unsigned int lutR_8b_[max_R_8b_lut_size_] = \n";
+    out << "#include \"deltaRLUT_8b.h\"\n";
     out << ";\n\n";
-
+ 
     out << "constexpr unsigned int deltaR_levels_ = (1u << deltaRBits_); // 256\n";
     out << "constexpr float deltaR_step_ = static_cast<float>(deltaR_max_) / (deltaR_levels_ - 1); // ~0.041\n";
     out << "constexpr unsigned int rMergeConsiderCutDigitized_ = static_cast<unsigned int>(\n";
     out << "    (rMergeCut_) / deltaR_step_ + 0.5f);\n\n"; // round to nearest
 
-    out << "constexpr unsigned int diam_levels_ = (1u << diam_bit_length_); // 32\n";
-    out << "constexpr float diam_step_ = static_cast<float>(r2Cut_) / (diam_levels_ - 1); // step in R^2 per code\n";
+    out << "constexpr unsigned int psi_R_levels_ = (1u << psi_R_bit_length_); // 256\n";
+    out << "constexpr float psi_R_step_ = static_cast<float>(1) / (psi_R_levels_ - 1); // step in R^2 per code\n";
 
     // ---- file ends ----
     std::cout << "writing constants file to: " << header_path << "\n";

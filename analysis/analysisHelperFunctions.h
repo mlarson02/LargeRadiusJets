@@ -26,12 +26,126 @@ struct EventDisplayInputs {
   TString outFile;                                         // output path
 };
 
+// Helper to create a TH2 with variable (or uniform) binning from the axes
+static TH2F* MakeTH2Like(const char* name, const char* title,
+                         const TAxis* axX, const TAxis* axY)
+{
+  const TArrayD& bx = *axX->GetXbins();
+  const TArrayD& by = *axY->GetXbins();
+
+  if (bx.GetSize() > 0 && by.GetSize() > 0)
+    return new TH2F(name, title,
+                    axX->GetNbins(), bx.GetArray(),
+                    axY->GetNbins(), by.GetArray());
+  if (bx.GetSize() > 0)
+    return new TH2F(name, title,
+                    axX->GetNbins(), bx.GetArray(),
+                    axY->GetNbins(), axY->GetXmin(), axY->GetXmax());
+  if (by.GetSize() > 0)
+    return new TH2F(name, title,
+                    axX->GetNbins(), axX->GetXmin(), axX->GetXmax(),
+                    axY->GetNbins(), by.GetArray());
+  return new TH2F(name, title,
+                  axX->GetNbins(), axX->GetXmin(), axX->GetXmax(),
+                  axY->GetNbins(), axY->GetXmin(), axY->GetXmax());
+}
+
+
+
 // Structure to store histograms used to generate background rate vs. signal efficiency plots
 struct RateEffOut {
   TH1* hEff_vsThr;   // efficiency vs threshold (optional)
   TH1* hRate_vsThr;  // rate vs threshold in Hz (optional)
   TGraph* gRate_vsEff; // main output: y(rate) vs x(eff)
 };
+
+struct RateEff2DOut {
+  TH2* hEff_vsThr_vsR;   // Signal efficiency surface vs (ET threshold, Rmax)
+  TH2* hRate_vsThr_vsR;  // Background rate surface vs (ET threshold, Rmax)
+  TGraphErrors* gRate_vsEff_all; // All (eff,rate) points from the 2D scan
+};
+
+// -----------------------------------------------------------------------------
+// MakeRateVsEff_ScanRMax
+// Scan ET threshold and Rmax simultaneously using 1D histograms.
+// Inputs:
+//   hSigEt, hBkgEt : 1D ET distributions (sig counts, bkg weighted to Hz)
+//   hSigR,  hBkgR  : 1D R=psi_lead/psi_sublead distributions
+// Returns 2D efficiency / rate surfaces and a graph with all (eff, rate) pairs.
+// -----------------------------------------------------------------------------
+RateEff2DOut MakeRateVsEff_ScanRMax(TH1* hSigEt, TH1* hBkgEt,
+                                    TH1* hSigR,  TH1* hBkgR)
+{
+  // ---- (1) Cumulative along ET: pass if ET > threshold (HIGH -> LOW)
+  auto* hSigCumEt = hSigEt->GetCumulative(/*forward=*/false,
+                            (std::string(hSigEt->GetName())+"_cumul").c_str());
+  auto* hBkgCumEt = hBkgEt->GetCumulative(/*forward=*/false,
+                            (std::string(hBkgEt->GetName())+"_cumul").c_str());
+
+  const int nbEt = hSigEt->GetNbinsX();
+  const double totalSigEt = hSigEt->Integral(1, nbEt);
+
+  std::vector<double> effEt(nbEt+1, 0.0), rateEt(nbEt+1, 0.0), errEt(nbEt+1, 0.0);
+  for (int ib=1; ib<=nbEt; ++ib) {
+    effEt[ib]  = (totalSigEt>0 ? hSigCumEt->GetBinContent(ib)/totalSigEt : 0.0);
+    rateEt[ib] = hBkgCumEt->GetBinContent(ib);    // already in Hz if weighted
+    errEt[ib]  = hBkgCumEt->GetBinError(ib);
+  }
+
+  // ---- (2) Cumulative along R: pass if R < Rmax (LOW -> HIGH)
+  auto* hSigCumR_lo = hSigR->GetCumulative(/*forward=*/true,
+                            (std::string(hSigR->GetName())+"_cumul_lo").c_str());
+  auto* hBkgCumR_lo = hBkgR->GetCumulative(/*forward=*/true,
+                            (std::string(hBkgR->GetName())+"_cumul_lo").c_str());
+
+  const int nbR  = hSigR->GetNbinsX();
+  const double totalSigR = hSigR->Integral(1, nbR);
+  const double totalBkgR = hBkgR->Integral(1, nbR); // Hz if weighted
+
+  std::vector<double> fracSigR(nbR+1, 0.0), fracBkgR(nbR+1, 0.0);
+  for (int jb=1; jb<=nbR; ++jb) {
+    fracSigR[jb] = (totalSigR>0 ? hSigCumR_lo->GetBinContent(jb)/totalSigR : 0.0);
+    fracBkgR[jb] = (totalBkgR>0 ? hBkgCumR_lo->GetBinContent(jb)/totalBkgR : 0.0);
+  }
+
+  // ---- (3) Build 2D surfaces vs (ET_thr, Rmax)
+  TH2F* hEff2D  = MakeTH2Like("hEff_vsThr_vsR",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Signal (hh#rightarrow4b) Efficiency",
+                     hSigEt->GetXaxis(), hSigR->GetXaxis());
+  TH2F* hRate2D = MakeTH2Like("hRate_vsThr_vsR",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Estimated Background Rate [Hz]",
+                     hBkgEt->GetXaxis(), hBkgR->GetXaxis());
+
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb) {
+      const double eff  = std::clamp(effEt[ib]  * fracSigR[jb], 0.0, 1.0);
+      const double rate = rateEt[ib] * fracBkgR[jb];
+      hEff2D ->SetBinContent(ib, jb, eff);
+      hRate2D->SetBinContent(ib, jb, rate);
+      // (Optional) error on rate:
+      hRate2D->SetBinError(ib, jb, errEt[ib] * fracBkgR[jb]);
+    }
+  }
+
+  // ---- (4) Collect all (eff, rate) points into a TGraphErrors
+  const int npts = nbEt * nbR;
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_all");
+  g->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+
+  int k=0;
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb, ++k) {
+      const double eff  = hEff2D ->GetBinContent(ib,jb);
+      const double rate = hRate2D->GetBinContent(ib,jb);
+      const double err  = hRate2D->GetBinError  (ib,jb);
+      g->SetPoint(k, eff, rate);
+      g->SetPointError(k, 0.0, err);
+    }
+  }
+
+  return {hEff2D, hRate2D, g};
+}
 
 // Function to generate background rate vs. signal efficiency plots
 RateEffOut MakeRateVsEff(TH1* hSig, TH1* hBkg) {
@@ -341,11 +455,12 @@ bool displayEv4Back_ = false;
 
 const double mH_ = 125.0;
 
-constexpr double et_granularity_ = 0.25;
+constexpr double et_granularity_ = 0.125;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
-constexpr unsigned int io_bit_length_ = 5; 
+constexpr unsigned int psi_R_bit_length_ = 10; 
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
 constexpr double eta_min_ = -5.0;
@@ -353,24 +468,24 @@ constexpr double eta_max_ = 5.0;
 constexpr double eta_granularity_ = 0.0390625;
 constexpr double phi_granularity_ = 0.1;
 constexpr unsigned int et_min_ = 0;
-constexpr unsigned int et_max_ = 2048;
+constexpr unsigned int et_max_ = 1024;
 const bool useMax_ = false;
 const unsigned nSeeds_ = 2;
 
 inline double undigitize_phi(const std::bitset<phi_bit_length_>& phi_bits) {
-    return phi_min_ + phi_bits.to_ulong() * (6.4 / 64.0);
+    return phi_min_ + phi_bits.to_ulong() * (6.4 / 256.0);
 }
 
 inline double undigitize_eta(const std::bitset<eta_bit_length_>& eta_bits) {
-    return eta_min_ + eta_bits.to_ulong() * (10.0 / 256.0);
+    return eta_min_ + eta_bits.to_ulong() * (10.0 / 2048.0);
 }
 
 inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
     return et_bits.to_ulong() * et_granularity_;
 }
 
-inline double undigitize_nmio(const std::bitset<io_bit_length_>& nmio_bits) {
-    return nmio_bits.to_ulong() * 0.03125;
+inline double undigitize_nmio(const std::bitset<psi_R_bit_length_>& nmio_bits) {
+    return nmio_bits.to_ulong() * 0.0048828125; // 5 / 2^psi_R_bit_length_
 }
 
 // Function to scale and digitize a value, returning the result as a binary string

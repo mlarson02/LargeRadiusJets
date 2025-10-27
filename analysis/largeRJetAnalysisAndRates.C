@@ -269,7 +269,7 @@ std::map<std::string, std::string> legendMap = {
     "R^{2}_{cut} = 1.44, N_{IO} = 512, No IO E_{cut}"}
 };
 
-void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<std::string > backgroundRootFileNames, bool overlayThreeFiles) {
+void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<std::string > backgroundRootFileNames, bool overlayThreeFiles, std::string inputObjectType) {
     SetPlotStyle();
     
     // Vectors to hold per-file histograms
@@ -331,6 +331,20 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TTree* caloTopoTowerTreeSignal = (TTree*)signalInputFile->Get("caloTopoTowerTree");
         TTree* topo422TreeSignal = (TTree*)signalInputFile->Get("topo422Tree");
         TTree* gepBasicClustersTreeSignal = (TTree*)signalInputFile->Get("gepBasicClustersTree");
+        TTree* gepCellsTowersTreeSignal = (TTree*)signalInputFile->Get("gepCellsTowersTree");
+        TTree* gepBasicTopoTowersTreeSignal = (TTree*)signalInputFile->Get("gepBasicTopoTowersTree");
+        TTree* gepConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepConeCellsTowersJetsTree");
+        TTree* gepWTAConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepWTAConeCellsTowersJetsTree");
+        TTree* gepConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepConeBasicClustersJetsTree");
+        TTree* gepWTAConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepWTAConeBasicClustersJetsTree");
+        TTree* gepLeadingConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepLeadingConeCellsTowersJetsTree");
+        TTree* gepLeadingWTAConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepLeadingWTAConeCellsTowersJetsTree");
+        TTree* gepLeadingConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepLeadingConeBasicClustersJetsTree");
+        TTree* gepLeadingWTAConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepLeadingWTAConeBasicClustersJetsTree");
+        TTree* gepSubleadingConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepSubleadingConeCellsTowersJetsTree");
+        TTree* gepSubleadingWTAConeCellsTowersJetsTreeSignal = (TTree*)signalInputFile->Get("gepSubleadingWTAConeCellsTowersJetsTree");
+        TTree* gepSubleadingConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepSubleadingConeBasicClustersJetsTree");
+        TTree* gepSubleadingWTAConeBasicClustersJetsTreeSignal = (TTree*)signalInputFile->Get("gepSubleadingWTAConeBasicClustersJetsTree");
         TTree* gFexSRJTreeSignal = (TTree*)signalInputFile->Get("gFexSRJTree");
         TTree* gFexLeadingSRJTreeSignal = (TTree*)signalInputFile->Get("gFexLeadingSRJTree");
         TTree* gFexSubleadingSRJTreeSignal = (TTree*)signalInputFile->Get("gFexSubleadingSRJTree");
@@ -363,6 +377,20 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TTree* caloTopoTowerTreeBack = (TTree*)backgroundInputFile->Get("caloTopoTowerTree");
         TTree* topo422TreeBack = (TTree*)backgroundInputFile->Get("topo422Tree");
         TTree* gepBasicClustersTreeBack = (TTree*)backgroundInputFile->Get("gepBasicClustersTree");
+        TTree* gepCellsTowersTreeBack = (TTree*)backgroundInputFile->Get("gepCellsTowersTree");
+        TTree* gepBasicTopoTowersTreeBack = (TTree*)backgroundInputFile->Get("gepBasicTopoTowersTree");
+        TTree* gepConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepConeCellsTowersJetsTree");
+        TTree* gepWTAConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepWTAConeCellsTowersJetsTree");
+        TTree* gepConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepConeBasicClustersJetsTree");
+        TTree* gepWTAConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepWTAConeBasicClustersJetsTree");
+        TTree* gepLeadingConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepLeadingConeCellsTowersJetsTree");
+        TTree* gepLeadingWTAConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepLeadingWTAConeCellsTowersJetsTree");
+        TTree* gepLeadingConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepLeadingConeBasicClustersJetsTree");
+        TTree* gepLeadingWTAConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepLeadingWTAConeBasicClustersJetsTree");
+        TTree* gepSubleadingConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepSubleadingConeCellsTowersJetsTree");
+        TTree* gepSubleadingWTAConeCellsTowersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepSubleadingWTAConeCellsTowersJetsTree");
+        TTree* gepSubleadingConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepSubleadingConeBasicClustersJetsTree");
+        TTree* gepSubleadingWTAConeBasicClustersJetsTreeBack = (TTree*)backgroundInputFile->Get("gepSubleadingWTAConeBasicClustersJetsTree");
         TTree* gFexSRJTreeBack = (TTree*)backgroundInputFile->Get("gFexSRJTree");
         TTree* gFexLeadingSRJTreeBack = (TTree*)backgroundInputFile->Get("gFexLeadingSRJTree");
         TTree* gFexSubleadingSRJTreeBack = (TTree*)backgroundInputFile->Get("gFexSubleadingSRJTree");
@@ -392,17 +420,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         double* sumOfWeightsForSampleValuesSignal = nullptr;
         std::vector<double>* eventWeightsValuesSignal = nullptr;
         int* sampleJZSliceValuesSignal = nullptr;
-        std::vector<double>* jetTaggerLRJDiamValuesSignal = nullptr;
+        std::vector<double>* jetTaggerLRJPsi_RValuesSignal = nullptr;
         std::vector<unsigned int>* jetTaggerLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJEtaValuesSignal = nullptr;
         std::vector<double>* jetTaggerLRJPhiValuesSignal = nullptr;
-        std::vector<double>* jetTaggerLeadingLRJDiamValuesSignal = nullptr;
+        std::vector<double>* jetTaggerLeadingLRJPsi_RValuesSignal = nullptr;
         std::vector<unsigned int>* jetTaggerLeadingLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtaValuesSignal = nullptr;
         std::vector<double>* jetTaggerLeadingLRJPhiValuesSignal = nullptr;
-        std::vector<double>* jetTaggerSubleadingLRJDiamValuesSignal = nullptr;
+        std::vector<double>* jetTaggerSubleadingLRJPsi_RValuesSignal = nullptr;
         std::vector<unsigned int>* jetTaggerSubleadingLRJMergedIndicesValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtValuesSignal = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtaValuesSignal = nullptr;
@@ -435,6 +463,72 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<double>* gepBasicClustersEtValuesSignal = nullptr;
         std::vector<double>* gepBasicClustersEtaValuesSignal = nullptr;
         std::vector<double>* gepBasicClustersPhiValuesSignal = nullptr;
+        std::vector<double>* gepCellsTowersEtValuesSignal = nullptr;
+        std::vector<double>* gepCellsTowersEtaValuesSignal = nullptr;
+        std::vector<double>* gepCellsTowersPhiValuesSignal = nullptr;
+        std::vector<double>* gepBasicTopoTowersEtValuesSignal = nullptr;
+        std::vector<double>* gepBasicTopoTowersEtaValuesSignal = nullptr;
+        std::vector<double>* gepBasicTopoTowersPhiValuesSignal = nullptr;
+        std::vector<double>* gepConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepLeadingConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepSubleadingConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepWTAConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepLeadingWTAConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepSubleadingWTAConeCellsTowersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepLeadingConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepSubleadingConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepWTAConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetspTValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsEtaValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsPhiValuesSignal = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsMassValuesSignal = nullptr;
+        std::vector<unsigned int >* gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValuesSignal = nullptr;
         std::vector<unsigned int>* gFexSRJEtIndexValuesSignal = nullptr;
         std::vector<double>* gFexSRJEtValuesSignal = nullptr;
         std::vector<double>* gFexSRJEtaValuesSignal = nullptr;
@@ -545,17 +639,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         double sumOfWeightsForSampleValuesBack = 0.0;
         std::vector<double>* eventWeightsValuesBack = nullptr;
         int sampleJZSliceValuesBack = -1;
-        std::vector<double>* jetTaggerLRJDiamValuesBack = nullptr;
+        std::vector<double>* jetTaggerLRJPsi_RValuesBack = nullptr;
         std::vector<unsigned int>* jetTaggerLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJEtaValuesBack = nullptr;
         std::vector<double>* jetTaggerLRJPhiValuesBack = nullptr;
-        std::vector<double>* jetTaggerLeadingLRJDiamValuesBack = nullptr;
+        std::vector<double>* jetTaggerLeadingLRJPsi_RValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJEtaValuesBack = nullptr;
         std::vector<double>* jetTaggerLeadingLRJPhiValuesBack = nullptr;
-        std::vector<double>* jetTaggerSubleadingLRJDiamValuesBack = nullptr;
+        std::vector<double>* jetTaggerSubleadingLRJPsi_RValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJMergedIndicesValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtValuesBack = nullptr;
         std::vector<double>* jetTaggerSubleadingLRJEtaValuesBack = nullptr;
@@ -569,6 +663,72 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<double>* gepBasicClustersEtValuesBack = nullptr;
         std::vector<double>* gepBasicClustersEtaValuesBack = nullptr;
         std::vector<double>* gepBasicClustersPhiValuesBack = nullptr;
+        std::vector<double>* gepCellsTowersEtValuesBack = nullptr;
+        std::vector<double>* gepCellsTowersEtaValuesBack = nullptr;
+        std::vector<double>* gepCellsTowersPhiValuesBack = nullptr;
+        std::vector<double>* gepBasicTopoTowersEtValuesBack = nullptr;
+        std::vector<double>* gepBasicTopoTowersEtaValuesBack = nullptr;
+        std::vector<double>* gepBasicTopoTowersPhiValuesBack = nullptr;
+        std::vector<double>* gepConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepLeadingConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepSubleadingConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepWTAConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepWTAConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepLeadingWTAConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetspTValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeCellsTowersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepSubleadingWTAConeCellsTowersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepLeadingConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepLeadingConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepSubleadingConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepSubleadingConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepWTAConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepWTAConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepLeadingWTAConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsEtaValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsPhiValuesBack = nullptr;
+        std::vector<double>* gepSubleadingWTAConeGEPBasicClustersJetsMassValuesBack = nullptr;
+        std::vector<unsigned int >* gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValuesBack = nullptr;
         std::vector<unsigned int>* gFexSRJEtIndexValuesBack = nullptr;
         std::vector<double>* gFexSRJEtValuesBack = nullptr;
         std::vector<double>* gFexSRJEtaValuesBack = nullptr;
@@ -660,21 +820,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         eventInfoTreeSignal->SetBranchAddress("sampleJZSlice", &sampleJZSliceValuesSignal);
 
         // === jetTaggerLRJsSignal ===
-        jetTaggerLRJsSignal->SetBranchAddress("Diam", &jetTaggerLRJDiamValuesSignal);
+        jetTaggerLRJsSignal->SetBranchAddress("Psi_R", &jetTaggerLRJPsi_RValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerLRJMergedIndicesValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Et", &jetTaggerLRJEtValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Eta", &jetTaggerLRJEtaValuesSignal);
         jetTaggerLRJsSignal->SetBranchAddress("Phi", &jetTaggerLRJPhiValuesSignal);
 
         // === jetTaggerLeadingLRJsSignal ===
-        jetTaggerLeadingLRJsSignal->SetBranchAddress("Diam", &jetTaggerLeadingLRJDiamValuesSignal);
+        jetTaggerLeadingLRJsSignal->SetBranchAddress("Psi_R", &jetTaggerLeadingLRJPsi_RValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Et", &jetTaggerLeadingLRJEtValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Eta", &jetTaggerLeadingLRJEtaValuesSignal);
         jetTaggerLeadingLRJsSignal->SetBranchAddress("Phi", &jetTaggerLeadingLRJPhiValuesSignal);
 
         // === jetTaggerSubleadingLRJsSignal ===
-        jetTaggerSubleadingLRJsSignal->SetBranchAddress("Diam", &jetTaggerSubleadingLRJDiamValuesSignal);
+        jetTaggerSubleadingLRJsSignal->SetBranchAddress("Psi_R", &jetTaggerSubleadingLRJPsi_RValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Et", &jetTaggerSubleadingLRJEtValuesSignal);
         jetTaggerSubleadingLRJsSignal->SetBranchAddress("Eta", &jetTaggerSubleadingLRJEtaValuesSignal);
@@ -717,6 +877,100 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         gepBasicClustersTreeSignal->SetBranchAddress("Et", &gepBasicClustersEtValuesSignal);
         gepBasicClustersTreeSignal->SetBranchAddress("Eta", &gepBasicClustersEtaValuesSignal);
         gepBasicClustersTreeSignal->SetBranchAddress("Phi", &gepBasicClustersPhiValuesSignal);
+
+        // === gepBasicClustersTree ===
+        gepCellsTowersTreeSignal->SetBranchAddress("Et", &gepCellsTowersEtValuesSignal);
+        gepCellsTowersTreeSignal->SetBranchAddress("Eta", &gepCellsTowersEtaValuesSignal);
+        gepCellsTowersTreeSignal->SetBranchAddress("Phi", &gepCellsTowersPhiValuesSignal);
+
+        // === gepBasicClustersTree ===
+        gepBasicTopoTowersTreeSignal->SetBranchAddress("Et", &gepBasicTopoTowersEtValuesSignal);
+        gepBasicTopoTowersTreeSignal->SetBranchAddress("Eta", &gepBasicTopoTowersEtaValuesSignal);
+        gepBasicTopoTowersTreeSignal->SetBranchAddress("Phi", &gepBasicTopoTowersPhiValuesSignal);
+
+        // gep cone cells towers jets
+        gepConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepConeCellsTowersJetspTValuesSignal);
+        gepConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepConeCellsTowersJetsEtaValuesSignal);
+        gepConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepConeCellsTowersJetsPhiValuesSignal);
+        gepConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepConeCellsTowersJetsMassValuesSignal);
+        gepConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep cone cells towers jets
+        gepLeadingConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepLeadingConeCellsTowersJetspTValuesSignal);
+        gepLeadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepLeadingConeCellsTowersJetsEtaValuesSignal);
+        gepLeadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepLeadingConeCellsTowersJetsPhiValuesSignal);
+        gepLeadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepLeadingConeCellsTowersJetsMassValuesSignal);
+        gepLeadingConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepLeadingConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep cone cells towers jets
+        gepSubleadingConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepSubleadingConeCellsTowersJetspTValuesSignal);
+        gepSubleadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepSubleadingConeCellsTowersJetsEtaValuesSignal);
+        gepSubleadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepSubleadingConeCellsTowersJetsPhiValuesSignal);
+        gepSubleadingConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepSubleadingConeCellsTowersJetsMassValuesSignal);
+        gepSubleadingConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepSubleadingConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep wta cone cells towers jets
+        gepWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepWTAConeCellsTowersJetspTValuesSignal);
+        gepWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepWTAConeCellsTowersJetsEtaValuesSignal);
+        gepWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepWTAConeCellsTowersJetsPhiValuesSignal);
+        gepWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepWTAConeCellsTowersJetsMassValuesSignal);
+        gepWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepWTAConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep wta cone cells towers jets
+        gepLeadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepLeadingWTAConeCellsTowersJetspTValuesSignal);
+        gepLeadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepLeadingWTAConeCellsTowersJetsEtaValuesSignal);
+        gepLeadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepLeadingWTAConeCellsTowersJetsPhiValuesSignal);
+        gepLeadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepLeadingWTAConeCellsTowersJetsMassValuesSignal);
+        gepLeadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepLeadingWTAConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep wta cone cells towers jets
+        gepSubleadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("pT", &gepSubleadingWTAConeCellsTowersJetspTValuesSignal);
+        gepSubleadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Eta", &gepSubleadingWTAConeCellsTowersJetsEtaValuesSignal);
+        gepSubleadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Phi", &gepSubleadingWTAConeCellsTowersJetsPhiValuesSignal);
+        gepSubleadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("Mass", &gepSubleadingWTAConeCellsTowersJetsMassValuesSignal);
+        gepSubleadingWTAConeCellsTowersJetsTreeSignal->SetBranchAddress("NConstituents", &gepSubleadingWTAConeCellsTowersJetsNConstituentsValuesSignal);
+
+        // gep cone basic clusters jets
+        gepConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepConeGEPBasicClustersJetspTValuesSignal);
+        gepConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepConeGEPBasicClustersJetsEtaValuesSignal);
+        gepConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepConeGEPBasicClustersJetsPhiValuesSignal);
+        gepConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepConeGEPBasicClustersJetsMassValuesSignal);
+        gepConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepConeGEPBasicClustersJetsNConstituentsValuesSignal);
+
+        // gep cone basic clusters jets
+        gepLeadingConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepLeadingConeGEPBasicClustersJetspTValuesSignal);
+        gepLeadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepLeadingConeGEPBasicClustersJetsEtaValuesSignal);
+        gepLeadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepLeadingConeGEPBasicClustersJetsPhiValuesSignal);
+        gepLeadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepLeadingConeGEPBasicClustersJetsMassValuesSignal);
+        gepLeadingConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepLeadingConeGEPBasicClustersJetsNConstituentsValuesSignal);
+
+        // gep cone basic clusters jets
+        gepSubleadingConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepSubleadingConeGEPBasicClustersJetspTValuesSignal);
+        gepSubleadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepSubleadingConeGEPBasicClustersJetsEtaValuesSignal);
+        gepSubleadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepSubleadingConeGEPBasicClustersJetsPhiValuesSignal);
+        gepSubleadingConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepSubleadingConeGEPBasicClustersJetsMassValuesSignal);
+        gepSubleadingConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepSubleadingConeGEPBasicClustersJetsNConstituentsValuesSignal);
+
+        // gep wta cone basic clusters jets
+        gepWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepWTAConeGEPBasicClustersJetspTValuesSignal);
+        gepWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepWTAConeGEPBasicClustersJetsEtaValuesSignal);
+        gepWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepWTAConeGEPBasicClustersJetsPhiValuesSignal);
+        gepWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepWTAConeGEPBasicClustersJetsMassValuesSignal);
+        gepWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepWTAConeGEPBasicClustersJetsNConstituentsValuesSignal);
+
+        // gep wta cone basic clusters jets
+        gepLeadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepLeadingWTAConeGEPBasicClustersJetspTValuesSignal);
+        gepLeadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepLeadingWTAConeGEPBasicClustersJetsEtaValuesSignal);
+        gepLeadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepLeadingWTAConeGEPBasicClustersJetsPhiValuesSignal);
+        gepLeadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepLeadingWTAConeGEPBasicClustersJetsMassValuesSignal);
+        gepLeadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValuesSignal);
+
+        // gep wta cone basic clusters jets
+        gepSubleadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("pT", &gepSubleadingWTAConeGEPBasicClustersJetspTValuesSignal);
+        gepSubleadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Eta", &gepSubleadingWTAConeGEPBasicClustersJetsEtaValuesSignal);
+        gepSubleadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Phi", &gepSubleadingWTAConeGEPBasicClustersJetsPhiValuesSignal);
+        gepSubleadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("Mass", &gepSubleadingWTAConeGEPBasicClustersJetsMassValuesSignal);
+        gepSubleadingWTAConeBasicClustersJetsTreeSignal->SetBranchAddress("NConstituents", &gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValuesSignal);
 
         // === gFexSRJTreeSignal ===
         gFexSRJTreeSignal->SetBranchAddress("EtIndex", &gFexSRJEtIndexValuesSignal);
@@ -860,21 +1114,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         eventInfoTreeBack->SetBranchAddress("sampleJZSlice", &sampleJZSliceValuesBack);
 
         // === jetTaggerLRJsBack ===
-        jetTaggerLRJsBack->SetBranchAddress("Diam", &jetTaggerLRJDiamValuesBack);
+        jetTaggerLRJsBack->SetBranchAddress("Psi_R", &jetTaggerLRJPsi_RValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerLRJMergedIndicesValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Et", &jetTaggerLRJEtValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Eta", &jetTaggerLRJEtaValuesBack);
         jetTaggerLRJsBack->SetBranchAddress("Phi", &jetTaggerLRJPhiValuesBack);
 
         // === jetTaggerLeadingLRJsBack ===
-        jetTaggerLeadingLRJsBack->SetBranchAddress("Diam", &jetTaggerLeadingLRJDiamValuesBack);
+        jetTaggerLeadingLRJsBack->SetBranchAddress("Psi_R", &jetTaggerLeadingLRJPsi_RValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerLeadingLRJMergedIndicesValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Et", &jetTaggerLeadingLRJEtValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Eta", &jetTaggerLeadingLRJEtaValuesBack);
         jetTaggerLeadingLRJsBack->SetBranchAddress("Phi", &jetTaggerLeadingLRJPhiValuesBack);
 
         // === jetTaggerSubleadingLRJsBack ===
-        jetTaggerSubleadingLRJsBack->SetBranchAddress("Diam", &jetTaggerSubleadingLRJDiamValuesBack);
+        jetTaggerSubleadingLRJsBack->SetBranchAddress("Psi_R", &jetTaggerSubleadingLRJPsi_RValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("MergedIndices", &jetTaggerSubleadingLRJMergedIndicesValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Et", &jetTaggerSubleadingLRJEtValuesBack);
         jetTaggerSubleadingLRJsBack->SetBranchAddress("Eta", &jetTaggerSubleadingLRJEtaValuesBack);
@@ -894,6 +1148,100 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         gepBasicClustersTreeBack->SetBranchAddress("Et", &gepBasicClustersEtValuesBack);
         gepBasicClustersTreeBack->SetBranchAddress("Eta", &gepBasicClustersEtaValuesBack);
         gepBasicClustersTreeBack->SetBranchAddress("Phi", &gepBasicClustersPhiValuesBack);
+
+        // === gepCellsTowersTreeBack ===
+        gepCellsTowersTreeBack->SetBranchAddress("Et", &gepCellsTowersEtValuesBack);
+        gepCellsTowersTreeBack->SetBranchAddress("Eta", &gepCellsTowersEtaValuesBack);
+        gepCellsTowersTreeBack->SetBranchAddress("Phi", &gepCellsTowersPhiValuesBack);
+
+        // === gepBasicTopoTowersTreeBack ===
+        gepBasicTopoTowersTreeBack->SetBranchAddress("Et", &gepBasicTopoTowersEtValuesBack);
+        gepBasicTopoTowersTreeBack->SetBranchAddress("Eta", &gepBasicTopoTowersEtaValuesBack);
+        gepBasicTopoTowersTreeBack->SetBranchAddress("Phi", &gepBasicTopoTowersPhiValuesBack);
+
+        // gep cone cells towers jets
+        gepConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepConeCellsTowersJetspTValuesBack);
+        gepConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepConeCellsTowersJetsEtaValuesBack);
+        gepConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepConeCellsTowersJetsPhiValuesBack);
+        gepConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepConeCellsTowersJetsMassValuesBack);
+        gepConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep cone cells towers jets
+        gepLeadingConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepLeadingConeCellsTowersJetspTValuesBack);
+        gepLeadingConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepLeadingConeCellsTowersJetsEtaValuesBack);
+        gepLeadingConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepLeadingConeCellsTowersJetsPhiValuesBack);
+        gepLeadingConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepLeadingConeCellsTowersJetsMassValuesBack);
+        gepLeadingConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepLeadingConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep cone cells towers jets
+        gepSubleadingConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepSubleadingConeCellsTowersJetspTValuesBack);
+        gepSubleadingConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepSubleadingConeCellsTowersJetsEtaValuesBack);
+        gepSubleadingConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepSubleadingConeCellsTowersJetsPhiValuesBack);
+        gepSubleadingConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepSubleadingConeCellsTowersJetsMassValuesBack);
+        gepSubleadingConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepSubleadingConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep wta cone cells towers jets
+        gepWTAConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepWTAConeCellsTowersJetspTValuesBack);
+        gepWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepWTAConeCellsTowersJetsEtaValuesBack);
+        gepWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepWTAConeCellsTowersJetsPhiValuesBack);
+        gepWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepWTAConeCellsTowersJetsMassValuesBack);
+        gepWTAConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepWTAConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep wta cone cells towers jets
+        gepLeadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepLeadingWTAConeCellsTowersJetspTValuesBack);
+        gepLeadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepLeadingWTAConeCellsTowersJetsEtaValuesBack);
+        gepLeadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepLeadingWTAConeCellsTowersJetsPhiValuesBack);
+        gepLeadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepLeadingWTAConeCellsTowersJetsMassValuesBack);
+        gepLeadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepLeadingWTAConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep wta cone cells towers jets
+        gepSubleadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("pT", &gepSubleadingWTAConeCellsTowersJetspTValuesBack);
+        gepSubleadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Eta", &gepSubleadingWTAConeCellsTowersJetsEtaValuesBack);
+        gepSubleadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Phi", &gepSubleadingWTAConeCellsTowersJetsPhiValuesBack);
+        gepSubleadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("Mass", &gepSubleadingWTAConeCellsTowersJetsMassValuesBack);
+        gepSubleadingWTAConeCellsTowersJetsTreeBack->SetBranchAddress("NConstituents", &gepSubleadingWTAConeCellsTowersJetsNConstituentsValuesBack);
+
+        // gep cone basic clusters jets
+        gepConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepConeGEPBasicClustersJetspTValuesBack);
+        gepConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepConeGEPBasicClustersJetsEtaValuesBack);
+        gepConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepConeGEPBasicClustersJetsPhiValuesBack);
+        gepConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepConeGEPBasicClustersJetsMassValuesBack);
+        gepConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepConeGEPBasicClustersJetsNConstituentsValuesBack);
+
+        // gep cone basic clusters jets
+        gepLeadingConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepLeadingConeGEPBasicClustersJetspTValuesBack);
+        gepLeadingConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepLeadingConeGEPBasicClustersJetsEtaValuesBack);
+        gepLeadingConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepLeadingConeGEPBasicClustersJetsPhiValuesBack);
+        gepLeadingConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepLeadingConeGEPBasicClustersJetsMassValuesBack);
+        gepLeadingConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepLeadingConeGEPBasicClustersJetsNConstituentsValuesBack);
+
+        // gep cone basic clusters jets
+        gepSubleadingConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepSubleadingConeGEPBasicClustersJetspTValuesBack);
+        gepSubleadingConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepSubleadingConeGEPBasicClustersJetsEtaValuesBack);
+        gepSubleadingConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepSubleadingConeGEPBasicClustersJetsPhiValuesBack);
+        gepSubleadingConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepSubleadingConeGEPBasicClustersJetsMassValuesBack);
+        gepSubleadingConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepSubleadingConeGEPBasicClustersJetsNConstituentsValuesBack);
+
+        // gep wta cone basic clusters jets
+        gepWTAConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepWTAConeGEPBasicClustersJetspTValuesBack);
+        gepWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepWTAConeGEPBasicClustersJetsEtaValuesBack);
+        gepWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepWTAConeGEPBasicClustersJetsPhiValuesBack);
+        gepWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepWTAConeGEPBasicClustersJetsMassValuesBack);
+        gepWTAConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepWTAConeGEPBasicClustersJetsNConstituentsValuesBack);
+
+        // gep wta cone basic clusters jets
+        gepLeadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepLeadingWTAConeGEPBasicClustersJetspTValuesBack);
+        gepLeadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepLeadingWTAConeGEPBasicClustersJetsEtaValuesBack);
+        gepLeadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepLeadingWTAConeGEPBasicClustersJetsPhiValuesBack);
+        gepLeadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepLeadingWTAConeGEPBasicClustersJetsMassValuesBack);
+        gepLeadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValuesBack);
+
+        // gep wta cone basic clusters jets
+        gepSubleadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("pT", &gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack);
+        gepSubleadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Eta", &gepSubleadingWTAConeGEPBasicClustersJetsEtaValuesBack);
+        gepSubleadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Phi", &gepSubleadingWTAConeGEPBasicClustersJetsPhiValuesBack);
+        gepSubleadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("Mass", &gepSubleadingWTAConeGEPBasicClustersJetsMassValuesBack);
+        gepSubleadingWTAConeBasicClustersJetsTreeBack->SetBranchAddress("NConstituents", &gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValuesBack);
 
         // === gFexSRJTreeBack ===
         gFexSRJTreeBack->SetBranchAddress("EtIndex", &gFexSRJEtIndexValuesBack);
@@ -1127,10 +1475,22 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_gFEX_subleading_LRJ_Et_arr[nJZSlices_];
         TH1F* back_h_jFEX_leading_LRJ_Et_arr[nJZSlices_];
         TH1F* back_h_jFEX_subleading_LRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_gFEX_leading_SRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_gFEX_subleading_SRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_jFEX_leading_SRJ_Et_arr[nJZSlices_];
+        TH1F* back_h_jFEX_subleading_SRJ_Et_arr[nJZSlices_];
         TH1F* back_h_leading_offlineLRJ_Et_arr[nJZSlices_];
         TH1F* back_h_subleading_offlineLRJ_Et_arr[nJZSlices_];
         TH1F* back_h_leading_truthSRJs_Et_arr[nJZSlices_];
         TH1F* back_h_subleading_truthSRJs_Et_arr[nJZSlices_];
+        TH1F* back_h_leading_conejets_cellstowers_pT_arr[nJZSlices_];
+        TH1F* back_h_subleading_conejets_cellstowers_pT_arr[nJZSlices_];
+        TH1F* back_h_leading_WTA_conejets_cellstowers_pT_arr[nJZSlices_];
+        TH1F* back_h_subleading_WTA_conejets_cellstowers_pT_arr[nJZSlices_];
+        TH1F* back_h_leading_conejets_basicclusters_pT_arr[nJZSlices_];
+        TH1F* back_h_subleading_conejets_basicclusters_pT_arr[nJZSlices_];
+        TH1F* back_h_leading_WTA_conejets_basicclusters_pT_arr[nJZSlices_];
+        TH1F* back_h_subleading_WTA_conejets_basicclusters_pT_arr[nJZSlices_];
 
         for (int i = 0; i < nJZSlices_; ++i) {
             back_h_leading_LRJ_Et_arr[i] = new TH1F(
@@ -1153,6 +1513,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 "Subleading gFEX LRJ Et Distribution;Subleading gFEX LRJ E_{T} [GeV]; Events / 10 GeV",
                 85, 0, 850);
 
+            back_h_gFEX_leading_SRJ_Et_arr[i] = new TH1F(
+                Form("back_h_gFEX_leading_SRJ_Et_%d", i),
+                "Leading gFEX SRJ Et Distribution;Leading gFEX SRJ E_{T} [GeV]; Events / 10 GeV",
+                85, 0, 850);
+
+            back_h_gFEX_subleading_SRJ_Et_arr[i] = new TH1F(
+                Form("back_h_gFEX_subleading_SRJ_Et_%d", i),
+                "Subleading gFEX SRJ Et Distribution;Subleading gFEX SRJ E_{T} [GeV]; Events / 10 GeV",
+                85, 0, 850);
+
             back_h_jFEX_leading_LRJ_Et_arr[i] = new TH1F(
                 Form("back_h_jFEX_leading_LRJ_Et_%d", i),
                 "Leading jFEX LRJ Et Distribution;Leading jFEX LRJ E_{T} [GeV]; Events / 10 GeV",
@@ -1162,6 +1532,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 Form("back_h_jFEX_subleading_LRJ_Et_%d", i),
                 "Subleading jFEX LRJ Et Distribution;Subleading jFEX LRJ E_{T} [GeV]; Events / 10 GeV",
                 170, 0, 1700);
+
+            back_h_jFEX_leading_SRJ_Et_arr[i] = new TH1F(
+                Form("back_h_jFEX_leading_SRJ_Et_%d", i),
+                "Leading jFEX SRJ Et Distribution;Leading jFEX SRJ E_{T} [GeV]; Events / 10 GeV",
+                50, 0, 500);
+
+            back_h_jFEX_subleading_SRJ_Et_arr[i] = new TH1F(
+                Form("back_h_jFEX_subleading_SRJ_Et_%d", i),
+                "Subleading jFEX SRJ Et Distribution;Subleading jFEX SRJ E_{T} [GeV]; Events / 10 GeV",
+                50, 0, 500);
 
             back_h_leading_offlineLRJ_Et_arr[i] = new TH1F(
                 Form("back_h_leading_offlineLRJ_Et_%d", i),
@@ -1175,13 +1555,53 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
             back_h_leading_truthSRJs_Et_arr[i] = new TH1F(
                 Form("back_h_leading_truthSRJs_Et_%d", i),
-                "Leading Offline LRJ Et Distribution;Leading Truth SRJ E_{T} [GeV]; Events / 25 GeV",
+                "Leading Truth Small-R Jet Et Distribution;Leading Truth SRJ E_{T} [GeV]; Events / 25 GeV",
                 160, 0, 4000);
 
             back_h_subleading_truthSRJs_Et_arr[i] = new TH1F(
                 Form("back_h_subleading_truthSRJs_Et_%d", i),
-                "Subleading Offline LRJ Et Distribution;E_{T} [GeV];Subleading Truth SRJs / 25 GeV",
+                "Subleading Truth Small-R Jet Et Distribution;Subleading Truth SRJ E_{T} [GeV];Subleading Truth SRJs / 25 GeV",
                 160, 0, 4000);
+
+            back_h_leading_conejets_cellstowers_pT_arr[i] = new TH1F(
+                Form("back_h_leading_conejets_cellstowers_pT_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading CellsTowers Cone Jet p_{T} [GeV]; Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_subleading_conejets_cellstowers_pT_arr[i] = new TH1F(
+                Form("back_h_subleading_conejets_cellstowers_pT_%d", i),
+                "Subleading Offline LRJ Et Distribution;Subleading CellsTowers Cone Jet p_{T} [GeV];Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_leading_WTA_conejets_cellstowers_pT_arr[i] = new TH1F(
+                Form("back_h_leading_WTA_conejets_cellstowers_pT_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading WTA CellsTowers Cone Jet p_{T} [GeV]; Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_subleading_WTA_conejets_cellstowers_pT_arr[i] = new TH1F(
+                Form("back_h_subleading_WTA_conejets_cellstowers_pT_%d", i),
+                "Subleading Offline LRJ Et Distribution;Subleading WTA CellsTowers Cone Jet p_{T} [GeV];Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_leading_conejets_basicclusters_pT_arr[i] = new TH1F(
+                Form("back_h_leading_conejets_basicclusters_pT_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading BasicClusters Cone Jet p_{T} [GeV]; Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_subleading_conejets_basicclusters_pT_arr[i] = new TH1F(
+                Form("back_h_subleading_conejets_basicclusters_pT_%d", i),
+                "Subleading Offline LRJ Et Distribution;Subleading BasicClusters Cone Jet p_{T} [GeV];Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_leading_WTA_conejets_basicclusters_pT_arr[i] = new TH1F(
+                Form("back_h_leading_WTA_conejets_basicclusters_pT_%d", i),
+                "Leading Offline LRJ Et Distribution;Leading WTA BasicClusters Cone Jet p_{T} [GeV]; Events / 25 GeV",
+                120, 0, 3000);
+
+            back_h_subleading_WTA_conejets_basicclusters_pT_arr[i] = new TH1F(
+                Form("back_h_subleading_WTA_conejets_basicclusters_pT_%d", i),
+                "Subleading Offline LRJ Et Distribution;Subleading WTA BasicClusters Cone Jet p_{T} [GeV];Events / 25 GeV",
+                120, 0, 3000);
         }
 
         // Variable binning: 0–400 GeV in 10 GeV steps, 400–800 GeV in 25 GeV steps
@@ -1227,11 +1647,27 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
 
         TH2F *sigOfflineLeadingLRJMassvsEt = new TH2F("sigOfflineLeadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Leading LRJ Mass [GeV]", 
-                            35, 0, 700,   // 100 bins from -5 to 5 on eta axis
+                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
+                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+
+        TH2F *sigOfflineSubleadingLRJMassvsEt = new TH2F("sigOfflineSubleadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Subleading LRJ Mass [GeV]", 
+                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
+                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+
+        TH2F *sigOfflineSubleadingLRJMassvsLeadingLRJMass = new TH2F("sigOfflineSubleadingLRJMassvsLeadingLRJMass", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ Mass [GeV];Offline Subleading LRJ Mass [GeV]", 
+                            25, 0, 250,   // 100 bins from -5 to 5 on eta axis
                             25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
 
         TH2F *backOfflineLeadingLRJMassvsEt = new TH2F("backOfflineLeadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Leading LRJ Mass [GeV]", 
-                            35, 0, 700,   // 100 bins from -5 to 5 on eta axis
+                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
+                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+
+        TH2F *backOfflineSubleadingLRJMassvsEt = new TH2F("backOfflineSubleadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Subleading LRJ Mass [GeV]", 
+                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
+                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+        
+        TH2F *backOfflineSubleadingLRJMassvsLeadingLRJMass = new TH2F("backOfflineSubleadingLRJMassvsLeadingLRJMass", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ Mass [GeV];Offline Subleading LRJ Mass [GeV]", 
+                            25, 0, 250,   // 100 bins from -5 to 5 on eta axis
                             25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
 
 
@@ -1241,16 +1677,20 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH2F *backOfflineLeadingLRJMassvsSubjetMult = new TH2F("backOfflineLeadingLRJMassvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Number of Subjets; Offline Leading LRJ Mass [GeV]", 
                             4, 0, 4, // x axis
                             25, 0, 250 ); //y axis
+                            
 
-        TH2F *sigOfflineLeadingLRJEtvsSubjetMult = new TH2F("sigOfflineLeadingLRJEtvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Number of Subjets; Offline Leading LRJ E_{T} [GeV]", 
-                            4, 0, 4, // x axis
-                            30, 0, 1500 ); //y axis
-        TH2F *backOfflineLeadingLRJEtvsSubjetMult = new TH2F("backOfflineLeadingLRJEtvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Number of Subjets; Offline Leading LRJ E_{T} [GeV]", 
-                            4, 0, 4, // x axis
-                            35, 0, 700 ); //y axis
+        TH2F *sigOfflineLeadingLRJEtvsSubjetMult = new TH2F("sigOfflineLeadingLRJEtvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV]; Number of Subjets", 
+                            40, 0, 800,  //x axis
+                            4, 0, 4 );  // y axis
+        TH2F *backOfflineLeadingLRJEtvsSubjetMult = new TH2F("backOfflineLeadingLRJEtvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV]; Number of Subjets", 
+                            40, 0, 800,// x axis
+                            4, 0, 4 ); //y axis
 
-        TH1F* sigOfflineLeadingLRJMass = new TH1F("sigOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
-        TH1F* backOfflineLeadingLRJMass = new TH1F("backOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
+        TH1F* sigOfflineLeadingLRJMass = new TH1F("sigOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 20, 0, 200);
+        TH1F* backOfflineLeadingLRJMass = new TH1F("backOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 20, 0, 200);
+
+        TH1F* sigOfflineSubleadingLRJMass = new TH1F("sigOfflineSubleadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
+        TH1F* backOfflineSubleadingLRJMass = new TH1F("backOfflineSubleadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
 
         TH1F* sig_h_LeadingOfflineLRJ_SubjetMultiplicity = new TH1F("sig_h_LeadingOfflineLRJ_SubjetMultiplicity", "LRJ Et Distribution;Number of Subjets;% of Leading LRJs", 4, 0, 4);
         TH1F* back_h_LeadingOfflineLRJ_SubjetMultiplicity = new TH1F("back_h_LeadingOfflineLRJ_SubjetMultiplicity", "LRJ Et Distribution;Number of Subjets;% of Leading LRJs", 4, 0, 4);
@@ -1291,16 +1731,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         TH2F *sigOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
                             35, 0, 700, // x axis
-                            20, 0, 0.4); //y axis
+                            35, 0, 0.7); //y axis
         TH2F *backOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
                             35, 0, 700, // x axis
-                            20, 0, 0.6); //y axis                    
+                            35, 0, 0.7); //y axis                    
         TH2F *sigOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
                             35, 0, 700, // x axis
-                            20, 0, 0.4); //y axis
+                            35, 0, 0.7); //y axis
         TH2F *backOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
                             35, 0, 700, // x axis
-                            20, 0, 0.6); //y axis
+                            50, 0, 1.0); //y axis
 
         // with deltaR^2 Metric
         TH2F *sigOfflineLeadingLRJEtvsPsi_R2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
@@ -1349,12 +1789,25 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                             35, 0, 700, // x axis
                             40, 0, 4); //y axis
 
+        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_12 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+        TH2F *backOfflineLeadingLRJEtvsPsi_R2_12 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2_12 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+        TH2F *backOfflineSubleadingLRJEtvsPsi_R2_12 = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            35, 0, 700, // x axis
+                            40, 0, 4); //y axis
+
         TH1F* sig_h_leading_LRJ_psi_R = new TH1F("sig_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
-        TH1F* sig_h_LRJ_psi_R_squared = new TH1F("sig_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* sig_h_LRJ_psi_R_squared = new TH1F("sig_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 35, 0, 0.7);
         TH1F* sig_h_LRJ_psi_R_12 = new TH1F("sig_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* sig_h_subleading_LRJ_psi_R = new TH1F("sig_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05 ", 20, 0, 1);
         TH1F* back_h_leading_LRJ_psi_R = new TH1F("back_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
-        TH1F* back_h_LRJ_psi_R_squared = new TH1F("back_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 20, 0, 0.4);
+        TH1F* back_h_LRJ_psi_R_squared = new TH1F("back_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 35, 0, 0.7);
         TH1F* back_h_LRJ_psi_R_12 = new TH1F("back_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* back_h_subleading_LRJ_psi_R = new TH1F("back_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05", 20, 0, 1);
 
@@ -1373,9 +1826,31 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_LRJ1_deltaEt_digitized_double = new TH1F("back_h_LRJ1_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
         TH1F* back_h_LRJ2_deltaEt_digitized_double = new TH1F("back_h_LRJ2_deltaEt_digitized_double", "LRJ Et Distribution;#Delta E_{T} (Digitized - Full-precision) [GeV];% of LRJs / 1 GeV", 40, -20, 20);
 
+        TH1F* sig_h_leading_conecellstowers_pT = new TH1F("sig_h_leading_conecellstowers_pT", "Leading LRJ pT Distribution;Leading Cone CellsTowers Jet p_{T} [GeV];% of Leading Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
+        TH1F* sig_h_subleading_conecellstowers_pT = new TH1F("sig_h_subleading_conecellstowers_pT", "Subleading LRJ pT Distribution;Subeading Cone CellsTowers Jet p_{T} [GeV];% of Subleading Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
 
-        TH1F* sig_h_offlineLRJ_Et = new TH1F("sig_h_offlineLRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of Offline LRJs / 50 GeV", 16, 0, 800);
-        TH1F* sig_h_leading_offlineLRJ_Et = new TH1F("sig_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 24, 0, 1200);
+        TH1F* sig_h_leading_WTA_conecellstowers_pT = new TH1F("sig_h_leading_WTA_conecellstowers_pT", "Leading LRJ pT Distribution;Lead. WTA Cone CellsTowers Jet p_{T} [GeV];% of Leading WTA Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
+        TH1F* sig_h_subleading_WTA_conecellstowers_pT = new TH1F("sig_h_subleading_WTA_conecellstowers_pT", "Subleading LRJ pT Distribution;Sublead. Cone CellsTowers Jet p_{T} [GeV];% of Subleading WTACone CellsTowers Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* sig_h_leading_conebasicclusters_pT = new TH1F("sig_h_leading_conebasicclusters_pT", "Leading LRJ pT Distribution;Lead. Cone BasicClusters Jet p_{T} [GeV];% of Leading Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+        TH1F* sig_h_subleading_conebasicclusters_pT = new TH1F("sig_h_subleading_conebasicclusters_pT", "Subleading LRJ pT Distribution;Sublead. Cone BasicClusters Jet p_{T} [GeV];% of Subleading Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* sig_h_leading_WTA_conebasicclusters_pT = new TH1F("sig_h_leading_WTA_conebasicclusters_pT", "Leading LRJ pT Distribution;Lead. WTA Cone BasicClusters Jet p_{T} [GeV];% of Leading WTA Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+        TH1F* sig_h_subleading_WTA_conebasicclusters_pT = new TH1F("sig_h_subleading_WTA_conebasicclusters_pT", "Subleading LRJ pT Distribution;Sublead. WTA Cone BasicClusters Jet p_{T} [GeV];% of Subleading WTA Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* sig_h_leading_conecellstowers_M = new TH1F("sig_h_leading_conecellstowers_M", "Leading LRJ pT Distribution;Lead. Cone CellsTowers Jet Mass [GeV];% of Leading Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        TH1F* sig_h_subleading_conecellstowers_M = new TH1F("sig_h_subleading_conecellstowers_M", "Subleading LRJ pT Distribution;Sublead. Cone CellsTowers Jet Mass [GeV];% of Subleading Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        // FIXME skip filling mass for WTA jets - for some reason these are all very close to 0 and some negative valued??
+        //TH1F* sig_h_leading_WTA_conecellstowers_M = new TH1F("sig_h_leading_WTA_conecellstowers_M", "Leading LRJ pT Distribution;Leading WTA Cone CellsTowers Jet Mass [GeV];% of Leading WTA Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        //TH1F* sig_h_subleading_WTA_conecellstowers_M = new TH1F("sig_h_subleading_WTA_conecellstowers_M", "Subleading LRJ pT Distribution;Subleading WTA Cone CellsTowers Jet Mass [GeV];% of Subleading WTACone CellsTowers Jets / 10 GeV", 25, 0, 250);
+
+        TH1F* sig_h_leading_conebasicclusters_M = new TH1F("sig_h_leading_conebasicclusters_M", "Leading LRJ pT Distribution;Lead. Cone BasicClusters Jet Mass [GeV];% of Leading Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+        TH1F* sig_h_subleading_conebasicclusters_M = new TH1F("sig_h_subleading_conebasicclusters_M", "Subleading LRJ pT Distribution;Sublead. Cone BasicClusters Jet Mass [GeV];% of Subleading Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+
+        //TH1F* sig_h_leading_WTA_conebasicclusters_M = new TH1F("sig_h_leading_WTA_conebasicclusters_M", "Leading LRJ pT Distribution;Leading WTA Cone BasicClusters Jet Mass [GeV];% of Leading WTA Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+        //TH1F* sig_h_subleading_WTA_conebasicclusters_M = new TH1F("sig_h_subleading_WTA_conebasicclusters_M", "Subleading LRJ pT Distribution;Subleading WTA Cone BasicClusters Jet Mass [GeV];% of Subleading WTA Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+
+        TH1F* sig_h_leading_offlineLRJ_Et = new TH1F("sig_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 23, 50, 1200);
         TH1F* sig_h_subleading_offlineLRJ_Et = new TH1F("sig_h_subleading_offlineLRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading Offline LRJs / 50 GeV", 16, 0, 800);
 
         TH1F* sig_h_LRJ_E = new TH1F("sig_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];% of LRJs / 10 GeV", 100, 0, 1000);
@@ -1404,6 +1879,15 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_lead_sublead_LRJ_deltaR = new TH1F("sig_h_lead_sublead_LRJ_deltaR", "#Delta R Leading, Subleading LRJ, ;#Delta R (Lead., Sublead. Output LRJ);% of Leading LRJs / 0.1", 50, 0, 5);
 
         // Signal trigger efficiencies (gFex, JetTagger)
+        // First equal rate thresholds
+        TH1F* sig_h_offlineLRJ_Et_num10kHz = new TH1F("sig_h_offlineLRJ_Et_num10kHz", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz = new TH1F("sig_h_offlineLRJ_Et_denom10kHz", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
+
+        TH1F* sig_h_offlineLRJ_Et_num10kHz_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num10kHz_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom10kHz_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
+
+        TH1F* sig_h_offlineLRJ_Et_num10kHz_jFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num10kHz_jFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz_jFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom10kHz_jFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 80, 100, 900);
 
         TH1F* sig_h_offlineLRJ_Et_num50 = new TH1F("sig_h_offlineLRJ_Et_num50", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom50 = new TH1F("sig_h_offlineLRJ_Et_denom50", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1419,6 +1903,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_offlineLRJ_Et_num50_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num50_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom50_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom50_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
+        TH1F* sig_h_offlineLRJ_subleading_Et_num50_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num50_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom50_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom50_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
         TH1F* sig_h_offlineLRJ_Et_num50_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num50_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom50_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom50_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1447,6 +1934,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_offlineLRJ_Et_num100_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num100_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom100_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom100_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
+        TH1F* sig_h_offlineLRJ_subleading_Et_num100_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num100_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom100_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom100_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
         TH1F* sig_h_offlineLRJ_Et_num100_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num100_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom100_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom100_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
@@ -1473,6 +1963,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_offlineLRJ_Et_num150_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num150_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom150_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom150_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
+        TH1F* sig_h_offlineLRJ_subleading_Et_num150_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num150_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom150_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom150_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
         TH1F* sig_h_offlineLRJ_Et_num150_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num150_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom150_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom150_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1501,6 +1994,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_offlineLRJ_Et_num200_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num200_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom200_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom200_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
+        TH1F* sig_h_offlineLRJ_subleading_Et_num200_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num200_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom200_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom200_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
         TH1F* sig_h_offlineLRJ_Et_num200_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num200_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom200_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom200_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
@@ -1527,6 +2023,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_offlineLRJ_Et_num250_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num250_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom250_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom250_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
+        TH1F* sig_h_offlineLRJ_subleading_Et_num250_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num250_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom250_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom250_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
         TH1F* sig_h_offlineLRJ_Et_num250_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num250_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom250_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom250_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1555,6 +2054,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_offlineLRJ_Et_num300_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num300_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom300_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom300_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
+        TH1F* sig_h_offlineLRJ_subleading_Et_num300_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num300_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom300_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom300_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
         TH1F* sig_h_offlineLRJ_Et_num300_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num300_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom300_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom300_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
@@ -1581,6 +2083,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_offlineLRJ_Et_num350_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num350_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom350_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom350_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
+        TH1F* sig_h_offlineLRJ_subleading_Et_num350_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num350_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom350_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom350_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
         TH1F* sig_h_offlineLRJ_Et_num350_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num350_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom350_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom350_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1609,6 +2114,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_offlineLRJ_Et_num400_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num400_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom400_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom400_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
+        TH1F* sig_h_offlineLRJ_subleading_Et_num400_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num400_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom400_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom400_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
         TH1F* sig_h_offlineLRJ_Et_num400_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num400_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom400_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom400_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
@@ -1636,6 +2144,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_offlineLRJ_Et_num450_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num450_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom450_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom450_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
+        TH1F* sig_h_offlineLRJ_subleading_Et_num450_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num450_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom450_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom450_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
         TH1F* sig_h_offlineLRJ_Et_num450_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num450_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom450_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom450_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
@@ -1662,6 +2173,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_offlineLRJ_Et_num500_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_num500_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom500_mass100to150 = new TH1F("sig_h_offlineLRJ_Et_denom500_mass100to150", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+
+        TH1F* sig_h_offlineLRJ_subleading_Et_num500_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_num500_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
+        TH1F* sig_h_offlineLRJ_subleading_Et_denom500_mass100to150 = new TH1F("sig_h_offlineLRJ_subleading_Et_denom500_mass100to150", "LRJ Et Distribution;Offline Subleading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
 
         TH1F* sig_h_offlineLRJ_Et_num500_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_num500_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
         TH1F* sig_h_offlineLRJ_Et_denom500_gFexLRJ = new TH1F("sig_h_offlineLRJ_Et_denom500_gFexLRJ", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 100, 0, 1000);
@@ -1858,8 +2372,33 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_jFEX_subleading_LRJ_Et = new TH1F("back_h_jFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
 
         TH1F* back_h_offlineLRJ_Et = new TH1F("back_h_offlineLRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of Offline LRJs / 50 GeV", 16, 0, 800);
-        TH1F* back_h_leading_offlineLRJ_Et = new TH1F("back_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 24, 0, 1200);
+        TH1F* back_h_leading_offlineLRJ_Et = new TH1F("back_h_leading_offlineLRJ_Et", "Leading LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV];% of Leading Offline LRJs / 50 GeV", 23, 50, 1200);
         TH1F* back_h_subleading_offlineLRJ_Et = new TH1F("back_h_subleading_offlineLRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading Offline LRJs / 50 GeV", 16, 0, 800);
+
+        TH1F* back_h_leading_conecellstowers_pT = new TH1F("back_h_leading_conecellstowers_pT", "Leading LRJ pT Distribution;Leading Cone CellsTowers Jet p_{T} [GeV];% of Leading Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
+        TH1F* back_h_subleading_conecellstowers_pT = new TH1F("back_h_subleading_conecellstowers_pT", "Subleading LRJ pT Distribution;Subeading Cone CellsTowers Jet p_{T} [GeV];% of Subleading Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* back_h_leading_WTA_conecellstowers_pT = new TH1F("back_h_leading_WTA_conecellstowers_pT", "Leading LRJ pT Distribution;Lead. WTA Cone CellsTowers Jet p_{T} [GeV];% of Leading WTA Cone CellsTowers Jets / 25 GeV", 32, 0, 800);
+        TH1F* back_h_subleading_WTA_conecellstowers_pT = new TH1F("back_h_subleading_WTA_conecellstowers_pT", "Subleading LRJ pT Distribution;Sublead. Cone CellsTowers Jet p_{T} [GeV];% of Subleading WTACone CellsTowers Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* back_h_leading_conebasicclusters_pT = new TH1F("back_h_leading_conebasicclusters_pT", "Leading LRJ pT Distribution;Lead. Cone BasicClusters Jet p_{T} [GeV];% of Leading Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+        TH1F* back_h_subleading_conebasicclusters_pT = new TH1F("back_h_subleading_conebasicclusters_pT", "Subleading LRJ pT Distribution;Sublead. Cone BasicClusters Jet p_{T} [GeV];% of Subleading Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* back_h_leading_WTA_conebasicclusters_pT = new TH1F("back_h_leading_WTA_conebasicclusters_pT", "Leading LRJ pT Distribution;Lead. WTA Cone BasicClusters Jet p_{T} [GeV];% of Leading WTA Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+        TH1F* back_h_subleading_WTA_conebasicclusters_pT = new TH1F("back_h_subleading_WTA_conebasicclusters_pT", "Subleading LRJ pT Distribution;Lead. WTA Cone BasicClusters Jet p_{T} [GeV];% of Subleading WTA Cone BasicClusters Jets / 25 GeV", 32, 0, 800);
+
+        TH1F* back_h_leading_conecellstowers_M = new TH1F("back_h_leading_conecellstowers_M", "Leading LRJ pT Distribution;Lead. Cone CellsTowers Jet Mass [GeV];% of Leading Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        TH1F* back_h_subleading_conecellstowers_M = new TH1F("back_h_subleading_conecellstowers_M", "Subleading LRJ pT Distribution;Sublead. Cone CellsTowers Jet Mass [GeV];% of Subleading Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        // FIXME skip filling mass for WTA jets - for some reason these are all very close to 0 and some negative valued??
+        //TH1F* back_h_leading_WTA_conecellstowers_M = new TH1F("back_h_leading_WTA_conecellstowers_M", "Leading LRJ pT Distribution;Leading WTA Cone CellsTowers Jet Mass [GeV];% of Leading WTA Cone CellsTowers Jets / 10 GeV", 25, 0, 250);
+        //TH1F* back_h_subleading_WTA_conecellstowers_M = new TH1F("back_h_subleading_WTA_conecellstowers_M", "Subleading LRJ pT Distribution;Subleading WTA Cone CellsTowers Jet Mass [GeV];% of Subleading WTACone CellsTowers Jets / 10 GeV", 25, 0, 250);
+
+        TH1F* back_h_leading_conebasicclusters_M = new TH1F("back_h_leading_conebasicclusters_M", "Leading LRJ pT Distribution;Lead. Cone BasicClusters Jet Mass [GeV];% of Leading Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+        TH1F* back_h_subleading_conebasicclusters_M = new TH1F("back_h_subleading_conebasicclusters_M", "Subleading LRJ pT Distribution;Sublead. Cone BasicClusters Jet Mass [GeV];% of Subleading Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+
+        //TH1F* back_h_leading_WTA_conebasicclusters_M = new TH1F("back_h_leading_WTA_conebasicclusters_M", "Leading LRJ pT Distribution;Leading WTA Cone BasicClusters Jet Mass [GeV];% of Leading WTA Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+        //TH1F* back_h_subleading_WTA_conebasicclusters_M = new TH1F("back_h_subleading_WTA_conebasicclusters_M", "Subleading LRJ pT Distribution;Subleading WTA Cone BasicClusters Jet Mass [GeV];% of Subleading WTA Cone BasicClusters Jets / 10 GeV", 25, 0, 250);
+
         TH1F* back_h_LRJ_E = new TH1F("back_h_LRJ_E", "LRJ Et Distribution;Energy [GeV];% of LRJs / 10 GeV", 100, 0, 1000);
         TH1F* back_h_LRJ_eta = new TH1F("back_h_LRJ_eta", "LRJ Eta Distribution;#eta;Counts", 50, -5, 5);
         TH1F* back_h_LRJ_phi = new TH1F("back_h_LRJ_phi", "LRJ Phi Distribution;#phi;Counts", 32, -3.2, 3.2);
@@ -2004,9 +2543,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             if(jFexLRJLeadingEtValuesSignal->size() > 0) sig_h_jFEX_leading_LRJ_Et->Fill(jFexLRJLeadingEtValuesSignal->at(0)); 
             if(jFexLRJSubleadingEtValuesSignal->size() > 0) sig_h_jFEX_subleading_LRJ_Et->Fill(jFexLRJSubleadingEtValuesSignal->at(0));
             
-            for(unsigned int iSigLRJ = 0; iSigLRJ < jetTaggerLRJDiamValuesSignal->size(); iSigLRJ++){
-                sig_h_LRJ_substruct->Fill(jetTaggerLRJDiamValuesSignal->at(iSigLRJ)); 
-                sigDiamvsEt->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ), jetTaggerLRJDiamValuesSignal->at(iSigLRJ));
+            for(unsigned int iSigLRJ = 0; iSigLRJ < jetTaggerLRJPsi_RValuesSignal->size(); iSigLRJ++){
+                sig_h_LRJ_substruct->Fill(jetTaggerLRJPsi_RValuesSignal->at(iSigLRJ)); 
+                sigDiamvsEt->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ), jetTaggerLRJPsi_RValuesSignal->at(iSigLRJ));
                 sig_h_LRJ_Et->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ));
                 sig_h_LRJ_E->Fill(jetTaggerLRJEtValuesSignal->at(iSigLRJ) * cosh(jetTaggerLRJEtaValuesSignal->at(iSigLRJ)));
                 sig_LRJ_Et[iEvt].push_back(jetTaggerLRJEtValuesSignal->at(iSigLRJ));
@@ -2015,8 +2554,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 sig_h_LRJ_eta->Fill(jetTaggerLRJEtaValuesSignal->at(iSigLRJ));
                 sig_h_LRJ_phi->Fill(jetTaggerLRJPhiValuesSignal->at(iSigLRJ));
             }
-
-            
         }
 
         for(unsigned int iEvt = 0; iEvt < num_processed_events_background; iEvt ++ ){ 
@@ -2041,9 +2578,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             if(jFexLRJLeadingEtValuesBack->size() > 0) back_h_jFEX_leading_LRJ_Et->Fill(jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight); 
             if(jFexLRJSubleadingEtValuesBack->size() > 0) back_h_jFEX_subleading_LRJ_Et->Fill(jFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight); 
 
-            for(unsigned int iBackLRJ = 0; iBackLRJ < jetTaggerLRJDiamValuesBack->size(); iBackLRJ++){
-                back_h_LRJ_substruct->Fill(jetTaggerLRJDiamValuesBack->at(iBackLRJ), backgroundEventWeight);
-                backDiamvsEt->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ), jetTaggerLRJDiamValuesBack->at(iBackLRJ), backgroundEventWeight);
+            for(unsigned int iBackLRJ = 0; iBackLRJ < jetTaggerLRJPsi_RValuesBack->size(); iBackLRJ++){
+                back_h_LRJ_substruct->Fill(jetTaggerLRJPsi_RValuesBack->at(iBackLRJ), backgroundEventWeight);
+                backDiamvsEt->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ), jetTaggerLRJPsi_RValuesBack->at(iBackLRJ), backgroundEventWeight);
                 back_h_LRJ_Et->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ), backgroundEventWeight);
                 back_h_LRJ_E->Fill(jetTaggerLRJEtValuesBack->at(iBackLRJ) * cosh(jetTaggerLRJEtaValuesBack->at(iBackLRJ)), backgroundEventWeight);
                 back_LRJ_Et[iEvt].push_back(jetTaggerLRJEtValuesBack->at(iBackLRJ));
@@ -2102,6 +2639,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         c2->SetLogy();
         out.gRate_vsEff->Draw("AP");   // A=axes, P=points
         c2->SaveAs(rateVsEffFileDir + "rate_vs_eff.pdf");
+
+        // Compute 10 kHz rate E_T cut:
+        double jetTagger_10kHz_Threshold_Leading = FindThrForRate(out.hRate_vsThr, 10000.0);
 
         // ---- SUBLEADING -----------------------------------------------------------
         auto out_subleading = MakeRateVsEff(sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et);
@@ -2169,6 +2709,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         out_gFEX_leading.gRate_vsEff->Draw("AP");   // A=axes, P=points
         c2_gFEX_leading->SaveAs(rateVsEffFileDir + "rate_vs_eff_gfex_leading.pdf");
 
+        // Compute 10 kHz rate E_T cut:
+        double gFEX_10kHz_Threshold_Leading = FindThrForRate(out_gFEX_leading.hRate_vsThr, 10000.0);
+
 
         // ---- jFEX LEADING --------------------------------------------------------------
         auto out_jFEX_leading = MakeRateVsEff(sig_h_jFEX_leading_LRJ_Et, back_h_jFEX_leading_LRJ_Et);
@@ -2202,6 +2745,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         out_jFEX_leading.gRate_vsEff->Draw("AP");   // A=axes, P=points
         c2_jFEX_leading->SaveAs(rateVsEffFileDir + "rate_vs_eff_jFEX_leading.pdf");
 
+        // Compute 10 kHz rate E_T cut:
+        double jFEX_10kHz_Threshold_Leading = FindThrForRate(out_jFEX_leading.hRate_vsThr, 10000.0);
 
         // ---- gFEX SUBLEADING --------------------------------------------------------------
         auto out_gFEX_subleading = MakeRateVsEff(sig_h_gFEX_subleading_LRJ_Et, back_h_gFEX_subleading_LRJ_Et);
@@ -2287,7 +2832,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         cLeadThrOverlay->cd(1);
         gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
 
-        for (int i=0;i<3;++i) {
+        for (int i=0;i<2;++i) {
             effH[i]->SetLineColor(cols[i]);
             effH[i]->SetLineWidth(2);
         }
@@ -2295,14 +2840,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         effH[0]->GetXaxis()->SetTitle("Leading LRJ E_{T} Threshold [GeV]");
         effH[0]->Draw("HIST");
         effH[1]->Draw("HIST SAME");
-        effH[2]->Draw("HIST SAME");
+        //effH[2]->Draw("HIST SAME");
 
         // legend (eff)
         auto legEff = new TLegend(0.55,0.72,0.88,0.88);
         legEff->SetBorderSize(0); legEff->SetFillStyle(0); legEff->SetTextSize(0.04);
         legEff->AddEntry(effH[0], labels[0], "l");
         legEff->AddEntry(effH[1], labels[1], "l");
-        legEff->AddEntry(effH[2], labels[2], "l");
+        //legEff->AddEntry(effH[2], labels[2], "l");
         legEff->Draw();
 
         // Right pad: rate vs threshold
@@ -2310,21 +2855,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
         gPad->SetLogy();
 
-        for (int i=0;i<3;++i) {
+        for (int i=0;i<2;++i) {
             rateH[i]->SetLineColor(cols[i]);
             rateH[i]->SetLineWidth(2);
         }
         rateH[0]->GetXaxis()->SetTitle("Leading LRJ E_{T} Threshold [GeV]");
         rateH[0]->Draw("HIST");
         rateH[1]->Draw("HIST SAME");
-        rateH[2]->Draw("HIST SAME");
+        //rateH[2]->Draw("HIST SAME");
 
         // legend (rate)
         auto legRate = new TLegend(0.55,0.72,0.88,0.88);
         legRate->SetBorderSize(0); legRate->SetFillStyle(0); legRate->SetTextSize(0.04);
         legRate->AddEntry(rateH[0], labels[0], "l");
         legRate->AddEntry(rateH[1], labels[1], "l");
-        legRate->AddEntry(rateH[2], labels[2], "l");
+        //legRate->AddEntry(rateH[2], labels[2], "l");
         legRate->Draw();
 
         cLeadThrOverlay->SaveAs(rateVsEffFileDir + "leading_threshold_overlays.pdf");
@@ -2455,22 +3000,22 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ---- Style palette ----
         // Colors per algorithm
-        const Int_t algoCols[3] = { kBlack, kRed+1, kBlue+1 }; // JetTagger, gFEX, jFEX
+        const Int_t algoCols[2] = { kBlack, kRed+1}; // JetTagger, gFEX, jFEX
 
         // Marker styles: leading vs subleading per algorithm
-        const Int_t mLead [3] = { 20, 21, 22 };  // solid markers
-        const Int_t mSub  [3] = { 24, 25, 26 };  // open markers
+        const Int_t mLead [2] = { 20, 21};  // solid markers
+        const Int_t mSub  [2] = { 24, 25};  // open markers
 
         // Line styles: leading=solid, subleading=dashed
         const Int_t lLead = 1;
         const Int_t lSub  = 2;
 
         // Labels
-        const char* algoNames[3] = { "JetTagger LRJ", "gFEX LRJ", "jFEX LRJ" };
+        const char* algoNames[2] = { "JetTagger LRJ", "gFEX LRJ"};
 
         // Convenience handles (rate vs eff graphs)
-        TGraph* gLead[3] = { out.gRate_vsEff,            out_gFEX_leading.gRate_vsEff,      out_jFEX_leading.gRate_vsEff      };
-        TGraph* gSub [3] = { out_subleading.gRate_vsEff, out_gFEX_subleading.gRate_vsEff,   out_jFEX_subleading.gRate_vsEff   };
+        TGraph* gLead[2] = { out.gRate_vsEff,            out_gFEX_leading.gRate_vsEff};
+        TGraph* gSub [2] = { out_subleading.gRate_vsEff, out_gFEX_subleading.gRate_vsEff};
 
         // ---- Canvas ----
         auto cAllROC = new TCanvas("cAllROC","Rate vs Efficiency: Leading & Subleading (All Algos)",800,650);
@@ -2484,7 +3029,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         bool firstDrawn = false;
 
         // (A) Leading first (solid)
-        for (int i=0; i<3; ++i) {
+        for (int i=0; i<2; ++i) {
             if (!gLead[i]) continue;
             gLead[i]->SetMarkerStyle(mLead[i]);
             gLead[i]->SetMarkerSize(1.1);
@@ -2512,7 +3057,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
 
         // (B) Subleading next (dashed)
-        for (int i=0; i<3; ++i) {
+        for (int i=0; i<2; ++i) {
         if (!gSub[i]) continue;
         gSub[i]->SetMarkerStyle(mSub[i]);
         gSub[i]->SetMarkerSize(1.1);
@@ -2531,7 +3076,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         legAll->SetTextSize(0.035);
 
         // Add algorithm-specific entries
-        for (int i=0; i<3; ++i) {
+        for (int i=0; i<2; ++i) {
         // Leading entry
         auto eL = legAll->AddEntry(gLead[i], Form("%s (leading)",   algoNames[i]), "lp");
         // Subleading entry
@@ -2549,6 +3094,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
 
         for (int i = 0; i < num_processed_events_signal; i++) {
+            //std::cout << "test 1" << "\n";
             jetTaggerLRJsSignal->GetEntry(i);
             jetTaggerLeadingLRJsSignal->GetEntry(i);
             jetTaggerSubleadingLRJsSignal->GetEntry(i);
@@ -2562,6 +3108,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             gFexSubleadingLRJTreeSignal->GetEntry(i);
             topo422TreeSignal->GetEntry(i);
             gepBasicClustersTreeSignal->GetEntry(i);
+            gepCellsTowersTreeSignal->GetEntry(i);
+            gepBasicTopoTowersTreeSignal->GetEntry(i);
+            gepConeCellsTowersJetsTreeSignal->GetEntry(i);
+            gepWTAConeCellsTowersJetsTreeSignal->GetEntry(i);
+            gepConeBasicClustersJetsTreeSignal->GetEntry(i);
+            gepWTAConeBasicClustersJetsTreeSignal->GetEntry(i);
+            gepLeadingConeCellsTowersJetsTreeSignal->GetEntry(i);
+            //gepLeadingConeCellsTowersJetsTreeSignal->Print();
+            gepLeadingWTAConeCellsTowersJetsTreeSignal->GetEntry(i);
+            gepLeadingConeBasicClustersJetsTreeSignal->GetEntry(i);
+            gepLeadingWTAConeBasicClustersJetsTreeSignal->GetEntry(i);
+            gepSubleadingConeCellsTowersJetsTreeSignal->GetEntry(i);
+            gepSubleadingWTAConeCellsTowersJetsTreeSignal->GetEntry(i);
+            gepSubleadingConeBasicClustersJetsTreeSignal->GetEntry(i);
+            gepSubleadingWTAConeBasicClustersJetsTreeSignal->GetEntry(i);
             truthbTreeSignal->GetEntry(i);
             truthHiggsTreeSignal->GetEntry(i);
             jFexSRJTreeSignal->GetEntry(i);
@@ -2593,23 +3154,68 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 jFEXSRJSubleadingEta = 0.0;
                 jFEXSRJSubleadingPhi = 0.0;
             }
+            // Fill cone jet kinematic distributions
+            //std::cout << "gepLeadingConeCellsTowersJetspTValuesSignal->size(): " << gepLeadingConeCellsTowersJetspTValuesSignal->size() << "\n";
+            if(gepLeadingConeCellsTowersJetspTValuesSignal->size() > 0) sig_h_leading_conecellstowers_pT->Fill(gepLeadingConeCellsTowersJetspTValuesSignal->at(0));
+            if(gepSubleadingConeCellsTowersJetspTValuesSignal->size() > 0) sig_h_subleading_conecellstowers_pT->Fill(gepSubleadingConeCellsTowersJetspTValuesSignal->at(0));
+            if(gepLeadingWTAConeCellsTowersJetspTValuesSignal->size() > 0) sig_h_leading_WTA_conecellstowers_pT->Fill(gepLeadingWTAConeCellsTowersJetspTValuesSignal->at(0));
+            if(gepSubleadingWTAConeCellsTowersJetspTValuesSignal->size() > 0) sig_h_subleading_WTA_conecellstowers_pT->Fill(gepSubleadingWTAConeCellsTowersJetspTValuesSignal->at(0));
+            if(gepLeadingConeGEPBasicClustersJetspTValuesSignal->size() > 0) sig_h_leading_conebasicclusters_pT->Fill(gepLeadingConeGEPBasicClustersJetspTValuesSignal->at(0));
+            if(gepSubleadingConeGEPBasicClustersJetspTValuesSignal->size() > 0) sig_h_subleading_conebasicclusters_pT->Fill(gepSubleadingConeGEPBasicClustersJetspTValuesSignal->at(0));
+            if(gepLeadingWTAConeGEPBasicClustersJetspTValuesSignal->size() > 0) sig_h_leading_WTA_conebasicclusters_pT->Fill(gepLeadingWTAConeGEPBasicClustersJetspTValuesSignal->at(0));
+            if(gepSubleadingWTAConeGEPBasicClustersJetspTValuesSignal->size() > 0) sig_h_subleading_WTA_conebasicclusters_pT->Fill(gepSubleadingWTAConeGEPBasicClustersJetspTValuesSignal->at(0));
+            // Don't fill mass for WTA jets (see comment near definition)
+            if(gepLeadingConeCellsTowersJetsMassValuesSignal->size() > 0) sig_h_leading_conecellstowers_M->Fill(gepLeadingConeCellsTowersJetsMassValuesSignal->at(0));
+            if(gepSubleadingConeCellsTowersJetsMassValuesSignal->size() > 0) sig_h_subleading_conecellstowers_M->Fill(gepSubleadingConeCellsTowersJetsMassValuesSignal->at(0));
+            //sig_h_leading_WTA_conecellstowers_M->Fill(gepLeadingWTAConeCellsTowersJetsMassValuesSignal->at(0));
+            //sig_h_subleading_WTA_conecellstowers_M->Fill(gepSubleadingWTAConeCellsTowersJetsMassValuesSignal->at(0));
+            if(gepLeadingConeGEPBasicClustersJetsMassValuesSignal->size() > 0) sig_h_leading_conebasicclusters_M->Fill(gepLeadingConeGEPBasicClustersJetsMassValuesSignal->at(0));
+            if(gepSubleadingConeGEPBasicClustersJetsMassValuesSignal->size() > 0) sig_h_subleading_conebasicclusters_M->Fill(gepSubleadingConeGEPBasicClustersJetsMassValuesSignal->at(0));
+            //sig_h_leading_WTA_conebasicclusters_M->Fill(gepLeadingWTAConeGEPBasicClustersJetsMassValuesSignal->at(0));
+            //sig_h_subleading_WTA_conebasicclusters_M->Fill(gepSubleadingWTAConeGEPBasicClustersJetsMassValuesSignal->at(0));
 
+
+            //std::cout << "test 2 (sig)" << "\n";
             double psi_R_SigJet1 = 0.0;
             double psi_R_SigJet2 = 0.0;
             double psi_R2_SigJet1 = 0.0;
             double psi_R2_SigJet2 = 0.0;
 
-            // Loop through and compute psi_R for each large-R jet
-            for(auto& idxSigJet1 : *jetTaggerLeadingLRJMergedIndicesValuesSignal){ // FIXME need to add in all the pSI_R and psi_R^2 computations!!
-                psi_R_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1)));
-                psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesSignal->at(0), jFexSRJLeadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1));
-                //std::cout << "psi_R_SigJet1: " << psi_R_SigJet1 << "\n";
+            psi_R_SigJet1 = jetTaggerLeadingLRJPsi_RValuesSignal->at(0);
+            psi_R_SigJet2 = jetTaggerSubleadingLRJPsi_RValuesSignal->at(0);
+
+
+            //std::cout << "jetTaggerLeadingLRJMergedIndicesValuesSignal: " << jetTaggerLeadingLRJMergedIndicesValuesSignal->size() << "\n";
+            //std::cout << "test 2.1" << "\n";
+            // Loop through and compute psi_R^2 for each large-R jet
+            for(auto& idxSigJet1 : *jetTaggerLeadingLRJMergedIndicesValuesSignal){
+                if(inputObjectType == "gepBasicClusters"){
+                    psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1));
+                }
+                else if(inputObjectType == "gepCellsTowers"){
+                    psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepCellsTowersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet1), gepCellsTowersPhiValuesSignal->at(idxSigJet1));
+                }
+                else if(inputObjectType == "gepTopoTowers"){
+                    psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)) * gepBasicTopoTowersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicTopoTowersEtaValuesSignal->at(idxSigJet1), gepBasicTopoTowersPhiValuesSignal->at(idxSigJet1));
+                }
+                else {
+                    std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
+                }
             }
             for(auto& idxSigJet2 : *jetTaggerSubleadingLRJMergedIndicesValuesSignal){
-                psi_R_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2)));
-                psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesSignal->at(0), jFexSRJSubleadingPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2));
+                if(inputObjectType == "gepBasicClusters"){
+                    psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2));
+                }
+                else if(inputObjectType == "gepCellsTowers"){
+                    psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepCellsTowersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet2), gepCellsTowersPhiValuesSignal->at(idxSigJet2));
+                }
+                else if(inputObjectType == "gepTopoTowers"){
+                    psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0)) * gepBasicTopoTowersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicTopoTowersEtaValuesSignal->at(idxSigJet2), gepBasicTopoTowersPhiValuesSignal->at(idxSigJet2));
+                }
+                else {
+                    std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
+                }
             }
-
             sig_h_LRJ_psi_R_squared->Fill(psi_R_SigJet1 * psi_R_SigJet2);
             sigOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
             sigOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
@@ -2629,6 +3235,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_h_LRJ_psi_R_12->Fill(psi_R_SigJet1 / psi_R_SigJet2);
             sigOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
             sigOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
+            sigOfflineLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
+            sigOfflineSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
             sigOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1);
             sigOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_SigJet2);
             sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet2, psi_R_SigJet1); // subleading filled to x-axis
@@ -2655,7 +3263,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             for (size_t ib = 0; ib < higgsIndexValuesSignal->size(); ++ib) {
                 higgsToB[ (*higgsIndexValuesSignal)[ib] ].push_back((int)ib);
             }
-
+            //std::cout << "test 4" << "\n";
             // For each Higgs, take the first two associated b's
             for (size_t ih = 0; ih < indexOfHiggsValuesSignal->size(); ++ih) {
                 const int hid = (*indexOfHiggsValuesSignal)[ih];
@@ -2682,10 +3290,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
             // FIXME don't want to skip over all these events??
             if(recoAntiKt10LRJLeadingEtValuesSignal->size() == 0) continue;
-
+            //std::cout << "test 5" << "\n";
             // Mass vs. Et for Leading Offline LRJ 
             sigOfflineLeadingLRJMassvsEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0), recoAntiKt10LRJLeadingMassValuesSignal->at(0));
             sigOfflineLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0));
+            if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0){
+                sigOfflineSubleadingLRJMassvsEt->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0), recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
+                sigOfflineSubleadingLRJMassvsLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0), recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
+                sigOfflineSubleadingLRJMass->Fill(recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
+            }
+            
             sig_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
 
             // ------------------- SIGNAL -------------------
@@ -2701,7 +3315,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             const double subjetEtCutoff           = 25.0;  // as before
             const double drMatchToLRJ             = 1.0;   // match truth subjets to leading large-R jet
             const double drMinBetweenSubjets      = 0.4;   // NEW: minimum deltaR separation between counted subjets
-
+            //std::cout << "test 6" << "\n";
             // ---- Utility: select non-overlapping subjets (greedy by Et desc) ----
             auto selectNonOverlappingSubjets = [&](const std::vector<double>& et,
                                                 const std::vector<double>& eta,
@@ -2747,7 +3361,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                                             sig_h_LeadingOfflineLRJ_SubjetEt);
 
             sig_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(signalSubjetCounter);
-            sigOfflineLeadingLRJEtvsSubjetMult->Fill(signalSubjetCounter, recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            sigOfflineLeadingLRJEtvsSubjetMult->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0), signalSubjetCounter);
             sigOfflineLeadingLRJMassvsSubjetMult->Fill(signalSubjetCounter, recoAntiKt10LRJLeadingMassValuesSignal->at(0));
 
             // Delta R, delta Et for leading gFEX, jFEX SRJ (seeds), Offline LRJs
@@ -2768,7 +3382,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_h_first_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFEXSRJLeadingEta, jFEXSRJLeadingPhi, sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0])));
             sig_h_second_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFEXSRJSubleadingEta, jFEXSRJSubleadingPhi, sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1])));
             sig_h_leading_LRJ_offlineLRJ_deltaR->Fill(sqrt(calcDeltaR2(recoAntiKt10LRJLeadingEtaValuesSignal->at(0), recoAntiKt10LRJLeadingPhiValuesSignal->at(0), sig_LRJ_Eta[i][highestEtIndexLRJSig], sig_LRJ_Phi[i][highestEtIndexLRJSig])));
-
+            //std::cout << "test 7" << "\n";
             // Dijet efficiencies (signal)
             if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0){
                 sig_h_subleading_offlineLRJ_Et->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
@@ -2979,6 +3593,76 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 sig_h_offlineLRJ_Et_denom500_mass100to150->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
             }
+
+            // Dijet selection + mass window efficiencies
+            if(recoAntiKt10LRJSubleadingEtValuesSignal->size() > 0){
+                if(recoAntiKt10LRJSubleadingMassValuesSignal->at(0) >= 100.0 && recoAntiKt10LRJSubleadingMassValuesSignal->at(0) <= 150.0){
+                    if(sig_LRJ_Et[i][0] >= 50.0 && sig_LRJ_Et[i][1] >= 50.0){
+                        sig_h_offlineLRJ_subleading_Et_num50_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom50_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 100.0 && sig_LRJ_Et[i][1] >= 100.0){
+                        sig_h_offlineLRJ_subleading_Et_num100_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom100_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 150.0 && sig_LRJ_Et[i][1] >= 150.0){
+                        sig_h_offlineLRJ_subleading_Et_num150_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom150_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 200.0 && sig_LRJ_Et[i][1] >= 200.0){
+                        sig_h_offlineLRJ_subleading_Et_num200_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom200_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 250.0 && sig_LRJ_Et[i][1] >= 250.0){
+                        sig_h_offlineLRJ_subleading_Et_num250_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom250_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 300.0 && sig_LRJ_Et[i][1] >= 300.0){
+                        sig_h_offlineLRJ_subleading_Et_num300_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom300_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 350.0 && sig_LRJ_Et[i][1] >= 350.0){
+                        sig_h_offlineLRJ_subleading_Et_num350_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom350_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 400.0 && sig_LRJ_Et[i][1] >= 400.0){
+                        sig_h_offlineLRJ_subleading_Et_num400_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom400_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 450.0 && sig_LRJ_Et[i][1] >= 450.0){
+                        sig_h_offlineLRJ_subleading_Et_num450_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom450_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+
+                    if(sig_LRJ_Et[i][0] >= 500.0 && sig_LRJ_Et[i][1] >= 500.0){
+                        sig_h_offlineLRJ_subleading_Et_num500_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                    }
+                    sig_h_offlineLRJ_subleading_Et_denom500_mass100to150->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
+                }
+            }
+
+            if(sig_LRJ_Et[i][0] >= jetTagger_10kHz_Threshold_Leading || sig_LRJ_Et[i][1] >= jetTagger_10kHz_Threshold_Leading){
+                sig_h_offlineLRJ_Et_num10kHz->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            }
+            sig_h_offlineLRJ_Et_denom10kHz->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+
+            if(gFexLRJLeadingEtValuesSignal->at(0) >= gFEX_10kHz_Threshold_Leading){
+                sig_h_offlineLRJ_Et_num10kHz_gFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            }
+            sig_h_offlineLRJ_Et_denom10kHz_gFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+
+            if(jFexLRJLeadingEtValuesSignal->at(0) >= jFEX_10kHz_Threshold_Leading){
+                sig_h_offlineLRJ_Et_num10kHz_jFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            }
+            sig_h_offlineLRJ_Et_denom10kHz_jFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
 
             if(sig_LRJ_Et[i][0] >= 50.0 || sig_LRJ_Et[i][1] >= 50.0){
                 sig_h_offlineLRJ_Et_num50->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
@@ -3382,21 +4066,41 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             }
             if(i <= evDisplayMaxSig_){
                 for(unsigned int iTopo = 0; iTopo < nInputObjectsAlgorithmConfiguration; iTopo++){
-                    if(i == evDisplay0Sig_){
-                        sigTopo422Highest128SeedPositionsEv0->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
-                    } 
-                    if(i == evDisplay1Sig_){
-                        sigTopo422Highest128SeedPositionsEv1->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
-                    } 
-                    if(i == evDisplay2Sig_){
-                        sigTopo422Highest128SeedPositionsEv2->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
-                    } 
-                    if(i == evDisplay3Sig_){
-                        sigTopo422Highest128SeedPositionsEv3->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
-                    } 
-                    if(i == evDisplay4Sig_){
-                        sigTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
-                    } 
+                    if(inputObjectType == "gepBasicClusters"){
+                        if(i == evDisplay0Sig_){
+                            sigTopo422Highest128SeedPositionsEv0->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay1Sig_){
+                            sigTopo422Highest128SeedPositionsEv1->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay2Sig_){
+                            sigTopo422Highest128SeedPositionsEv2->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay3Sig_){
+                            sigTopo422Highest128SeedPositionsEv3->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay4Sig_){
+                            sigTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
+                        } 
+                    }
+                    else if(inputObjectType == "gepCellsTowers"){
+                        if(i == evDisplay0Sig_){
+                            sigTopo422Highest128SeedPositionsEv0->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay1Sig_){
+                            sigTopo422Highest128SeedPositionsEv1->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay2Sig_){
+                            sigTopo422Highest128SeedPositionsEv2->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay3Sig_){
+                            sigTopo422Highest128SeedPositionsEv3->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
+                        } 
+                        if(i == evDisplay4Sig_){
+                            sigTopo422Highest128SeedPositionsEv4->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
+                        } 
+                    }
+                    
                 }
             }
 
@@ -3417,6 +4121,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         } // loop through signal events
 
         for (int i = 0; i < num_processed_events_background; i++) {
+            //std::cout << "i:  "<< i << "\n";
             jetTaggerLRJsBack->GetEntry(i);
             jetTaggerLeadingLRJsBack->GetEntry(i);
             jetTaggerSubleadingLRJsBack->GetEntry(i);
@@ -3432,24 +4137,82 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             gFexSubleadingLRJTreeBack->GetEntry(i);
             jFexLeadingSRJTreeBack->GetEntry(i);
             jFexSubleadingSRJTreeBack->GetEntry(i);
+            gFexLeadingSRJTreeBack->GetEntry(i);
+            gFexSubleadingSRJTreeBack->GetEntry(i);
             jFexSRJTreeBack->GetEntry(i);
             topo422TreeBack->GetEntry(i);
             gepBasicClustersTreeBack->GetEntry(i);
+            gepCellsTowersTreeBack->GetEntry(i);
+            gepBasicTopoTowersTreeBack->GetEntry(i);
+            gepConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepWTAConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepConeBasicClustersJetsTreeBack->GetEntry(i);
+            gepWTAConeBasicClustersJetsTreeBack->GetEntry(i);
+            gepLeadingConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepLeadingWTAConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepLeadingConeBasicClustersJetsTreeBack->GetEntry(i);
+            gepLeadingWTAConeBasicClustersJetsTreeBack->GetEntry(i);
+            gepSubleadingConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepSubleadingWTAConeCellsTowersJetsTreeBack->GetEntry(i);
+            gepSubleadingConeBasicClustersJetsTreeBack->GetEntry(i);
+            gepSubleadingWTAConeBasicClustersJetsTreeBack->GetEntry(i);
 
             double backgroundEventWeight = eventWeightsValuesBack->at(0);
-
+            //std::cout << "test 0" << "\n";
+            // Fill jetTagger, gFEX, jFEX LRJs E_T by JZ Slice
             back_h_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
             back_h_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
             back_h_gFEX_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             back_h_gFEX_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
             if(jFexLRJLeadingEtValuesBack->size() > 0) back_h_jFEX_leading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexLRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             if(jFexLRJSubleadingEtValuesBack->size() > 0) back_h_jFEX_subleading_LRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexLRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+
+            // Fill jetTagger, gFEX, jFEX SRJs E_T by JZ Slice
+            back_h_gFEX_leading_SRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexSRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            back_h_gFEX_subleading_SRJ_Et_arr[sampleJZSliceValuesBack]->Fill(gFexSRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+            if(jFexSRJLeadingEtValuesBack->size() > 0) back_h_jFEX_leading_SRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexSRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            if(jFexSRJSubleadingEtValuesBack->size() > 0) back_h_jFEX_subleading_SRJ_Et_arr[sampleJZSliceValuesBack]->Fill(jFexSRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+
+            // Fill offline LRJ, truth SRJ E_T by JZ Slice
             if(recoAntiKt10LRJLeadingEtValuesBack->size() > 0) back_h_leading_offlineLRJ_Et_arr[sampleJZSliceValuesBack]->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0) back_h_subleading_offlineLRJ_Et_arr[sampleJZSliceValuesBack]->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
             if(truthAntiKt4WZSRJLeadingEtValuesBack->size() > 0) back_h_leading_truthSRJs_Et_arr[sampleJZSliceValuesBack]->Fill(truthAntiKt4WZSRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             if(truthAntiKt4WZSRJSubleadingEtValuesBack->size() > 0) back_h_subleading_truthSRJs_Et_arr[sampleJZSliceValuesBack]->Fill(truthAntiKt4WZSRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
+
+            // Fill cone jet JZ Slice pT distributions
+            if (gepLeadingConeCellsTowersJetspTValuesBack->size() > 0) back_h_leading_conejets_cellstowers_pT_arr[sampleJZSliceValuesBack]->Fill(gepLeadingConeCellsTowersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepSubleadingConeCellsTowersJetspTValuesBack->size() > 0) back_h_subleading_conejets_cellstowers_pT_arr[sampleJZSliceValuesBack]->Fill(gepSubleadingConeCellsTowersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepLeadingWTAConeCellsTowersJetspTValuesBack->size() > 0) back_h_leading_WTA_conejets_cellstowers_pT_arr[sampleJZSliceValuesBack]->Fill(gepLeadingWTAConeCellsTowersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepSubleadingWTAConeCellsTowersJetspTValuesBack->size() > 0) back_h_subleading_WTA_conejets_cellstowers_pT_arr[sampleJZSliceValuesBack]->Fill(gepSubleadingWTAConeCellsTowersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepLeadingConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_leading_conejets_basicclusters_pT_arr[sampleJZSliceValuesBack]->Fill(gepLeadingConeGEPBasicClustersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepSubleadingConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_subleading_conejets_cellstowers_pT_arr[sampleJZSliceValuesBack]->Fill(gepSubleadingConeGEPBasicClustersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepLeadingWTAConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_leading_WTA_conejets_basicclusters_pT_arr[sampleJZSliceValuesBack]->Fill(gepLeadingWTAConeGEPBasicClustersJetspTValuesBack->at(0), backgroundEventWeight);
+            if (gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_subleading_WTA_conejets_basicclusters_pT_arr[sampleJZSliceValuesBack]->Fill(gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack->at(0), backgroundEventWeight);
+
+            // Fill cone jet kinematic distributions
+            if (gepLeadingConeCellsTowersJetspTValuesBack->size() > 0) back_h_leading_conecellstowers_pT->Fill(gepLeadingConeCellsTowersJetspTValuesBack->at(0));
+            if (gepSubleadingConeCellsTowersJetspTValuesBack->size() > 0) back_h_subleading_conecellstowers_pT->Fill(gepSubleadingConeCellsTowersJetspTValuesBack->at(0));
+            if (gepLeadingWTAConeCellsTowersJetspTValuesBack->size() > 0) back_h_leading_WTA_conecellstowers_pT->Fill(gepLeadingWTAConeCellsTowersJetspTValuesBack->at(0));
+            if (gepSubleadingWTAConeCellsTowersJetspTValuesBack->size() > 0) back_h_subleading_WTA_conecellstowers_pT->Fill(gepSubleadingWTAConeCellsTowersJetspTValuesBack->at(0));
+            if (gepLeadingConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_leading_conebasicclusters_pT->Fill(gepLeadingConeGEPBasicClustersJetspTValuesBack->at(0));
+            if (gepSubleadingConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_subleading_conebasicclusters_pT->Fill(gepSubleadingConeGEPBasicClustersJetspTValuesBack->at(0));
+            if (gepLeadingWTAConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_leading_WTA_conebasicclusters_pT->Fill(gepLeadingWTAConeGEPBasicClustersJetspTValuesBack->at(0));
+            if (gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack->size() > 0) back_h_subleading_WTA_conebasicclusters_pT->Fill(gepSubleadingWTAConeGEPBasicClustersJetspTValuesBack->at(0));
+
+            // Don't fill mass for WTA jets (see comment near definition)
+            if (gepLeadingConeCellsTowersJetsMassValuesBack->size() > 0) back_h_leading_conecellstowers_M->Fill(gepLeadingConeCellsTowersJetsMassValuesBack->at(0));
+            if (gepSubleadingConeCellsTowersJetsMassValuesBack->size() > 0) back_h_subleading_conecellstowers_M->Fill(gepSubleadingConeCellsTowersJetsMassValuesBack->at(0));
+            //back_h_leading_WTA_conecellstowers_M->Fill(gepLeadingWTAConeCellsTowersJetsMassValuesBack->at(0));
+            //back_h_subleading_WTA_conecellstowers_M->Fill(gepSubleadingWTAConeCellsTowersJetsMassValuesBack->at(0));
+            if (gepLeadingConeGEPBasicClustersJetsMassValuesBack->size() > 0) back_h_leading_conebasicclusters_M->Fill(gepLeadingConeGEPBasicClustersJetsMassValuesBack->at(0));
+            if (gepSubleadingConeGEPBasicClustersJetsMassValuesBack->size() > 0) back_h_subleading_conebasicclusters_M->Fill(gepSubleadingConeGEPBasicClustersJetsMassValuesBack->at(0));
+            //back_h_leading_WTA_conebasicclusters_M->Fill(gepLeadingWTAConeGEPBasicClustersJetsMassValuesBack->at(0));
+            //back_h_subleading_WTA_conebasicclusters_M->Fill(gepSubleadingWTAConeGEPBasicClustersJetsMassValuesBack->at(0));
+
+
+            //std::cout << "test 1" << "\n";
             unsigned int highestEtIndexLRJBack = -1;
-            
+            //std::cout << "test 1.1" << "\n";
             if(back_LRJ_Et[i][0] >= back_LRJ_Et[i][1]) highestEtIndexLRJBack = 0;
             else highestEtIndexLRJBack = 1;
 
@@ -3457,15 +4220,37 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             double psi_R_BackJet2 = 0.0;
             double psi_R2_BackJet1 = 0.0;
             double psi_R2_BackJet2 = 0.0;
-            
+
             for(auto& idxBackJet1 : *jetTaggerLeadingLRJMergedIndicesValuesBack){
-                psi_R_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1)));
-                psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1));
+                if(inputObjectType == "gepBasicClusters"){
+                    psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1));
+                }
+                else if(inputObjectType == "gepCellsTowers"){
+                    psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepCellsTowersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet1), gepCellsTowersPhiValuesBack->at(idxBackJet1));
+                }
+                else if(inputObjectType == "gepTopoTowers"){
+                    psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0)) * gepBasicTopoTowersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicTopoTowersEtaValuesBack->at(idxBackJet1), gepBasicTopoTowersPhiValuesBack->at(idxBackJet1));
+                }
+                else {
+                    std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
+                }
             }
             for(auto& idxBackJet2 : *jetTaggerSubleadingLRJMergedIndicesValuesBack){
-                psi_R_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2)));
-                psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2));
+                if(inputObjectType == "gepBasicClusters"){
+                    psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicClustersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2));
+                }
+                else if(inputObjectType == "gepCellsTowers"){
+                    psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepCellsTowersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet2), gepCellsTowersPhiValuesBack->at(idxBackJet2));
+                }
+                else if(inputObjectType == "gepTopoTowers"){
+                    psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0)) * gepBasicTopoTowersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicTopoTowersEtaValuesBack->at(idxBackJet2), gepBasicTopoTowersPhiValuesBack->at(idxBackJet2));
+                }
+                else {
+                    std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
+                }
             }
+            psi_R_BackJet1 = jetTaggerLeadingLRJPsi_RValuesBack->at(0);
+            psi_R_BackJet2 = jetTaggerSubleadingLRJPsi_RValuesBack->at(0);
 
             back_h_LRJ_psi_R_squared->Fill(psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
             backOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
@@ -3477,16 +4262,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
             backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
             backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
-            back_h_LRJ_psi_R2_squared->Fill(psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
             backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
             backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
-
+            //std::cout << "test 2" << "\n";
             // Fill with regular deltaR metric
             back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
             back_h_LRJ_psi_R_12->Fill(psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
             backOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
             backOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            backOfflineLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
+            backOfflineSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
             
             backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
             backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
@@ -3499,18 +4285,25 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backOfflineSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet2, backgroundEventWeight);
             backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_BackJet2, psi_R2_BackJet1, backgroundEventWeight); // subleading filled to x-axis
 
-
+            //std::cout << "test 3" << "\n";
             back_h_LRJ1_deltaEt_digitized_double->Fill((back_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesBack->at(0)), backgroundEventWeight);
             back_h_LRJ2_deltaEt_digitized_double->Fill((back_LRJ_Et[i][1] - jetTaggerSubleadingLRJEtValuesBack->at(0)), backgroundEventWeight);
 
             if(recoAntiKt10LRJLeadingEtValuesBack->size() == 0) continue;
             // Mass vs. Et for Leading Offline LRJ 
             backOfflineLeadingLRJMassvsEt->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+            
             backOfflineLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+            if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0){
+                backOfflineSubleadingLRJMassvsEt->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
+                backOfflineSubleadingLRJMassvsLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
+                backOfflineSubleadingLRJMass->Fill(recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
+            }
+            
             back_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             
             if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0) back_h_subleading_offlineLRJ_Et->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
-            
+            //std::cout << "test 4" << "\n";
             // ------------------- BACKGROUND -------------------
             const auto& etBkg  = *truthAntiKt4WZSRJEtValuesBack;
             const auto& etaBkg = *truthAntiKt4WZSRJEtaValuesBack;
@@ -3567,9 +4360,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             const unsigned int backgroundSubjetCounter =
                 selectNonOverlappingSubjets(etBkg, etaBkg, phiBkg, lrjEtaBkg, lrjPhiBkg,
                                             back_h_LeadingOfflineLRJ_SubjetEt);
-
+            //std::cout << "test 5" << "\n";
             back_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounter, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+            backOfflineLeadingLRJEtvsSubjetMult->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundSubjetCounter, backgroundEventWeight);
             backOfflineLeadingLRJMassvsSubjetMult->Fill(backgroundSubjetCounter, recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
 
             // Delta R, delta Et for leading gFEX, jFEX SRJ (seeds), Offline LRJs
@@ -3584,7 +4377,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_leading_LRJ_offlineLRJ_Et_resolution->Fill(((recoAntiKt10LRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0))/ recoAntiKt10LRJLeadingEtValuesBack->at(0)), backgroundEventWeight);
 
             back_h_leading_LRJ_gFexLRJ_deltaR->Fill(sqrt(calcDeltaR2(gFexLRJLeadingEtaValuesBack->at(0), gFexLRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
-            
+            //std::cout << "test 6" << "\n";
             back_h_leading_LRJ_offlineLRJ_deltaR->Fill(sqrt(calcDeltaR2(recoAntiKt10LRJLeadingEtaValuesBack->at(0), recoAntiKt10LRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][highestEtIndexLRJBack], back_LRJ_Phi[i][highestEtIndexLRJBack])), backgroundEventWeight);
             back_h_first_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJLeadingEtaValuesBack->at(0), jFexSRJLeadingPhiValuesBack->at(0), back_LRJ_Eta[i][0], back_LRJ_Phi[i][0])));
             back_h_second_LRJ_jFexSRJ_deltaR->Fill(sqrt(calcDeltaR2(jFexSRJSubleadingEtaValuesBack->at(0), jFexSRJSubleadingPhiValuesBack->at(0), back_LRJ_Eta[i][1], back_LRJ_Phi[i][1])), backgroundEventWeight);
@@ -3625,7 +4418,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 }
                 back_h_offlineLRJ_Et_denom300_GrEq2Subjets->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
             }
-
+            //std::cout << "test 7" << "\n";
             // Fill background jFEX trigger efficiencies (1 jet) 
             if(jFexLRJLeadingEtValuesBack->at(0) >= 50.0){
                 back_h_offlineLRJ_Et_num50_jFexLRJ->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
@@ -4023,6 +4816,355 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         h2_DR_vs_HpT->Scale(1.0 / h2_DR_vs_HpT->Integral());
         c2_TH2F.SaveAs(modifiedOutputFileDir + "dR_vs_HpT_2D.pdf");
 
+
+        // ===================== LEADING (ET_th vs R_max scan) ======================= (R_max == psi_R_leading / psi_R_sublead)
+        auto out2D_leading = MakeRateVsEff_ScanRMax(
+            sig_h_leading_LRJ_Et,  back_h_leading_LRJ_Et,   // ET spectra
+            sig_h_LRJ_psi_R_12,    back_h_LRJ_psi_R_12      // R = psi_lead/psi_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading.hEff_vsThr_vsR ->GetYaxis(), "R_{max} = #psi_{R,lead}/#psi_{R,subl}");
+        SetAxes(out2D_leading.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading.hRate_vsThr_vsR->GetYaxis(), "R_{max} = #psi_{R,lead}/#psi_{R,subl}");
+
+        SetAxes(out2D_leading.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_leading.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D = new TCanvas("c1_leading2D","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Signal (hh#rightarrow4b) Efficiency");
+        out2D_leading.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Estimated Background Rate [Hz]");
+        out2D_leading.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Rmax_leading.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D = new TCanvas("c2_leading2D","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D->SetLeftMargin(0.16); c2_leading2D->SetBottomMargin(0.16); c2_leading2D->SetTicks(1,1);
+        c2_leading2D->SetLogy();
+        out2D_leading.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading.pdf");
+
+
+        // ================== SUBLEADING (ET_th vs R_max scan) =======================
+        auto out2D_subl = MakeRateVsEff_ScanRMax(
+            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,  // ET spectra
+            sig_h_LRJ_psi_R_12,      back_h_LRJ_psi_R_12        // same R histos
+        );
+
+        // Axis titles
+        SetAxes(out2D_subl.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_subl.hEff_vsThr_vsR ->GetYaxis(), "R_{max} = #psi_{R,lead}/#psi_{R,subl}");
+        SetAxes(out2D_subl.hRate_vsThr_vsR->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_subl.hRate_vsThr_vsR->GetYaxis(), "R_{max} = #psi_{R,lead}/#psi_{R,subl}");
+
+        SetAxes(out2D_subl.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_subl.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // 2D surfaces
+        auto c1_subl2D = new TCanvas("c1_subl2D","ET_thr vs Rmax surfaces (subleading)",1200,520);
+        c1_subl2D->Divide(2,1);
+
+        // Efficiency surface
+        c1_subl2D->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_subl.hEff_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];R_{max};Signal (hh#rightarrow4b) Efficiency");
+        out2D_subl.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_subl2D->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_subl.hRate_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];R_{max};Estimated Background Rate [Hz]");
+        out2D_subl.hRate_vsThr_vsR->Draw("COLZ");
+        c1_subl2D->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Rmax_subleading.pdf");
+
+        // Main plot: rate vs efficiency (all points)
+        auto c2_subl2D = new TCanvas("c2_subl2D","Rate vs Eff (2D scan, subleading)",700,600);
+        c2_subl2D->SetLeftMargin(0.16); c2_subl2D->SetBottomMargin(0.16); c2_subl2D->SetTicks(1,1);
+        c2_subl2D->SetLogy();
+        out2D_subl.gRate_vsEff_all->Draw("AP");
+        c2_subl2D->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_subleading.pdf");
+
+        // ===================== LEADING (ET_thr vs P_max scan) =======================
+        auto out2D_leading_Pmax = MakeRateVsEff_ScanRMax(
+            sig_h_leading_LRJ_Et,        back_h_leading_LRJ_Et,        // ET spectra
+            sig_h_LRJ_psi_R_squared,     back_h_LRJ_psi_R_squared       // P = psiR_lead * psiR_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_Pmax.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_Pmax.hEff_vsThr_vsR ->GetYaxis(), "P_{max} = #psi_{R,lead}#times#psi_{R,subl}");
+        SetAxes(out2D_leading_Pmax.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_Pmax.hRate_vsThr_vsR->GetYaxis(), "P_{max} = #psi_{R,lead}#times#psi_{R,subl}");
+
+        SetAxes(out2D_leading_Pmax.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_leading_Pmax.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        out2D_leading_Pmax.hEff_vsThr_vsR->GetZaxis()->SetTitleOffset(1.4);
+        out2D_leading_Pmax.hRate_vsThr_vsR->GetZaxis()->SetTitleOffset(1.6);
+
+        // 2D "vs-threshold & Pmax" views (surfaces)
+        auto c1_leading2D_Pmax = new TCanvas("c1_leading2D_Pmax","ET_thr vs Pmax surfaces (leading)",1200,520);
+        c1_leading2D_Pmax->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_Pmax->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_Pmax.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];P_{max};Signal (hh#rightarrow4b) Efficiency");
+        out2D_leading_Pmax.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_Pmax->cd(2);
+        gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.2); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_Pmax.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];P_{max};Estimated Background Rate [Hz]");
+        out2D_leading_Pmax.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_Pmax->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_leading.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_Pmax = new TCanvas("c2_leading2D_Pmax","Rate vs Eff (2D scan, leading, Pmax)",700,600);
+        c2_leading2D_Pmax->SetLeftMargin(0.16); c2_leading2D_Pmax->SetBottomMargin(0.16); c2_leading2D_Pmax->SetTicks(1,1);
+        c2_leading2D_Pmax->SetLogy();
+        out2D_leading_Pmax.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_Pmax->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_leading.pdf");
+
+
+        // ================== SUBLEADING (ET_thr vs P_max scan) ======================
+        auto out2D_subl_Pmax = MakeRateVsEff_ScanRMax(
+            sig_h_subleading_LRJ_Et,     back_h_subleading_LRJ_Et,     // ET spectra
+            sig_h_LRJ_psi_R_squared,     back_h_LRJ_psi_R_squared      // same P histos
+        );
+
+        // Axis titles
+        SetAxes(out2D_subl_Pmax.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_subl_Pmax.hEff_vsThr_vsR ->GetYaxis(), "P_{max} = #psi_{R,lead}#times#psi_{R,subl}");
+        SetAxes(out2D_subl_Pmax.hRate_vsThr_vsR->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_subl_Pmax.hRate_vsThr_vsR->GetYaxis(), "P_{max} = #psi_{R,lead}#times#psi_{R,subl}");
+
+        SetAxes(out2D_subl_Pmax.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_subl_Pmax.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+        out2D_subl_Pmax.hEff_vsThr_vsR->GetZaxis()->SetTitleOffset(1.4);
+        out2D_subl_Pmax.hRate_vsThr_vsR->GetZaxis()->SetTitleOffset(1.6);
+
+        // 2D surfaces
+        auto c1_subl2D_Pmax = new TCanvas("c1_subl2D_Pmax","ET_thr vs Pmax surfaces (subleading)",1200,520);
+        c1_subl2D_Pmax->Divide(2,1);
+
+        // Efficiency surface
+        c1_subl2D_Pmax->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_subl_Pmax.hEff_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];P_{max};Signal (hh#rightarrow4b) Efficiency");
+        out2D_subl_Pmax.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_subl2D_Pmax->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_subl_Pmax.hRate_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];P_{max};Estimated Background Rate [Hz]");
+        out2D_subl_Pmax.hRate_vsThr_vsR->Draw("COLZ");
+        c1_subl2D_Pmax->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_subleading.pdf");
+
+        // Main plot: rate vs efficiency (all points)
+        auto c2_subl2D_Pmax = new TCanvas("c2_subl2D_Pmax","Rate vs Eff (2D scan, subleading, Pmax)",700,600);
+        c2_subl2D_Pmax->SetLeftMargin(0.16); c2_subl2D_Pmax->SetBottomMargin(0.16); c2_subl2D_Pmax->SetTicks(1,1);
+        c2_subl2D_Pmax->SetLogy();
+        out2D_subl_Pmax.gRate_vsEff_all->Draw("AP");
+        c2_subl2D_Pmax->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_subleading.pdf");
+
+
+
+
+        // ---------- Overlay: Leading (1D vs 2D scan) ----------
+        TGraph*       gLead1D  = out.gRate_vsEff;            // standard leading (ET threshold only)
+        TGraphErrors* gLead2D  = out2D_leading.gRate_vsEff_all; // 2D scan (ET, Rmax)
+
+        // --- Styling ---
+        gLead1D->SetMarkerStyle(20);   // filled circle
+        gLead1D->SetMarkerSize(1.8);
+        gLead1D->SetMarkerColor(kRed+1);
+        gLead1D->SetLineColor(kRed+1);
+        gLead1D->SetLineWidth(2);
+
+        gLead2D->SetMarkerStyle(24);   // open circle
+        gLead2D->SetMarkerColor(kBlack);
+        gLead2D->SetLineColor(kBlack);
+        gLead2D->SetLineWidth(1);
+        gLead2D->SetMarkerSize(0.9);
+        //gLead2D->SetMarkerColorAlpha(kBlack, 0.3);  // ROOT >=6.26
+
+
+        // --- Canvas setup ---
+        auto cLeadOverlay = new TCanvas("cLeadOverlay","Leading: 1D vs 2D Scan",700,600);
+        cLeadOverlay->SetLeftMargin(0.16);
+        cLeadOverlay->SetBottomMargin(0.16);
+        cLeadOverlay->SetTicks(1,1);
+        cLeadOverlay->SetLogy();
+
+        // Draw a horizontal line at y = 1e4
+        TLine *line_Rmax_leading = new TLine(gLead1D->GetXaxis()->GetXmin(), 1e4, gLead1D->GetXaxis()->GetXmax(), 1e4);
+        line_Rmax_leading->SetLineColor(kGray + 2);
+        line_Rmax_leading->SetLineStyle(2);
+        line_Rmax_leading->SetLineWidth(2);
+        line_Rmax_leading->Draw("same");
+
+        // Draw with axes
+        gLead1D->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gLead1D->Draw("AP");     // axes + points (filled)
+        gLead2D->Draw("P SAME"); // overlay open circles
+
+        // --- Legend ---
+        auto legLead = new TLegend(0.40,0.22,0.78,0.38);
+        legLead->SetBorderSize(0);
+        legLead->SetFillStyle(0);
+        legLead->SetTextSize(0.04);
+        legLead->AddEntry(gLead1D, "Leading: E_{T}^{thr} only",        "lp");
+        legLead->AddEntry(gLead2D, "Leading: (E_{T}^{thr}, R_{max}) scan", "p");
+        legLead->Draw();
+
+        // --- Save ---
+        cLeadOverlay->SaveAs(rateVsEffFileDir + "overlay_leading_1D_vs_2D_Rmax_scan.pdf");
+
+        // ---------- Overlay: Subleading (1D ET-only vs 2D (ET_thr, R_max) scan) ----------
+        TGraph*       gSub1D = out_subleading.gRate_vsEff;          // ET-only
+        TGraphErrors* gSub2D = out2D_subl.gRate_vsEff_all;          // 2D scan points
+
+        // Style: ET-only curve
+        gSub1D->SetMarkerStyle(20);     // filled circle
+        gSub1D->SetMarkerSize(1.8);
+        gSub1D->SetMarkerColor(kRed+1);
+        gSub1D->SetLineColor(kRed+1);
+        gSub1D->SetLineWidth(2);
+
+        // Style: 2D scan points (open black circles, smaller)
+        gSub2D->SetMarkerStyle(24);     // open circle
+        gSub2D->SetMarkerSize(0.9);
+        gSub2D->SetMarkerColor(kBlack);
+        gSub2D->SetLineColor(kBlack);
+        gSub2D->SetLineWidth(1);
+
+        // Canvas
+        auto cSubOverlay = new TCanvas("cSubOverlay","Subleading: 1D vs 2D Scan",700,600);
+        cSubOverlay->SetLeftMargin(0.16);
+        cSubOverlay->SetBottomMargin(0.16);
+        cSubOverlay->SetTicks(1,1);
+        cSubOverlay->SetLogy();
+
+        // Axes from 1D curve; then overlay 2D scan points
+        gSub1D->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gSub1D->Draw("AP");      // axes + points (filled red)
+        gSub2D->Draw("P SAME");  // open black
+
+        // Legend
+        auto legSub = new TLegend(0.40,0.32,0.78,0.48);
+        legSub->SetBorderSize(0);
+        legSub->SetFillStyle(0);
+        legSub->SetTextSize(0.04);
+        legSub->AddEntry(gSub1D, "Subleading: E_{T}^{thr} only",         "lp");
+        legSub->AddEntry(gSub2D, "Subleading: (E_{T}^{thr}, R_{max}) scan","p");
+        legSub->Draw();
+
+        cSubOverlay->SaveAs(rateVsEffFileDir + "overlay_subleading_1D_vs_2D_Rmax_scan.pdf");
+
+        // ===================== OVERLAY: LEADING (ET-only vs 2D Pmax scan) =====================
+        TGraph*       gLead1D_Pmax = out.gRate_vsEff;                 // ET-only (leading)
+        TGraphErrors* gLead2D_Pmax = out2D_leading_Pmax.gRate_vsEff_all; // 2D scan (ET_thr, Pmax)
+
+        // --- Styling ---
+        gLead1D_Pmax->SetMarkerStyle(20);   // filled circle
+        gLead1D_Pmax->SetMarkerSize(1.8);
+        gLead1D_Pmax->SetMarkerColor(kRed+1);
+        gLead1D_Pmax->SetLineColor(kRed+1);
+        gLead1D_Pmax->SetLineWidth(2);
+
+        gLead2D_Pmax->SetMarkerStyle(24);   // open circle
+        gLead2D_Pmax->SetMarkerSize(0.9);
+        gLead2D_Pmax->SetMarkerColor(kBlack);
+        gLead2D_Pmax->SetLineColor(kBlack);
+        gLead2D_Pmax->SetLineWidth(1);
+
+        // --- Canvas ---
+        auto cLeadOverlay_Pmax = new TCanvas("cLeadOverlay_Pmax","Leading: 1D vs 2D Pmax Scan",700,600);
+        cLeadOverlay_Pmax->SetLeftMargin(0.16);
+        cLeadOverlay_Pmax->SetBottomMargin(0.16);
+        cLeadOverlay_Pmax->SetTicks(1,1);
+        cLeadOverlay_Pmax->SetLogy();
+
+        // Draw a horizontal line at y = 1e4
+        TLine *line_Pmax_leading = new TLine(gLead1D_Pmax->GetXaxis()->GetXmin(), 1e4, gLead1D_Pmax->GetXaxis()->GetXmax(), 1e4);
+        line_Pmax_leading->SetLineColor(kGray + 2);
+        line_Pmax_leading->SetLineStyle(2);
+        line_Pmax_leading->SetLineWidth(2);
+        line_Pmax_leading->Draw("same");
+
+        // Draw
+        gLead1D_Pmax->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gLead1D_Pmax->Draw("AP");            // axes + points
+        gLead2D_Pmax->Draw("P SAME");        // overlay open circles
+
+        // Legend
+        auto legLead_Pmax = new TLegend(0.40,0.26,0.78,0.42);
+        legLead_Pmax->SetBorderSize(0); legLead_Pmax->SetFillStyle(0); legLead_Pmax->SetTextSize(0.04);
+        legLead_Pmax->AddEntry(gLead1D_Pmax, "Leading: E_{T}^{thr} only",            "lp");
+        legLead_Pmax->AddEntry(gLead2D_Pmax, "Leading: (E_{T}^{thr}, P_{max}) scan", "p");
+        legLead_Pmax->Draw();
+
+        cLeadOverlay_Pmax->SaveAs(rateVsEffFileDir + "overlay_leading_1D_vs_2D_Pmax_scan.pdf");
+
+
+        // ===================== OVERLAY: SUBLEADING (ET-only vs 2D Pmax scan) =====================
+        TGraph*       gSub1D_Pmax = out_subleading.gRate_vsEff;           // ET-only (subleading)
+        TGraphErrors* gSub2D_Pmax = out2D_subl_Pmax.gRate_vsEff_all;      // 2D scan (ET_thr, Pmax)
+
+        // --- Styling ---
+        gSub1D_Pmax->SetMarkerStyle(20);   // filled circle
+        gSub1D_Pmax->SetMarkerSize(1.8);
+        gSub1D_Pmax->SetMarkerColor(kRed+1);
+        gSub1D_Pmax->SetLineColor(kRed+1);
+        gSub1D_Pmax->SetLineWidth(2);
+
+        gSub2D_Pmax->SetMarkerStyle(24);   // open circle
+        gSub2D_Pmax->SetMarkerSize(0.9);
+        gSub2D_Pmax->SetMarkerColor(kBlack);
+        gSub2D_Pmax->SetLineColor(kBlack);
+        gSub2D_Pmax->SetLineWidth(1);
+
+        // --- Canvas ---
+        auto cSubOverlay_Pmax = new TCanvas("cSubOverlay_Pmax","Subleading: 1D vs 2D Pmax Scan",700,600);
+        cSubOverlay_Pmax->SetLeftMargin(0.16);
+        cSubOverlay_Pmax->SetBottomMargin(0.16);
+        cSubOverlay_Pmax->SetTicks(1,1);
+        cSubOverlay_Pmax->SetLogy();
+
+        // Draw
+        gSub1D_Pmax->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gSub1D_Pmax->Draw("AP");
+        gSub2D_Pmax->Draw("P SAME");
+
+        // Legend
+        auto legSub_Pmax = new TLegend(0.35,0.22,0.73,0.38);
+        legSub_Pmax->SetBorderSize(0); legSub_Pmax->SetFillStyle(0); legSub_Pmax->SetTextSize(0.04);
+        legSub_Pmax->AddEntry(gSub1D_Pmax, "Subleading: E_{T}^{thr} only",             "lp");
+        legSub_Pmax->AddEntry(gSub2D_Pmax, "Subleading: (E_{T}^{thr}, P_{max}) scan",  "p");
+        legSub_Pmax->Draw();
+
+        cSubOverlay_Pmax->SaveAs(rateVsEffFileDir + "overlay_subleading_1D_vs_2D_Pmax_scan.pdf");
+
+
+
+
     
         //gSystem->RedirectOutput(0); // back to normal
         // Save histograms
@@ -4057,11 +5199,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->AddEntry(sig_h_LRJ_Et, "Signal", "l");
         leg->AddEntry(back_h_LRJ_Et, "Background", "l");
 
-        TLegend *leg_diam = new TLegend(0.4,0.8,0.55,0.95);
-        leg_diam->SetTextSize(0.025);
+        TLegend *leg_Psi_R = new TLegend(0.4,0.8,0.55,0.95);
+        leg_Psi_R->SetTextSize(0.025);
 
-        leg_diam->AddEntry(sig_h_LRJ_Et, "Signal", "l");
-        leg_diam->AddEntry(back_h_LRJ_Et, "Background", "l");
+        leg_Psi_R->AddEntry(sig_h_LRJ_Et, "Signal", "l");
+        leg_Psi_R->AddEntry(back_h_LRJ_Et, "Background", "l");
 
         TLegend *legEffb = new TLegend(0.8,0.2,0.95,0.35);
         legEffb->SetTextSize(0.025);
@@ -4143,6 +5285,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R_Leading_over_Subleading.pdf");
 
+        sig_h_LRJ_psi_R2_12->Scale(1.0 / sig_h_LRJ_psi_R2_12->Integral());
+        back_h_LRJ_psi_R2_12->Scale(1.0 / back_h_LRJ_psi_R2_12->Integral());
+        sig_h_LRJ_psi_R2_12->SetLineColor(kRed);
+        back_h_LRJ_psi_R2_12->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R2_12->Draw("HIST");
+        sig_h_LRJ_psi_R2_12->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_psi_R2_Leading_over_Subleading.pdf");
+
+        TCanvas cLogY2;
+        cLogY2.SetLogy();
         sig_h_LRJ_psi_R_squared->Scale(1.0 / sig_h_LRJ_psi_R_squared->Integral());
         back_h_LRJ_psi_R_squared->Scale(1.0 / back_h_LRJ_psi_R_squared->Integral());
         sig_h_LRJ_psi_R_squared->SetLineColor(kRed);
@@ -4152,7 +5307,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sig_h_LRJ_psi_R_squared->Draw("HIST SAME");
         
         leg->Draw();
-        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_squared_JetTagger.pdf");
+        cLogY2.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_squared_JetTagger.pdf");
+
+        c.cd();
+        sig_h_LRJ_psi_R2_squared->Scale(1.0 / sig_h_LRJ_psi_R2_squared->Integral());
+        back_h_LRJ_psi_R2_squared->Scale(1.0 / back_h_LRJ_psi_R2_squared->Integral());
+        sig_h_LRJ_psi_R2_squared->SetLineColor(kRed);
+        back_h_LRJ_psi_R2_squared->SetLineColor(kBlue);
+        
+        back_h_LRJ_psi_R2_squared->Draw("HIST");
+        sig_h_LRJ_psi_R2_squared->Draw("HIST SAME");
+        
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R2_squared_JetTagger.pdf");
 
         sig_h_subleading_LRJ_psi_R->Scale(1.0 / sig_h_subleading_LRJ_psi_R->Integral());
         back_h_subleading_LRJ_psi_R->Scale(1.0 / back_h_subleading_LRJ_psi_R->Integral());
@@ -4550,11 +5717,30 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         OverlayAndSave(back_h_jFEX_leading_LRJ_Et_arr, nJZSlices_, "c_jFEX_leadLRJ",   overlayedJZSliceDir + "overlay_jFEX_leading_LRJ_Et.pdf");
         OverlayAndSave(back_h_jFEX_subleading_LRJ_Et_arr, nJZSlices_, "c_jFEX_subLRJ", overlayedJZSliceDir + "overlay_jFEX_subleading_LRJ_Et.pdf");
 
+        OverlayAndSave(back_h_gFEX_leading_SRJ_Et_arr, nJZSlices_, "c_gFEX_leadSRJ", overlayedJZSliceDir + "overlay_gFEX_leading_SRJ_Et.pdf");
+        OverlayAndSave(back_h_gFEX_subleading_SRJ_Et_arr, nJZSlices_, "c_gFEX_subSRJ", overlayedJZSliceDir + "overlay_gFEX_subleading_SRJ_Et.pdf");
+
+        OverlayAndSave(back_h_jFEX_leading_SRJ_Et_arr, nJZSlices_, "c_jFEX_leadSRJ",   overlayedJZSliceDir + "overlay_jFEX_leading_SRJ_Et.pdf");
+        OverlayAndSave(back_h_jFEX_subleading_SRJ_Et_arr, nJZSlices_, "c_jFEX_subSRJ", overlayedJZSliceDir + "overlay_jFEX_subleading_SRJ_Et.pdf");
+
         OverlayAndSave(back_h_leading_offlineLRJ_Et_arr, nJZSlices_, "c_off_leadLRJ", overlayedJZSliceDir + "overlay_offline_leading_LRJ_Et.pdf");
         OverlayAndSave(back_h_subleading_offlineLRJ_Et_arr,nJZSlices_, "c_off_subLRJ", overlayedJZSliceDir + "overlay_offline_subleading_LRJ_Et.pdf");
 
         OverlayAndSave(back_h_leading_truthSRJs_Et_arr, nJZSlices_, "c_truth_leadSRJ", overlayedJZSliceDir + "overlay_truth_leading_SRJs_Et.pdf");
         OverlayAndSave(back_h_subleading_truthSRJs_Et_arr, nJZSlices_, "c_truth_subSRJ", overlayedJZSliceDir + "overlay_truth_subleading_SRJs_Et.pdf");
+
+        OverlayAndSave(back_h_leading_conejets_cellstowers_pT_arr, nJZSlices_, "c_leadConeCellsTowers", overlayedJZSliceDir + "overlay_lead_conejet_cellstowers_pT.pdf");
+        OverlayAndSave(back_h_subleading_conejets_cellstowers_pT_arr, nJZSlices_, "c_subleadConeCellsTowers", overlayedJZSliceDir + "overlay_sublead_conejet_cellstowers_pT.pdf");
+
+        OverlayAndSave(back_h_leading_WTA_conejets_cellstowers_pT_arr, nJZSlices_, "c_WTA_leadConeCellsTowers", overlayedJZSliceDir + "overlay_wta_lead_conejet_cellstowers_pT.pdf");
+        OverlayAndSave(back_h_subleading_WTA_conejets_cellstowers_pT_arr, nJZSlices_, "c_WTA_subleadConeCellsTowers", overlayedJZSliceDir + "overlay_wta_sublead_conejet_cellstowers_pT.pdf");
+
+        OverlayAndSave(back_h_leading_conejets_basicclusters_pT_arr, nJZSlices_, "c_leadConeBasicClusters", overlayedJZSliceDir + "overlay_lead_conejet_basicclusters_pT.pdf");
+        OverlayAndSave(back_h_subleading_conejets_cellstowers_pT_arr, nJZSlices_, "c_subleadConeBasicClusters", overlayedJZSliceDir + "overlay_sublead_conejet_basicclusters_pT.pdf");
+
+        OverlayAndSave(back_h_leading_WTA_conejets_basicclusters_pT_arr, nJZSlices_, "c_WTA_leadConeBasicClusters", overlayedJZSliceDir + "overlay_wta_lead_conejet_basicclusters_pT.pdf");
+        OverlayAndSave(back_h_subleading_WTA_conejets_basicclusters_pT_arr, nJZSlices_, "c_WTA_subleadConeBasicClusters", overlayedJZSliceDir + "overlay_wta_sublead_conejet_basicclusters_pT.pdf");
+
 
         TCanvas cLog;
         cLog.SetLogy();
@@ -4711,39 +5897,71 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         cLogZ.SetLogz();
 
         cLogZ.cd();
-
+        
         backOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        //backOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        backOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_squared->Integral());
+        backOfflineLeadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_squared.pdf");
-
+        
         backOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        //backOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        backOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
+        backOfflineSubleadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
 
         c.cd();
         
+        char rhoText_Sig_Psi_R[128];
+        sprintf(rhoText_Sig_Psi_R, "Pearson #rho = %.3f", sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
+        std::cout << "rhoText_Sig_Psi_R: " << rhoText_Sig_Psi_R << "\n";
+        
         sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
         sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        mySmallText(0.15, 0.05, kBlack, rhoText_Sig_Psi_R);
         c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
 
         cLogZ.cd();
 
+        
         backOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
-        //backOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_12.pdf");
+        backOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_12->Integral());
+        backOfflineLeadingLRJEtvsPsi_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_12.pdf");
 
+        
+        backOfflineSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        backOfflineSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2_12->Integral());
+        backOfflineSubleadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2_12.pdf");
+
+        backOfflineLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        backOfflineLeadingLRJEtvsPsi_R2_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2_12->Integral());
+        backOfflineLeadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2_12.pdf");
+
+        
         backOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
-        //backOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_12.pdf");
+        backOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_12->Integral());
+        backOfflineSubleadingLRJEtvsPsi_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_12.pdf");
 
+        char rhoText_Back_Psi_R[128];
+        sprintf(rhoText_Back_Psi_R, "Pearson #rho = %.3f", backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
+        
+        
         backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
-        //backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->SetMinimum(1e-14);
+        mySmallText(0.15, 0.05, kBlack, rhoText_Back_Psi_R);
+        
+        
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
 
+        backOfflineLeadingLRJEtvsPsi_R->SetMinimum(1e-6);
         backOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
         //backOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R->Integral());
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R.pdf");
 
+        backOfflineSubleadingLRJEtvsPsi_R->SetMinimum(1e-6);
         backOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
         //backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
@@ -4766,11 +5984,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         cLogZ.cd();
         sigOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
         sigOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_12.pdf");
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_12.pdf");
         
         sigOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
         sigOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_12.pdf");
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R_12.pdf");
+
+        sigOfflineLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        sigOfflineLeadingLRJEtvsPsi_R2_12->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2_12.pdf");
+        
+        sigOfflineSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        sigOfflineSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2_12.pdf");
 
         c.cd();
         sigOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
@@ -4807,10 +6033,40 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigOfflineLeadingLRJMassvsEt->Draw("COLZ");
         cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsEt.pdf");
 
+        sigOfflineSubleadingLRJMassvsEt->Scale(1.0 / sigOfflineSubleadingLRJMassvsEt->Integral());
+        sigOfflineSubleadingLRJMassvsEt->Draw("COLZ");
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJMassvsEt.pdf");
 
+        char rhoText_Sig_Mass[128];
+        sprintf(rhoText_Sig_Mass, "Pearson #rho = %.3f", sigOfflineSubleadingLRJMassvsLeadingLRJMass->GetCorrelationFactor());
+        std::cout << "rhoText_Sig_Mass: " << rhoText_Sig_Mass << "\n";
+        
+        sigOfflineSubleadingLRJMassvsLeadingLRJMass->Scale(1.0 / sigOfflineSubleadingLRJMassvsLeadingLRJMass->Integral());
+        sigOfflineSubleadingLRJMassvsLeadingLRJMass->Draw("COLZ");
+        mySmallText(0.15, 0.05, kBlack, rhoText_Sig_Mass);
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJMassvsLeadingLRJMass.pdf");
+
+        
         backOfflineLeadingLRJMassvsEt->Draw("COLZ");
+        
         backOfflineLeadingLRJMassvsEt->Scale(1.0 / backOfflineLeadingLRJMassvsEt->Integral());
+        backOfflineLeadingLRJMassvsEt->SetMinimum(1e-14);
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJMassvsEt.pdf");
+
+        char rhoText_Back_Mass[128];
+        sprintf(rhoText_Back_Mass, "Pearson #rho = %.3f", backOfflineSubleadingLRJMassvsLeadingLRJMass->GetCorrelationFactor());
+        
+        backOfflineSubleadingLRJMassvsLeadingLRJMass->SetMinimum(1e-6);
+        backOfflineSubleadingLRJMassvsLeadingLRJMass->Draw("COLZ");
+        mySmallText(0.15, 0.05, kBlack, rhoText_Back_Mass);
+        //backOfflineSubleadingLRJMassvsLeadingLRJMass->Scale(1.0 / backOfflineSubleadingLRJMassvsLeadingLRJMass->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJMassvsLeadingLRJMass.pdf");
+
+        
+        backOfflineSubleadingLRJMassvsEt->Draw("COLZ");
+        backOfflineSubleadingLRJMassvsEt->Scale(1.0 / backOfflineSubleadingLRJMassvsEt->Integral());
+        backOfflineSubleadingLRJMassvsEt->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJMassvsEt.pdf");
 
         c.cd();
         sigOfflineLeadingLRJMassvsSubjetMult->Draw("COLZ");
@@ -4819,12 +6075,129 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         backOfflineLeadingLRJMassvsSubjetMult->Draw("COLZ");
         c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJMassvsSubjetMult.pdf");
 
+        cLogZ.cd();
         sigOfflineLeadingLRJEtvsSubjetMult->Draw("COLZ");
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsSubjetMult.pdf");
+        sigOfflineLeadingLRJEtvsSubjetMult->Scale(1.0 / sigOfflineLeadingLRJEtvsSubjetMult->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsSubjetMult.pdf");
 
         backOfflineLeadingLRJEtvsSubjetMult->Draw("COLZ");
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsSubjetMult.pdf");
+        backOfflineLeadingLRJEtvsSubjetMult->Scale(1.0 / backOfflineLeadingLRJEtvsSubjetMult->Integral());
+        backOfflineLeadingLRJEtvsSubjetMult->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsSubjetMult.pdf");
 
+        TCanvas cLogYConeJets;
+        cLogYConeJets.SetLogy();
+        cLogYConeJets.cd();
+
+        sig_h_leading_conecellstowers_pT->Scale(1.0 / sig_h_leading_conecellstowers_pT->Integral());
+        back_h_leading_conecellstowers_pT->Scale(1.0 / back_h_leading_conecellstowers_pT->Integral());
+        sig_h_leading_conecellstowers_pT->SetLineColor(kRed);
+        back_h_leading_conecellstowers_pT->SetLineColor(kBlue);
+        back_h_leading_conecellstowers_pT->Draw("HIST");
+        sig_h_leading_conecellstowers_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_conecellstowers_pT.pdf");
+
+        sig_h_subleading_conecellstowers_pT->Scale(1.0 / sig_h_subleading_conecellstowers_pT->Integral());
+        back_h_subleading_conecellstowers_pT->Scale(1.0 / back_h_subleading_conecellstowers_pT->Integral());
+        sig_h_subleading_conecellstowers_pT->SetLineColor(kRed);
+        back_h_subleading_conecellstowers_pT->SetLineColor(kBlue);
+        back_h_subleading_conecellstowers_pT->Draw("HIST");
+        sig_h_subleading_conecellstowers_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_conecellstowers_pT.pdf");
+
+        sig_h_leading_WTA_conecellstowers_pT->Scale(1.0 / sig_h_leading_WTA_conecellstowers_pT->Integral());
+        back_h_leading_WTA_conecellstowers_pT->Scale(1.0 / back_h_leading_WTA_conecellstowers_pT->Integral());
+        sig_h_leading_WTA_conecellstowers_pT->SetLineColor(kRed);
+        back_h_leading_WTA_conecellstowers_pT->SetLineColor(kBlue);
+        back_h_leading_WTA_conecellstowers_pT->Draw("HIST");
+        sig_h_leading_WTA_conecellstowers_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_WTA_conecellstowers_pT.pdf");
+
+        sig_h_subleading_WTA_conecellstowers_pT->Scale(1.0 / sig_h_subleading_WTA_conecellstowers_pT->Integral());
+        back_h_subleading_WTA_conecellstowers_pT->Scale(1.0 / back_h_subleading_WTA_conecellstowers_pT->Integral());
+        sig_h_subleading_WTA_conecellstowers_pT->SetLineColor(kRed);
+        back_h_subleading_WTA_conecellstowers_pT->SetLineColor(kBlue);
+        back_h_subleading_WTA_conecellstowers_pT->Draw("HIST");
+        sig_h_subleading_WTA_conecellstowers_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_WTA_conecellstowers_pT.pdf");
+
+        sig_h_leading_conebasicclusters_pT->Scale(1.0 / sig_h_leading_conebasicclusters_pT->Integral());
+        back_h_leading_conebasicclusters_pT->Scale(1.0 / back_h_leading_conebasicclusters_pT->Integral());
+        sig_h_leading_conebasicclusters_pT->SetLineColor(kRed);
+        back_h_leading_conebasicclusters_pT->SetLineColor(kBlue);
+        back_h_leading_conebasicclusters_pT->Draw("HIST");
+        sig_h_leading_conebasicclusters_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_conebasicclusters_pT.pdf");
+
+        sig_h_subleading_conebasicclusters_pT->Scale(1.0 / sig_h_subleading_conebasicclusters_pT->Integral());
+        back_h_subleading_conebasicclusters_pT->Scale(1.0 / back_h_subleading_conebasicclusters_pT->Integral());
+        sig_h_subleading_conebasicclusters_pT->SetLineColor(kRed);
+        back_h_subleading_conebasicclusters_pT->SetLineColor(kBlue);
+        back_h_subleading_conebasicclusters_pT->Draw("HIST");
+        sig_h_subleading_conebasicclusters_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_conebasicclusters_pT.pdf");
+
+        sig_h_leading_WTA_conebasicclusters_pT->Scale(1.0 / sig_h_leading_WTA_conebasicclusters_pT->Integral());
+        back_h_leading_WTA_conebasicclusters_pT->Scale(1.0 / back_h_leading_WTA_conebasicclusters_pT->Integral());
+        sig_h_leading_WTA_conebasicclusters_pT->SetLineColor(kRed);
+        back_h_leading_WTA_conebasicclusters_pT->SetLineColor(kBlue);
+        back_h_leading_WTA_conebasicclusters_pT->Draw("HIST");
+        sig_h_leading_WTA_conebasicclusters_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_WTA_conebasicclusters_pT.pdf");
+
+        sig_h_subleading_WTA_conebasicclusters_pT->Scale(1.0 / sig_h_subleading_WTA_conebasicclusters_pT->Integral());
+        back_h_subleading_WTA_conebasicclusters_pT->Scale(1.0 / back_h_subleading_WTA_conebasicclusters_pT->Integral());
+        sig_h_subleading_WTA_conebasicclusters_pT->SetLineColor(kRed);
+        back_h_subleading_WTA_conebasicclusters_pT->SetLineColor(kBlue);
+        back_h_subleading_WTA_conebasicclusters_pT->Draw("HIST");
+        sig_h_subleading_WTA_conebasicclusters_pT->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_WTA_conebasicclusters_pT.pdf");
+
+        sig_h_leading_conecellstowers_M->Scale(1.0 / sig_h_leading_conecellstowers_M->Integral());
+        back_h_leading_conecellstowers_M->Scale(1.0 / back_h_leading_conecellstowers_M->Integral());
+        sig_h_leading_conecellstowers_M->SetLineColor(kRed);
+        back_h_leading_conecellstowers_M->SetLineColor(kBlue);
+        back_h_leading_conecellstowers_M->Draw("HIST");
+        sig_h_leading_conecellstowers_M->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_conecellstowers_M.pdf");
+
+        sig_h_subleading_conecellstowers_M->Scale(1.0 / sig_h_subleading_conecellstowers_M->Integral());
+        back_h_subleading_conecellstowers_M->Scale(1.0 / back_h_subleading_conecellstowers_M->Integral());
+        sig_h_subleading_conecellstowers_M->SetLineColor(kRed);
+        back_h_subleading_conecellstowers_M->SetLineColor(kBlue);
+        back_h_subleading_conecellstowers_M->Draw("HIST");
+        sig_h_subleading_conecellstowers_M->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_conecellstowers_M.pdf");
+
+        sig_h_leading_conebasicclusters_M->Scale(1.0 / sig_h_leading_conebasicclusters_M->Integral());
+        back_h_leading_conebasicclusters_M->Scale(1.0 / back_h_leading_conebasicclusters_M->Integral());
+        sig_h_leading_conebasicclusters_M->SetLineColor(kRed);
+        back_h_leading_conebasicclusters_M->SetLineColor(kBlue);
+        back_h_leading_conebasicclusters_M->Draw("HIST");
+        sig_h_leading_conebasicclusters_M->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "leading_conebasicclusters_M.pdf");
+
+        sig_h_subleading_conebasicclusters_M->Scale(1.0 / sig_h_subleading_conebasicclusters_M->Integral());
+        back_h_subleading_conebasicclusters_M->Scale(1.0 / back_h_subleading_conebasicclusters_M->Integral());
+        sig_h_subleading_conebasicclusters_M->SetLineColor(kRed);
+        back_h_subleading_conebasicclusters_M->SetLineColor(kBlue);
+        back_h_subleading_conebasicclusters_M->Draw("HIST");
+        sig_h_subleading_conebasicclusters_M->Draw("HIST SAME");
+        leg->Draw();
+        cLogYConeJets.SaveAs(modifiedOutputFileDir + "subleading_conebasicclusters_M.pdf");
+
+        c.cd();
         sigOfflineLeadingLRJMass->Scale(1.0 / sigOfflineLeadingLRJMass->Integral());
         backOfflineLeadingLRJMass->Scale(1.0 / backOfflineLeadingLRJMass->Integral());
         sigOfflineLeadingLRJMass->SetLineColor(kRed);
@@ -4833,6 +6206,15 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigOfflineLeadingLRJMass->Draw("HIST SAME");
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "leadingOfflineLRJMass.pdf");
+
+        sigOfflineSubleadingLRJMass->Scale(1.0 / sigOfflineSubleadingLRJMass->Integral());
+        backOfflineSubleadingLRJMass->Scale(1.0 / backOfflineSubleadingLRJMass->Integral());
+        sigOfflineSubleadingLRJMass->SetLineColor(kRed);
+        backOfflineSubleadingLRJMass->SetLineColor(kBlue);
+        backOfflineSubleadingLRJMass->Draw("HIST");
+        sigOfflineSubleadingLRJMass->Draw("HIST SAME");
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "subleadingOfflineLRJMass.pdf");
 
 
         sig_h_LRJ_substruct->Scale(1.0 / sig_h_LRJ_substruct->Integral());
@@ -4843,8 +6225,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         sig_h_LRJ_substruct->Draw("HIST");
         back_h_LRJ_substruct->Draw("HIST SAME");
-        leg_diam->Draw();
-        c.SaveAs(modifiedOutputFileDir + "LRJ_diam.pdf");
+        leg_Psi_R->Draw();
+        c.SaveAs(modifiedOutputFileDir + "LRJ_Psi_R.pdf");
 
         sig_h_LRJ_eta->SetLineColor(kRed);
         back_h_LRJ_eta->SetLineColor(kBlue);
@@ -4864,21 +6246,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         auto be100 = (TH1F*)h_back_num100->Clone(Form("back_eff_offlineLRJ_Et_100_%d", fileIt));
         be100->SetDirectory(nullptr);
         be100->SetTitle("Emulated Trigger Efficiency (Background);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Background)");
-        be100->Divide(h_back_num100, h_back_denom100 , 1.0, 1.0);//, "B"); // binomial errors
+        be100->Divide(h_back_num100, h_back_denom100 , 1.0, 1.0, "B"); // binomial errors
         be100->SetAxisRange(0.0, 1.1, "Y");
         back_eff_100.push_back(be100);
 
         auto be200 = (TH1F*)h_back_num200->Clone(Form("back_eff_offlineLRJ_Et_200_%d", fileIt));
         be200->SetDirectory(nullptr);
         be200->SetTitle("Emulated Trigger Efficiency (Background);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Background)");
-        be200->Divide(h_back_num200, h_back_denom200, 1.0, 1.0);//, "B");
+        be200->Divide(h_back_num200, h_back_denom200, 1.0, 1.0, "B");
         be200->SetAxisRange(0.0, 1.1, "Y");
         back_eff_200.push_back(be200);
 
         auto be300 = (TH1F*)h_back_num300->Clone(Form("back_eff_offlineLRJ_Et_300_%d", fileIt));
         be300->SetDirectory(nullptr);
         be300->SetTitle("Emulated Trigger Efficiency (Background);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Background)");
-        be300->Divide(h_back_num300, h_back_denom300, 1.0, 1.0);//, "B");
+        be300->Divide(h_back_num300, h_back_denom300, 1.0, 1.0, "B");
         be300->SetAxisRange(0.0, 1.1, "Y");
         back_eff_300.push_back(be300);
 
@@ -4886,31 +6268,64 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         auto se100 = (TH1F*)h_sig_num100->Clone(Form("sig_eff_offlineLRJ_Et_100_%d", fileIt));
         se100->SetDirectory(nullptr);
         se100->SetTitle("Emulated Trigger Efficiency (Signal);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)");
-        se100->Divide(h_sig_num100, h_sig_denom100, 1.0, 1.0);//, "B");
+        se100->Divide(h_sig_num100, h_sig_denom100, 1.0, 1.0, "B");
         se100->SetAxisRange(0.0, 1.1, "Y");
         sig_eff_100.push_back(se100);
 
         auto se250 = (TH1F*)h_sig_num250->Clone(Form("sig_eff_offlineLRJ_Et_250_%d", fileIt));
         se250->SetDirectory(nullptr);
         se250->SetTitle("Emulated Trigger Efficiency (Signal);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)");
-        se250->Divide(h_sig_num250, h_sig_denom250, 1.0, 1.0);//, "B");
+        se250->Divide(h_sig_num250, h_sig_denom250, 1.0, 1.0, "B");
         se250->SetAxisRange(0.0, 1.1, "Y");
         sig_eff_250.push_back(se250);
 
         auto se400 = (TH1F*)h_sig_num400->Clone(Form("sig_eff_offlineLRJ_Et_400_%d", fileIt));
         se400->SetDirectory(nullptr);
         se400->SetTitle("Emulated Trigger Efficiency (Signal);Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)");
-        se400->Divide(h_sig_num400, h_sig_denom400, 1.0, 1.0);//, "B");
+        se400->Divide(h_sig_num400, h_sig_denom400, 1.0, 1.0, "B");
         se400->SetAxisRange(0.0, 1.1, "Y");
         sig_eff_400.push_back(se400);
 
 
         // Draw signal JetTagger efficiency curves by dividing numerator, denominator TH1Fs
 
+        TH1F* sig_eff_offlineLRJ10kHz = (TH1F*)sig_h_offlineLRJ_Et_num10kHz->Clone();
+        sig_eff_offlineLRJ10kHz->SetName("eff_LRJ10kHz");
+        sig_eff_offlineLRJ10kHz->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offlineLRJ10kHz->Divide(sig_h_offlineLRJ_Et_num10kHz, sig_h_offlineLRJ_Et_denom10kHz, 1.0, 1.0, "B");
+        
+        sig_eff_offlineLRJ10kHz->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offlineLRJ10kHz->Draw();
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offlineLRJ10kHz.pdf");
+
+        TH1F* sig_eff_offline_gFEX_LRJ10kHz = (TH1F*)sig_h_offlineLRJ_Et_num10kHz_gFexLRJ->Clone();
+        sig_eff_offline_gFEX_LRJ10kHz->SetName("eff_gFEX_LRJ_10kHz");
+        sig_eff_offline_gFEX_LRJ10kHz->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offline_gFEX_LRJ10kHz->Divide(sig_h_offlineLRJ_Et_num10kHz_gFexLRJ, sig_h_offlineLRJ_Et_denom10kHz_gFexLRJ, 1.0, 1.0, "B");
+        
+        sig_eff_offline_gFEX_LRJ10kHz->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offline_gFEX_LRJ10kHz->Draw();
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offline_gFEX_LRJ10kHz.pdf");
+
+        TH1F* sig_eff_offline_jFEX_LRJ10kHz = (TH1F*)sig_h_offlineLRJ_Et_num10kHz_jFexLRJ->Clone();
+        sig_eff_offline_jFEX_LRJ10kHz->SetName("eff_jFEX_LRJ_10kHz");
+        sig_eff_offline_jFEX_LRJ10kHz->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offline_jFEX_LRJ10kHz->Divide(sig_h_offlineLRJ_Et_num10kHz_jFexLRJ, sig_h_offlineLRJ_Et_denom10kHz_jFexLRJ, 1.0, 1.0, "B");
+        
+        sig_eff_offline_jFEX_LRJ10kHz->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offline_jFEX_LRJ10kHz->Draw();
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offline_jFEX_LRJ10kHz.pdf");
+
         TH1F* sig_eff_offlineLRJ50 = (TH1F*)sig_h_offlineLRJ_Et_num50->Clone();
         sig_eff_offlineLRJ50->SetName("eff_LRJ50");
         sig_eff_offlineLRJ50->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50->Divide(sig_h_offlineLRJ_Et_num50, sig_h_offlineLRJ_Et_denom50, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50->Divide(sig_h_offlineLRJ_Et_num50, sig_h_offlineLRJ_Et_denom50, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50->SetAxisRange(0, 1.1, "Y");
 
@@ -4921,7 +6336,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num50_mass100to150->Clone();
         sig_eff_offlineLRJ50_mass100to150->SetName("eff_LRJ50_mass100to150");
         sig_eff_offlineLRJ50_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_mass100to150->Divide(sig_h_offlineLRJ_Et_num50_mass100to150, sig_h_offlineLRJ_Et_denom50_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_mass100to150->Divide(sig_h_offlineLRJ_Et_num50_mass100to150, sig_h_offlineLRJ_Et_denom50_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -4932,7 +6347,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et50 = (TH1F*)sig_h_Avg_b_Et_num50->Clone();
         sig_eff_b_Et50->SetName("eff_b50");
         sig_eff_b_Et50->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et50->Divide(sig_h_Avg_b_Et_num50, sig_h_Avg_b_Et_denom50, 1.0, 1.0);//, "B");
+        sig_eff_b_Et50->Divide(sig_h_Avg_b_Et_num50, sig_h_Avg_b_Et_denom50, 1.0, 1.0, "B");
         
         sig_eff_b_Et50->SetAxisRange(0, 1.1, "Y");
 
@@ -4943,7 +6358,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100 = (TH1F*)sig_h_offlineLRJ_Et_num100->Clone();
         sig_eff_offlineLRJ100->SetName("eff_LRJ100");
         sig_eff_offlineLRJ100->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100->Divide(sig_h_offlineLRJ_Et_num100, sig_h_offlineLRJ_Et_denom100, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100->Divide(sig_h_offlineLRJ_Et_num100, sig_h_offlineLRJ_Et_denom100, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100->SetAxisRange(0, 1.1, "Y");
 
@@ -4954,7 +6369,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num100_mass100to150->Clone();
         sig_eff_offlineLRJ100_mass100to150->SetName("eff_LRJ100_mass100to150");
         sig_eff_offlineLRJ100_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_mass100to150->Divide(sig_h_offlineLRJ_Et_num100_mass100to150, sig_h_offlineLRJ_Et_denom100_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_mass100to150->Divide(sig_h_offlineLRJ_Et_num100_mass100to150, sig_h_offlineLRJ_Et_denom100_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -4965,7 +6380,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et100 = (TH1F*)sig_h_Avg_b_Et_num100->Clone();
         sig_eff_b_Et100->SetName("eff_b100");
         sig_eff_b_Et100->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et100->Divide(sig_h_Avg_b_Et_num100, sig_h_Avg_b_Et_denom100, 1.0, 1.0);//, "B");
+        sig_eff_b_Et100->Divide(sig_h_Avg_b_Et_num100, sig_h_Avg_b_Et_denom100, 1.0, 1.0, "B");
         
         sig_eff_b_Et100->SetAxisRange(0, 1.1, "Y");
 
@@ -4976,7 +6391,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150 = (TH1F*)sig_h_offlineLRJ_Et_num150->Clone();
         sig_eff_offlineLRJ150->SetName("eff_LRJ150");
         sig_eff_offlineLRJ150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150->Divide(sig_h_offlineLRJ_Et_num150, sig_h_offlineLRJ_Et_denom150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150->Divide(sig_h_offlineLRJ_Et_num150, sig_h_offlineLRJ_Et_denom150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150->SetAxisRange(0, 1.1, "Y");
 
@@ -4987,7 +6402,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num150_mass100to150->Clone();
         sig_eff_offlineLRJ150_mass100to150->SetName("eff_LRJ150_mass100to150");
         sig_eff_offlineLRJ150_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_mass100to150->Divide(sig_h_offlineLRJ_Et_num150_mass100to150, sig_h_offlineLRJ_Et_denom150_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_mass100to150->Divide(sig_h_offlineLRJ_Et_num150_mass100to150, sig_h_offlineLRJ_Et_denom150_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -4998,7 +6413,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et150 = (TH1F*)sig_h_Avg_b_Et_num150->Clone();
         sig_eff_b_Et150->SetName("eff_b150");
         sig_eff_b_Et150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et150->Divide(sig_h_Avg_b_Et_num150, sig_h_Avg_b_Et_denom150, 1.0, 1.0);//, "B");
+        sig_eff_b_Et150->Divide(sig_h_Avg_b_Et_num150, sig_h_Avg_b_Et_denom150, 1.0, 1.0, "B");
         
         sig_eff_b_Et150->SetAxisRange(0, 1.1, "Y");
 
@@ -5009,7 +6424,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200 = (TH1F*)sig_h_offlineLRJ_Et_num200->Clone();
         sig_eff_offlineLRJ200->SetName("eff_LRJ200");
         sig_eff_offlineLRJ200->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200->Divide(sig_h_offlineLRJ_Et_num200, sig_h_offlineLRJ_Et_denom200, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200->Divide(sig_h_offlineLRJ_Et_num200, sig_h_offlineLRJ_Et_denom200, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200->SetAxisRange(0, 1.1, "Y");
 
@@ -5020,7 +6435,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num200_mass100to150->Clone();
         sig_eff_offlineLRJ200_mass100to150->SetName("eff_LRJ200_mass100to150");
         sig_eff_offlineLRJ200_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_mass100to150->Divide(sig_h_offlineLRJ_Et_num200_mass100to150, sig_h_offlineLRJ_Et_denom200_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_mass100to150->Divide(sig_h_offlineLRJ_Et_num200_mass100to150, sig_h_offlineLRJ_Et_denom200_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5031,7 +6446,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et200 = (TH1F*)sig_h_Avg_b_Et_num200->Clone();
         sig_eff_b_Et200->SetName("eff_b200");
         sig_eff_b_Et200->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et200->Divide(sig_h_Avg_b_Et_num200, sig_h_Avg_b_Et_denom200, 1.0, 1.0);//, "B");
+        sig_eff_b_Et200->Divide(sig_h_Avg_b_Et_num200, sig_h_Avg_b_Et_denom200, 1.0, 1.0, "B");
         
         sig_eff_b_Et200->SetAxisRange(0, 1.1, "Y");
 
@@ -5042,7 +6457,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250 = (TH1F*)sig_h_offlineLRJ_Et_num250->Clone();
         sig_eff_offlineLRJ250->SetName("eff_LRJ250");
         sig_eff_offlineLRJ250->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250->Divide(sig_h_offlineLRJ_Et_num250, sig_h_offlineLRJ_Et_denom250, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250->Divide(sig_h_offlineLRJ_Et_num250, sig_h_offlineLRJ_Et_denom250, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250->SetAxisRange(0, 1.1, "Y");
 
@@ -5053,7 +6468,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num250_mass100to150->Clone();
         sig_eff_offlineLRJ250_mass100to150->SetName("eff_LRJ250_mass100to150");
         sig_eff_offlineLRJ250_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_mass100to150->Divide(sig_h_offlineLRJ_Et_num250_mass100to150, sig_h_offlineLRJ_Et_denom250_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_mass100to150->Divide(sig_h_offlineLRJ_Et_num250_mass100to150, sig_h_offlineLRJ_Et_denom250_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5064,7 +6479,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et250 = (TH1F*)sig_h_Avg_b_Et_num250->Clone();
         sig_eff_b_Et250->SetName("eff_b250");
         sig_eff_b_Et250->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et250->Divide(sig_h_Avg_b_Et_num250, sig_h_Avg_b_Et_denom250, 1.0, 1.0);//, "B");
+        sig_eff_b_Et250->Divide(sig_h_Avg_b_Et_num250, sig_h_Avg_b_Et_denom250, 1.0, 1.0, "B");
         
         sig_eff_b_Et250->SetAxisRange(0, 1.1, "Y");
 
@@ -5075,7 +6490,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300 = (TH1F*)sig_h_offlineLRJ_Et_num300->Clone();
         sig_eff_offlineLRJ300->SetName("eff_LRJ300");
         sig_eff_offlineLRJ300->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300->Divide(sig_h_offlineLRJ_Et_num300, sig_h_offlineLRJ_Et_denom300, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300->Divide(sig_h_offlineLRJ_Et_num300, sig_h_offlineLRJ_Et_denom300, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300->SetAxisRange(0, 1.1, "Y");
 
@@ -5086,7 +6501,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num300_mass100to150->Clone();
         sig_eff_offlineLRJ300_mass100to150->SetName("eff_LRJ300_mass100to150");
         sig_eff_offlineLRJ300_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_mass100to150->Divide(sig_h_offlineLRJ_Et_num300_mass100to150, sig_h_offlineLRJ_Et_denom300_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_mass100to150->Divide(sig_h_offlineLRJ_Et_num300_mass100to150, sig_h_offlineLRJ_Et_denom300_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5097,7 +6512,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et300 = (TH1F*)sig_h_Avg_b_Et_num300->Clone();
         sig_eff_b_Et300->SetName("eff_b300");
         sig_eff_b_Et300->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et300->Divide(sig_h_Avg_b_Et_num300, sig_h_Avg_b_Et_denom300, 1.0, 1.0);//, "B");
+        sig_eff_b_Et300->Divide(sig_h_Avg_b_Et_num300, sig_h_Avg_b_Et_denom300, 1.0, 1.0, "B");
         
         sig_eff_b_Et300->SetAxisRange(0, 1.1, "Y");
 
@@ -5108,7 +6523,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350 = (TH1F*)sig_h_offlineLRJ_Et_num350->Clone();
         sig_eff_offlineLRJ350->SetName("eff_LRJ350");
         sig_eff_offlineLRJ350->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350->Divide(sig_h_offlineLRJ_Et_num350, sig_h_offlineLRJ_Et_denom350, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350->Divide(sig_h_offlineLRJ_Et_num350, sig_h_offlineLRJ_Et_denom350, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350->SetAxisRange(0, 1.1, "Y");
 
@@ -5119,7 +6534,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num350_mass100to150->Clone();
         sig_eff_offlineLRJ350_mass100to150->SetName("eff_LRJ350_mass100to150");
         sig_eff_offlineLRJ350_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_mass100to150->Divide(sig_h_offlineLRJ_Et_num350_mass100to150, sig_h_offlineLRJ_Et_denom350_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_mass100to150->Divide(sig_h_offlineLRJ_Et_num350_mass100to150, sig_h_offlineLRJ_Et_denom350_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5130,7 +6545,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et350 = (TH1F*)sig_h_Avg_b_Et_num350->Clone();
         sig_eff_b_Et350->SetName("eff_b350");
         sig_eff_b_Et350->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et350->Divide(sig_h_Avg_b_Et_num350, sig_h_Avg_b_Et_denom350, 1.0, 1.0);//, "B");
+        sig_eff_b_Et350->Divide(sig_h_Avg_b_Et_num350, sig_h_Avg_b_Et_denom350, 1.0, 1.0, "B");
         
         sig_eff_b_Et350->SetAxisRange(0, 1.1, "Y");
 
@@ -5141,7 +6556,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400 = (TH1F*)sig_h_offlineLRJ_Et_num400->Clone();
         sig_eff_offlineLRJ400->SetName("eff_LRJ400");
         sig_eff_offlineLRJ400->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400->Divide(sig_h_offlineLRJ_Et_num400, sig_h_offlineLRJ_Et_denom400, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400->Divide(sig_h_offlineLRJ_Et_num400, sig_h_offlineLRJ_Et_denom400, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400->SetAxisRange(0, 1.1, "Y");
 
@@ -5152,7 +6567,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num400_mass100to150->Clone();
         sig_eff_offlineLRJ400_mass100to150->SetName("eff_LRJ400_mass100to150");
         sig_eff_offlineLRJ400_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_mass100to150->Divide(sig_h_offlineLRJ_Et_num400_mass100to150, sig_h_offlineLRJ_Et_denom400_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_mass100to150->Divide(sig_h_offlineLRJ_Et_num400_mass100to150, sig_h_offlineLRJ_Et_denom400_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5163,7 +6578,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et400 = (TH1F*)sig_h_Avg_b_Et_num400->Clone();
         sig_eff_b_Et400->SetName("eff_b400");
         sig_eff_b_Et400->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et400->Divide(sig_h_Avg_b_Et_num400, sig_h_Avg_b_Et_denom400, 1.0, 1.0);//, "B");
+        sig_eff_b_Et400->Divide(sig_h_Avg_b_Et_num400, sig_h_Avg_b_Et_denom400, 1.0, 1.0, "B");
         
         sig_eff_b_Et400->SetAxisRange(0, 1.1, "Y");
 
@@ -5174,7 +6589,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450 = (TH1F*)sig_h_offlineLRJ_Et_num450->Clone();
         sig_eff_offlineLRJ450->SetName("eff_LRJ450");
         sig_eff_offlineLRJ450->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450->Divide(sig_h_offlineLRJ_Et_num450, sig_h_offlineLRJ_Et_denom450, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450->Divide(sig_h_offlineLRJ_Et_num450, sig_h_offlineLRJ_Et_denom450, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450->SetAxisRange(0, 1.1, "Y");
 
@@ -5185,7 +6600,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num450_mass100to150->Clone();
         sig_eff_offlineLRJ450_mass100to150->SetName("eff_LRJ450_mass100to150");
         sig_eff_offlineLRJ450_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_mass100to150->Divide(sig_h_offlineLRJ_Et_num450_mass100to150, sig_h_offlineLRJ_Et_denom450_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_mass100to150->Divide(sig_h_offlineLRJ_Et_num450_mass100to150, sig_h_offlineLRJ_Et_denom450_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5196,7 +6611,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et450 = (TH1F*)sig_h_Avg_b_Et_num450->Clone();
         sig_eff_b_Et450->SetName("eff_b450");
         sig_eff_b_Et450->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et450->Divide(sig_h_Avg_b_Et_num450, sig_h_Avg_b_Et_denom450, 1.0, 1.0);//, "B");
+        sig_eff_b_Et450->Divide(sig_h_Avg_b_Et_num450, sig_h_Avg_b_Et_denom450, 1.0, 1.0, "B");
         
         sig_eff_b_Et450->SetAxisRange(0, 1.1, "Y");
 
@@ -5207,7 +6622,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500 = (TH1F*)sig_h_offlineLRJ_Et_num500->Clone();
         sig_eff_offlineLRJ500->SetName("eff_LRJ500");
         sig_eff_offlineLRJ500->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500->Divide(sig_h_offlineLRJ_Et_num500, sig_h_offlineLRJ_Et_denom500, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500->Divide(sig_h_offlineLRJ_Et_num500, sig_h_offlineLRJ_Et_denom500, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500->SetAxisRange(0, 1.1, "Y");
 
@@ -5218,7 +6633,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_mass100to150 = (TH1F*)sig_h_offlineLRJ_Et_num500_mass100to150->Clone();
         sig_eff_offlineLRJ500_mass100to150->SetName("eff_LRJ500_mass100to150");
         sig_eff_offlineLRJ500_mass100to150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_mass100to150->Divide(sig_h_offlineLRJ_Et_num500_mass100to150, sig_h_offlineLRJ_Et_denom500_mass100to150, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_mass100to150->Divide(sig_h_offlineLRJ_Et_num500_mass100to150, sig_h_offlineLRJ_Et_denom500_mass100to150, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_mass100to150->SetAxisRange(0, 1.1, "Y");
 
@@ -5229,7 +6644,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_b_Et500 = (TH1F*)sig_h_Avg_b_Et_num500->Clone();
         sig_eff_b_Et500->SetName("eff_b500");
         sig_eff_b_Et500->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_b_Et500->Divide(sig_h_Avg_b_Et_num500, sig_h_Avg_b_Et_denom500, 1.0, 1.0);//, "B");
+        sig_eff_b_Et500->Divide(sig_h_Avg_b_Et_num500, sig_h_Avg_b_Et_denom500, 1.0, 1.0, "B");
         
         sig_eff_b_Et500->SetAxisRange(0, 1.1, "Y");
 
@@ -5242,7 +6657,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num50_gFexLRJ->Clone();
         sig_eff_offlineLRJ50_gFexLRJ->SetName("eff_LRJ50");
         sig_eff_offlineLRJ50_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num50_gFexLRJ, sig_h_offlineLRJ_Et_denom50_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num50_gFexLRJ, sig_h_offlineLRJ_Et_denom50_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5253,7 +6668,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num100_gFexLRJ->Clone();
         sig_eff_offlineLRJ100_gFexLRJ->SetName("eff_LRJ100");
         sig_eff_offlineLRJ100_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num100_gFexLRJ, sig_h_offlineLRJ_Et_denom100_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num100_gFexLRJ, sig_h_offlineLRJ_Et_denom100_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5264,7 +6679,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num150_gFexLRJ->Clone();
         sig_eff_offlineLRJ150_gFexLRJ->SetName("eff_LRJ150");
         sig_eff_offlineLRJ150_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num150_gFexLRJ, sig_h_offlineLRJ_Et_denom150_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num150_gFexLRJ, sig_h_offlineLRJ_Et_denom150_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5275,7 +6690,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num200_gFexLRJ->Clone();
         sig_eff_offlineLRJ200_gFexLRJ->SetName("eff_LRJ200_gFexLRJ");
         sig_eff_offlineLRJ200_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num200_gFexLRJ, sig_h_offlineLRJ_Et_denom200_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num200_gFexLRJ, sig_h_offlineLRJ_Et_denom200_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5286,7 +6701,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num250_gFexLRJ->Clone();
         sig_eff_offlineLRJ250_gFexLRJ->SetName("eff_LRJ250_gFexLRJ");
         sig_eff_offlineLRJ250_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num250_gFexLRJ, sig_h_offlineLRJ_Et_denom250_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num250_gFexLRJ, sig_h_offlineLRJ_Et_denom250_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5298,7 +6713,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num300_gFexLRJ->Clone();
         sig_eff_offlineLRJ300_gFexLRJ->SetName("eff_LRJ300");
         sig_eff_offlineLRJ300_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num300_gFexLRJ, sig_h_offlineLRJ_Et_denom300_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num300_gFexLRJ, sig_h_offlineLRJ_Et_denom300_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5310,7 +6725,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num350_gFexLRJ->Clone();
         sig_eff_offlineLRJ350_gFexLRJ->SetName("eff_LRJ350");
         sig_eff_offlineLRJ350_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num350_gFexLRJ, sig_h_offlineLRJ_Et_denom350_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num350_gFexLRJ, sig_h_offlineLRJ_Et_denom350_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5322,7 +6737,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num400_gFexLRJ->Clone();
         sig_eff_offlineLRJ400_gFexLRJ->SetName("eff_LRJ400");
         sig_eff_offlineLRJ400_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num400_gFexLRJ, sig_h_offlineLRJ_Et_denom400_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num400_gFexLRJ, sig_h_offlineLRJ_Et_denom400_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5334,7 +6749,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num450_gFexLRJ->Clone();
         sig_eff_offlineLRJ450_gFexLRJ->SetName("eff_LRJ450");
         sig_eff_offlineLRJ450_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num450_gFexLRJ, sig_h_offlineLRJ_Et_denom450_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num450_gFexLRJ, sig_h_offlineLRJ_Et_denom450_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5346,7 +6761,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_gFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num500_gFexLRJ->Clone();
         sig_eff_offlineLRJ500_gFexLRJ->SetName("eff_LRJ500");
         sig_eff_offlineLRJ500_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num500_gFexLRJ, sig_h_offlineLRJ_Et_denom500_gFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_gFexLRJ->Divide(sig_h_offlineLRJ_Et_num500_gFexLRJ, sig_h_offlineLRJ_Et_denom500_gFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5359,7 +6774,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num50_jFexLRJ->Clone();
         sig_eff_offlineLRJ50_jFexLRJ->SetName("eff_LRJ50");
         sig_eff_offlineLRJ50_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num50_jFexLRJ, sig_h_offlineLRJ_Et_denom50_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num50_jFexLRJ, sig_h_offlineLRJ_Et_denom50_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5370,7 +6785,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num100_jFexLRJ->Clone();
         sig_eff_offlineLRJ100_jFexLRJ->SetName("eff_LRJ100");
         sig_eff_offlineLRJ100_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num100_jFexLRJ, sig_h_offlineLRJ_Et_denom100_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num100_jFexLRJ, sig_h_offlineLRJ_Et_denom100_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5381,7 +6796,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num150_jFexLRJ->Clone();
         sig_eff_offlineLRJ150_jFexLRJ->SetName("eff_LRJ150");
         sig_eff_offlineLRJ150_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num150_jFexLRJ, sig_h_offlineLRJ_Et_denom150_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num150_jFexLRJ, sig_h_offlineLRJ_Et_denom150_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5392,7 +6807,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num200_jFexLRJ->Clone();
         sig_eff_offlineLRJ200_jFexLRJ->SetName("eff_LRJ200_jFexLRJ");
         sig_eff_offlineLRJ200_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num200_jFexLRJ, sig_h_offlineLRJ_Et_denom200_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num200_jFexLRJ, sig_h_offlineLRJ_Et_denom200_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5403,7 +6818,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num250_jFexLRJ->Clone();
         sig_eff_offlineLRJ250_jFexLRJ->SetName("eff_LRJ250_jFexLRJ");
         sig_eff_offlineLRJ250_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num250_jFexLRJ, sig_h_offlineLRJ_Et_denom250_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num250_jFexLRJ, sig_h_offlineLRJ_Et_denom250_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5415,7 +6830,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num300_jFexLRJ->Clone();
         sig_eff_offlineLRJ300_jFexLRJ->SetName("eff_LRJ300");
         sig_eff_offlineLRJ300_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num300_jFexLRJ, sig_h_offlineLRJ_Et_denom300_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num300_jFexLRJ, sig_h_offlineLRJ_Et_denom300_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5427,7 +6842,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num350_jFexLRJ->Clone();
         sig_eff_offlineLRJ350_jFexLRJ->SetName("eff_LRJ350");
         sig_eff_offlineLRJ350_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num350_jFexLRJ, sig_h_offlineLRJ_Et_denom350_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num350_jFexLRJ, sig_h_offlineLRJ_Et_denom350_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5439,7 +6854,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num400_jFexLRJ->Clone();
         sig_eff_offlineLRJ400_jFexLRJ->SetName("eff_LRJ400");
         sig_eff_offlineLRJ400_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num400_jFexLRJ, sig_h_offlineLRJ_Et_denom400_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num400_jFexLRJ, sig_h_offlineLRJ_Et_denom400_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5451,7 +6866,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num450_jFexLRJ->Clone();
         sig_eff_offlineLRJ450_jFexLRJ->SetName("eff_LRJ450");
         sig_eff_offlineLRJ450_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num450_jFexLRJ, sig_h_offlineLRJ_Et_denom450_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num450_jFexLRJ, sig_h_offlineLRJ_Et_denom450_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5463,7 +6878,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_jFexLRJ = (TH1F*)sig_h_offlineLRJ_Et_num500_jFexLRJ->Clone();
         sig_eff_offlineLRJ500_jFexLRJ->SetName("eff_LRJ500");
         sig_eff_offlineLRJ500_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num500_jFexLRJ, sig_h_offlineLRJ_Et_denom500_jFexLRJ, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_jFexLRJ->Divide(sig_h_offlineLRJ_Et_num500_jFexLRJ, sig_h_offlineLRJ_Et_denom500_jFexLRJ, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5476,7 +6891,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num50_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ50_gFexLRJ_Dijet->SetName("eff_LRJ50");
         sig_eff_offlineLRJ50_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num50_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom50_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num50_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom50_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5487,7 +6902,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num100_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ100_gFexLRJ_Dijet->SetName("eff_LRJ100");
         sig_eff_offlineLRJ100_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num100_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom100_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num100_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom100_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5498,7 +6913,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num150_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ150_gFexLRJ_Dijet->SetName("eff_LRJ150");
         sig_eff_offlineLRJ150_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num150_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom150_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num150_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom150_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5509,7 +6924,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num200_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ200_gFexLRJ_Dijet->SetName("eff_LRJ200_gFexLRJ_Dijet");
         sig_eff_offlineLRJ200_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num200_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom200_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num200_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom200_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5520,7 +6935,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num250_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ250_gFexLRJ_Dijet->SetName("eff_LRJ250_gFexLRJ_Dijet");
         sig_eff_offlineLRJ250_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num250_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom250_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num250_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom250_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5532,7 +6947,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num300_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ300_gFexLRJ_Dijet->SetName("eff_LRJ300");
         sig_eff_offlineLRJ300_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num300_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom300_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num300_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom300_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5544,7 +6959,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num350_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ350_gFexLRJ_Dijet->SetName("eff_LRJ350");
         sig_eff_offlineLRJ350_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num350_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom350_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num350_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom350_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5556,7 +6971,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num400_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ400_gFexLRJ_Dijet->SetName("eff_LRJ400");
         sig_eff_offlineLRJ400_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num400_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom400_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num400_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom400_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5568,7 +6983,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num450_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ450_gFexLRJ_Dijet->SetName("eff_LRJ450");
         sig_eff_offlineLRJ450_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num450_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom450_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num450_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom450_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5580,7 +6995,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_gFexLRJ_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num500_gFexLRJ_Dijet->Clone();
         sig_eff_offlineLRJ500_gFexLRJ_Dijet->SetName("eff_LRJ500");
         sig_eff_offlineLRJ500_gFexLRJ_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num500_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom500_gFexLRJ_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_gFexLRJ_Dijet->Divide(sig_h_offlineLRJ_Et_num500_gFexLRJ_Dijet, sig_h_offlineLRJ_Et_denom500_gFexLRJ_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_gFexLRJ_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5594,7 +7009,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ50_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num50_gFexLRJ->Clone();
         back_eff_offlineLRJ50_gFexLRJ->SetName("eff_LRJ50");
         back_eff_offlineLRJ50_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ50_gFexLRJ->Divide(back_h_offlineLRJ_Et_num50_gFexLRJ, back_h_offlineLRJ_Et_denom50_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ50_gFexLRJ->Divide(back_h_offlineLRJ_Et_num50_gFexLRJ, back_h_offlineLRJ_Et_denom50_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ50_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5605,7 +7020,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ100_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num100_gFexLRJ->Clone();
         back_eff_offlineLRJ100_gFexLRJ->SetName("eff_LRJ100");
         back_eff_offlineLRJ100_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ100_gFexLRJ->Divide(back_h_offlineLRJ_Et_num100_gFexLRJ, back_h_offlineLRJ_Et_denom100_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ100_gFexLRJ->Divide(back_h_offlineLRJ_Et_num100_gFexLRJ, back_h_offlineLRJ_Et_denom100_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ100_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5616,7 +7031,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ150_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num150_gFexLRJ->Clone();
         back_eff_offlineLRJ150_gFexLRJ->SetName("eff_LRJ150");
         back_eff_offlineLRJ150_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ150_gFexLRJ->Divide(back_h_offlineLRJ_Et_num150_gFexLRJ, back_h_offlineLRJ_Et_denom150_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ150_gFexLRJ->Divide(back_h_offlineLRJ_Et_num150_gFexLRJ, back_h_offlineLRJ_Et_denom150_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ150_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5627,7 +7042,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ200_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num200_gFexLRJ->Clone();
         back_eff_offlineLRJ200_gFexLRJ->SetName("eff_LRJ200_gFexLRJ");
         back_eff_offlineLRJ200_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ200_gFexLRJ->Divide(back_h_offlineLRJ_Et_num200_gFexLRJ, back_h_offlineLRJ_Et_denom200_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ200_gFexLRJ->Divide(back_h_offlineLRJ_Et_num200_gFexLRJ, back_h_offlineLRJ_Et_denom200_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ200_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5638,7 +7053,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ250_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num250_gFexLRJ->Clone();
         back_eff_offlineLRJ250_gFexLRJ->SetName("eff_LRJ250_gFexLRJ");
         back_eff_offlineLRJ250_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ250_gFexLRJ->Divide(back_h_offlineLRJ_Et_num250_gFexLRJ, back_h_offlineLRJ_Et_denom250_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ250_gFexLRJ->Divide(back_h_offlineLRJ_Et_num250_gFexLRJ, back_h_offlineLRJ_Et_denom250_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ250_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5650,7 +7065,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ300_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num300_gFexLRJ->Clone();
         back_eff_offlineLRJ300_gFexLRJ->SetName("eff_LRJ300");
         back_eff_offlineLRJ300_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ300_gFexLRJ->Divide(back_h_offlineLRJ_Et_num300_gFexLRJ, back_h_offlineLRJ_Et_denom300_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ300_gFexLRJ->Divide(back_h_offlineLRJ_Et_num300_gFexLRJ, back_h_offlineLRJ_Et_denom300_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ300_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5662,7 +7077,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ350_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num350_gFexLRJ->Clone();
         back_eff_offlineLRJ350_gFexLRJ->SetName("eff_LRJ350");
         back_eff_offlineLRJ350_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ350_gFexLRJ->Divide(back_h_offlineLRJ_Et_num350_gFexLRJ, back_h_offlineLRJ_Et_denom350_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ350_gFexLRJ->Divide(back_h_offlineLRJ_Et_num350_gFexLRJ, back_h_offlineLRJ_Et_denom350_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ350_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5674,7 +7089,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ400_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num400_gFexLRJ->Clone();
         back_eff_offlineLRJ400_gFexLRJ->SetName("eff_LRJ400");
         back_eff_offlineLRJ400_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ400_gFexLRJ->Divide(back_h_offlineLRJ_Et_num400_gFexLRJ, back_h_offlineLRJ_Et_denom400_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ400_gFexLRJ->Divide(back_h_offlineLRJ_Et_num400_gFexLRJ, back_h_offlineLRJ_Et_denom400_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ400_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5686,7 +7101,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ450_gFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num450_gFexLRJ->Clone();
         back_eff_offlineLRJ450_gFexLRJ->SetName("eff_LRJ450");
         back_eff_offlineLRJ450_gFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ450_gFexLRJ->Divide(back_h_offlineLRJ_Et_num450_gFexLRJ, back_h_offlineLRJ_Et_denom450_gFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ450_gFexLRJ->Divide(back_h_offlineLRJ_Et_num450_gFexLRJ, back_h_offlineLRJ_Et_denom450_gFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ450_gFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5699,7 +7114,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ50_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num50_jFexLRJ->Clone();
         back_eff_offlineLRJ50_jFexLRJ->SetName("eff_LRJ50");
         back_eff_offlineLRJ50_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ50_jFexLRJ->Divide(back_h_offlineLRJ_Et_num50_jFexLRJ, back_h_offlineLRJ_Et_denom50_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ50_jFexLRJ->Divide(back_h_offlineLRJ_Et_num50_jFexLRJ, back_h_offlineLRJ_Et_denom50_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ50_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5710,7 +7125,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ100_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num100_jFexLRJ->Clone();
         back_eff_offlineLRJ100_jFexLRJ->SetName("eff_LRJ100");
         back_eff_offlineLRJ100_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ100_jFexLRJ->Divide(back_h_offlineLRJ_Et_num100_jFexLRJ, back_h_offlineLRJ_Et_denom100_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ100_jFexLRJ->Divide(back_h_offlineLRJ_Et_num100_jFexLRJ, back_h_offlineLRJ_Et_denom100_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ100_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5721,7 +7136,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ150_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num150_jFexLRJ->Clone();
         back_eff_offlineLRJ150_jFexLRJ->SetName("eff_LRJ150");
         back_eff_offlineLRJ150_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ150_jFexLRJ->Divide(back_h_offlineLRJ_Et_num150_jFexLRJ, back_h_offlineLRJ_Et_denom150_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ150_jFexLRJ->Divide(back_h_offlineLRJ_Et_num150_jFexLRJ, back_h_offlineLRJ_Et_denom150_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ150_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5732,7 +7147,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ200_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num200_jFexLRJ->Clone();
         back_eff_offlineLRJ200_jFexLRJ->SetName("eff_LRJ200_jFexLRJ");
         back_eff_offlineLRJ200_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ200_jFexLRJ->Divide(back_h_offlineLRJ_Et_num200_jFexLRJ, back_h_offlineLRJ_Et_denom200_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ200_jFexLRJ->Divide(back_h_offlineLRJ_Et_num200_jFexLRJ, back_h_offlineLRJ_Et_denom200_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ200_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5743,7 +7158,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ250_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num250_jFexLRJ->Clone();
         back_eff_offlineLRJ250_jFexLRJ->SetName("eff_LRJ250_jFexLRJ");
         back_eff_offlineLRJ250_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ250_jFexLRJ->Divide(back_h_offlineLRJ_Et_num250_jFexLRJ, back_h_offlineLRJ_Et_denom250_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ250_jFexLRJ->Divide(back_h_offlineLRJ_Et_num250_jFexLRJ, back_h_offlineLRJ_Et_denom250_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ250_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5755,7 +7170,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ300_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num300_jFexLRJ->Clone();
         back_eff_offlineLRJ300_jFexLRJ->SetName("eff_LRJ300");
         back_eff_offlineLRJ300_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ300_jFexLRJ->Divide(back_h_offlineLRJ_Et_num300_jFexLRJ, back_h_offlineLRJ_Et_denom300_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ300_jFexLRJ->Divide(back_h_offlineLRJ_Et_num300_jFexLRJ, back_h_offlineLRJ_Et_denom300_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ300_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5767,7 +7182,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ350_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num350_jFexLRJ->Clone();
         back_eff_offlineLRJ350_jFexLRJ->SetName("eff_LRJ350");
         back_eff_offlineLRJ350_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ350_jFexLRJ->Divide(back_h_offlineLRJ_Et_num350_jFexLRJ, back_h_offlineLRJ_Et_denom350_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ350_jFexLRJ->Divide(back_h_offlineLRJ_Et_num350_jFexLRJ, back_h_offlineLRJ_Et_denom350_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ350_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5779,7 +7194,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ400_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num400_jFexLRJ->Clone();
         back_eff_offlineLRJ400_jFexLRJ->SetName("eff_LRJ400");
         back_eff_offlineLRJ400_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ400_jFexLRJ->Divide(back_h_offlineLRJ_Et_num400_jFexLRJ, back_h_offlineLRJ_Et_denom400_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ400_jFexLRJ->Divide(back_h_offlineLRJ_Et_num400_jFexLRJ, back_h_offlineLRJ_Et_denom400_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ400_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5791,7 +7206,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ450_jFexLRJ = (TH1F*)back_h_offlineLRJ_Et_num450_jFexLRJ->Clone();
         back_eff_offlineLRJ450_jFexLRJ->SetName("eff_LRJ450");
         back_eff_offlineLRJ450_jFexLRJ->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ450_jFexLRJ->Divide(back_h_offlineLRJ_Et_num450_jFexLRJ, back_h_offlineLRJ_Et_denom450_jFexLRJ, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ450_jFexLRJ->Divide(back_h_offlineLRJ_Et_num450_jFexLRJ, back_h_offlineLRJ_Et_denom450_jFexLRJ, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ450_jFexLRJ->SetAxisRange(0, 1.1, "Y");
 
@@ -5804,7 +7219,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ50 = (TH1F*)back_h_offlineLRJ_Et_num50->Clone();
         back_eff_offlineLRJ50->SetName("eff_LRJ50");
         back_eff_offlineLRJ50->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ50->Divide(back_h_offlineLRJ_Et_num50, back_h_offlineLRJ_Et_denom50, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ50->Divide(back_h_offlineLRJ_Et_num50, back_h_offlineLRJ_Et_denom50, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ50->SetAxisRange(0, 1.1, "Y");
 
@@ -5815,7 +7230,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ100 = (TH1F*)back_h_offlineLRJ_Et_num100->Clone();
         back_eff_offlineLRJ100->SetName("eff_LRJ100");
         back_eff_offlineLRJ100->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ100->Divide(back_h_offlineLRJ_Et_num100, back_h_offlineLRJ_Et_denom100, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ100->Divide(back_h_offlineLRJ_Et_num100, back_h_offlineLRJ_Et_denom100, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ100->SetAxisRange(0, 1.1, "Y");
 
@@ -5826,7 +7241,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ150 = (TH1F*)back_h_offlineLRJ_Et_num150->Clone();
         back_eff_offlineLRJ150->SetName("eff_LRJ150");
         back_eff_offlineLRJ150->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ150->Divide(back_h_offlineLRJ_Et_num150, back_h_offlineLRJ_Et_denom150, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ150->Divide(back_h_offlineLRJ_Et_num150, back_h_offlineLRJ_Et_denom150, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ150->SetAxisRange(0, 1.1, "Y");
 
@@ -5837,7 +7252,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ200 = (TH1F*)back_h_offlineLRJ_Et_num200->Clone();
         back_eff_offlineLRJ200->SetName("eff_LRJ200");
         back_eff_offlineLRJ200->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ200->Divide(back_h_offlineLRJ_Et_num200, back_h_offlineLRJ_Et_denom200, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ200->Divide(back_h_offlineLRJ_Et_num200, back_h_offlineLRJ_Et_denom200, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ200->SetAxisRange(0, 1.1, "Y");
 
@@ -5848,7 +7263,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ250 = (TH1F*)back_h_offlineLRJ_Et_num250->Clone();
         back_eff_offlineLRJ250->SetName("eff_LRJ250");
         back_eff_offlineLRJ250->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ250->Divide(back_h_offlineLRJ_Et_num250, back_h_offlineLRJ_Et_denom250, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ250->Divide(back_h_offlineLRJ_Et_num250, back_h_offlineLRJ_Et_denom250, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ250->SetAxisRange(0, 1.1, "Y");
 
@@ -5859,7 +7274,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ300 = (TH1F*)back_h_offlineLRJ_Et_num300->Clone();
         back_eff_offlineLRJ300->SetName("eff_LRJ300");
         back_eff_offlineLRJ300->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ300->Divide(back_h_offlineLRJ_Et_num300, back_h_offlineLRJ_Et_denom300, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ300->Divide(back_h_offlineLRJ_Et_num300, back_h_offlineLRJ_Et_denom300, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ300->SetAxisRange(0, 1.1, "Y");
 
@@ -5870,7 +7285,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ350 = (TH1F*)back_h_offlineLRJ_Et_num350->Clone();
         back_eff_offlineLRJ350->SetName("eff_LRJ350");
         back_eff_offlineLRJ350->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ350->Divide(back_h_offlineLRJ_Et_num350, back_h_offlineLRJ_Et_denom350, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ350->Divide(back_h_offlineLRJ_Et_num350, back_h_offlineLRJ_Et_denom350, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ350->SetAxisRange(0, 1.1, "Y");
 
@@ -5881,7 +7296,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ400 = (TH1F*)back_h_offlineLRJ_Et_num400->Clone();
         back_eff_offlineLRJ400->SetName("eff_LRJ400");
         back_eff_offlineLRJ400->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ400->Divide(back_h_offlineLRJ_Et_num400, back_h_offlineLRJ_Et_denom400, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ400->Divide(back_h_offlineLRJ_Et_num400, back_h_offlineLRJ_Et_denom400, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ400->SetAxisRange(0, 1.1, "Y");
 
@@ -5892,7 +7307,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ450 = (TH1F*)back_h_offlineLRJ_Et_num450->Clone();
         back_eff_offlineLRJ450->SetName("eff_LRJ450");
         back_eff_offlineLRJ450->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ450->Divide(back_h_offlineLRJ_Et_num450, back_h_offlineLRJ_Et_denom450, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ450->Divide(back_h_offlineLRJ_Et_num450, back_h_offlineLRJ_Et_denom450, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ450->SetAxisRange(0, 1.1, "Y");
 
@@ -5905,7 +7320,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num50_Dijet->Clone();
         sig_eff_offlineLRJ50_Dijet->SetName("eff_LRJ50_Dijet");
         sig_eff_offlineLRJ50_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_Dijet->Divide(sig_h_offlineLRJ_Et_num50_Dijet, sig_h_offlineLRJ_Et_denom50_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_Dijet->Divide(sig_h_offlineLRJ_Et_num50_Dijet, sig_h_offlineLRJ_Et_denom50_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5916,7 +7331,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num100_Dijet->Clone();
         sig_eff_offlineLRJ100_Dijet->SetName("eff_LRJ100_Dijet");
         sig_eff_offlineLRJ100_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_Dijet->Divide(sig_h_offlineLRJ_Et_num100_Dijet, sig_h_offlineLRJ_Et_denom100_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_Dijet->Divide(sig_h_offlineLRJ_Et_num100_Dijet, sig_h_offlineLRJ_Et_denom100_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5927,7 +7342,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num150_Dijet->Clone();
         sig_eff_offlineLRJ150_Dijet->SetName("eff_LRJ150_Dijet");
         sig_eff_offlineLRJ150_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_Dijet->Divide(sig_h_offlineLRJ_Et_num150_Dijet, sig_h_offlineLRJ_Et_denom150_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_Dijet->Divide(sig_h_offlineLRJ_Et_num150_Dijet, sig_h_offlineLRJ_Et_denom150_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5938,7 +7353,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num200_Dijet->Clone();
         sig_eff_offlineLRJ200_Dijet->SetName("eff_LRJ200_Dijet");
         sig_eff_offlineLRJ200_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_Dijet->Divide(sig_h_offlineLRJ_Et_num200_Dijet, sig_h_offlineLRJ_Et_denom200_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_Dijet->Divide(sig_h_offlineLRJ_Et_num200_Dijet, sig_h_offlineLRJ_Et_denom200_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5949,7 +7364,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num250_Dijet->Clone();
         sig_eff_offlineLRJ250_Dijet->SetName("eff_LRJ250_Dijet");
         sig_eff_offlineLRJ250_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_Dijet->Divide(sig_h_offlineLRJ_Et_num250_Dijet, sig_h_offlineLRJ_Et_denom250_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_Dijet->Divide(sig_h_offlineLRJ_Et_num250_Dijet, sig_h_offlineLRJ_Et_denom250_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5960,7 +7375,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num300_Dijet->Clone();
         sig_eff_offlineLRJ300_Dijet->SetName("eff_LRJ300_Dijet");
         sig_eff_offlineLRJ300_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_Dijet->Divide(sig_h_offlineLRJ_Et_num300_Dijet, sig_h_offlineLRJ_Et_denom300_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_Dijet->Divide(sig_h_offlineLRJ_Et_num300_Dijet, sig_h_offlineLRJ_Et_denom300_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5971,7 +7386,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num350_Dijet->Clone();
         sig_eff_offlineLRJ350_Dijet->SetName("eff_LRJ350_Dijet");
         sig_eff_offlineLRJ350_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_Dijet->Divide(sig_h_offlineLRJ_Et_num350_Dijet, sig_h_offlineLRJ_Et_denom350_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_Dijet->Divide(sig_h_offlineLRJ_Et_num350_Dijet, sig_h_offlineLRJ_Et_denom350_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5982,7 +7397,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num400_Dijet->Clone();
         sig_eff_offlineLRJ400_Dijet->SetName("eff_LRJ400_Dijet");
         sig_eff_offlineLRJ400_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_Dijet->Divide(sig_h_offlineLRJ_Et_num400_Dijet, sig_h_offlineLRJ_Et_denom400_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_Dijet->Divide(sig_h_offlineLRJ_Et_num400_Dijet, sig_h_offlineLRJ_Et_denom400_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -5993,7 +7408,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num450_Dijet->Clone();
         sig_eff_offlineLRJ450_Dijet->SetName("eff_LRJ450_Dijet");
         sig_eff_offlineLRJ450_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_Dijet->Divide(sig_h_offlineLRJ_Et_num450_Dijet, sig_h_offlineLRJ_Et_denom450_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_Dijet->Divide(sig_h_offlineLRJ_Et_num450_Dijet, sig_h_offlineLRJ_Et_denom450_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -6004,7 +7419,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_Dijet = (TH1F*)sig_h_offlineLRJ_Et_num500_Dijet->Clone();
         sig_eff_offlineLRJ500_Dijet->SetName("eff_LRJ500_Dijet");
         sig_eff_offlineLRJ500_Dijet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_Dijet->Divide(sig_h_offlineLRJ_Et_num500_Dijet, sig_h_offlineLRJ_Et_denom500_Dijet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_Dijet->Divide(sig_h_offlineLRJ_Et_num500_Dijet, sig_h_offlineLRJ_Et_denom500_Dijet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_Dijet->SetAxisRange(0, 1.1, "Y");
 
@@ -6017,7 +7432,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num50_1Subjet->Clone();
         sig_eff_offlineLRJ50_1Subjet->SetName("eff_LRJ50_1Subjet");
         sig_eff_offlineLRJ50_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_1Subjet->Divide(sig_h_offlineLRJ_Et_num50_1Subjet, sig_h_offlineLRJ_Et_denom50_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_1Subjet->Divide(sig_h_offlineLRJ_Et_num50_1Subjet, sig_h_offlineLRJ_Et_denom50_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6028,7 +7443,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num100_1Subjet->Clone();
         sig_eff_offlineLRJ100_1Subjet->SetName("eff_LRJ100_1Subjet");
         sig_eff_offlineLRJ100_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_1Subjet->Divide(sig_h_offlineLRJ_Et_num100_1Subjet, sig_h_offlineLRJ_Et_denom100_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_1Subjet->Divide(sig_h_offlineLRJ_Et_num100_1Subjet, sig_h_offlineLRJ_Et_denom100_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6039,7 +7454,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num150_1Subjet->Clone();
         sig_eff_offlineLRJ150_1Subjet->SetName("eff_LRJ150_1Subjet");
         sig_eff_offlineLRJ150_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_1Subjet->Divide(sig_h_offlineLRJ_Et_num150_1Subjet, sig_h_offlineLRJ_Et_denom150_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_1Subjet->Divide(sig_h_offlineLRJ_Et_num150_1Subjet, sig_h_offlineLRJ_Et_denom150_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6050,7 +7465,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num200_1Subjet->Clone();
         sig_eff_offlineLRJ200_1Subjet->SetName("eff_LRJ200_1Subjet");
         sig_eff_offlineLRJ200_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_1Subjet->Divide(sig_h_offlineLRJ_Et_num200_1Subjet, sig_h_offlineLRJ_Et_denom200_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_1Subjet->Divide(sig_h_offlineLRJ_Et_num200_1Subjet, sig_h_offlineLRJ_Et_denom200_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6061,7 +7476,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num250_1Subjet->Clone();
         sig_eff_offlineLRJ250_1Subjet->SetName("eff_LRJ250_1Subjet");
         sig_eff_offlineLRJ250_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_1Subjet->Divide(sig_h_offlineLRJ_Et_num250_1Subjet, sig_h_offlineLRJ_Et_denom250_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_1Subjet->Divide(sig_h_offlineLRJ_Et_num250_1Subjet, sig_h_offlineLRJ_Et_denom250_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6072,7 +7487,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num300_1Subjet->Clone();
         sig_eff_offlineLRJ300_1Subjet->SetName("eff_LRJ300_1Subjet");
         sig_eff_offlineLRJ300_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_1Subjet->Divide(sig_h_offlineLRJ_Et_num300_1Subjet, sig_h_offlineLRJ_Et_denom300_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_1Subjet->Divide(sig_h_offlineLRJ_Et_num300_1Subjet, sig_h_offlineLRJ_Et_denom300_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6083,7 +7498,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num350_1Subjet->Clone();
         sig_eff_offlineLRJ350_1Subjet->SetName("eff_LRJ350_1Subjet");
         sig_eff_offlineLRJ350_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_1Subjet->Divide(sig_h_offlineLRJ_Et_num350_1Subjet, sig_h_offlineLRJ_Et_denom350_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_1Subjet->Divide(sig_h_offlineLRJ_Et_num350_1Subjet, sig_h_offlineLRJ_Et_denom350_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6094,7 +7509,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num400_1Subjet->Clone();
         sig_eff_offlineLRJ400_1Subjet->SetName("eff_LRJ400_1Subjet");
         sig_eff_offlineLRJ400_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_1Subjet->Divide(sig_h_offlineLRJ_Et_num400_1Subjet, sig_h_offlineLRJ_Et_denom400_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_1Subjet->Divide(sig_h_offlineLRJ_Et_num400_1Subjet, sig_h_offlineLRJ_Et_denom400_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6105,7 +7520,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num450_1Subjet->Clone();
         sig_eff_offlineLRJ450_1Subjet->SetName("eff_LRJ450_1Subjet");
         sig_eff_offlineLRJ450_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_1Subjet->Divide(sig_h_offlineLRJ_Et_num450_1Subjet, sig_h_offlineLRJ_Et_denom450_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_1Subjet->Divide(sig_h_offlineLRJ_Et_num450_1Subjet, sig_h_offlineLRJ_Et_denom450_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6116,7 +7531,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_1Subjet = (TH1F*)sig_h_offlineLRJ_Et_num500_1Subjet->Clone();
         sig_eff_offlineLRJ500_1Subjet->SetName("eff_LRJ500_1Subjet");
         sig_eff_offlineLRJ500_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_1Subjet->Divide(sig_h_offlineLRJ_Et_num500_1Subjet, sig_h_offlineLRJ_Et_denom500_1Subjet, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_1Subjet->Divide(sig_h_offlineLRJ_Et_num500_1Subjet, sig_h_offlineLRJ_Et_denom500_1Subjet, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6129,7 +7544,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 TH1F* back_eff_offlineLRJ100_1Subjet = (TH1F*)back_h_offlineLRJ_Et_num100_1Subjet->Clone();
         back_eff_offlineLRJ100_1Subjet->SetName("eff_LRJ100_1Subjet");
         back_eff_offlineLRJ100_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ100_1Subjet->Divide(back_h_offlineLRJ_Et_num100_1Subjet, back_h_offlineLRJ_Et_denom100_1Subjet, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ100_1Subjet->Divide(back_h_offlineLRJ_Et_num100_1Subjet, back_h_offlineLRJ_Et_denom100_1Subjet, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ100_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6140,7 +7555,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ200_1Subjet = (TH1F*)back_h_offlineLRJ_Et_num200_1Subjet->Clone();
         back_eff_offlineLRJ200_1Subjet->SetName("eff_LRJ200_1Subjet");
         back_eff_offlineLRJ200_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ200_1Subjet->Divide(back_h_offlineLRJ_Et_num200_1Subjet, back_h_offlineLRJ_Et_denom200_1Subjet, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ200_1Subjet->Divide(back_h_offlineLRJ_Et_num200_1Subjet, back_h_offlineLRJ_Et_denom200_1Subjet, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ200_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6151,7 +7566,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ300_1Subjet = (TH1F*)back_h_offlineLRJ_Et_num300_1Subjet->Clone();
         back_eff_offlineLRJ300_1Subjet->SetName("eff_LRJ300_1Subjet");
         back_eff_offlineLRJ300_1Subjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ300_1Subjet->Divide(back_h_offlineLRJ_Et_num300_1Subjet, back_h_offlineLRJ_Et_denom300_1Subjet, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ300_1Subjet->Divide(back_h_offlineLRJ_Et_num300_1Subjet, back_h_offlineLRJ_Et_denom300_1Subjet, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ300_1Subjet->SetAxisRange(0, 1.1, "Y");
 
@@ -6164,7 +7579,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ50_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num50_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ50_GrEq2Subjets->SetName("eff_LRJ50_GrEq2Subjets");
         sig_eff_offlineLRJ50_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ50_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num50_GrEq2Subjets, sig_h_offlineLRJ_Et_denom50_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ50_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num50_GrEq2Subjets, sig_h_offlineLRJ_Et_denom50_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ50_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6175,7 +7590,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ100_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num100_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ100_GrEq2Subjets->SetName("eff_LRJ100_GrEq2Subjets");
         sig_eff_offlineLRJ100_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ100_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num100_GrEq2Subjets, sig_h_offlineLRJ_Et_denom100_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ100_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num100_GrEq2Subjets, sig_h_offlineLRJ_Et_denom100_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ100_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6186,7 +7601,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ150_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num150_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ150_GrEq2Subjets->SetName("eff_LRJ150_GrEq2Subjets");
         sig_eff_offlineLRJ150_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ150_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num150_GrEq2Subjets, sig_h_offlineLRJ_Et_denom150_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ150_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num150_GrEq2Subjets, sig_h_offlineLRJ_Et_denom150_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ150_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6197,7 +7612,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ200_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num200_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ200_GrEq2Subjets->SetName("eff_LRJ200_GrEq2Subjets");
         sig_eff_offlineLRJ200_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ200_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num200_GrEq2Subjets, sig_h_offlineLRJ_Et_denom200_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ200_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num200_GrEq2Subjets, sig_h_offlineLRJ_Et_denom200_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ200_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6208,7 +7623,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ250_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num250_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ250_GrEq2Subjets->SetName("eff_LRJ250_GrEq2Subjets");
         sig_eff_offlineLRJ250_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ250_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num250_GrEq2Subjets, sig_h_offlineLRJ_Et_denom250_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ250_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num250_GrEq2Subjets, sig_h_offlineLRJ_Et_denom250_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ250_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6219,7 +7634,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ300_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num300_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ300_GrEq2Subjets->SetName("eff_LRJ300_GrEq2Subjets");
         sig_eff_offlineLRJ300_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ300_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num300_GrEq2Subjets, sig_h_offlineLRJ_Et_denom300_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ300_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num300_GrEq2Subjets, sig_h_offlineLRJ_Et_denom300_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ300_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6230,7 +7645,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ350_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num350_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ350_GrEq2Subjets->SetName("eff_LRJ350_GrEq2Subjets");
         sig_eff_offlineLRJ350_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ350_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num350_GrEq2Subjets, sig_h_offlineLRJ_Et_denom350_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ350_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num350_GrEq2Subjets, sig_h_offlineLRJ_Et_denom350_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ350_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6241,7 +7656,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ400_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num400_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ400_GrEq2Subjets->SetName("eff_LRJ400_GrEq2Subjets");
         sig_eff_offlineLRJ400_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ400_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num400_GrEq2Subjets, sig_h_offlineLRJ_Et_denom400_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ400_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num400_GrEq2Subjets, sig_h_offlineLRJ_Et_denom400_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ400_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6252,7 +7667,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ450_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num450_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ450_GrEq2Subjets->SetName("eff_LRJ450_GrEq2Subjets");
         sig_eff_offlineLRJ450_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ450_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num450_GrEq2Subjets, sig_h_offlineLRJ_Et_denom450_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ450_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num450_GrEq2Subjets, sig_h_offlineLRJ_Et_denom450_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ450_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6263,7 +7678,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_eff_offlineLRJ500_GrEq2Subjets = (TH1F*)sig_h_offlineLRJ_Et_num500_GrEq2Subjets->Clone();
         sig_eff_offlineLRJ500_GrEq2Subjets->SetName("eff_LRJ500_GrEq2Subjets");
         sig_eff_offlineLRJ500_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
-        sig_eff_offlineLRJ500_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num500_GrEq2Subjets, sig_h_offlineLRJ_Et_denom500_GrEq2Subjets, 1.0, 1.0);//, "B");
+        sig_eff_offlineLRJ500_GrEq2Subjets->Divide(sig_h_offlineLRJ_Et_num500_GrEq2Subjets, sig_h_offlineLRJ_Et_denom500_GrEq2Subjets, 1.0, 1.0, "B");
         
         sig_eff_offlineLRJ500_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6275,7 +7690,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ100_GrEq2Subjets = (TH1F*)back_h_offlineLRJ_Et_num100_GrEq2Subjets->Clone();
         back_eff_offlineLRJ100_GrEq2Subjets->SetName("back_eff_LRJ100_GrEq2Subjets");
         back_eff_offlineLRJ100_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ100_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num100_GrEq2Subjets, back_h_offlineLRJ_Et_denom100_GrEq2Subjets, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ100_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num100_GrEq2Subjets, back_h_offlineLRJ_Et_denom100_GrEq2Subjets, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ100_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6287,7 +7702,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ200_GrEq2Subjets = (TH1F*)back_h_offlineLRJ_Et_num200_GrEq2Subjets->Clone();
         back_eff_offlineLRJ200_GrEq2Subjets->SetName("back_eff_LRJ200_GrEq2Subjets");
         back_eff_offlineLRJ200_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ200_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num200_GrEq2Subjets, back_h_offlineLRJ_Et_denom200_GrEq2Subjets, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ200_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num200_GrEq2Subjets, back_h_offlineLRJ_Et_denom200_GrEq2Subjets, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ200_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
@@ -6299,13 +7714,263 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_eff_offlineLRJ300_GrEq2Subjets = (TH1F*)back_h_offlineLRJ_Et_num300_GrEq2Subjets->Clone();
         back_eff_offlineLRJ300_GrEq2Subjets->SetName("back_eff_LRJ300_GrEq2Subjets");
         back_eff_offlineLRJ300_GrEq2Subjets->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Background)");
-        back_eff_offlineLRJ300_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num300_GrEq2Subjets, back_h_offlineLRJ_Et_denom300_GrEq2Subjets, 1.0, 1.0);//, "B");
+        back_eff_offlineLRJ300_GrEq2Subjets->Divide(back_h_offlineLRJ_Et_num300_GrEq2Subjets, back_h_offlineLRJ_Et_denom300_GrEq2Subjets, 1.0, 1.0, "B");
         
         back_eff_offlineLRJ300_GrEq2Subjets->SetAxisRange(0, 1.1, "Y");
 
         back_eff_offlineLRJ300_GrEq2Subjets->Draw("P");
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "back_eff_offlineLRJ300_GrEq2Subjets.pdf");
+
+        // ===========================================================
+        // Compute Likelihood Ratio (Signal / Background) TH2F plots
+        // ===========================================================
+
+        // Small protection value for empty bins
+        const double epsilon = 1e-12;
+
+        // --- Leading jets ---
+        TH2F* LR_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_12->Clone("LR_Leading");
+        LR_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
+        for (int i = 1; i <= LR_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Leading->GetNbinsY(); ++j) {
+            double s = sigOfflineLeadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backOfflineLeadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR_Leading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optionally take log10 of LR for dynamic range clarity
+        TH2F* logLR_Leading = (TH2F*)LR_Leading->Clone("logLR_Leading");
+        logLR_Leading->SetTitle("log10(Likelihood Ratio) - Leading");
+        for (int i = 1; i <= logLR_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR_Leading->GetNbinsY(); ++j) {
+            double val = LR_Leading->GetBinContent(i,j);
+            logLR_Leading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10); // clip low bins
+        }
+        }
+
+        // --- Subleading jets ---
+        TH2F* LR_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
+        LR_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
+        for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
+            double s = sigOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR_Subleading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optional log10 version for visibility
+        TH2F* logLR_Subleading = (TH2F*)LR_Subleading->Clone("logLR_Subleading");
+        logLR_Subleading->SetTitle("log10(Likelihood Ratio) - Subleading");
+        for (int i = 1; i <= logLR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR_Subleading->GetNbinsY(); ++j) {
+            double val = LR_Subleading->GetBinContent(i,j);
+            logLR_Subleading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10);
+        }
+        }
+
+        // ===========================================================
+        // Draw and save
+        // ===========================================================
+        TCanvas cLR("cLR", "Likelihood Ratios", 800, 700);
+        cLR.SetLogz(); // log scale color map for clarity
+
+        logLR_Leading->Draw("COLZ");
+        logLR_Leading->GetXaxis()->SetTitle("JetTagger Leading LRJ E_{T} [GeV]");
+        logLR_Leading->GetYaxis()->SetTitle("#psi_{R,Leading}/#psi_{R,Subleading}");
+        cLR.SaveAs(modifiedOutputFileDir + "Psi_12_LikelihoodRatio_Leading.pdf");
+
+        logLR_Subleading->Draw("COLZ");
+        logLR_Subleading->GetXaxis()->SetTitle("JetTagger Subleading LRJ E_{T} [GeV]");
+        logLR_Subleading->GetYaxis()->SetTitle("#psi_{R,Leading}/#psi_{R,Subleading}");
+        cLR.SaveAs(modifiedOutputFileDir + "Psi_12_LikelihoodRatio_Subleading.pdf");
+
+        //Psi_1 * Psi_2
+        // --- Leading jets ---
+        TH2F* LRSquared_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_R_squared->Clone("LRSquared_Leading");
+        LRSquared_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
+        for (int i = 1; i <= LRSquared_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LRSquared_Leading->GetNbinsY(); ++j) {
+            double s = sigOfflineLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double b = backOfflineLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LRSquared_Leading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optionally take log10 of LR for dynamic range clarity
+        TH2F* logLRSquared_Leading = (TH2F*)LRSquared_Leading->Clone("logLRSquared_Leading");
+        logLRSquared_Leading->SetTitle("log10(Likelihood Ratio) - Leading");
+        for (int i = 1; i <= logLRSquared_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLRSquared_Leading->GetNbinsY(); ++j) {
+            double val = LRSquared_Leading->GetBinContent(i,j);
+            logLRSquared_Leading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10); // clip low bins
+        }
+        }
+
+        // --- Subleading jets ---
+        TH2F* LRSquared_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_R_squared->Clone("LRSquared_Subleading");
+        LRSquared_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
+        for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
+            double s = sigOfflineSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double b = backOfflineSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LRSquared_Subleading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optional log10 version for visibility
+        TH2F* logLRSquared_Subleading = (TH2F*)LRSquared_Subleading->Clone("logLRSquared_Subleading");
+        logLRSquared_Subleading->SetTitle("log10(Likelihood Ratio) - Subleading");
+        for (int i = 1; i <= logLRSquared_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLRSquared_Subleading->GetNbinsY(); ++j) {
+            double val = LRSquared_Subleading->GetBinContent(i,j);
+            logLRSquared_Subleading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10);
+        }
+        }
+
+        // ===========================================================
+        // Draw and save
+        // ===========================================================
+        TCanvas cLRSquared("cLSquared", "Likelihood Ratios", 800, 700);
+        cLRSquared.SetLogz(); // log scale color map for clarity
+
+        logLRSquared_Leading->Draw("COLZ");
+        logLRSquared_Leading->GetXaxis()->SetTitle("JetTagger Leading LRJ E_{T} [GeV]");
+        logLRSquared_Leading->GetYaxis()->SetTitle("#psi_{R,Leading} #times #psi_{R,Subleading}");
+        cLRSquared.SaveAs(modifiedOutputFileDir + "Psi_R_Squared_LikelihoodRatio_Leading.pdf");
+
+        logLRSquared_Subleading->Draw("COLZ");
+        logLRSquared_Subleading->GetXaxis()->SetTitle("JetTagger Subleading LRJ E_{T} [GeV]");
+        logLRSquared_Subleading->GetYaxis()->SetTitle("#psi_{R,Leading} #times #psi_{R,Subleading}");
+        cLRSquared.SaveAs(modifiedOutputFileDir + "Psi_R_Squared_LikelihoodRatio_Subleading.pdf");
+
+        //  Psi ratio computed with R^2 metric 
+        // --- Leading jets ---
+        TH2F* LR2_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_R2_12->Clone("LR2_Leading");
+        LR2_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
+        for (int i = 1; i <= LR_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Leading->GetNbinsY(); ++j) {
+            double s = sigOfflineLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double b = backOfflineLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR2_Leading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optionally take log10 of LR for dynamic range clarity
+        TH2F* logLR2_Leading = (TH2F*)LR2_Leading->Clone("logLR2_Leading");
+        logLR2_Leading->SetTitle("log10(Likelihood Ratio) - Leading");
+        for (int i = 1; i <= logLR2_Leading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR2_Leading->GetNbinsY(); ++j) {
+            double val = LR2_Leading->GetBinContent(i,j);
+            logLR2_Leading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10); // clip low bins
+        }
+        }
+
+        // --- Subleading jets ---
+        TH2F* LR2_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_R2_12->Clone("LR2_Subleading");
+        LR2_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
+        for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
+            double s = sigOfflineSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double b = backOfflineSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR2_Subleading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optional log10 version for visibility
+        TH2F* logLR2_Subleading = (TH2F*)LR2_Subleading->Clone("logLR2_Subleading");
+        logLR2_Subleading->SetTitle("log10(Likelihood Ratio) - Subleading");
+        for (int i = 1; i <= logLR2_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR2_Subleading->GetNbinsY(); ++j) {
+            double val = LR2_Subleading->GetBinContent(i,j);
+            logLR2_Subleading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10);
+        }
+        }
+
+        // ===========================================================
+        // Draw and save
+        // ===========================================================
+        TCanvas cLR2("cLR2", "Likelihood Ratios", 800, 700);
+        cLR2.SetLogz(); // log scale color map for clarity
+
+        logLR2_Leading->Draw("COLZ");
+        logLR2_Leading->GetXaxis()->SetTitle("JetTagger Leading LRJ E_{T} [GeV]");
+        logLR2_Leading->GetYaxis()->SetTitle("#psi_{R^{2},Leading}/#psi_{R^{2},Subleading}");
+        cLR2.SaveAs(modifiedOutputFileDir + "Psi_R2_12_LikelihoodRatio_Leading.pdf");
+
+        logLR_Subleading->Draw("COLZ");
+        logLR2_Subleading->GetXaxis()->SetTitle("JetTagger Subleading LRJ E_{T} [GeV]");
+        logLR2_Subleading->GetYaxis()->SetTitle("#psi_{R^{2},Leading}/#psi_{R^{2},Subleading}");
+        cLR2.SaveAs(modifiedOutputFileDir + "Psi_R2_12_LikelihoodRatio_Subleading.pdf");
+
+        // N Subjets of Leading Offline LRJ vs. Leading Offline LRJ E_T likelihood ratio
+        // --- Leading jets ---
+        TH2F* LR_Leading_Subjets = (TH2F*)sigOfflineLeadingLRJEtvsSubjetMult->Clone("LR_Leading_Subjets");
+        LR_Leading_Subjets->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
+        for (int i = 1; i <= LR_Leading_Subjets->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Leading_Subjets->GetNbinsY(); ++j) {
+            double s = sigOfflineLeadingLRJEtvsSubjetMult->GetBinContent(i,j);
+            double b = backOfflineLeadingLRJEtvsSubjetMult->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR_Leading_Subjets->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optionally take log10 of LR for dynamic range clarity
+        TH2F* logLR_Leading_Subjets = (TH2F*)LR_Leading_Subjets->Clone("logLR_Leading_Subjets");
+        logLR_Leading_Subjets->SetTitle("log10(Likelihood Ratio) - Leading");
+        for (int i = 1; i <= logLR_Leading_Subjets->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR_Leading_Subjets->GetNbinsY(); ++j) {
+            double val = LR_Leading_Subjets->GetBinContent(i,j);
+            logLR_Leading_Subjets->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10); // clip low bins
+        }
+        }
+
+        // --- Subleading jets ---
+        /*TH2F* LR_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
+        LR_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
+        for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
+            double s = sigOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
+            LR_Subleading->SetBinContent(i, j, ratio);
+        }
+        }
+
+        // Optional log10 version for visibility
+        TH2F* logLR_Subleading = (TH2F*)LR_Subleading->Clone("logLR_Subleading");
+        logLR_Subleading->SetTitle("log10(Likelihood Ratio) - Subleading");
+        for (int i = 1; i <= logLR_Subleading->GetNbinsX(); ++i) {
+        for (int j = 1; j <= logLR_Subleading->GetNbinsY(); ++j) {
+            double val = LR_Subleading->GetBinContent(i,j);
+            logLR_Subleading->SetBinContent(i,j, (val > 0) ? std::log10(val) : -10);
+        }
+        }*/
+
+        // ===========================================================
+        // Draw and save
+        // ===========================================================
+        TCanvas cLR_Subjets("cLR_Subjets", "Likelihood Ratios", 800, 700);
+        cLR_Subjets.SetLogz(); // log scale color map for clarity
+
+        logLR_Leading_Subjets->Draw("COLZ");
+        logLR_Leading_Subjets->GetXaxis()->SetTitle("Leading Offline LRJ E_{T} [GeV]");
+        logLR_Leading_Subjets->GetYaxis()->SetTitle("N_{Subjets} (Offline Leading LRJ)");
+        cLR_Subjets.SaveAs(modifiedOutputFileDir + "NSubjets_Likelihood_Ratio.pdf");
+
+        /*logLR_Subleading->Draw("COLZ");
+        logLR_Subleading->GetXaxis()->SetTitle("JetTagger Subleading LRJ E_{T} [GeV]");
+        logLR_Subleading->GetYaxis()->SetTitle("#psi_{R,Leading}/#psi_{R,Subleading}");
+        cLR.SaveAs(modifiedOutputFileDir + "Psi_12_LikelihoodRatio_Subleading.pdf");*/
 
 
 
@@ -8808,7 +10473,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         backLegEffLRJ_gFex_LRJ_overlay->AddEntry(back_eff_offlineLRJ300,           "Lead. Jet E_{T} > 300 GeV (JetTagger)", "p");
         backLegEffLRJ_gFex_LRJ_overlay->AddEntry(back_eff_offlineLRJ300_gFexLRJ,   "Lead. Jet E_{T} > 300 GeV (gFEX LRJ)",    "p");
 
-        //backLegEffLRJ_gFex_LRJ_overlay->Draw();
+        backLegEffLRJ_gFex_LRJ_overlay->Draw();
 
         // Save to a new file/canvas
         cBackEffLRJ_gFex_LRJ_overlay.SaveAs(modifiedOutputFileDir + "back_overlayed_eff_LRJ_off_vs_gFEX_100_200_300.pdf");
@@ -8905,6 +10570,56 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sig_eff_b_Et250->Draw("P SAME");
         legEffb->Draw();
         cSigEffb.SaveAs(modifiedOutputFileDir + "overlayed_eff_b_Et.pdf");
+
+        // --- Styling ---
+        sig_eff_offlineLRJ10kHz->SetLineColor(kBlack);
+        sig_eff_offlineLRJ10kHz->SetMarkerColor(kBlack);
+        sig_eff_offlineLRJ10kHz->SetMarkerStyle(20);
+        sig_eff_offlineLRJ10kHz->SetMarkerSize(1.0);
+
+        sig_eff_offline_gFEX_LRJ10kHz->SetLineColor(kRed+1);
+        sig_eff_offline_gFEX_LRJ10kHz->SetMarkerColor(kRed+1);
+        sig_eff_offline_gFEX_LRJ10kHz->SetMarkerStyle(21);
+        sig_eff_offline_gFEX_LRJ10kHz->SetMarkerSize(1.0);
+
+        //sig_eff_offline_jFEX_LRJ10kHz->SetLineColor(kGreen+2);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerColor(kGreen+2);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerStyle(22);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerSize(1.0);
+
+        // Axis range / cosmetics
+        sig_eff_offlineLRJ10kHz->SetAxisRange(0.0, 1.1, "Y");
+        sig_eff_offline_gFEX_LRJ10kHz->SetAxisRange(0.0, 1.1, "Y");
+        //sig_eff_offline_jFEX_LRJ10kHz->SetAxisRange(0.0, 1.1, "Y");
+        sig_eff_offlineLRJ10kHz->GetXaxis()->SetTitleOffset(1.1);
+        sig_eff_offlineLRJ10kHz->GetYaxis()->SetTitleOffset(1.2);
+
+        // --- Draw overlay ---
+        TCanvas c_effLRJ10kHz("c_effLRJ10kHz","LRJ Efficiencies @ 10 kHz bkg",900,700);
+
+        sig_eff_offlineLRJ10kHz->Draw("P");          // first: JetTagger (offline)
+        sig_eff_offline_gFEX_LRJ10kHz->Draw("P SAME");
+        //sig_eff_offline_jFEX_LRJ10kHz->Draw("P SAME");
+
+        // --- Legend with proper labels and note about 10 kHz ---
+        TLegend *leg_10kHz_effs = new TLegend(0.4, 0.18, 0.78, 0.38);
+        leg_10kHz_effs->SetBorderSize(0);
+        leg_10kHz_effs->SetFillStyle(0);
+        leg_10kHz_effs->SetTextSize(0.03);
+        leg_10kHz_effs->SetHeader("Cuts tuned to 10 kHz background","C"); // clearly states the rate
+        leg_10kHz_effs->AddEntry(sig_eff_offlineLRJ10kHz,
+            Form("JetTagger Lead. LRJ E_{T} > %.1f GeV", jetTagger_10kHz_Threshold_Leading), "lp");
+
+        leg_10kHz_effs->AddEntry(sig_eff_offline_gFEX_LRJ10kHz,
+            Form("gFEX Lead. LRJ E_{T}  > %.1f GeV", gFEX_10kHz_Threshold_Leading), "lp");
+
+        //leg_10kHz_effs->AddEntry(sig_eff_offline_jFEX_LRJ10kHz,
+        //    Form("jFEX ( > %.1f GeV)", jFEX_10kHz_Threshold_Leading), "lp");
+        leg_10kHz_effs->Draw();
+
+        // --- Save overlay ---
+        c_effLRJ10kHz.SaveAs(modifiedOutputFileDir + "sig_eff_offline_LRJ10kHz_overlay.pdf");
+
 
     } 
 
@@ -9386,14 +11101,19 @@ void callAnalyzer(bool overlayThreeFiles = false){
     //const std::string signalLargeRJetDataFileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/largeRJets/mc21_14TeV_hh_bbbb_vbf_novhh_largeR.dat";
     //const std::string backgroundLargeRJetDataFileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/largeRJets/mc21_14TeV_jj_JZ3_largeR.dat";
     constexpr bool vbfBool = true;
-    std::vector<std::string > signalRootFileNames;
+    std::vector<std::string > signalRootFileNames; //= {"/data/larsonma/LargeRadiusJets/outputNTuples/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.root",
+                                                  //   "/data/larsonma/LargeRadiusJets/outputNTuples/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.root",
+                                                  //   "/data/larsonma/LargeRadiusJets/outputNTuples/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.root",
+                                                  //   "/data/larsonma/LargeRadiusJets/outputNTuples/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_256_Seeds_2_R2_1.root",
+                                                  //      };
     std::vector<std::string > backgroundRootFileNames;
     std::string signalRootFileName; // FIXME allow for processing of multiple root files of different configurations! 
-    if (vbfBool) signalRootFileName = "/home/larsonma/LargeRadiusJets/data/outputNTuples/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.root";
-    else signalRootFileName = "/home/larsonma/LargeRadiusJets/data/daodNtuples/mc21_14TeV_HHbbbb_HLLHC_DAOD_NTUPLE_GEP.root";
+    if (vbfBool) signalRootFileName = "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepBasicClusters.root";
+    //else signalRootFileName = "/home/larsonma/LargeRadiusJets/data/daodNtuples/mc21_14TeV_HHbbbb_HLLHC_DAOD_NTUPLE_GEP.root";
     signalRootFileNames.push_back(signalRootFileName);
-    std::string backgroundRootFileName = "/home/larsonma/LargeRadiusJets/data/outputNTuples/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.root";
+    std::string backgroundRootFileName = "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepBasicClusters.root";
     backgroundRootFileNames.push_back(backgroundRootFileName);
-    analyze_files(signalRootFileNames, backgroundRootFileNames, overlayThreeFiles);
+    std::string inputObjectType = "gepCellsTowers";
+    analyze_files(signalRootFileNames, backgroundRootFileNames, overlayThreeFiles, inputObjectType);
     gSystem->Exit(0);
 }
