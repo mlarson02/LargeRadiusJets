@@ -17,14 +17,15 @@ base_constants = {
     "maxObjectsConsidered_": 1024,
     "inputEnergyCut_": 1,
     "useInputEnergyCut_": "false", 
-    "et_granularity_": 0.25,
+    "et_granularity_": 0.125,
     "r2Cut_": 1.0,
     "rCut_": 1.0,
     "rMergeCut_": 5.0,
     "et_bit_length_": 13,
     "eta_bit_length_": 8,
     "phi_bit_length_": 6,
-    "diam_bit_length_": 5, 
+    "psi_R_bit_length_": 8, 
+    "num_constituents_bit_length_": 9, 
     "deltaRBits_": 8,
     "phi_min_": -3.2,
     "phi_max_": 3.2,
@@ -34,7 +35,7 @@ base_constants = {
     "eta_granularity_": 0.0390625,
     "phi_granularity_": 0.1,
     "et_min_": 0,
-    "et_max_": 2048,
+    "et_max_": 1024,
     "useMax_": "false",
     "max_R2lut_size_": 2048,
     "max_Rlut_size_": 2048,
@@ -144,6 +145,7 @@ def write_file_read_header(file_path, file_suffix, signal_bool, jzSlice):
 // Define constants used by testbench
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
+static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
 """
 
     # Add your file suffix line *after* lutPath_
@@ -322,8 +324,8 @@ def write_constants_h(constants: dict, output_file: str, unroll: int, ii: int):
 
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
-
-constexpr unsigned int total_bits_ = diam_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
+constexpr unsigned int total_bits_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 typedef ap_uint<total_bits_> input;
 
 constexpr unsigned int phi_low_  = 0;
@@ -335,22 +337,28 @@ constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
 constexpr unsigned int et_low_   = eta_high_ + 1;
 constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
 
-constexpr unsigned int diam_low_  = et_high_ + 1;
-constexpr unsigned int diam_high_ = diam_low_ + diam_bit_length_ - 1;
+constexpr unsigned int psi_R_low_  = et_high_ + 1;
+constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;
+
+constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
+constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
+
+constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
+constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
 
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
 static const bool lut_[max_R2lut_size_] =
-#include "../data/LUTs/deltaR2Cut.h"
+#include "../data/LUTs/deltaR2LUT.h"
 ;
 
 static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] = 
-#include "../data/LUTs/deltaR.h"
+#include "../data/LUTs/deltaRLUT.h"
 ;
 
-static const ap_uint<diam_bit_length_ > lutR_32b_[max_R_32b_lut_size_] = 
-#include "../data/LUTs/deltaR_32b.h"
+static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] = 
+#include "../data/LUTs/deltaRLUT_8b.h"
 ;
 
 #endif
@@ -358,7 +366,7 @@ constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 256
 constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.041
 constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
 
-constexpr unsigned int diam_levels_ = (1 << diam_bit_length_); // 32
+constexpr unsigned int diam_levels_ = (1 << psi_R_bit_length_); // 32
 constexpr float diam_step_ = r2Cut_ / (diam_levels_ - 1); // ~0.041
         ''')
 
@@ -378,10 +386,10 @@ if __name__ == "__main__":
     maxObjectsConsidered_options = [128]
     #maxObjectsConsidered_options = [128]
     #sortSeeds_options = [False, True]
-    rMergeCut_options = [0.001, 1.5, 2.0, 2.5, 3.0, 3.5]
+    rMergeCut_options = [0.001]
     #rMergeCut_options = [3.5]
     sortSeeds_options = [False] # NOW ALWAYS TRUE UNDER ASSUMPTION THAT GFEX IS DOING SORTING
-    signalBool_options = [True, False]
+    signalBool_options = [True]
     #inputEnergyCut_options = [False]
     inputEnergyCut_options = [False]
     jzSlices = [3]
@@ -407,7 +415,7 @@ if __name__ == "__main__":
                                         print("signalBool processed:", signalBool)
                                         # Copy base constants
                                         constants = base_constants.copy()
-                                        constants["nSeeds_"] = nSeeds
+                                        constants["nSeedsOutput_"] = nSeeds
                                         constants["r2Cut_"] = r2Cut
                                         constants["rMergeCut_"] = rMergeCut
                                         constants["maxObjectsConsidered_"] = maxObjectsConsidered
@@ -445,7 +453,7 @@ if __name__ == "__main__":
                                             phi_granularity=phi_granularity
                                         )
 
-                                        lutR_32b_max_size = calculate_lutR_max_size(
+                                        lutR_8b_max_size = calculate_lutR_max_size(
                                             rCut=constants["rCut_"],
                                             eta_bit_length=constants["eta_bit_length_"],
                                             phi_bit_length=constants["phi_bit_length_"],
@@ -455,7 +463,7 @@ if __name__ == "__main__":
 
                                         constants["max_R2lut_size_"] = lut_max_size  # Add it to constants.h!
                                         constants["max_Rlut_size_"] = lutR_max_size  # Add it to constants.h!
-                                        constants["max_R_32b_lut_size_"] = lutR_32b_max_size
+                                        constants["max_R_8b_lut_size_"] = lutR_8b_max_size
 
                                         # Update derived values
                                         constants = compute_derived(constants)
@@ -486,7 +494,7 @@ if __name__ == "__main__":
                                             f"maxObj{maxObjectsConsidered}_"
                                             f"{rMergeCut_str}"
                                             f"{signal_str}"
-                                            "_SeedPosRecalcWeighted"
+                                            "_DSPs"
                                             #f"{energyCutBool_str}_"
                                             #f"ecutVal{energyCut_str}"
                                         )

@@ -30,7 +30,7 @@ int main() {
     std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClustersSeedPosRecalcFIXED/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClusters_DebuggingEmultion/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -64,18 +64,18 @@ int main() {
         
         for (unsigned i = 0; i < nSeedsInput_; ++i) {
             uint32_t w = static_cast<uint32_t>(sortedSeedValues[i]);   // or (w & 0xFFFFFFFFu)
-            std::cout << "seedValues: 0x"
-                    << std::setw(8) << std::setfill('0') << std::uppercase
-                    << std::hex << w
-                    << std::dec << std::setfill(' ') << "\n";
+            //std::cout << "seedValues: 0x"
+            //        << std::setw(8) << std::setfill('0') << std::uppercase
+            //        << std::hex << w
+            //        << std::dec << std::setfill(' ') << "\n";
         }
 
         for (unsigned j = 0; j < maxObjectsConsidered_; ++j) {
             uint32_t w = static_cast<uint32_t>(inputObjectValues[j]);
-            std::cout << "input object value: 0x"
-                    << std::setw(8) << std::setfill('0') << std::uppercase
-                    << std::hex << w
-                    << std::dec << std::setfill(' ') << "\n";
+            //std::cout << "input object value: 0x"
+            //        << std::setw(8) << std::setfill('0') << std::uppercase
+            //        << std::hex << w
+            //        << std::dec << std::setfill(' ') << "\n";
         }
         input outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
@@ -103,16 +103,25 @@ int main() {
             std::bitset<et_bit_length_ > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
-            ap_uint<diam_bit_length_> diam_apuint(diam_value);
-            ap_uint<et_bit_length_> et_apuint(et_value);
+            //ap_uint<diam_bit_length_> diam_apuint(diam_value);
+            //ap_uint<et_bit_length_> et_apuint(et_value);
             //std::cout << "et_apuint : " << et_apuint << "\n";
-            ap_uint<eta_bit_length_> eta_apuint(eta_value);
-            ap_uint<phi_bit_length_> phi_apuint(phi_value);
-            ap_uint<total_bits_> combined_value = (ap_uint<total_bits_>(diam_apuint) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_ ) | ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(et_apuint) << (eta_bit_length_ + phi_bit_length_)) | (ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(eta_apuint) << phi_bit_length_) | phi_apuint;
+            //ap_uint<eta_bit_length_> eta_apuint(eta_value);
+            //ap_uint<phi_bit_length_> phi_apuint(phi_value);
+            uint32_t combined_value =
+                ((diam_value & maskN(diam_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
+                ((et_value   & maskN(et_bit_length_  )) << (eta_bit_length_ + phi_bit_length_)) |
+                ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
+                ( phi_value  & maskN(phi_bit_length_ ));
+            //ap_uint<total_bits_> combined_value = (ap_uint<total_bits_>(diam_apuint) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_ ) | ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(et_apuint) << (eta_bit_length_ + phi_bit_length_)) | (ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(eta_apuint) << phi_bit_length_) | phi_apuint;
+            std::cout << "total_bits_: " << std::dec << total_bits_ << "\n";
+            std::cout << "combined_value : " << std::hex << combined_value << "\n";
             // Convert to hexadecimal (for the last field)
             std::stringstream hex_stream;
-            hex_stream << std::setw(8) << std::setfill('0') << std::hex << combined_value;
+            hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_ / 4) << combined_value;
             std::string hexValue = hex_stream.str();
+
+            std::cout << "hex_stream: " << std::hex << std::setfill('0') << std::setw(total_bits_ / 4) << hex_stream.str() << "\n";
 
             //std::cout << "et_bitset.to_string() : " << et_bitset.to_string() << "\n";
             // Output in the required format

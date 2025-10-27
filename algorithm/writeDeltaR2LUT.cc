@@ -8,14 +8,14 @@
 
 
 int main() {
-    const std::string lut_output_path = "../data/LUTs/deltaR2Cut.h";
+    const std::string lut_output_path = "../data/LUTs/deltaR2LUT.h";
     std::ofstream outfile(lut_output_path);
     if (!outfile) {
         std::cerr << "Failed to open file for writing." << std::endl;
         return 1;
     }
 
-    const std::string lutR_output_path = "../data/LUTs/deltaR.h";
+    const std::string lutR_output_path = "../data/LUTs/deltaRLUT.h";
     std::ofstream outfileR(lutR_output_path);
 
     if (!outfileR) {
@@ -23,9 +23,9 @@ int main() {
         return 1;
     }
 
-    const std::string lutR_32b_output_path = "../data/LUTs/deltaR_32b.h";
-    std::ofstream outfileR32b(lutR_32b_output_path);
-    if (!outfileR32b) {
+    const std::string lutR_8b_output_path = "../data/LUTs/deltaRLUT_8b.h";
+    std::ofstream outfileR8b(lutR_8b_output_path);
+    if (!outfileR8b) {
         std::cerr << "Failed to open file for writing." << std::endl;
         return 1;
     }
@@ -92,13 +92,13 @@ int main() {
 
 
     unsigned int iR = 0;
-    outfileR32b << "{\n    ";
+    outfileR8b << "{\n    ";
 
     //std::cout << "r2Cut_ for LUT: " << r2Cut_ << "\n";
 
     for (unsigned int etaIt = 0; etaIt < (1 << eta_bit_length_); ++etaIt) {
         for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_ - 1)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
-            if (iR >= max_R_32b_lut_size_) break;
+            if (iR >= max_R_8b_lut_size_) break;
             
 
             float deltaEta = etaIt * eta_granularity_;
@@ -110,22 +110,22 @@ int main() {
             uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / diam_step_ + 0.5f);
             if (digitizedDeltaR > 31) digitizedDeltaR = 31; // Clamp (optional safety)
             
-            outfileR32b << static_cast<unsigned int>(digitizedDeltaR); // cast for readability
+            outfileR8b << static_cast<unsigned int>(digitizedDeltaR); // cast for readability
 
             iR++;
             //std::cout << "digitizedDeltaR: " << std::dec << static_cast<unsigned int>(digitizedDeltaR) << "\n";
-            if (iR < max_R_32b_lut_size_)
-                outfileR32b << ", " << ((iR % 16 == 0) ? "\n    " : "");
+            if (iR < max_R_8b_lut_size_)
+                outfileR8b << ", " << ((iR % 16 == 0) ? "\n    " : "");
         }
-        if (iR >= max_R_32b_lut_size_) break;
+        if (iR >= max_R_8b_lut_size_) break;
     }
 
-    outfileR32b << "\n};\n";
-    outfileR32b.close();
+    outfileR8b << "\n};\n";
+    outfileR8b.close();
 
     std::cout << "dR^2 LUT written to " << lut_output_path << " with size " << max_R2lut_size_ << std::endl;
     std::cout << "dR LUT written to " << lutR_output_path << " with size " << max_Rlut_size_ << std::endl;
-    std::cout << "dR LUT written to " << lutR_32b_output_path << " with size " << max_R_32b_lut_size_ << std::endl;
+    std::cout << "dR LUT written to " << lutR_8b_output_path << " with size " << max_R_8b_lut_size_ << std::endl;
     return 0;
 }
 #endif

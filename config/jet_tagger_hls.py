@@ -83,11 +83,11 @@ with open(cfg_path, 'w') as f:
 print("hls exec later:", hls_exec)
 comp = client.get_component(name=comp_name)
 if hls_exec == 0: # hls_exec determined by function input
-    print("this should be triggered")
+    #print("this should be triggered")
     comp.run(operation='C_SIMULATION')
 if hls_exec == 1: # hls_exec determined by function input
-    print("why is this triggered")
-    comp.run(operation='C_SIMULATION')
+    #print("why is this triggered")
+    #comp.run(operation='C_SIMULATION')
     comp.run(operation='SYNTHESIS')
 elif hls_exec == 2:
     comp.run(operation='C_SIMULATION')
