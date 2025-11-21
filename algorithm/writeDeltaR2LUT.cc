@@ -108,7 +108,7 @@ int main() {
             //std::cout << "deltaR: " << deltaR << "\n";
             // Digitize deltaR to 8-bit value
             uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / diam_step_ + 0.5f);
-            if (digitizedDeltaR > 31) digitizedDeltaR = 31; // Clamp (optional safety)
+            if (digitizedDeltaR > 255) digitizedDeltaR = 255; // Clamp (optional safety)
             
             outfileR8b << static_cast<unsigned int>(digitizedDeltaR); // cast for readability
 

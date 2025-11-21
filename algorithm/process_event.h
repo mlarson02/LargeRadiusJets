@@ -17,6 +17,8 @@
 //#include "helperFunctions.h"
 
 // Main function
-void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxObjectsConsidered_], input (&outputJetValues)[nSeedsOutput_]); // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+//void process_event(input seedValues[nSeedsInput_], input inputObjectValues[maxObjectsConsidered_], input (&outputJetValues)[nSeedsOutput_]); // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+void process_event(input inputObjectValues[maxObjectsConsidered_], output (&outputJetValues)[nSeedsOutput_]); // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+    
     
 #endif

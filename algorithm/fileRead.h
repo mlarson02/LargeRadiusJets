@@ -15,7 +15,7 @@
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
-const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_0p001sig_DSPs";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p0_maxObj128_0p001sig_ConeJetsCellsTowers";
 constexpr bool signalBool_ = true;
 constexpr unsigned int jzSlice_ = 3;
 

@@ -44,9 +44,12 @@ constexpr double phi_range_ = 6.4;
 
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
-constexpr unsigned int total_bits_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
-typedef ap_uint<total_bits_> input;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;
+constexpr unsigned int padded_zeroes_length_32b_ = 32 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
+constexpr unsigned int total_bits_input_ = padded_zeroes_length_32b_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+typedef ap_uint<total_bits_input_> input; // need 32b input, 64b output!
+typedef ap_uint<total_bits_output_> output;
 
 constexpr unsigned int phi_low_  = 0;
 constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;
