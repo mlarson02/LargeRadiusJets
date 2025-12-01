@@ -5,12 +5,11 @@ set -euo pipefail
 #rMergeCuts=(0.001 1.5 2.0 2.5 3.5)
 #rSquaredCuts=(0.81 1.0 1.21 1.44)
 #nIOs=(64 128 256 512)
-#nSeeds=(2)
-#signals=(true false)
 
+#signals=(true false)
 rMergeCuts=(0.001)
 rSquaredCuts=(1.0)
-nIOs=(128 256 512)
+nIOs=(128)
 nSeeds=(2)
 signals=(true false)
 

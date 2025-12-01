@@ -513,11 +513,11 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     }
 
     if (fileNames.empty()) {
-        cout << "No ROOT files found in directory." << endl;
+        std::cout << "No ROOT files found in directory." << endl;
         return;
     }
 
-    cout << "Found " << fileNames.size() << " files." << endl;
+    std::cout << "Found " << fileNames.size() << " files." << endl;
 
     // Main processing loop
     int fileIt = 0;
@@ -648,7 +648,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 continue;
             }
 
-            // FIXME add all this, fill trees and clear vectors:
             hltAntiKt4SRJEtaValues.clear();
             hltAntiKt4SRJEtValues.clear();
             hltAntiKt4SRJPhiValues.clear();
@@ -977,7 +976,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                             << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                     topocluster422_it++; 
                 }
-            }
+            } // Loop through CaloTopoClusters422
 
             // Temporary vector for sorting by Et
             std::vector<std::pair<size_t, double>> jFexSRJetEtWithIndex;
@@ -1340,7 +1339,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 recoAntiKt10LRJSubleadingMassValues.push_back(subleading->m() / 1000.0);
             }
 
-
             // Temporary vector to hold (index, Et) for sorting
             std::vector<std::pair<size_t, double>> truthWZJetEtWithIndex;
 
@@ -1421,7 +1419,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         std::cout << "for jz: " << jzSlice << " these many events passed: " << passedEventsCounter << " out of: " << event.getEntries() << "\n";
         std::cout << " these many events skipped due to empty truth container: " << skippedEventsEmptyTruth << " these many events skipped due to pt hard < pt pileup: " << skippedEventsHSTP << "\n";
         std::cout << "closing files" << "\n";
-        f->Close();
+        f->Close(); // xAOD file
     } // loop through filenames
     outputFile->cd();
     std::cout << "writing output file" << "\n";

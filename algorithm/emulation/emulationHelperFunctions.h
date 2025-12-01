@@ -161,6 +161,7 @@ std::string makeOutputFileName(double rMergeCut,
                                double RSquaredCut,
                                bool signalBool,
                                std::string inputObjectType,
+                               std::string seedObjectType,
                                std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev/") {
     std::ostringstream ss;
     if (signalBool) {
@@ -171,7 +172,7 @@ std::string makeOutputFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << "_" << inputObjectType << ".root";
+       << "R2_" << std::setprecision(2) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".root";
 
     return ss.str();
 }
@@ -182,17 +183,18 @@ std::string makeOutputTextFileName(double rMergeCut,
                                double RSquaredCut,
                                bool signalBool,
                                std::string inputObjectType,
-                               std::string outputRootFilePath = "/home/larsonma/LargeRadiusJets/data/MemPrintsEmulation/") {
+                               std::string seedObjectType,
+                               std::string outputTextFilePath = "/home/larsonma/LargeRadiusJets/data/MemPrintsEmulation/") {
     std::ostringstream ss;
     if (signalBool) {
-        ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
     } else {
-        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130";
+        ss <<outputTextFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << "_" << inputObjectType << ".dat";
+       << "R2_" << std::setprecision(2) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".dat";
 
     return ss.str();
 }
@@ -229,6 +231,7 @@ void write_constants_header(const std::string& header_path,
                             double rMergeCut,
                             unsigned int maxObjectsConsidered,
                             unsigned int nSeedsOutput,
+                            unsigned int nSeedsInput,
                             unsigned int max_R2lut_size,
                             unsigned int max_Rlut_size,
                             unsigned int max_R_8b_lut_size)
@@ -248,7 +251,7 @@ void write_constants_header(const std::string& header_path,
 
     // Fixed (from your template)
     out << "static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }\n";
-    out << "constexpr unsigned int nSeedsInput_ = 6;\n";
+    out << "constexpr unsigned int nSeedsInput_ = " << nSeedsInput << ";\n";//= 6;\n";
     out << "constexpr unsigned int nSeedsOutput_ = " << nSeedsOutput << ";\n";
     out << "constexpr unsigned int maxObjectsConsidered_ = " << maxObjectsConsidered << ";\n";
     out << "constexpr double et_granularity_ = 0.125;\n";
@@ -258,7 +261,9 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int eta_bit_length_ = 8;\n";
     out << "constexpr unsigned int phi_bit_length_ = 6;\n";
     out << "constexpr unsigned int psi_R_bit_length_ = 8;\n";
-    out << "constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_;\n";
+    out << "constexpr unsigned int num_constituents_bit_length_ = 9;\n";
+    out << "constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;\n";
+    out << "constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;\n";
     out << "constexpr unsigned int deltaRBits_ = 8;\n";
     out << "constexpr double phi_min_ = -3.2;\n";
     out << "constexpr double phi_max_ = 3.2;\n";
@@ -282,18 +287,24 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int total_bits_ = padded_zeroes_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;\n\n";
 
     out << "constexpr unsigned int phi_low_  = 0;\n";
-    out << "constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;\n\n";
+    out << "constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;\n";
 
     out << "constexpr unsigned int eta_low_  = phi_high_ + 1;\n";
-    out << "constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;\n\n";
+    out << "constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;\n";
 
     out << "constexpr unsigned int et_low_   = eta_high_ + 1;\n";
-    out << "constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;\n\n";
+    out << "constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;\n";
 
     out << "constexpr unsigned int psi_R_low_  = et_high_ + 1;\n";
-    out << "constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;\n\n";
+    out << "constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;\n";
 
-    out << "constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;\n\n";
+    out << "constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;\n";
+    out << "constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;\n";
+
+    out << "constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;\n";
+    out << "constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;\n";
+
+    out << "constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;\n"; // FIXME unhard code this to account for when using cone jets! 
 
     out << "static const bool lut_[max_R2lut_size_] =\n";
     out << "#include \"deltaR2LUT.h\"\n";

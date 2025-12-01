@@ -10,8 +10,6 @@
 #include <filesystem> // C++17
 #include <algorithm>
 #include <stdexcept>  // for std::runtime_error
-//#include "xAODCutFlow/CutBookkeeperContainer.h"
-//#include "xAODCutFlow/CutBookkeeper.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TSystem.h"
@@ -25,6 +23,8 @@ struct OutputFiles {
     std::string gepBasicClusters;
     std::string gepCellTowers;
     std::string gepBasicTopoTowers;
+    std::string gepConeJetsCellsTowers;
+    std::string gepConeJetsBasicClusters;
     std::string gFex;
     std::string jFex;
 };
@@ -94,6 +94,8 @@ inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSl
     out.gepBasicClusters= base + "GEPBasicClusters/"+ tag + "_gepbasicclusters.dat";
     out.gepCellTowers= base + "GEPCellsTowers/"+ tag + "_gepcellstowers.dat";
     out.gepBasicTopoTowers= base + "GEPBasicTopoTowers/"+ tag + "_gepbasictopotowers.dat";
+    out.gepConeJetsCellsTowers= base + "GEPConeJetsCellsTowers/"+ tag + "_gepconejetscellstowers.dat";
+    out.gepConeJetsBasicClusters= base + "GEPConeJetsBasicClusters/"+ tag + "_gepconejetsbasicclusters.dat";
     out.gFex            = base + "gFex/"            + tag + "_gfex_smallrj.dat";
     out.jFex            = base + "jFex/"            + tag + "_jfex_smallrj.dat";
     return out;
@@ -200,7 +202,7 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     //ServiceHandle<StoreGateSvc> inputMetaStore("StoreGateSvc/InputMetaDataStore","");
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
-    std::string fileDir = makeFileDir(vbfBool, signalBool, jzSlice);
+    std::string fileDir =  //makeFileDir(vbfBool, signalBool, jzSlice);
     std::cout << "fileDir: " << fileDir << "\n";
     //xAOD::Init().ignore();
 
@@ -212,11 +214,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     std::ofstream f_gepbasicclusters(out.gepBasicClusters);
     std::ofstream f_gepcellstowers(out.gepCellTowers);
     std::ofstream f_gepbasictopotowers(out.gepBasicTopoTowers);
+    std::ofstream f_conejetscellstowers(out.gepConeJetsCellsTowers);
+    std::ofstream f_conejetsbasicclusters(out.gepConeJetsBasicClusters);
     std::ofstream f_topo(out.topo422);
     std::ofstream f_gfex(out.gFex);
     std::ofstream f_jfex(out.jFex);
 
-    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open() || !f_gepcellstowers.is_open() || !f_gepbasictopotowers.is_open()) {
+    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open() || !f_gepcellstowers.is_open() || !f_gepbasictopotowers.is_open() || !f_conejetscellstowers.is_open() || !f_conejetsbasicclusters.is_open()) {
         std::cerr << "Error: One or more output files could not be opened for writing!" << std::endl;
         // handle error or return
     }
@@ -1556,7 +1560,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                         [&](unsigned int a, unsigned int b) {
                             return (*gepConeCellsTowersJetsPt)[a] > (*gepConeCellsTowersJetsPt)[b];
                         });
-
+                unsigned int gepconecellstowers_it = 0;
                 for (unsigned int i = 0; i < indices.size(); i++) {
                     unsigned int idx = indices[i];
                     float coneCellsTowersJetspT  = (*gepConeCellsTowersJetsPt)[idx] / 1000.0;
@@ -1584,6 +1588,33 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     gepConeCellsTowersJetsPhiValues.push_back(coneCellsTowersJetsPhi);
                     gepConeCellsTowersJetsMassValues.push_back(coneCellsTowersJetsMass);
                     gepConeCellsTowersJetsNConstituentsValues.push_back(coneCellsTowersJetsNConstituents);
+
+                    if (coneCellsTowersJetspT < 0) continue;
+
+                    int phi_bin = digitize(coneCellsTowersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(coneCellsTowersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(coneCellsTowersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    std::stringstream binary_ss;
+                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
+                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                            << std::bitset<phi_bit_length_>(phi_bin);
+                    std::string binary_word = binary_ss.str();
+
+                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                        (eta_bin <<  phi_bit_length_) |
+                                        (phi_bin);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepconecellstowers_it == 0) {
+                            f_conejetscellstowers << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_conejetscellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepconecellstowers_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepconecellstowers_it;
+                    }
                 }
             }
 
@@ -1636,7 +1667,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                         [&](unsigned int a, unsigned int b) {
                             return (*gepConeBasicClustersJetsPt)[a] > (*gepConeBasicClustersJetsPt)[b];
                         });
-
+                unsigned int gepconebasicclusters_it = 0;
                 for (unsigned int i = 0; i < indices.size(); i++) {
                     unsigned int idx = indices[i];
                     float coneGEPBasicClustersJetspT  = (*gepConeBasicClustersJetsPt)[idx] / 1000.0;
@@ -1664,6 +1695,33 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     gepConeGEPBasicClustersJetsPhiValues.push_back(coneGEPBasicClustersJetsPhi);
                     gepConeGEPBasicClustersJetsMassValues.push_back(coneGEPBasicClustersJetsMass);
                     gepConeGEPBasicClustersJetsNConstituentsValues.push_back(coneGEPBasicClustersJetsNConstituents);
+
+                    if (coneGEPBasicClustersJetspT < 0) continue;
+
+                    int phi_bin = digitize(coneGEPBasicClustersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(coneGEPBasicClustersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(coneGEPBasicClustersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    std::stringstream binary_ss;
+                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
+                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                            << std::bitset<phi_bit_length_>(phi_bin);
+                    std::string binary_word = binary_ss.str();
+
+                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                        (eta_bin <<  phi_bit_length_) |
+                                        (phi_bin);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepconebasicclusters_it == 0) {
+                            f_conejetsbasicclusters << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_conejetsbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepconebasicclusters_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepconebasicclusters_it;
+                    }
                 }
             }
 

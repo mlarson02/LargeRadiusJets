@@ -1,9 +1,9 @@
 // Constants used by JetTagger Emulation
 
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
-constexpr unsigned int nSeedsInput_ = 6;
+constexpr unsigned int nSeedsInput_ = 2;
 constexpr unsigned int nSeedsOutput_ = 2;
-constexpr unsigned int maxObjectsConsidered_ = 512;
+constexpr unsigned int maxObjectsConsidered_ = 128;
 constexpr double et_granularity_ = 0.125;
 constexpr double r2Cut_ = 1.0000;
 constexpr double rMergeCut_ = 0.0010;
@@ -11,7 +11,9 @@ constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
 constexpr unsigned int psi_R_bit_length_ = 8;
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
+constexpr unsigned int num_constituents_bit_length_ = 9;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;
+constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 constexpr unsigned int deltaRBits_ = 8;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
@@ -36,18 +38,17 @@ constexpr unsigned int total_bits_ = padded_zeroes_length_ + psi_R_bit_length_ +
 
 constexpr unsigned int phi_low_  = 0;
 constexpr unsigned int phi_high_ = phi_low_ + phi_bit_length_ - 1;
-
 constexpr unsigned int eta_low_  = phi_high_ + 1;
 constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
-
 constexpr unsigned int et_low_   = eta_high_ + 1;
 constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
-
 constexpr unsigned int psi_R_low_  = et_high_ + 1;
 constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;
-
-constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
-
+constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
+constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
+constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
+constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
+constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;
 static const bool lut_[max_R2lut_size_] =
 #include "deltaR2LUT.h"
 ;

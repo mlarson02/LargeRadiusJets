@@ -25,7 +25,7 @@
 
 // Function for processing provided number of loops with JetTagger algorithm,
 // then writing output large radius jets to a new TTree & text files
-void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::string outputTextFilePath, std::string inputObjectType){
+void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::string outputTextFilePath, std::string inputObjectType, std::string seedObjectType){
 
     //std::cout << "test 1 " << "\n";
 
@@ -55,6 +55,19 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     std::vector<double>* gepBasicTopoTowersEtValues = nullptr;
     std::vector<double>* gepBasicTopoTowersEtaValues = nullptr;
     std::vector<double>* gepBasicTopoTowersPhiValues = nullptr;
+
+    // Cone jets from TrigGepPerf
+    std::vector<double>* gepConeCellsTowersJetspTValues = nullptr;
+    std::vector<double>* gepConeCellsTowersJetsEtaValues = nullptr;
+    std::vector<double>* gepConeCellsTowersJetsPhiValues = nullptr;
+    std::vector<double>* gepConeCellsTowersJetsMassValues = nullptr;
+    std::vector<unsigned int >* gepConeCellsTowersJetsNConstituentsValues = nullptr;
+
+    std::vector<double>* gepConeGEPBasicClustersJetspTValues = nullptr;
+    std::vector<double>* gepConeGEPBasicClustersJetsEtaValues = nullptr;
+    std::vector<double>* gepConeGEPBasicClustersJetsPhiValues = nullptr;
+    std::vector<double>* gepConeGEPBasicClustersJetsMassValues = nullptr;
+    std::vector<unsigned int >* gepConeGEPBasicClustersJetsNConstituentsValues = nullptr;
 
     // gFEX small radius jets
     std::vector<unsigned int>* gFexSRJEtIndexValues = nullptr;
@@ -113,6 +126,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     TTree* gepBasicClustersTree = (TTree*)inputFile->Get("gepBasicClustersTree");
     TTree* gepCellsTowersTree = (TTree*)inputFile->Get("gepCellsTowersTree");
     TTree* gepBasicTopoTowersTree = (TTree*)inputFile->Get("gepBasicTopoTowersTree");
+    TTree* gepConeCellsTowersJetsTree = (TTree*)inputFile->Get("gepConeCellsTowersJetsTree");
+    TTree* gepConeBasicClustersJetsTree =(TTree*)inputFile->Get("gepConeBasicClustersJetsTree"); 
     TTree* gFexSRJTree = (TTree*)inputFile->Get("gFexSRJTree");
     TTree* jFexSRJTree = (TTree*)inputFile->Get("jFexSRJTree"); // Note that jFEX, gFEX trees are pre-sorted by Et in LRJNTupler.cc
 
@@ -165,6 +180,28 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     gepBasicTopoTowersTree->SetBranchAddress("Eta", &gepBasicTopoTowersEtaValues);
     gepBasicTopoTowersTree->SetBranchAddress("Phi", &gepBasicTopoTowersPhiValues);
 
+    // gep WTA cone cells towers jets
+    /*gepWTAConeCellsTowersJetsTree->SetBranchAddress("pT", &gepWTAConeCellsTowersJetspTValues);
+    gepWTAConeCellsTowersJetsTree->SetBranchAddress("Eta", &gepWTAConeCellsTowersJetsEtaValues);
+    gepWTAConeCellsTowersJetsTree->SetBranchAddress("Phi", &gepWTAConeCellsTowersJetsPhiValues);
+    gepWTAConeCellsTowersJetsTree->SetBranchAddress("Mass", &gepWTAConeCellsTowersJetsMassValues);
+    gepWTAConeCellsTowersJetsTree->SetBranchAddress("NConstituents", &gepWTAConeCellsTowersJetsNConstituentsValues);*/
+    
+    // gep cone cells towers jets
+    gepWTAConeCellsTowersJetsTree->SetBranchAddress("pT", &gepConeCellsTowersJetspTValues);
+    gepConeCellsTowersJetsTree->SetBranchAddress("Eta", &gepConeCellsTowersJetsEtaValues);
+    gepConeCellsTowersJetsTree->SetBranchAddress("Phi", &gepConeCellsTowersJetsPhiValues);
+    gepConeCellsTowersJetsTree->SetBranchAddress("Mass", &gepConeCellsTowersJetsMassValues);
+    gepConeCellsTowersJetsTree->SetBranchAddress("NConstituents", &gepConeCellsTowersJetsNConstituentsValues);
+
+    // GEP CONE JETS NOT MEANT TO USE CLUSTERS, NOR non-WTA
+    // gep cone basic clusters jets
+    gepConeBasicClustersJetsTree->SetBranchAddress("pT", &gepConeGEPBasicClustersJetspTValues);
+    gepConeBasicClustersJetsTree->SetBranchAddress("Eta", &gepConeGEPBasicClustersJetsEtaValues);
+    gepConeBasicClustersJetsTree->SetBranchAddress("Phi", &gepConeGEPBasicClustersJetsPhiValues);
+    gepConeBasicClustersJetsTree->SetBranchAddress("Mass", &gepConeGEPBasicClustersJetsMassValues);
+    gepConeBasicClustersJetsTree->SetBranchAddress("NConstituents", &gepConeGEPBasicClustersJetsNConstituentsValues);
+
     // === gFexSRJTree ===
     gFexSRJTree->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues);
     gFexSRJTree->SetBranchAddress("Et", &gFexSRJEtValues);
@@ -193,6 +230,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
         //std::cout << "procesing event: " << std::dec << iEvt << "\n";
 
+        std::bitset<num_constituents_bit_length_> numMergedIO_bitset_array[nSeedsOutput_];
         std::bitset<psi_R_bit_length_> psi_R_bitset_array[nSeedsOutput_];
         std::bitset<et_bit_length_  > et_bitset_array[nSeedsOutput_];
         std::bitset<eta_bit_length_ > eta_bitset_array[nSeedsOutput_];
@@ -217,6 +255,16 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         jetTaggerSubleadingLRJEtaValues->clear();
         jetTaggerSubleadingLRJPhiValues->clear();
 
+        if(seedObjectType == "jFEXSRJ"){
+            jFexSRJTree->GetEntry(iEvt); // get seed data
+        }
+        else if(seedObjectType == "gepConeCellsTowersJets"){
+            gepConeCellsTowersJetsTree->GetEntry(iEvt); // get seed object data
+        }
+        else if(seedObjectType == "gepConeBasicClustersJets"){
+            gepConeBasicClustersJetsTree->GetEntry(iEvt); // get input object data
+        }
+
         if(inputObjectType == "gepBasicClusters"){
             gepBasicClustersTree->GetEntry(iEvt); // get input object data
         }
@@ -226,32 +274,75 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         else if(inputObjectType == "gepTopoTowers"){
             gepBasicTopoTowersTree->GetEntry(iEvt); // get input object data
         }
+        else if(inputObjectType == "gepConeCellsTowersJets"){
+            gepConeCellsTowersJetsTree->GetEntry(iEvt); // get input object data
+        }
+        else if(inputObjectType == "gepConeBasicClustersJets"){
+            gepConeBasicClustersJetsTree->GetEntry(iEvt); // get input object data
+        }
         else {
             std::cerr << "INPUT OBJECT UNKNOWN!" << "\n";
         }
-        
-        jFexSRJTree->GetEntry(iEvt); // get seed data
 
         unsigned int seedValues[nSeedsInput_][3] = {0}; // 3 = number of data types (Et, Eta, Phi)
         unsigned int inputObjectValues[maxObjectsConsidered_][3] ={0};
-        unsigned int outputJetValues[nSeedsOutput_][4] = {0}; // 4 = number of data types (Substructure, Eta, Phi)
+        unsigned int outputJetValues[nSeedsOutput_][5] = {0}; // 5 = number of data types (constituents ,Substructure, Et, Eta, Phi)
         //std::cout << "rMergeConsiderCutDigitized_ : " << rMergeConsiderCutDigitized_ << "\n";
         // Digitize and format data in same way expected for running in HLS
         for(unsigned int iSeed = 0; iSeed < nSeedsInput_; iSeed++){
             //std::cout << "iSeed :" << iSeed << "\n";
             //std::cout << "jFexSRJEtValues->size(): " << jFexSRJEtValues->size() << "\n";
-            if(jFexSRJEtValues->size() < nSeedsInput_){
-                if(iSeed >= jFexSRJEtValues->size()){
-                    seedValues[iSeed][0] = 0;
-                    seedValues[iSeed][1] = 0;
-                    seedValues[iSeed][2] = 0;
-                    continue;
+            if(seedObjectType == "jFEXSRJ"){
+                if(jFexSRJEtValues->size() < nSeedsInput_){
+                    if(iSeed >= jFexSRJEtValues->size()){
+                        seedValues[iSeed][0] = 0;
+                        seedValues[iSeed][1] = 0;
+                        seedValues[iSeed][2] = 0;
+                        continue;
+                    }
                 }
+                seedValues[iSeed][0] = digitize(jFexSRJEtValues->at(iSeed), et_bit_length_,
+                                static_cast<double>(et_min_), static_cast<double>(et_max_));
+                seedValues[iSeed][1] = digitize(jFexSRJEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
+                seedValues[iSeed][2] = digitize(jFexSRJPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
             }
-            seedValues[iSeed][0] = digitize(jFexSRJEtValues->at(iSeed), et_bit_length_,
-                            static_cast<double>(et_min_), static_cast<double>(et_max_));
-            seedValues[iSeed][1] = digitize(jFexSRJEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
-            seedValues[iSeed][2] = digitize(jFexSRJPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
+            else if(seedObjectType == "gepConeCellsTowersJets"){
+                //std::cout << " seedobject type is correct" << "\n";
+                //std::cout << "gepConeGEPBasicClustersJetspTValues->size() :" << gepConeCellsTowersJetspTValues->size() << "\n";
+                if(gepConeCellsTowersJetspTValues->size() < nSeedsInput_){
+                    if(iSeed >= gepConeCellsTowersJetspTValues->size()){
+                        seedValues[iSeed][0] = 0;
+                        seedValues[iSeed][1] = 0;
+                        seedValues[iSeed][2] = 0;
+                        continue;
+                    }
+                }
+                seedValues[iSeed][0] = digitize(gepConeCellsTowersJetspTValues->at(iSeed), et_bit_length_,
+                                static_cast<double>(et_min_), static_cast<double>(et_max_));
+                //std::cout << "seedValues[iSeed][0] after digi: " << seedValues[iSeed][0] << "\n";
+                seedValues[iSeed][1] = digitize(gepConeCellsTowersJetsEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
+                seedValues[iSeed][2] = digitize(gepConeCellsTowersJetsPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
+                //std::cout << "---------------------" << "\n";
+                //std::cout << "iSeed: " << iSeed << "\n";
+                //std::cout << "seed Et : " << seedValues[iSeed][0] << "\n";
+                //std::cout << "seed eta: " << seedValues[iSeed][1] << " and phi: " << seedValues[iSeed][2] << "\n";
+            }
+
+            else if(seedObjectType == "gepConeCellsTowersJets"){
+                if(gepConeCellsTowersJetspTValues->size() < nSeedsInput_){
+                    if(iSeed >= gepConeCellsTowersJetspTValues->size()){
+                        seedValues[iSeed][0] = 0;
+                        seedValues[iSeed][1] = 0;
+                        seedValues[iSeed][2] = 0;
+                        continue;
+                    }
+                }
+                seedValues[iSeed][0] = digitize(gepConeCellsTowersJetspTValues->at(iSeed), et_bit_length_,
+                                static_cast<double>(et_min_), static_cast<double>(et_max_));
+                seedValues[iSeed][1] = digitize(gepConeCellsTowersJetsEtaValues->at(iSeed), eta_bit_length_, eta_min_, eta_max_);
+                seedValues[iSeed][2] = digitize(gepConeCellsTowersJetsPhiValues->at(iSeed), phi_bit_length_, phi_min_, phi_max_);
+            }
+            
             
             //if (iSeed < 2){
                 //std::cout << "seed et: " << std::dec << seedValues[iSeed][0] << " eta: " << seedValues[iSeed][1] << " phi: " << seedValues[iSeed][2] << "\n";
@@ -268,6 +359,18 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         else if(inputObjectType == "gepTopoTowers"){
             if (maxObjectsConsidered_ > gepBasicTopoTowersEtValues->size()) objectsProcessed = gepBasicTopoTowersEtValues->size();
         }
+        else if(inputObjectType == "gepConeCellsTowersJets"){
+            if (maxObjectsConsidered_ + nSeedsInput_ >= gepConeCellsTowersJetspTValues->size()){
+                if(gepConeCellsTowersJetspTValues->size() >= nSeedsInput_ ) objectsProcessed = gepConeCellsTowersJetspTValues->size() - nSeedsInput_;
+                else objectsProcessed = 0;
+            } 
+        }
+        else if(inputObjectType == "gepConeBasicClustersJets"){
+            if (maxObjectsConsidered_ + nSeedsInput_ >= gepConeGEPBasicClustersJetspTValues->size()){
+                if(gepConeGEPBasicClustersJetspTValues->size() >= nSeedsInput_ ) objectsProcessed = gepConeGEPBasicClustersJetspTValues->size() - nSeedsInput_;
+                else objectsProcessed = 0;
+            }
+        }
         
         for(unsigned int iIO = 0; iIO < objectsProcessed; iIO++){
             if(inputObjectType == "gepBasicClusters"){
@@ -278,10 +381,10 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             }
             else if(inputObjectType == "gepCellsTowers"){
 
-                if(gepCellsTowersEtValues->at(iIO) > 10.0){
-                    std::cout << "gepCellsTowersEtValues->at(iIO): " << gepCellsTowersEtValues->at(iIO) << "\n";
-                    std::cout << "io index: " << iIO << "\n";
-                }
+                //if(gepCellsTowersEtValues->at(iIO) > 10.0){
+                //    //std::cout << "gepCellsTowersEtValues->at(iIO): " << gepCellsTowersEtValues->at(iIO) << "\n";
+                //    //std::cout << "io index: " << iIO << "\n";
+                //}
                 
                 inputObjectValues[iIO][0] = digitize(gepCellsTowersEtValues->at(iIO), et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
@@ -294,6 +397,20 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                 inputObjectValues[iIO][1] = digitize(gepBasicTopoTowersEtaValues->at(iIO), eta_bit_length_, eta_min_, eta_max_);
                 inputObjectValues[iIO][2] = digitize(gepBasicTopoTowersPhiValues->at(iIO), phi_bit_length_, phi_min_, phi_max_);
+            }
+            else if(inputObjectType == "gepConeCellsTowersJets"){
+                std::cout << "iIO: " << iIO << "\n";
+                inputObjectValues[iIO][0] = digitize(gepConeCellsTowersJetspTValues->at(iIO + nSeedsInput_), et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                std::cout << "input et: " << inputObjectValues[iIO][0] << " , " << "input eta: " << inputObjectValues[iIO][1] << "\n";
+                inputObjectValues[iIO][1] = digitize(gepConeCellsTowersJetsEtaValues->at(iIO + nSeedsInput_), eta_bit_length_, eta_min_, eta_max_);
+                inputObjectValues[iIO][2] = digitize(gepConeCellsTowersJetsPhiValues->at(iIO + nSeedsInput_), phi_bit_length_, phi_min_, phi_max_);
+            }
+            else if(inputObjectType == "gepConeBasicClustersJets"){
+                inputObjectValues[iIO][0] = digitize(gepConeGEPBasicClustersJetspTValues->at(iIO + nSeedsInput_), et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                inputObjectValues[iIO][1] = digitize(gepConeGEPBasicClustersJetsEtaValues->at(iIO + nSeedsInput_), eta_bit_length_, eta_min_, eta_max_);
+                inputObjectValues[iIO][2] = digitize(gepConeGEPBasicClustersJetsPhiValues->at(iIO + nSeedsInput_), phi_bit_length_, phi_min_, phi_max_);
             }
             
             //std::cout << "iInput: " << iIO << "\n";
@@ -448,12 +565,16 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         
         for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ // FIXME no longer considering highest Et seed first (need to implement some sorting)
             unsigned int outputJetEt = 0;
+            //std::cout << "seedValues[iSeed][0]: " << seedValues[iSeed][0] << "\n";
+            if(inputObjectType == "gepConeCellsTowersJets" || inputObjectType == "gepConeBasicClustersJets") outputJetEt = seedValues[iSeed][0]; // If clustering using jets, output jet E_T should start with seed E_T
             unsigned int numMergedIO = 0; 
             unsigned int jet_psi_R = 0;
             unsigned int highestEtMergedIOEta[2];
             unsigned int highestEtMergedIOPhi[2];
 
-            for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
+            //std::cout << "outputjetet: " << outputJetEt << "\n";
+
+            for (unsigned int iInput = 0; iInput < objectsProcessed; ++iInput){ // loop through input objects to consider merging
 
                 // Calculate signed differences (deltaEta and deltaPhi)
                 //std::cout << "-----------------------------" << "\n";
@@ -483,13 +604,35 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                     }
                     // Compute psi_R using 8b 0,1 deltaR LUT
                     unsigned int lut_index_mergedIO = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi;
+                    if(iEvt == 3674){
+                        std::cout << "iEvt 3674 -------------------------" << "\n";
+                        std::cout << "lut_index_mergedIO: " << lut_index_mergedIO << "\n";
+                        std::cout << "deltaR: " << lutR_8b_[lut_index_mergedIO] << "\n";
+                        std::cout << "input object et: " << inputObjectValues[iInput][0] << "\n";
+                        std::cout << "psi_R contribution: " << inputObjectValues[iInput][0] * lutR_8b_[lut_index_mergedIO] << "\n";
+                    }
+                    
                     jet_psi_R += inputObjectValues[iInput][0] * lutR_8b_[lut_index_mergedIO];
                     numMergedIO++; 
+                    if(iEvt == 3674){
+                        std::cout << "psi_R_temp : " << jet_psi_R << "\n";
+                        std::cout << "nummergedIO temp: " << numMergedIO << "\n";
+                    }
                 }
             }
+            if(iEvt == 3674){
+                std::cout << "jetpsi_R before: " << jet_psi_R << "\n";
+            }
+            
             if(outputJetEt > 0) jet_psi_R = jet_psi_R / outputJetEt;
             else jet_psi_R = 0;
-            std::cout << "jetpsi_R: " << jet_psi_R << "\n";
+            if(iEvt == 3674){
+                std::cout << "jetpsi_R after: " << jet_psi_R << "\n";
+                std::cout << "nummergedIO final: " << numMergedIO << "\n";
+            }
+
+            
+            
 
             // Compute delta R between the two highest Et topoclusters merged to a large R jet FIXME need to account for case when 0 or 1 input objects are merged! if statement should be fine for now?
             /*unsigned int jet_diam = 0;
@@ -508,63 +651,67 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             }*/
 
             // Values you already computed:
-            uint32_t psi_R_value = static_cast<uint32_t>(jet_psi_R)        & maskN(psi_R_bit_length_);
+            
+            uint64_t numMergedIO_value = static_cast<uint32_t>(numMergedIO)        & maskN(num_constituents_bit_length_);
+            uint64_t psi_R_value = static_cast<uint32_t>(jet_psi_R)        & maskN(psi_R_bit_length_);
             //std::cout << "dim_value: " << diam_value << "\n";
-            uint32_t et_value   = static_cast<uint32_t>(outputJetEt)      & maskN(et_bit_length_);
+            uint64_t et_value   = static_cast<uint32_t>(outputJetEt)      & maskN(et_bit_length_);
             // NOTE: this mirrors your original snippet exactly (eta_bitset took seedValues[iSeed][1] and phi_bitset took [2]).
-            uint32_t eta_value  = static_cast<uint32_t>(seedValues[iSeed][1]) & maskN(eta_bit_length_);
-            uint32_t phi_value  = static_cast<uint32_t>(seedValues[iSeed][2]) & maskN(phi_bit_length_);
+            uint64_t eta_value  = static_cast<uint32_t>(seedValues[iSeed][1]) & maskN(eta_bit_length_);
+            uint64_t phi_value  = static_cast<uint32_t>(seedValues[iSeed][2]) & maskN(phi_bit_length_);
 
             //std::cout << "jet_diam: " << jet_diam << " and output jet Et: " << outputJetEt << "\n";
         //std::cout << "output jet eta, phi: " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
 
             // Set output values (unchanged semantic layout)
-            outputJetValues[iSeed][0] = psi_R_value; // substructure
-            outputJetValues[iSeed][1] = et_value;   // Et
-            outputJetValues[iSeed][2] = seedValues[iSeed][1]; // phi
-            outputJetValues[iSeed][3] = seedValues[iSeed][2]; // eta
+            outputJetValues[iSeed][0] = numMergedIO_value; // constituents
+            outputJetValues[iSeed][1] = psi_R_value; // substructure
+            outputJetValues[iSeed][2] = et_value;   // Et
+            outputJetValues[iSeed][3] = seedValues[iSeed][1]; // phi
+            outputJetValues[iSeed][4] = seedValues[iSeed][2]; // eta
 
             // Bitset strings (unchanged)
+            std::bitset<num_constituents_bit_length_> numMergedIO_bitset(numMergedIO_value);
             std::bitset<psi_R_bit_length_> psi_R_bitset(psi_R_value);
             std::bitset<et_bit_length_  > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
 
             
-
+            numMergedIO_bitset_array[iSeed] = numMergedIO_bitset;
             psi_R_bitset_array[iSeed] = psi_R_bitset;
             et_bitset_array[iSeed] = et_bitset;
             eta_bitset_array[iSeed] = eta_bitset;
             phi_bitset_array[iSeed] = phi_bitset;
 
             // Pack into one word: [diam | et | eta | phi] (same field order as your ap_uint expression)
-            uint32_t combined_value =
+            uint64_t combined_value =
+                ((numMergedIO_value & maskN(num_constituents_bit_length_)) << (psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
                 ((psi_R_value & maskN(psi_R_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
                 ((et_value   & maskN(et_bit_length_  )) << (eta_bit_length_ + phi_bit_length_)) |
                 ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
                 ( phi_value  & maskN(phi_bit_length_ ));
 
-                //std::cout << "combined_value : " << std::hex << combined_value << "\n";
             // Hex string with width = total_bits_/4 (=8 for 32 bits)
             std::stringstream hex_stream;
-            hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_ / 4) << combined_value;
+            hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_output_ / 4) << combined_value;
             std::string hexValue = hex_stream.str();
 
             // Final print (identical shape)
             f_output << "0x" << std::hex << std::setw(2) << std::setfill('0') << iSeed
-                    << " "  << psi_R_bitset.to_string() << "|" << et_bitset.to_string()
+                    << " "  << numMergedIO_bitset.to_string() << "|" << psi_R_bitset.to_string() << "|" << et_bitset.to_string()
                     << "|"  << eta_bitset.to_string()  << "|" << phi_bitset.to_string()
                     << " 0x" << hexValue << std::endl;
 
             // Write data to all LRJ branch
             jetTaggerLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset));
-            std::cout << "undigitized psi_R: " << undigitize_diam(psi_R_bitset) << "\n";
+            //std::cout << "undigitized psi_R: " << undigitize_diam(psi_R_bitset) << "\n";
             jetTaggerLRJEtValues->push_back(undigitize_et(et_bitset));
             jetTaggerLRJEtaValues->push_back(undigitize_eta(eta_bitset));
             jetTaggerLRJPhiValues->push_back(undigitize_phi(phi_bitset));
         } // Loop through seeds 
         // Write data to leading, subleading jet branches
-        if(outputJetValues[0][1] >= outputJetValues[1][1]){ // to ensure leading, subleading sorted correctly
+        if(outputJetValues[0][2] >= outputJetValues[1][2]){ // to ensure leading, subleading sorted correctly
             jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_diam(psi_R_bitset_array[0]));
             for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
                 jetTaggerLeadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
@@ -625,23 +772,24 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
                       double RSquaredCut, // radius squared of output jets
                       bool signalBool,  // whether processing a signal or background process // FIXME add additional signal types for later
                       bool condorBool, // whether running using condor batch job submission (requires change in filepaths)
-                      std::string inputObjectType = "gepBasicClusters"){ 
+                      std::string inputObjectType = "gepConeCellsTowersJets", // Possibilities: "gepCellsTowers", "gepConeCellsTowersJets", "gepConeBasicClustersJets", "gepTopoTowers", "gepBasicClusters"
+                      std::string seedObjectType = "gepConeCellsTowersJets"){ // Possibilities: "gepConeCellsTowersJets" or "jFEXSRJ"  // FIXME allow this to be changed in executable
     // Construct input and output ntuple, LUT paths based on configuration type
     auto infile = makeInputFileName(signalBool); // FIXME update this when running with condor.
-    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType);
-    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType);
+    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType, seedObjectType);
+    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, inputObjectType, seedObjectType);
     std::cout << "infile: " << infile << "\n";
     std::cout << "outntuplefile: " << outntuplefile << "\n"; 
     std::cout << "outtextfile: " << outtextfile << "\n";       
     try { // FIXME update this when running with condor.
-        std::cout << "why is this not working" << "\n";
+        //std::cout << "why is this not working" << "\n";
         std::filesystem::copy_file(infile, outntuplefile, 
                       std::filesystem::copy_options::overwrite_existing);
         std::cout << "File copied successfully\n";
     } catch (std::filesystem::filesystem_error& e) {
         std::cerr << "Copy failed: " << e.what() << '\n';
     }            
-    //gSystem->RedirectOutput("debuglog.log", "w");
-    eventLoop(infile, outntuplefile, outtextfile, inputObjectType);
+    gSystem->RedirectOutput("debuglog.log", "w");
+    eventLoop(infile, outntuplefile, outtextfile, inputObjectType, seedObjectType);
     gSystem->Exit(0);
 } 

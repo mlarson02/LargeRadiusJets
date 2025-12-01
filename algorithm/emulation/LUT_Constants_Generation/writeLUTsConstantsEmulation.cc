@@ -17,6 +17,7 @@ int main() {
     std::vector<double > rSquaredCuts = {1.0};
     std::vector<unsigned int > nIOs = {64, 128, 256, 512};
     std::vector<unsigned int > nSeeds = {2};
+    std::vector<unsigned int > nSeedsInput = {2};
 
     for(double rMergeCut : rMergeCuts){ // Loop through algorithm configurations affecting constants.h
         for(double rSquaredCut : rSquaredCuts){ // And generate different constants files
@@ -25,19 +26,21 @@ int main() {
             unsigned int max_R_8b_lut_size = calculate_lut_max_size(std::sqrt(rSquaredCut), etaBitLength, phiBitLength, etaGranularity, phiGranularity);
             for(unsigned int nIOOption : nIOs){
                 for(unsigned int nSeedOption : nSeeds){
-                    std::cout << "---------------------" << "\n";
-                    std::cout << "writing constants file with: " << "\n";
-                    std::cout << "rMergeCut: " << rMergeCut << "\n";
-                    std::cout << "rSquaredCut: " << rSquaredCut << "\n";
-                    std::cout << "nIOs: " << nIOOption << "\n";
-                    std::cout << "nSeeds: " << nSeedOption << "\n";
-                    std::cout << "max_R2lut_size: " << max_R2lut_size << "\n";
-                    std::cout << "max_Rlut_size: " << max_Rlut_size << "\n";
-                    std::cout << "max_R_8b_lut_size: " << max_R_8b_lut_size << "\n";
-                    std::cout << "---------------------" << "\n";
-                    std::string constantsFilePath = makeInputConstantsFileName(rMergeCut, nIOOption, nSeedOption, rSquaredCut);
-                    write_constants_header(constantsFilePath, rSquaredCut, rMergeCut, nIOOption, nSeedOption,
-                                           max_R2lut_size, max_Rlut_size, max_R_8b_lut_size);
+                    for (unsigned int nSeedInputOption : nSeedsInput){
+                        std::cout << "---------------------" << "\n";
+                        std::cout << "writing constants file with: " << "\n";
+                        std::cout << "rMergeCut: " << rMergeCut << "\n";
+                        std::cout << "rSquaredCut: " << rSquaredCut << "\n";
+                        std::cout << "nIOs: " << nIOOption << "\n";
+                        std::cout << "nSeeds: " << nSeedOption << "\n";
+                        std::cout << "max_R2lut_size: " << max_R2lut_size << "\n";
+                        std::cout << "max_Rlut_size: " << max_Rlut_size << "\n";
+                        std::cout << "max_R_8b_lut_size: " << max_R_8b_lut_size << "\n";
+                        std::cout << "---------------------" << "\n";
+                        std::string constantsFilePath = makeInputConstantsFileName(rMergeCut, nIOOption, nSeedOption, rSquaredCut);
+                        write_constants_header(constantsFilePath, rSquaredCut, rMergeCut, nIOOption, nSeedOption, nSeedInputOption,
+                                            max_R2lut_size, max_Rlut_size, max_R_8b_lut_size);
+                    } 
                 }
             }
         }

@@ -14,7 +14,93 @@
 #include <cmath>
 #include <TMath.h>
 #include <unordered_map>
+#include <utility>
 //#include "../algorithm/constants.h"
+
+
+struct FileInfo {
+    std::string inputObjectType;
+    std::string seedObjectType;
+};
+
+// Extract types from a path string like "..._IO_<input>_Seed_<seed>.root"
+FileInfo ParseFileName(const std::string& path)
+{
+    FileInfo info;
+
+    const std::string ioTag   = "_IO_";
+    const std::string seedTag = "_Seed_";
+    const std::string ext     = ".root";
+
+    // Find tag positions
+    const size_t posIO   = path.find(ioTag);
+    const size_t posSeed = path.find(seedTag);
+
+    if (posIO == std::string::npos || posSeed == std::string::npos || posSeed <= posIO) {
+        std::cerr << "⚠️ ParseFileName: could not find expected tags in: " << path << "\n";
+        return info;
+    }
+
+    // Extract inputObjectType
+    const size_t startInput = posIO + ioTag.size();
+    const size_t lenInput   = posSeed - startInput;
+    info.inputObjectType    = path.substr(startInput, lenInput);
+
+    // Extract seedObjectType
+    const size_t startSeed = posSeed + seedTag.size();
+    size_t endSeed = path.find(ext, startSeed);
+    if (endSeed == std::string::npos)
+        endSeed = path.size(); // fallback
+
+    info.seedObjectType = path.substr(startSeed, endSeed - startSeed);
+
+    return info;
+}
+
+
+
+
+// Return the point with the **largest efficiency (x)**
+// among all points with rate y <= maxRateHz.
+// If no point satisfies y <= maxRateHz, fall back to the point
+// with y closest to maxRateHz (using log distance).
+std::pair<double,double>
+FindBestPointBelowRate(const TGraph *g, double maxRateHz)
+{
+    int n = g->GetN();
+    const double *x = g->GetX();
+    const double *y = g->GetY();
+
+    double bestX = -1.0;
+    double bestY =  0.0;
+
+    // 1) Primary: best efficiency with y <= maxRateHz
+    for (int i = 0; i < n; ++i) {
+        if (y[i] <= maxRateHz && x[i] > bestX) {
+            bestX = x[i];
+            bestY = y[i];
+        }
+    }
+
+    if (bestX >= 0.0) {
+        return {bestX, bestY};
+    }
+
+    // 2) Fallback: if nothing is below the threshold,
+    // choose the point closest in log(y) to maxRateHz.
+    double bestDiff = 1e99;
+    for (int i = 0; i < n; ++i) {
+        double diff = std::fabs(std::log10(y[i]) - std::log10(maxRateHz));
+        if (diff < bestDiff || (diff == bestDiff && x[i] > bestX)) {
+            bestDiff = diff;
+            bestX    = x[i];
+            bestY    = y[i];
+        }
+    }
+    return {bestX, bestY};
+}
+
+
 
 // ---------- Data container for one event ----------
 struct EventDisplayInputs {
@@ -64,6 +150,150 @@ struct RateEff2DOut {
   TH2* hRate_vsThr_vsR;  // Background rate surface vs (ET threshold, Rmax)
   TGraphErrors* gRate_vsEff_all; // All (eff,rate) points from the 2D scan
 };
+
+// -----------------------------------------------------------------------------
+// MakeRateVsEff_ScanRMax_AllowZeroR
+//
+// Like MakeRateVsEff_ScanRMax, but implements the logic:
+//
+//   pass if  (E_T > threshold) AND ( R < Rmax  OR  R == 0 )
+//
+// i.e. events with R == 0 are *only* subject to the E_T cut, not the R cut.
+//
+// Assumes the first R-bin (jb = 1) corresponds to R == 0 (or contains all R=0
+// entries). If that's not strictly true, adjust the "zero bin" logic below.
+// -----------------------------------------------------------------------------
+RateEff2DOut MakeRateVsEff_ScanRMax_AllowZeroR(TH1* hSigEt, TH1* hBkgEt,
+                                               TH1* hSigR,  TH1* hBkgR)
+{
+  // ---- (1) Cumulative along ET: pass if ET > threshold (HIGH -> LOW)
+  auto* hSigCumEt = hSigEt->GetCumulative(/*forward=*/false,
+                            (std::string(hSigEt->GetName())+"_cumul").c_str());
+  auto* hBkgCumEt = hBkgEt->GetCumulative(/*forward=*/false,
+                            (std::string(hBkgEt->GetName())+"_cumul").c_str());
+
+  const int nbEt = hSigEt->GetNbinsX();
+  const double totalSigEt = hSigEt->Integral(1, nbEt);
+
+  std::vector<double> effEt(nbEt+1, 0.0), rateEt(nbEt+1, 0.0), errEt(nbEt+1, 0.0);
+  for (int ib=1; ib<=nbEt; ++ib) {
+    effEt[ib]  = (totalSigEt>0 ? hSigCumEt->GetBinContent(ib)/totalSigEt : 0.0);
+    rateEt[ib] = hBkgCumEt->GetBinContent(ib);    // already in Hz if weighted
+    errEt[ib]  = hBkgCumEt->GetBinError(ib);
+  }
+
+  // ---- (2) Cumulative along R, with special treatment for R == 0
+  //
+  // Logic at event level:
+  //   pass if ET>thr AND [ (R == 0) OR (0 < R < Rmax) ]
+  //
+  // With factorization, the ET part is effEt[ib] / rateEt[ib].
+  // The R part becomes:
+  //
+  //   fracSigR(jb) = f0_sig + (1 - f0_sig) * gSig(jb),
+  //
+  // where
+  //   f0_sig = fraction of signal events with R == 0,
+  //   gSig(jb) = fraction of *non-zero-R* events with R < Rmax(jb).
+  //
+  // Same for background.
+
+  auto* hSigCumR_lo = hSigR->GetCumulative(/*forward=*/true,
+                            (std::string(hSigR->GetName())+"_cumul_lo").c_str());
+  auto* hBkgCumR_lo = hBkgR->GetCumulative(/*forward=*/true,
+                            (std::string(hBkgR->GetName())+"_cumul_lo").c_str());
+
+  const int nbR = hSigR->GetNbinsX();
+  const double totalSigR = hSigR->Integral(1, nbR);
+  const double totalBkgR = hBkgR->Integral(1, nbR); // Hz if weighted
+
+  std::vector<double> fracSigR(nbR+1, 0.0);
+  std::vector<double> fracBkgR(nbR+1, 0.0);
+
+  if (totalSigR <= 0.0 || totalBkgR <= 0.0) {
+    // Degenerate case: fall back to ET-only (no R cut at all)
+    for (int jb=1; jb<=nbR; ++jb) {
+      fracSigR[jb] = 1.0;
+      fracBkgR[jb] = 1.0;
+    }
+  } else {
+    // Assume bin 1 is the "R == 0" bin
+    const int zeroBin = 1;
+
+    const double sigR0 = hSigR->GetBinContent(zeroBin);
+    const double bkgR0 = hBkgR->GetBinContent(zeroBin);
+
+    const double f0_sig   = sigR0 / totalSigR;
+    const double f0_bkg   = bkgR0 / totalBkgR;
+    const double sigPos   = totalSigR - sigR0;  // R > 0
+    const double bkgPos   = totalBkgR - bkgR0;  // R > 0
+
+    for (int jb=1; jb<=nbR; ++jb) {
+      const double cumSig = hSigCumR_lo->GetBinContent(jb); // includes zero bin
+      const double cumBkg = hBkgCumR_lo->GetBinContent(jb);
+
+      // Non-zero-R cumulative parts
+      double gSig = 0.0;
+      double gBkg = 0.0;
+
+      if (sigPos > 0.0) {
+        gSig = (cumSig - sigR0) / sigPos;  // fraction of non-zero-R with R < Rmax
+        if (gSig < 0.0) gSig = 0.0;
+        if (gSig > 1.0) gSig = 1.0;
+      }
+
+      if (bkgPos > 0.0) {
+        gBkg = (cumBkg - bkgR0) / bkgPos;
+        if (gBkg < 0.0) gBkg = 0.0;
+        if (gBkg > 1.0) gBkg = 1.0;
+      }
+
+      // Total fraction passing the R logic: R == 0 OR (0 < R < Rmax)
+      fracSigR[jb] = f0_sig + (1.0 - f0_sig) * gSig;
+      fracBkgR[jb] = f0_bkg + (1.0 - f0_bkg) * gBkg;
+    }
+  }
+
+  // ---- (3) Build 2D surfaces vs (ET_thr, Rmax)
+  TH2F* hEff2D  = MakeTH2Like("hEff_vsThr_vsR_allowR0",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Signal (hh#rightarrow4b) Efficiency",
+                     hSigEt->GetXaxis(), hSigR->GetXaxis());
+  TH2F* hRate2D = MakeTH2Like("hRate_vsThr_vsR_allowR0",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Estimated Background Rate [Hz]",
+                     hBkgEt->GetXaxis(), hBkgR->GetXaxis());
+
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb) {
+      const double eff  = std::clamp(effEt[ib]  * fracSigR[jb], 0.0, 1.0);
+      const double rate = rateEt[ib] * fracBkgR[jb];
+      const double err  = errEt[ib]  * fracBkgR[jb];
+
+      hEff2D ->SetBinContent(ib, jb, eff);
+      hRate2D->SetBinContent(ib, jb, rate);
+      hRate2D->SetBinError  (ib, jb, err);
+    }
+  }
+
+  // ---- (4) Collect all (eff, rate) points into a TGraphErrors
+  const int npts = nbEt * nbR;
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_all_allowR0");
+  g->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+
+  int k = 0;
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb, ++k) {
+      const double eff  = hEff2D ->GetBinContent(ib,jb);
+      const double rate = hRate2D->GetBinContent(ib,jb);
+      const double err  = hRate2D->GetBinError  (ib,jb);
+      g->SetPoint(k, eff, rate);
+      g->SetPointError(k, 0.0, err);
+    }
+  }
+
+  return {hEff2D, hRate2D, g};
+}
+
 
 // -----------------------------------------------------------------------------
 // MakeRateVsEff_ScanRMax
@@ -333,7 +563,7 @@ void SaveStandaloneROC(const char* cname,
 // save as a single-page PDF.
 // ------------------------------------------------------------
 void OverlayAndSave(TH1F* hists[], int n, const char* canvasName,
-                    TString pdfOut,
+                    TString pdfOut, unsigned int fillStyle,
                     const char* drawOpt = "HIST")
 {
     if (n <= 0 || !hists[0]) return;
@@ -375,7 +605,7 @@ void OverlayAndSave(TH1F* hists[], int n, const char* canvasName,
         hists[i]->SetLineColor(col);
         hists[i]->SetLineWidth(2);
         hists[i]->SetFillColor(col);
-        hists[i]->SetFillStyle(0); // solid box in legend
+        hists[i]->SetFillStyle(fillStyle); // solid box in legend
         hists[i]->GetXaxis()->SetTitleSize(0.045);
         hists[i]->GetYaxis()->SetTitleSize(0.045);
         hists[i]->GetXaxis()->SetLabelSize(0.040);
@@ -420,6 +650,66 @@ void OverlayAndSave(TH1F* hists[], int n, const char* canvasName,
     // (optional) keep objects alive outside this function if needed
     // delete c; // uncomment if you manage object ownership elsewhere
 }
+
+void OverlayAndSaveStack(TH1F* hists[], int n, const char* canvasName,
+                         TString pdfOut, unsigned int fillStyle,
+                         const char* drawOpt = "HIST")
+{
+    if (n <= 0 || !hists) return;
+
+    const Color_t colors[10] = { kRed+1, kGreen+1, kBlue, kYellow+1, kMagenta+1,
+                                 kCyan+1, kTeal+2, kViolet+1, kGray+1, kGray+3 };
+
+    TCanvas* c = new TCanvas(canvasName, canvasName, 900, 700);
+    c->SetMargin(0.12, 0.22, 0.16, 0.06);
+    c->SetLogy();
+
+    TLegend* leg = new TLegend(0.80, 0.15, 0.97, 0.92);
+    leg->SetBorderSize(0); leg->SetFillStyle(0); leg->SetTextSize(0.030);
+
+    // Don't pass " ; ; " – it clears axis titles.
+    THStack* hs = new THStack(TString::Format("%s_stack", canvasName), canvasName);
+
+    int firstIdx = -1;
+    for (int i = 0; i < n; ++i) {
+        if (!hists[i]) continue;
+        if (firstIdx < 0) firstIdx = i;
+
+        const Color_t col = colors[i % 10];
+        hists[i]->SetLineColor(col);
+        hists[i]->SetLineWidth(2);
+        hists[i]->SetFillColor(col);
+        hists[i]->SetFillStyle(fillStyle);
+
+        hs->Add(hists[i], drawOpt);
+        leg->AddEntry(hists[i], TString::Format("Slice JZ%d", i), "f");
+    }
+    if (firstIdx < 0) return;
+
+    // Draw once to create the internal histogram/axes
+    hs->Draw(drawOpt);
+    gPad->Update();
+
+    // --- Set axis titles on the STACK (not on each TH1) ---
+    if (hs->GetXaxis()) hs->GetXaxis()->SetTitle(hists[firstIdx]->GetXaxis()->GetTitle());
+    if (hs->GetYaxis()) hs->GetYaxis()->SetTitle(hists[firstIdx]->GetYaxis()->GetTitle());
+    if (hs->GetXaxis()) { hs->GetXaxis()->SetTitleSize(0.045); hs->GetXaxis()->SetLabelSize(0.040); }
+    if (hs->GetYaxis()) { hs->GetYaxis()->SetTitleSize(0.045); hs->GetYaxis()->SetLabelSize(0.040); }
+
+    // --- Control y-range on the STACK (not the components) ---
+    const double ymin = 1e-7;
+    hs->SetMinimum(ymin);                 // this is the one that matters for THStack
+    const double ymax = hs->GetMaximum(); // after Draw()
+    hs->SetMaximum((ymax > ymin ? ymax : ymin*10.0) * 1.20);
+
+    leg->Draw();
+    gPad->Modified();                     // make ROOT re-compute the pad
+    gPad->Update();
+
+    c->SaveAs(pdfOut);
+}
+
+
 
 constexpr unsigned int nJZSlices_ = 10;
 
