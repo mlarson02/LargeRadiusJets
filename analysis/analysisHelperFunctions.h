@@ -21,41 +21,100 @@
 struct FileInfo {
     std::string inputObjectType;
     std::string seedObjectType;
+    std::string rMergeValue;
+
+    double jetRadiusSquared = 0.0;  // NEW FIELD
 };
 
-// Extract types from a path string like "..._IO_<input>_Seed_<seed>.root"
+
 FileInfo ParseFileName(const std::string& path)
 {
     FileInfo info;
 
-    const std::string ioTag   = "_IO_";
-    const std::string seedTag = "_Seed_";
-    const std::string ext     = ".root";
+    const std::string rMergeTag = "_rMerge_";
+    const std::string ioTag     = "_IO_";
+    const std::string seedTag   = "_Seed_";
+    const std::string r2Tag     = "_R2_";   // NEW TAG
 
-    // Find tag positions
-    const size_t posIO   = path.find(ioTag);
-    const size_t posSeed = path.find(seedTag);
+    const std::string ext1      = ".root";
+    const std::string ext2      = "_OR.root";
+
+    // ----------------------------
+    // Find tags
+    // ----------------------------
+    const size_t posRMerge = path.find(rMergeTag);
+    const size_t posIO     = path.find(ioTag);
+    const size_t posSeed   = path.find(seedTag);
+    const size_t posR2     = path.find(r2Tag);
 
     if (posIO == std::string::npos || posSeed == std::string::npos || posSeed <= posIO) {
-        std::cerr << "⚠️ ParseFileName: could not find expected tags in: " << path << "\n";
+        std::cerr << "⚠️ ParseFileName: could not find expected IO/Seed tags in: " << path << "\n";
         return info;
     }
 
+    // ----------------------------
+    // Extract rMergeValue
+    // ----------------------------
+    if (posRMerge != std::string::npos) {
+        size_t startR = posRMerge + rMergeTag.size();
+        size_t endR = path.find('_', startR);
+        if (endR == std::string::npos)
+            endR = path.size();
+        info.rMergeValue = path.substr(startR, endR - startR);
+    }
+
+    // ----------------------------
+    // Extract jetRadiusSquared (value between _R2_ and _IO_)
+    // ----------------------------
+    if (posR2 != std::string::npos && posIO != std::string::npos && posR2 < posIO) {
+        size_t startR2 = posR2 + r2Tag.size();
+        size_t endR2 = posIO;
+
+        std::string r2String = path.substr(startR2, endR2 - startR2);
+
+        try {
+            info.jetRadiusSquared = std::stod(r2String);
+        } catch (...) {
+            std::cerr << "⚠️ Failed to parse R2 value '" << r2String << "' as double\n";
+        }
+    }
+
+    // ----------------------------
     // Extract inputObjectType
-    const size_t startInput = posIO + ioTag.size();
-    const size_t lenInput   = posSeed - startInput;
-    info.inputObjectType    = path.substr(startInput, lenInput);
+    // ----------------------------
+    {
+        const size_t startInput = posIO + ioTag.size();
+        const size_t lenInput   = posSeed - startInput;
+        info.inputObjectType    = path.substr(startInput, lenInput);
+    }
 
+    // ----------------------------
     // Extract seedObjectType
-    const size_t startSeed = posSeed + seedTag.size();
-    size_t endSeed = path.find(ext, startSeed);
-    if (endSeed == std::string::npos)
-        endSeed = path.size(); // fallback
+    // ----------------------------
+    {
+        size_t startSeed = posSeed + seedTag.size();
 
-    info.seedObjectType = path.substr(startSeed, endSeed - startSeed);
+        // Find both possible extensions
+        size_t end1 = path.find(ext1, startSeed);
+        size_t end2 = path.find(ext2, startSeed);
+
+        size_t endSeed = std::string::npos;
+        if (end1 != std::string::npos && end2 != std::string::npos)
+            endSeed = std::min(end1, end2);
+        else if (end1 != std::string::npos)
+            endSeed = end1;
+        else if (end2 != std::string::npos)
+            endSeed = end2;
+        else
+            endSeed = path.size();  // fallback
+
+        info.seedObjectType = path.substr(startSeed, endSeed - startSeed);
+    }
 
     return info;
 }
+
+
 
 
 
@@ -294,6 +353,500 @@ RateEff2DOut MakeRateVsEff_ScanRMax_AllowZeroR(TH1* hSigEt, TH1* hBkgEt,
   return {hEff2D, hRate2D, g};
 }
 
+// -----------------------------------------------------------------------------
+// MakeRateVsEff_ScanRWindow
+// Scan ET threshold and an R window cut simultaneously.
+// Pass condition in R: R_min <= R <= R_max.
+// We scan over all bin pairs (jMin, jMax) with jMin <= jMax.
+//
+// Inputs:
+//   hSigEt, hBkgEt : 1D ET distributions (sig counts, bkg weighted to Hz)
+//   hSigR,  hBkgR  : 1D R distributions
+//
+// Output: here I focus on building a TGraphErrors with all (eff, rate) points.
+// You can wrap it in your own struct, e.g. RateEffWindowOut.
+// -----------------------------------------------------------------------------
+TGraphErrors* MakeRateVsEff_ScanRWindow(TH1* hSigEt, TH1* hBkgEt,
+                                        TH1* hSigR,  TH1* hBkgR)
+{
+  // ---- (1) Cumulative along ET: pass if ET > threshold (HIGH -> LOW)
+  auto* hSigCumEt = hSigEt->GetCumulative(/*forward=*/false,
+                            (std::string(hSigEt->GetName())+"_cumulEt").c_str());
+  auto* hBkgCumEt = hBkgEt->GetCumulative(/*forward=*/false,
+                            (std::string(hBkgEt->GetName())+"_cumulEt").c_str());
+
+  const int nbEt = hSigEt->GetNbinsX();
+  const double totalSigEt = hSigEt->Integral(1, nbEt);
+
+  std::vector<double> effEt(nbEt+1, 0.0), rateEt(nbEt+1, 0.0), errEt(nbEt+1, 0.0);
+  for (int ib=1; ib<=nbEt; ++ib) {
+    effEt[ib]  = (totalSigEt > 0 ? hSigCumEt->GetBinContent(ib) / totalSigEt : 0.0);
+    rateEt[ib] = hBkgCumEt->GetBinContent(ib);    // already in Hz if weighted
+    errEt[ib]  = hBkgCumEt->GetBinError(ib);
+  }
+
+  // ---- (2) Cumulative along R from LOW -> HIGH
+  // We will use this to build arbitrary windows [jMin, jMax].
+  auto* hSigCumR_lo = hSigR->GetCumulative(/*forward=*/true,
+                            (std::string(hSigR->GetName())+"_cumul_lo").c_str());
+  auto* hBkgCumR_lo = hBkgR->GetCumulative(/*forward=*/true,
+                            (std::string(hBkgR->GetName())+"_cumul_lo").c_str());
+
+  const int nbR  = hSigR->GetNbinsX();
+  const double totalSigR = hSigR->Integral(1, nbR);
+  const double totalBkgR = hBkgR->Integral(1, nbR); // Hz if weighted
+
+  // Pre-store the cumulative contents for convenience
+  std::vector<double> cumSigR(nbR+2, 0.0), cumBkgR(nbR+2, 0.0);
+  for (int jb=1; jb<=nbR; ++jb) {
+    cumSigR[jb] = hSigCumR_lo->GetBinContent(jb);
+    cumBkgR[jb] = hBkgCumR_lo->GetBinContent(jb);
+  }
+  // Define "bin 0" cumulative as 0 so we can safely do cum(jMax)-cum(jMin-1)
+  cumSigR[0] = 0.0;
+  cumBkgR[0] = 0.0;
+
+  // ---- (3) Number of (R_min, R_max) windows and total points
+  const int nWindows = nbR * (nbR + 1) / 2; // all pairs jMin <= jMax
+  const int npts     = nbEt * nWindows;
+
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_window");
+  g->SetTitle("Trigger Rate vs Signal Efficiency (R window);"
+              "Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+
+  int k = 0;
+  for (int ib=1; ib<=nbEt; ++ib) {
+
+    const double effEt_ib  = effEt[ib];
+    const double rateEt_ib = rateEt[ib];
+    const double errEt_ib  = errEt[ib];
+
+    // Loop over all windows in R: jMin <= jMax
+    for (int jMin=1; jMin<=nbR; ++jMin) {
+      for (int jMax=jMin; jMax<=nbR; ++jMax, ++k) {
+
+        // Fraction of events in [R(jMin), R(jMax)] for signal and background
+        double winSig   = cumSigR[jMax] - cumSigR[jMin-1];
+        double winBkg   = cumBkgR[jMax] - cumBkgR[jMin-1];
+
+        double fracSigR = (totalSigR > 0 ? winSig / totalSigR : 0.0);
+        double fracBkgR = (totalBkgR > 0 ? winBkg / totalBkgR : 0.0);
+
+        const double eff  = std::clamp(effEt_ib * fracSigR, 0.0, 1.0);
+        const double rate = rateEt_ib * fracBkgR;
+        const double err  = errEt_ib * fracBkgR;
+
+        g->SetPoint(k, eff, rate);
+        g->SetPointError(k, 0.0, err);
+
+        // If you'd like to keep track of which window it was, you can encode it
+        // in the point index or in auxiliary arrays (R_min, R_max) stored elsewhere.
+      }
+    }
+  }
+
+  return g;
+}
+
+// -----------------------------------------------------------------------------
+// MakeRateVsEff_ScanRMin
+// Scan ET threshold and R_min simultaneously using 1D histograms.
+// Inputs:
+//   hSigEt, hBkgEt : 1D ET distributions (sig counts, bkg weighted to Hz)
+//   hSigR,  hBkgR  : 1D R=psi_lead/psi_sublead distributions
+// Returns 2D efficiency / rate surfaces and a graph with all (eff, rate) pairs.
+// Now the R cut is: pass if R > R_min.
+// -----------------------------------------------------------------------------
+/*
+RateEff2DOut MakeRateVsEff_ScanRMin(TH1* hSigEt, TH1* hBkgEt,
+                                    TH1* hSigR,  TH1* hBkgR)
+{
+  // ---- (1) Cumulative along ET: pass if ET > threshold (HIGH -> LOW)
+  auto* hSigCumEt = hSigEt->GetCumulative(false,
+                            (std::string(hSigEt->GetName())+"_cumulEt").c_str());
+  auto* hBkgCumEt = hBkgEt->GetCumulative(false,
+                            (std::string(hBkgEt->GetName())+"_cumulEt").c_str());
+
+  const int nbEt = hSigEt->GetNbinsX();
+  const double totalSigEt = hSigEt->Integral(1, nbEt);
+
+  std::vector<double> effEt(nbEt+1, 0.0), rateEt(nbEt+1, 0.0), errEt(nbEt+1, 0.0);
+  for (int ib=1; ib<=nbEt; ++ib) {
+    effEt[ib]  = (totalSigEt>0 ? hSigCumEt->GetBinContent(ib)/totalSigEt : 0.0);
+    rateEt[ib] = hBkgCumEt->GetBinContent(ib);    // already in Hz if weighted
+    errEt[ib]  = hBkgCumEt->GetBinError(ib);
+  }
+
+  // ---- (2) Cumulative along R: pass if R > R_min (HIGH -> LOW)
+  auto* hSigCumR_hi = hSigR->GetCumulative(false,
+                            (std::string(hSigR->GetName())+"_cumul_hi").c_str());
+  auto* hBkgCumR_hi = hBkgR->GetCumulative(false,
+                            (std::string(hBkgR->GetName())+"_cumul_hi").c_str());
+
+  const int nbR  = hSigR->GetNbinsX();
+  const double totalSigR = hSigR->Integral(1, nbR);
+  const double totalBkgR = hBkgR->Integral(1, nbR); // Hz if weighted
+
+  std::vector<double> fracSigR(nbR+1, 0.0), fracBkgR(nbR+1, 0.0);
+  for (int jb=1; jb<=nbR; ++jb) {
+    // Now each bin jb represents the fraction with R >= R_bin_center(jb)
+    fracSigR[jb] = (totalSigR>0 ? hSigCumR_hi->GetBinContent(jb)/totalSigR : 0.0);
+    fracBkgR[jb] = (totalBkgR>0 ? hBkgCumR_hi->GetBinContent(jb)/totalBkgR : 0.0);
+  }
+
+  // ---- (3) Build 2D surfaces vs (ET_thr, R_min)
+  TH2F* hEff2D  = MakeTH2Like("hEff_vsThr_vsRmin",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{min};Signal (hh#rightarrow4b) Efficiency",
+                     hSigEt->GetXaxis(), hSigR->GetXaxis());
+  TH2F* hRate2D = MakeTH2Like("hRate_vsThr_vsRmin",
+                     ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{min};Estimated Background Rate [Hz]",
+                     hBkgEt->GetXaxis(), hBkgR->GetXaxis());
+
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb) {
+      const double eff  = std::clamp(effEt[ib]  * fracSigR[jb], 0.0, 1.0);
+      const double rate = rateEt[ib] * fracBkgR[jb];
+      hEff2D ->SetBinContent(ib, jb, eff);
+      hRate2D->SetBinContent(ib, jb, rate);
+      // (Optional) error on rate:
+      hRate2D->SetBinError(ib, jb, errEt[ib] * fracBkgR[jb]);
+    }
+  }
+
+  // ---- (4) Collect all (eff, rate) points into a TGraphErrors
+  const int npts = nbEt * nbR;
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_all_Rmin");
+  g->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+
+  int k=0;
+  for (int ib=1; ib<=nbEt; ++ib) {
+    for (int jb=1; jb<=nbR; ++jb, ++k) {
+      const double eff  = hEff2D ->GetBinContent(ib,jb);
+      const double rate = hRate2D->GetBinContent(ib,jb);
+      const double err  = hRate2D->GetBinError  (ib,jb);
+      g->SetPoint(k, eff, rate);
+      g->SetPointError(k, 0.0, err);
+    }
+  }
+
+  return {hEff2D, hRate2D, g};
+}
+*/
+// -----------------------------------------------------------------------------
+// MakeRateVsEff_ScanRMin  (2D version)
+// Scan ET threshold and R_min simultaneously using 2D histograms.
+//
+// Inputs:
+//   hSigEtR, hBkgEtR : 2D ET–R distributions
+//                      X axis = Leading LRJ E_T
+//                      Y axis = R (e.g. tau2/tau1 product)
+//
+//   Event passes if:   ET > ET_thr(bin_x)  AND  R >= R_min(bin_y)
+//
+// Returns 2D efficiency / rate surfaces and a graph with all (eff, rate) pairs.
+// -----------------------------------------------------------------------------
+RateEff2DOut MakeRateVsEff_ScanRMin(TH2* hSigEtR, TH2* hBkgEtR)
+{
+  // --- basic checks ---------------------------------------------------------
+  if (!hSigEtR || !hBkgEtR) {
+    throw std::runtime_error("MakeRateVsEff_ScanRMin: null input histogram");
+  }
+
+  const int nbEt = hSigEtR->GetNbinsX();
+  const int nbR  = hSigEtR->GetNbinsY();
+
+  if (nbEt != hBkgEtR->GetNbinsX() || nbR != hBkgEtR->GetNbinsY()) {
+    throw std::runtime_error("MakeRateVsEff_ScanRMin: signal/bkg 2D hist binning mismatch");
+  }
+
+  // Total signal for normalisation (all ET, all R)
+  const double totalSig = hSigEtR->Integral(1, nbEt, 1, nbR);
+
+  // --- (1) Cumulative sums over region (ET >= thr_x, R >= R_min_y) ---------
+  //
+  // We want cum(ix,iy) = sum_{x>=ix, y>=iy} H(x,y).
+  //
+  // Recurrence (summing from high to low indices in both x and y):
+  //   C(ix,iy) = H(ix,iy) + C(ix+1,iy) + C(ix,iy+1) - C(ix+1,iy+1)
+
+  std::vector<std::vector<double>> cumSig   (nbEt+2, std::vector<double>(nbR+2, 0.0));
+  std::vector<std::vector<double>> cumBkg   (nbEt+2, std::vector<double>(nbR+2, 0.0));
+  std::vector<std::vector<double>> cumBkgVar(nbEt+2, std::vector<double>(nbR+2, 0.0));
+
+  for (int ix = nbEt; ix >= 1; --ix) {
+    for (int iy = nbR; iy >= 1; --iy) {
+      const double s    = hSigEtR->GetBinContent(ix, iy);
+      const double b    = hBkgEtR->GetBinContent(ix, iy);
+      const double berr = hBkgEtR->GetBinError  (ix, iy);
+      const double var  = berr * berr;
+
+      cumSig[ix][iy] =
+          s + cumSig[ix+1][iy] + cumSig[ix][iy+1] - cumSig[ix+1][iy+1];
+
+      cumBkg[ix][iy] =
+          b + cumBkg[ix+1][iy] + cumBkg[ix][iy+1] - cumBkg[ix+1][iy+1];
+
+      cumBkgVar[ix][iy] =
+          var + cumBkgVar[ix+1][iy] + cumBkgVar[ix][iy+1] - cumBkgVar[ix+1][iy+1];
+    }
+  }
+
+  // --- (2) Output 2D histograms (same binning as inputs) -------------------
+  TH2F* hEff2D = MakeTH2Like(
+      "hEff_vsThr_vsRmin",
+      ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{min};Signal (hh#rightarrow4b) Efficiency",
+      hSigEtR->GetXaxis(), hSigEtR->GetYaxis());
+
+  TH2F* hRate2D = MakeTH2Like(
+      "hRate_vsThr_vsRmin",
+      ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{min};Estimated Background Rate [Hz]",
+      hBkgEtR->GetXaxis(), hBkgEtR->GetYaxis());
+
+  for (int ix = 1; ix <= nbEt; ++ix) {
+    for (int iy = 1; iy <= nbR; ++iy) {
+      const double sigPass = cumSig[ix][iy];     // ET >= ix, R >= iy
+      const double bkgPass = cumBkg[ix][iy];
+      const double varPass = cumBkgVar[ix][iy];
+
+      const double eff  = (totalSig > 0.0 ? sigPass / totalSig : 0.0);
+      const double rate = bkgPass;
+      const double err  = (varPass > 0.0 ? std::sqrt(varPass) : 0.0);
+
+      hEff2D ->SetBinContent(ix, iy, eff);
+      hRate2D->SetBinContent(ix, iy, rate);
+      hRate2D->SetBinError  (ix, iy, err);
+    }
+  }
+
+  // --- (3) Collect all (eff, rate) points into a TGraphErrors -------------
+  const int npts = nbEt * nbR;
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_all_Rmin");
+  g->SetTitle("Trigger Rate vs Signal Efficiency;"
+              "Signal (hh#rightarrow4b) Efficiency;"
+              "Estimated Background Rate [Hz]");
+
+  int k = 0;
+  for (int ix = 1; ix <= nbEt; ++ix) {
+    for (int iy = 1; iy <= nbR; ++iy, ++k) {
+      const double eff  = hEff2D ->GetBinContent(ix, iy);
+      const double rate = hRate2D->GetBinContent(ix, iy);
+      const double err  = hRate2D->GetBinError  (ix, iy);
+
+      g->SetPoint     (k, eff, rate);
+      g->SetPointError(k, 0.0, err);
+    }
+  }
+
+  return {hEff2D, hRate2D, g};
+}
+
+struct RateEff3DOut {
+  TH3* hEff_vsThr3D;          // Signal efficiency vs (x_thr, y_thr, z_thr)
+  TH3* hRate_vsThr3D;         // Background rate vs (x_thr, y_thr, z_thr)
+  TGraphErrors* gRate_vsEff_all;       // all (eff,rate) points
+  TGraphErrors* gRate_vsEff_frontier;  // only best points (efficiency frontier)
+};
+
+
+TH3F* MakeTH3Like(const char* name,
+                  const char* title,
+                  const TAxis* xaxis,
+                  const TAxis* yaxis,
+                  const TAxis* zaxis)
+{
+  auto* h = new TH3F(
+      name, title,
+      xaxis->GetNbins(), xaxis->GetXmin(), xaxis->GetXmax(),
+      yaxis->GetNbins(), yaxis->GetXmin(), yaxis->GetXmax(),
+      zaxis->GetNbins(), zaxis->GetXmin(), zaxis->GetXmax());
+  return h;
+}
+
+
+RateEff3DOut MakeRateVsEff_Scan3DMin(TH3* hSigXYZ, TH3* hBkgXYZ)
+{
+  // --- basic checks ---------------------------------------------------------
+  if (!hSigXYZ || !hBkgXYZ) {
+    throw std::runtime_error("MakeRateVsEff_Scan3DMin: null input histogram");
+  }
+
+  const int nbX = hSigXYZ->GetNbinsX();
+  const int nbY = hSigXYZ->GetNbinsY();
+  const int nbZ = hSigXYZ->GetNbinsZ();
+
+  if (nbX != hBkgXYZ->GetNbinsX() ||
+      nbY != hBkgXYZ->GetNbinsY() ||
+      nbZ != hBkgXYZ->GetNbinsZ()) {
+    throw std::runtime_error("MakeRateVsEff_Scan3DMin: signal/bkg 3D hist binning mismatch");
+  }
+
+  // Total signal for normalisation (all x,y,z)
+  const double totalSig = hSigXYZ->Integral(1, nbX, 1, nbY, 1, nbZ);
+
+  // --- (1) Cumulative sums over region (x>=ix, y>=iy, z>=iz) ---------------
+  //
+  // We want cum(ix,iy,iz) = sum_{x>=ix, y>=iy, z>=iz} H(x,y,z).
+  //
+  // Recurrence (summing from high to low indices in x, y, z):
+  //   C(ix,iy,iz) = H(ix,iy,iz)
+  //               + C(ix+1,iy,  iz  ) + C(ix,  iy+1,iz  ) + C(ix,  iy,  iz+1)
+  //               - C(ix+1,iy+1,iz  ) - C(ix+1,iy,  iz+1) - C(ix,  iy+1,iz+1)
+  //               + C(ix+1,iy+1,iz+1)
+
+  const int NX = nbX + 2;
+  const int NY = nbY + 2;
+  const int NZ = nbZ + 2;
+
+  auto idx = [NY, NZ](int ix, int iy, int iz) {
+    return (ix * NY + iy) * NZ + iz;
+  };
+
+  std::vector<double> cumSig   (NX * NY * NZ, 0.0);
+  std::vector<double> cumBkg   (NX * NY * NZ, 0.0);
+  std::vector<double> cumBkgVar(NX * NY * NZ, 0.0);
+
+  for (int ix = nbX; ix >= 1; --ix) {
+    for (int iy = nbY; iy >= 1; --iy) {
+      for (int iz = nbZ; iz >= 1; --iz) {
+        const double s    = hSigXYZ->GetBinContent(ix, iy, iz);
+        const double b    = hBkgXYZ->GetBinContent(ix, iy, iz);
+        const double berr = hBkgXYZ->GetBinError  (ix, iy, iz);
+        const double var  = berr * berr;
+
+        const int i000 = idx(ix,   iy,   iz  );
+        const int i100 = idx(ix+1, iy,   iz  );
+        const int i010 = idx(ix,   iy+1, iz  );
+        const int i001 = idx(ix,   iy,   iz+1);
+        const int i110 = idx(ix+1, iy+1, iz  );
+        const int i101 = idx(ix+1, iy,   iz+1);
+        const int i011 = idx(ix,   iy+1, iz+1);
+        const int i111 = idx(ix+1, iy+1, iz+1);
+
+        cumSig[i000] =
+            s + cumSig[i100] + cumSig[i010] + cumSig[i001]
+              - cumSig[i110] - cumSig[i101] - cumSig[i011]
+              + cumSig[i111];
+
+        cumBkg[i000] =
+            b + cumBkg[i100] + cumBkg[i010] + cumBkg[i001]
+              - cumBkg[i110] - cumBkg[i101] - cumBkg[i011]
+              + cumBkg[i111];
+
+        cumBkgVar[i000] =
+            var + cumBkgVar[i100] + cumBkgVar[i010] + cumBkgVar[i001]
+                - cumBkgVar[i110] - cumBkgVar[i101] - cumBkgVar[i011]
+                + cumBkgVar[i111];
+      }
+    }
+  }
+
+  // --- (2) Output 3D histograms (same binning as inputs) -------------------
+  TH3F* hEff3D = MakeTH3Like(
+      "hEff_vsThr3D",
+      ";X threshold;Y threshold;Z threshold;Signal Efficiency",
+      hSigXYZ->GetXaxis(), hSigXYZ->GetYaxis(), hSigXYZ->GetZaxis());
+
+  TH3F* hRate3D = MakeTH3Like(
+      "hRate_vsThr3D",
+      ";X threshold;Y threshold;Z threshold;Estimated Background Rate [Hz]",
+      hBkgXYZ->GetXaxis(), hBkgXYZ->GetYaxis(), hBkgXYZ->GetZaxis());
+
+  for (int ix = 1; ix <= nbX; ++ix) {
+    for (int iy = 1; iy <= nbY; ++iy) {
+      for (int iz = 1; iz <= nbZ; ++iz) {
+        const double sigPass = cumSig   [idx(ix, iy, iz)];  // x>=ix,y>=iy,z>=iz
+        const double bkgPass = cumBkg   [idx(ix, iy, iz)];
+        const double varPass = cumBkgVar[idx(ix, iy, iz)];
+
+        const double eff  = (totalSig > 0.0 ? sigPass / totalSig : 0.0);
+        const double rate = bkgPass;
+        const double err  = (varPass > 0.0 ? std::sqrt(varPass) : 0.0);
+
+        hEff3D ->SetBinContent(ix, iy, iz, eff);
+        hRate3D->SetBinContent(ix, iy, iz, rate);
+        hRate3D->SetBinError  (ix, iy, iz, err);
+      }
+    }
+  }
+
+  // --- (3) Collect all (eff, rate) points into a TGraphErrors -------------
+  const int npts = nbX * nbY * nbZ;
+  auto* gAll = new TGraphErrors(npts);
+  gAll->SetName("gRate_vsEff_all_3D");
+  gAll->SetTitle("Trigger Rate vs Signal Efficiency;"
+                 "Signal Efficiency;"
+                 "Estimated Background Rate [Hz]");
+
+  struct Point {
+    double eff;
+    double rate;
+    double err;
+  };
+  std::vector<Point> points;
+  points.reserve(npts);
+
+  int k = 0;
+  for (int ix = 1; ix <= nbX; ++ix) {
+    for (int iy = 1; iy <= nbY; ++iy) {
+      for (int iz = 1; iz <= nbZ; ++iz, ++k) {
+        const double eff  = hEff3D ->GetBinContent(ix, iy, iz);
+        const double rate = hRate3D->GetBinContent(ix, iy, iz);
+        const double err  = hRate3D->GetBinError  (ix, iy, iz);
+
+        gAll->SetPoint     (k, eff, rate);
+        gAll->SetPointError(k, 0.0, err);
+
+        points.push_back({eff, rate, err});
+      }
+    }
+  }
+
+  // --- (4) Build the frontier: best efficiency for each rate ---------------
+  //
+  // Sort by rate ascending, and for equal rate, by efficiency descending.
+  std::sort(points.begin(), points.end(),
+            [](const Point& a, const Point& b) {
+              if (a.rate < b.rate) return true;
+              if (a.rate > b.rate) return false;
+              return a.eff > b.eff; // for same rate, keep higher eff first
+            });
+
+  std::vector<Point> frontier;
+  frontier.reserve(points.size());
+
+  double bestEffSoFar = -1.0;
+  const double eps = 1e-8;
+
+  for (const auto& p : points) {
+    // keep only points that improve the efficiency at this or higher rate
+    if (p.eff > bestEffSoFar + eps) {
+      frontier.push_back(p);
+      bestEffSoFar = p.eff;
+    }
+  }
+
+  auto* gFrontier = new TGraphErrors(frontier.size());
+  gFrontier->SetName("gRate_vsEff_3D_frontier");
+  gFrontier->SetTitle("Trigger Rate vs Signal Efficiency (3D scan frontier);"
+                      "Signal (hh#rightarrow4b) Efficiency;"
+                      "Estimated Background Rate [Hz]");
+
+  for (size_t i = 0; i < frontier.size(); ++i) {
+    gFrontier->SetPoint(i, frontier[i].eff, frontier[i].rate);
+    gFrontier->SetPointError(i, 0.0, frontier[i].err);
+  }
+
+  RateEff3DOut out;
+  out.hEff_vsThr3D          = hEff3D;
+  out.hRate_vsThr3D         = hRate3D;
+  out.gRate_vsEff_all       = gAll;
+  out.gRate_vsEff_frontier  = gFrontier;
+  return out;
+}
+
 
 // -----------------------------------------------------------------------------
 // MakeRateVsEff_ScanRMax
@@ -303,13 +856,14 @@ RateEff2DOut MakeRateVsEff_ScanRMax_AllowZeroR(TH1* hSigEt, TH1* hBkgEt,
 //   hSigR,  hBkgR  : 1D R=psi_lead/psi_sublead distributions
 // Returns 2D efficiency / rate surfaces and a graph with all (eff, rate) pairs.
 // -----------------------------------------------------------------------------
+/*
 RateEff2DOut MakeRateVsEff_ScanRMax(TH1* hSigEt, TH1* hBkgEt,
                                     TH1* hSigR,  TH1* hBkgR)
 {
   // ---- (1) Cumulative along ET: pass if ET > threshold (HIGH -> LOW)
-  auto* hSigCumEt = hSigEt->GetCumulative(/*forward=*/false,
+  auto* hSigCumEt = hSigEt->GetCumulative(false,
                             (std::string(hSigEt->GetName())+"_cumul").c_str());
-  auto* hBkgCumEt = hBkgEt->GetCumulative(/*forward=*/false,
+  auto* hBkgCumEt = hBkgEt->GetCumulative(false,
                             (std::string(hBkgEt->GetName())+"_cumul").c_str());
 
   const int nbEt = hSigEt->GetNbinsX();
@@ -323,9 +877,9 @@ RateEff2DOut MakeRateVsEff_ScanRMax(TH1* hSigEt, TH1* hBkgEt,
   }
 
   // ---- (2) Cumulative along R: pass if R < Rmax (LOW -> HIGH)
-  auto* hSigCumR_lo = hSigR->GetCumulative(/*forward=*/true,
+  auto* hSigCumR_lo = hSigR->GetCumulative(true,
                             (std::string(hSigR->GetName())+"_cumul_lo").c_str());
-  auto* hBkgCumR_lo = hBkgR->GetCumulative(/*forward=*/true,
+  auto* hBkgCumR_lo = hBkgR->GetCumulative(true,
                             (std::string(hBkgR->GetName())+"_cumul_lo").c_str());
 
   const int nbR  = hSigR->GetNbinsX();
@@ -375,7 +929,103 @@ RateEff2DOut MakeRateVsEff_ScanRMax(TH1* hSigEt, TH1* hBkgEt,
   }
 
   return {hEff2D, hRate2D, g};
+}*/
+// 2D version: hSigEtR, hBkgEtR are TH2 with X=ET, Y=R
+RateEff2DOut MakeRateVsEff_ScanRMax(TH2* hSigEtR, TH2* hBkgEtR)
+{
+  // --- basic checks ---------------------------------------------------------
+  if (!hSigEtR || !hBkgEtR) {
+    throw std::runtime_error("MakeRateVsEff_ScanRMax: null input histogram");
+  }
+  const int nbEt = hSigEtR->GetNbinsX();
+  const int nbR  = hSigEtR->GetNbinsY();
+
+  if (nbEt != hBkgEtR->GetNbinsX() || nbR != hBkgEtR->GetNbinsY()) {
+    throw std::runtime_error("MakeRateVsEff_ScanRMax: signal/bkg 2D hist binning mismatch");
+  }
+
+  // Total signal for normalisation (all ET, all R)
+  const double totalSig = hSigEtR->Integral(1, nbEt, 1, nbR);
+
+  // --- (1) Build cumulative sums over (ET_thr, Rmax) -----------------------
+  //
+  // We want cum(ix,iy) = sum_{x>=ix, y<=iy} H(x,y).
+  // Do this with a 2D prefix-sum style recurrence:
+  //   C(ix,iy) = H(ix,iy) + C(ix+1,iy) + C(ix,iy-1) - C(ix+1,iy-1)
+
+  std::vector<std::vector<double>> cumSig(nbEt+2, std::vector<double>(nbR+2, 0.0));
+  std::vector<std::vector<double>> cumBkg(nbEt+2, std::vector<double>(nbR+2, 0.0));
+  std::vector<std::vector<double>> cumBkgVar(nbEt+2, std::vector<double>(nbR+2, 0.0));
+
+  for (int ix = nbEt; ix >= 1; --ix) {
+    for (int iy = 1; iy <= nbR; ++iy) {
+      const double s    = hSigEtR->GetBinContent(ix, iy);
+      const double b    = hBkgEtR->GetBinContent(ix, iy);
+      const double berr = hBkgEtR->GetBinError  (ix, iy);
+
+      cumSig[ix][iy] =
+          s + cumSig[ix+1][iy] + cumSig[ix][iy-1] - cumSig[ix+1][iy-1];
+
+      cumBkg[ix][iy] =
+          b + cumBkg[ix+1][iy] + cumBkg[ix][iy-1] - cumBkg[ix+1][iy-1];
+
+      // store variance for error propagation
+      const double var = berr * berr;
+      cumBkgVar[ix][iy] =
+          var + cumBkgVar[ix+1][iy] + cumBkgVar[ix][iy-1] - cumBkgVar[ix+1][iy-1];
+    }
+  }
+
+  // --- (2) Create output 2D histograms (same binning as input) ------------
+  TH2F* hEff2D  = MakeTH2Like(
+      "hEff_vsThr_vsR",
+      ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Signal (hh#rightarrow4b) Efficiency",
+      hSigEtR->GetXaxis(), hSigEtR->GetYaxis());
+
+  TH2F* hRate2D = MakeTH2Like(
+      "hRate_vsThr_vsR",
+      ";Leading JetTagger LRJ E_{T} threshold [GeV];R_{max};Estimated Background Rate [Hz]",
+      hBkgEtR->GetXaxis(), hBkgEtR->GetYaxis());
+
+  for (int ix = 1; ix <= nbEt; ++ix) {
+    for (int iy = 1; iy <= nbR; ++iy) {
+      const double sigPass = cumSig[ix][iy];      // ET >= ix, R <= iy
+      const double bkgPass = cumBkg[ix][iy];
+      const double varPass = cumBkgVar[ix][iy];
+
+      const double eff  = (totalSig > 0.0 ? sigPass / totalSig : 0.0);
+      const double rate = bkgPass;
+      const double err  = (varPass > 0.0 ? std::sqrt(varPass) : 0.0);
+
+      hEff2D ->SetBinContent(ix, iy, eff);
+      hRate2D->SetBinContent(ix, iy, rate);
+      hRate2D->SetBinError  (ix, iy, err);
+    }
+  }
+
+  // --- (3) Collect all (eff, rate) points into a TGraphErrors -------------
+  const int npts = nbEt * nbR;
+  auto* g = new TGraphErrors(npts);
+  g->SetName("gRate_vsEff_all");
+  g->SetTitle("Trigger Rate vs Signal Efficiency;"
+              "Signal (hh#rightarrow4b) Efficiency;"
+              "Estimated Background Rate [Hz]");
+
+  int k = 0;
+  for (int ix = 1; ix <= nbEt; ++ix) {
+    for (int iy = 1; iy <= nbR; ++iy, ++k) {
+      const double eff  = hEff2D ->GetBinContent(ix, iy);
+      const double rate = hRate2D->GetBinContent(ix, iy);
+      const double err  = hRate2D->GetBinError  (ix, iy);
+
+      g->SetPoint     (k, eff, rate);
+      g->SetPointError(k, 0.0, err);
+    }
+  }
+
+  return {hEff2D, hRate2D, g};
 }
+
 
 // Function to generate background rate vs. signal efficiency plots
 RateEffOut MakeRateVsEff(TH1* hSig, TH1* hBkg) {
@@ -710,6 +1360,836 @@ void OverlayAndSaveStack(TH1F* hists[], int n, const char* canvasName,
 }
 
 
+struct GlobalRateEffOut {
+  TGraphErrors* gRate_vsEff_combined; // frontier only (best eff per rate)
+
+  // total (all categories combined)
+  double bestEff;   // global total efficiency
+  double bestRate;  // global total rate
+
+  // thresholds at best point
+  double bestEtCut_0;
+  double bestEtCut_1;
+  double bestEtCut_2;
+  double bestMassCut_2;
+
+  // per-category conditional efficiencies at best point
+  // (efficiency within each subjet category)
+  double bestEff0_cat;
+  double bestEff1_cat;
+  double bestEff2_cat;
+
+  // per-category *global* contributions to signal efficiency
+  // (these sum to bestEff)
+  double bestEff0_tot;
+  double bestEff1_tot;
+  double bestEff2_tot;
+
+  // per-category rates
+  double bestRate0;
+  double bestRate1;
+  double bestRate2;
+};
+
+
+
+GlobalRateEffOut MakeCombinedRateVsEff_AllSubjets(
+    const RateEffOut&   out0,
+    const RateEffOut&   out1,
+    const RateEff2DOut& out2D,
+    TH1* sig0,        // signal hist for 0 subjets
+    TH1* sig1,        // signal hist for 1 subjet
+    TH2* sig2D,       // signal hist for >=2 subjets
+    double maxRateHz = 1.0e4) // e.g. 10 kHz constraint
+{
+  if (!sig0 || !sig1 || !sig2D) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllSubjets: null signal hist");
+  }
+
+  const int nb0  = out0.hEff_vsThr->GetNbinsX();
+  const int nb1  = out1.hEff_vsThr->GetNbinsX();
+  const int nb2x = out2D.hEff_vsThr_vsR->GetNbinsX();
+  const int nb2y = out2D.hEff_vsThr_vsR->GetNbinsY();
+
+  const double nSig0 = sig0->Integral(1, nb0);
+  const double nSig1 = sig1->Integral(1, nb1);
+  const double nSig2 = sig2D->Integral(1, nb2x, 1, nb2y);
+  const double totalSig = nSig0 + nSig1 + nSig2;
+
+  std::cout << "nSig0,1,2: " << nSig0 << " , " << nSig1 << " , " << nSig2 << "\n";
+  std::cout << "totalSig: " << totalSig << "\n";
+  if (totalSig != 10000) {
+    std::cout << "ERROR: not all signal included in histograms scanned over!" << "\n";
+  }
+
+  if (totalSig <= 0.0) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllSubjets: totalSig <= 0");
+  }
+
+  const double frac0 = nSig0 / totalSig;
+  const double frac1 = nSig1 / totalSig;
+  const double frac2 = nSig2 / totalSig;
+
+  struct GlobalPoint {
+    // global total eff
+    double eff;
+
+    // per-category conditional effs (within each category)
+    double eff0_cat;
+    double eff1_cat;
+    double eff2_cat;
+
+    // per-category global contributions (eff_cat * frac_cat)
+    double eff0_tot;
+    double eff1_tot;
+    double eff2_tot;
+
+    // rates
+    double rate;    // total
+    double rate0;
+    double rate1;
+    double rate2;
+
+    double rateErr; // total stat error
+
+    // thresholds
+    double etCut0;
+    double etCut1;
+    double etCut2;
+    double massCut2;
+  };
+
+  std::vector<GlobalPoint> allPoints;
+  allPoints.reserve(nb0 * nb1 * nb2x * nb2y);
+
+  // ---- (1) Enumerate all combinations, apply rate cut, store raw points ----
+  for (int i0 = 1; i0 <= nb0; ++i0) {
+    const double eff0_cat = out0.hEff_vsThr->GetBinContent(i0); // conditional eff in cat 0
+    const double rate0    = out0.hRate_vsThr->GetBinContent(i0);
+    const double err0     = out0.hRate_vsThr->GetBinError(i0);
+    const double etCut0   = out0.hEff_vsThr->GetXaxis()->GetBinLowEdge(i0);
+
+    for (int i1 = 1; i1 <= nb1; ++i1) {
+      const double eff1_cat = out1.hEff_vsThr->GetBinContent(i1);
+      const double rate1    = out1.hRate_vsThr->GetBinContent(i1);
+      const double err1     = out1.hRate_vsThr->GetBinError(i1);
+      const double etCut1   = out1.hEff_vsThr->GetXaxis()->GetBinLowEdge(i1);
+
+      for (int ix2 = 1; ix2 <= nb2x; ++ix2) {
+        for (int iy2 = 1; iy2 <= nb2y; ++iy2) {
+          const double eff2_cat = out2D.hEff_vsThr_vsR->GetBinContent(ix2, iy2);
+          const double rate2    = out2D.hRate_vsThr_vsR->GetBinContent(ix2, iy2);
+          const double err2     = out2D.hRate_vsThr_vsR->GetBinError(ix2, iy2);
+          const double etCut2   = out2D.hEff_vsThr_vsR->GetXaxis()->GetBinLowEdge(ix2);
+          const double massCut2 = out2D.hEff_vsThr_vsR->GetYaxis()->GetBinLowEdge(iy2);
+
+          // per-category global contributions
+          const double eff0_tot = eff0_cat * frac0;
+          const double eff1_tot = eff1_cat * frac1;
+          const double eff2_tot = eff2_cat * frac2;
+          const double effTot   = eff0_tot + eff1_tot + eff2_tot;
+
+          const double rateTot = rate0 + rate1 + rate2;
+          const double errTot  = std::sqrt(err0*err0 + err1*err1 + err2*err2);
+
+          if (rateTot > maxRateHz) continue;
+
+          GlobalPoint gp;
+          gp.eff      = effTot;
+
+          gp.eff0_cat = eff0_cat;
+          gp.eff1_cat = eff1_cat;
+          gp.eff2_cat = eff2_cat;
+
+          gp.eff0_tot = eff0_tot;
+          gp.eff1_tot = eff1_tot;
+          gp.eff2_tot = eff2_tot;
+
+          gp.rate     = rateTot;
+          gp.rate0    = rate0;
+          gp.rate1    = rate1;
+          gp.rate2    = rate2;
+
+          gp.rateErr  = errTot;
+          gp.etCut0   = etCut0;
+          gp.etCut1   = etCut1;
+          gp.etCut2   = etCut2;
+          gp.massCut2 = massCut2;
+
+          allPoints.push_back(gp);
+        }
+      }
+    }
+  }
+
+  // ---- (2) Build "best efficiency per rate" frontier ----------------------
+  std::sort(allPoints.begin(), allPoints.end(),
+            [](const GlobalPoint& a, const GlobalPoint& b) {
+              if (a.rate < b.rate) return true;
+              if (a.rate > b.rate) return false;
+              return a.eff > b.eff; // for same rate, keep higher eff first
+            });
+
+  std::vector<GlobalPoint> frontier;
+  frontier.reserve(allPoints.size());
+
+  double bestEffSoFar = -1.0;
+  const double eps = 1e-8;
+
+  for (const auto& gp : allPoints) {
+    if (gp.eff > bestEffSoFar + eps) {
+      frontier.push_back(gp);
+      bestEffSoFar = gp.eff;
+    }
+  }
+
+  // ---- (3) Build TGraphErrors only from frontier points & pick best -------
+
+  auto* gCombined = new TGraphErrors(frontier.size());
+  gCombined->SetName("gRate_vsEff_all_frontier");
+  gCombined->SetTitle("Combined Trigger Rate vs Signal Efficiency;"
+                      "Signal (hh#rightarrow4b) Efficiency (all categories combined);"
+                      "Total Estimated Background Rate [Hz]");
+
+  double bestEff   = -1.0;
+  double bestRate  =  0.0;
+  double bestEt0   =  0.0;
+  double bestEt1   =  0.0;
+  double bestEt2   =  0.0;
+  double bestMass2 =  0.0;
+
+  double bestEff0_cat = 0.0;
+  double bestEff1_cat = 0.0;
+  double bestEff2_cat = 0.0;
+
+  double bestEff0_tot = 0.0;
+  double bestEff1_tot = 0.0;
+  double bestEff2_tot = 0.0;
+
+  double bestRate0 = 0.0;
+  double bestRate1 = 0.0;
+  double bestRate2 = 0.0;
+
+  for (size_t i = 0; i < frontier.size(); ++i) {
+    const auto& gp = frontier[i];
+    gCombined->SetPoint(i, gp.eff, gp.rate);
+    gCombined->SetPointError(i, 0.0, gp.rateErr);
+
+    if (gp.eff > bestEff) {
+      bestEff   = gp.eff;
+      bestRate  = gp.rate;
+      bestEt0   = gp.etCut0;
+      bestEt1   = gp.etCut1;
+      bestEt2   = gp.etCut2;
+      bestMass2 = gp.massCut2;
+
+      bestEff0_cat = gp.eff0_cat;
+      bestEff1_cat = gp.eff1_cat;
+      bestEff2_cat = gp.eff2_cat;
+
+      bestEff0_tot = gp.eff0_tot;
+      bestEff1_tot = gp.eff1_tot;
+      bestEff2_tot = gp.eff2_tot;
+
+      bestRate0 = gp.rate0;
+      bestRate1 = gp.rate1;
+      bestRate2 = gp.rate2;
+    }
+  }
+
+  GlobalRateEffOut out;
+  out.gRate_vsEff_combined = gCombined;
+
+  out.bestEff   = bestEff;
+  out.bestRate  = bestRate;
+
+  out.bestEtCut_0   = bestEt0;
+  out.bestEtCut_1   = bestEt1;
+  out.bestEtCut_2   = bestEt2;
+  out.bestMassCut_2 = bestMass2;
+
+  out.bestEff0_cat = bestEff0_cat;
+  out.bestEff1_cat = bestEff1_cat;
+  out.bestEff2_cat = bestEff2_cat;
+
+  out.bestEff0_tot = bestEff0_tot;
+  out.bestEff1_tot = bestEff1_tot;
+  out.bestEff2_tot = bestEff2_tot;
+
+  out.bestRate0 = bestRate0;
+  out.bestRate1 = bestRate1;
+  out.bestRate2 = bestRate2;
+
+  return out;
+}
+
+
+
+struct Cat1DPoint {
+  double eff_cat;   // efficiency within this category
+  double rate_cat;  // rate in Hz
+  double err_cat;   // stat error on rate
+  double thrEt;     // Et threshold
+};
+
+struct Cat2DPoint {
+  double eff_cat;
+  double rate_cat;
+  double err_cat;
+  double thrEt;     // Et threshold
+  double thrMass;   // mass threshold
+};
+
+struct Cat3DPoint {
+  double eff_cat;
+  double rate_cat;
+  double err_cat;
+  double thrEtSub;      // subleading Et threshold
+  double thrMassLead;   // leading mass threshold
+  double thrMassSub;    // subleading mass threshold
+};
+
+// Build frontier for 1D rate-vs-eff (RateEffOut) selection
+static std::vector<Cat1DPoint>
+BuildFrontier1D(const RateEffOut& out, double maxRateHz)
+{
+  const int nb = out.hEff_vsThr->GetNbinsX();
+  std::vector<Cat1DPoint> pts;
+  pts.reserve(nb);
+
+  for (int i = 1; i <= nb; ++i) {
+    const double eff  = out.hEff_vsThr ->GetBinContent(i);
+    const double rate = out.hRate_vsThr->GetBinContent(i);
+    const double err  = out.hRate_vsThr->GetBinError(i);
+    if (rate > maxRateHz) continue;  // hopeless on its own
+
+    const double thrEt = out.hEff_vsThr->GetXaxis()->GetBinLowEdge(i);
+    pts.push_back({eff, rate, err, thrEt});
+  }
+
+  // Sort by rate ascending, and for equal rate, by efficiency descending
+  std::sort(pts.begin(), pts.end(),
+            [](const Cat1DPoint& a, const Cat1DPoint& b) {
+              if (a.rate_cat < b.rate_cat) return true;
+              if (a.rate_cat > b.rate_cat) return false;
+              return a.eff_cat > b.eff_cat;
+            });
+
+  // Keep only frontier (monotonic in efficiency)
+  std::vector<Cat1DPoint> frontier;
+  frontier.reserve(pts.size());
+  double bestEffSoFar = -1.0;
+  const double eps = 1e-8;
+
+  for (const auto& p : pts) {
+    if (p.eff_cat > bestEffSoFar + eps) {
+      frontier.push_back(p);
+      bestEffSoFar = p.eff_cat;
+    }
+  }
+  return frontier;
+}
+
+// Build frontier for 2D (Et,Mass) selection
+static std::vector<Cat2DPoint>
+BuildFrontier2D(const RateEff2DOut& out2D, double maxRateHz)
+{
+  TH2* hEff  = out2D.hEff_vsThr_vsR;
+  TH2* hRate = out2D.hRate_vsThr_vsR;
+
+  const int nbx = hEff->GetNbinsX();
+  const int nby = hEff->GetNbinsY();
+
+  std::vector<Cat2DPoint> pts;
+  pts.reserve(nbx * nby);
+
+  for (int ix = 1; ix <= nbx; ++ix) {
+    for (int iy = 1; iy <= nby; ++iy) {
+      const double eff  = hEff ->GetBinContent(ix, iy);
+      const double rate = hRate->GetBinContent(ix, iy);
+      const double err  = hRate->GetBinError  (ix, iy);
+      if (rate > maxRateHz) continue;
+
+      const double thrEt   = hEff->GetXaxis()->GetBinLowEdge(ix);
+      const double thrMass = hEff->GetYaxis()->GetBinLowEdge(iy);
+
+      pts.push_back({eff, rate, err, thrEt, thrMass});
+    }
+  }
+
+  std::sort(pts.begin(), pts.end(),
+            [](const Cat2DPoint& a, const Cat2DPoint& b) {
+              if (a.rate_cat < b.rate_cat) return true;
+              if (a.rate_cat > b.rate_cat) return false;
+              return a.eff_cat > b.eff_cat;
+            });
+
+  std::vector<Cat2DPoint> frontier;
+  frontier.reserve(pts.size());
+  double bestEffSoFar = -1.0;
+  const double eps = 1e-8;
+
+  for (const auto& p : pts) {
+    if (p.eff_cat > bestEffSoFar + eps) {
+      frontier.push_back(p);
+      bestEffSoFar = p.eff_cat;
+    }
+  }
+  return frontier;
+}
+
+// Build frontier for 3D (Et_sub, m_lead, m_sub) selection
+static std::vector<Cat3DPoint>
+BuildFrontier3D(const RateEff3DOut& out3D, double maxRateHz)
+{
+  TH3* hEff  = out3D.hEff_vsThr3D;
+  TH3* hRate = out3D.hRate_vsThr3D;
+
+  const int nbx = hEff->GetNbinsX();
+  const int nby = hEff->GetNbinsY();
+  const int nbz = hEff->GetNbinsZ();
+
+  std::vector<Cat3DPoint> pts;
+  pts.reserve(nbx * nby * nbz);
+
+  for (int ix = 1; ix <= nbx; ++ix) {
+    for (int iy = 1; iy <= nby; ++iy) {
+      for (int iz = 1; iz <= nbz; ++iz) {
+        const double eff  = hEff ->GetBinContent(ix, iy, iz);
+        const double rate = hRate->GetBinContent(ix, iy, iz);
+        const double err  = hRate->GetBinError  (ix, iy, iz);
+        if (rate > maxRateHz) continue;
+
+        const double thrEtSub    = hEff->GetXaxis()->GetBinLowEdge(ix);
+        const double thrMassLead = hEff->GetYaxis()->GetBinLowEdge(iy);
+        const double thrMassSub  = hEff->GetZaxis()->GetBinLowEdge(iz);
+
+        pts.push_back({eff, rate, err, thrEtSub, thrMassLead, thrMassSub});
+      }
+    }
+  }
+
+  std::sort(pts.begin(), pts.end(),
+            [](const Cat3DPoint& a, const Cat3DPoint& b) {
+              if (a.rate_cat < b.rate_cat) return true;
+              if (a.rate_cat > b.rate_cat) return false;
+              return a.eff_cat > b.eff_cat;
+            });
+
+  std::vector<Cat3DPoint> frontier;
+  frontier.reserve(pts.size());
+  double bestEffSoFar = -1.0;
+  const double eps = 1e-8;
+
+  for (const auto& p : pts) {
+    if (p.eff_cat > bestEffSoFar + eps) {
+      frontier.push_back(p);
+      bestEffSoFar = p.eff_cat;
+    }
+  }
+  return frontier;
+}
+
+
+
+struct GlobalRateEffOut5 {
+  TGraphErrors* gRate_vsEff_combined; // frontier only (best eff per rate)
+
+  // total (all 5 categories combined)
+  double bestEff;   // global total efficiency
+  double bestRate;  // global total rate
+
+  // thresholds at best point
+  //  (0) 0/1-subjet selection, leading Et scan
+  double bestEtCut_0_lead;
+  //  (1) 0/1-subjet selection, subleading Et scan
+  double bestEtCut_0_sub;
+  //  (2) >=2 lead subjets, leading Et vs mass
+  double bestEtCut_lead2;
+  double bestMassCut_lead2;
+  //  (3) >=2 subleading subjets, subleading Et vs mass
+  double bestEtCut_sub2;
+  double bestMassCut_sub2;
+  //  (4) >=2 lead & >=2 subleading subjets, 3D Et_sub vs m_lead vs m_sub
+  double bestEtCut_3D_sub;
+  double bestMassCut_3D_lead;
+  double bestMassCut_3D_sub;
+
+  // per-category conditional efficiencies (within each category)
+  double bestEff_cat[5]; // eff within that category only
+
+  // per-category global contributions to efficiency (sum to bestEff)
+  double bestEff_tot[5]; // eff_cat * frac_cat
+
+  // fraction of total signal events in each category (sum to 1)
+  double fractionEventsPerCat[5];
+
+  // per-category rates
+  double bestRate_cat[5]; // Hz
+};
+
+// Helper structs & functions for the 5-category combination
+namespace {
+
+  struct GlobalPoint {
+    double eff;            // global total efficiency
+
+    double eff_cat[5];     // per-category conditional efficiencies
+    double eff_tot[5];     // per-category global contributions
+
+    double rate;           // total rate
+    double rate_cat[5];    // per-category rates
+
+    double rateErr;        // total stat error on rate
+
+    // thresholds
+    double etCut0_lead;
+    double etCut0_sub;
+
+    double etCut_lead2;
+    double massCut_lead2;
+
+    double etCut_sub2;
+    double massCut_sub2;
+
+    double etCut_3D_sub;
+    double massCut_3D_lead;
+    double massCut_3D_sub;
+  };
+
+  // Maintain a global (rate,eff) frontier incrementally
+  void UpdateGlobalFrontier(std::vector<GlobalPoint>& frontier,
+                            const GlobalPoint& gp)
+  {
+    const double eps = 1e-8;
+
+    // 1) If gp is dominated by an existing frontier point, drop it.
+    // Dominated means: existing has <= rate and >= eff.
+    for (const auto& f : frontier) {
+      if (f.rate <= gp.rate + eps && f.eff >= gp.eff - eps) {
+        return;  // gp adds nothing new
+      }
+    }
+
+    // 2) Remove any frontier points dominated by gp:
+    // gp has <= rate and >= eff.
+    frontier.erase(
+      std::remove_if(frontier.begin(), frontier.end(),
+        [&](const GlobalPoint& f){
+          return (gp.rate <= f.rate + eps && gp.eff >= f.eff - eps);
+        }),
+      frontier.end()
+    );
+
+    // 3) Insert gp in sorted order by rate (then eff desc).
+    auto it = std::upper_bound(
+        frontier.begin(), frontier.end(), gp,
+        [](const GlobalPoint& a, const GlobalPoint& b) {
+          if (a.rate < b.rate) return true;
+          if (a.rate > b.rate) return false;
+          return a.eff > b.eff;
+        }
+    );
+    frontier.insert(it, gp);
+  }
+
+  // Generic helper: keep only frontier points with rate in [minRate, maxRate]
+  template <typename T>
+  std::vector<T> FilterFrontierByRate(const std::vector<T>& in,
+                                      double                minRate,
+                                      double                maxRate)
+  {
+    std::vector<T> out;
+    out.reserve(in.size());
+    for (const auto& p : in) {
+      if (p.rate_cat >= minRate && p.rate_cat <= maxRate) {
+        out.push_back(p);
+      }
+    }
+    return out;
+  }
+
+} // anonymous namespace
+
+
+// Designed for 5 separate selections depending on the number of subjets
+GlobalRateEffOut5 MakeCombinedRateVsEff_AllFive(
+    const RateEffOut&   out0_leadEt,   // 1D: leading Et (0/1 subjets)
+    const RateEffOut&   out0_subEt,    // 1D: subleading Et (0/1 subjets)
+    const RateEff2DOut& out2D_lead2,   // 2D: leading Et vs mass (>=2 lead subjets)
+    const RateEff2DOut& out2D_sub2,    // 2D: subleading Et vs mass (>=2 subl subjets)
+    const RateEff3DOut& out3D_both2,   // 3D: subleading Et vs m_lead vs m_sub (>=2 lead & subl)
+    TH1* sig0_leadEt,                  // signal hist for 1D leading Et
+    TH1* sig0_subEt,                   // signal hist for 1D subleading Et
+    TH2* sig2D_lead2,                  // signal hist for 2D leading (Et,mass)
+    TH2* sig2D_sub2,                   // signal hist for 2D subleading (Et,mass)
+    TH3* sig3D_both2,                  // signal hist for 3D (Et_sub,m_lead,m_sub)
+    double maxRateHz)                  // e.g. 10 kHz constraint
+{
+  // Only consider per-category frontier points with rate in [minRateHz, maxRateHz]
+  const double minRateHz = 10.0;
+
+  // Basic null checks
+  if (!sig0_leadEt || !sig0_subEt || !sig2D_lead2 || !sig2D_sub2 || !sig3D_both2) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: null signal hist");
+  }
+
+  if (!out0_leadEt.hEff_vsThr || !out0_leadEt.hRate_vsThr ||
+      !out0_subEt .hEff_vsThr || !out0_subEt .hRate_vsThr ||
+      !out2D_lead2.hEff_vsThr_vsR || !out2D_lead2.hRate_vsThr_vsR ||
+      !out2D_sub2 .hEff_vsThr_vsR || !out2D_sub2 .hRate_vsThr_vsR ||
+      !out3D_both2.hEff_vsThr3D  || !out3D_both2.hRate_vsThr3D) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: one or more RateEff*Out hists are null");
+  }
+
+  // --- (0) Signal fractions per category -----------------------------------
+  const int nb0L  = out0_leadEt.hEff_vsThr->GetNbinsX();
+  const int nb0S  = out0_subEt .hEff_vsThr->GetNbinsX();
+  const int nb2Lx = out2D_lead2.hEff_vsThr_vsR->GetNbinsX();
+  const int nb2Ly = out2D_lead2.hEff_vsThr_vsR->GetNbinsY();
+  const int nb2Sx = out2D_sub2 .hEff_vsThr_vsR->GetNbinsX();
+  const int nb2Sy = out2D_sub2 .hEff_vsThr_vsR->GetNbinsY();
+  const int nb3X  = out3D_both2.hEff_vsThr3D->GetNbinsX();
+  const int nb3Y  = out3D_both2.hEff_vsThr3D->GetNbinsY();
+  const int nb3Z  = out3D_both2.hEff_vsThr3D->GetNbinsZ();
+
+  const double nSig0L = sig0_leadEt->Integral(1, nb0L);
+  const double nSig0S = sig0_subEt ->Integral(1, nb0S);
+  const double nSig2L = sig2D_lead2->Integral(1, nb2Lx, 1, nb2Ly);
+  const double nSig2S = sig2D_sub2 ->Integral(1, nb2Sx, 1, nb2Sy);
+  const double nSig3D = sig3D_both2->Integral(1, nb3X, 1, nb3Y, 1, nb3Z);
+
+  const double totalSig = nSig0L + nSig0S + nSig2L + nSig2S + nSig3D;
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] nSig0L,0S,2L,2S,3D: "
+            << nSig0L << " , " << nSig0S << " , "
+            << nSig2L << " , " << nSig2S << " , "
+            << nSig3D << "\n";
+  std::cout << "[MakeCombinedRateVsEff_AllFive] totalSig: " << totalSig << "\n";
+
+  if (totalSig <= 0.0) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: totalSig <= 0");
+  }
+
+  const double frac0L = nSig0L / totalSig;
+  const double frac0S = nSig0S / totalSig;
+  const double frac2L = nSig2L / totalSig;
+  const double frac2S = nSig2S / totalSig;
+  const double frac3D = nSig3D / totalSig;
+
+  // --- (1) Build per-category frontiers -----------------------------------
+  auto front0L_raw = BuildFrontier1D(out0_leadEt, maxRateHz);
+  auto front0S_raw = BuildFrontier1D(out0_subEt , maxRateHz);
+  auto front2L_raw = BuildFrontier2D(out2D_lead2, maxRateHz);
+  auto front2S_raw = BuildFrontier2D(out2D_sub2 , maxRateHz);
+  auto front3D_raw = BuildFrontier3D(out3D_both2, maxRateHz);
+
+  // Further restrict to per-category rate in [minRateHz, maxRateHz]
+  auto front0L = FilterFrontierByRate(front0L_raw, minRateHz, maxRateHz);
+  auto front0S = FilterFrontierByRate(front0S_raw, minRateHz, maxRateHz);
+  auto front2L = FilterFrontierByRate(front2L_raw, minRateHz, maxRateHz);
+  auto front2S = FilterFrontierByRate(front2S_raw, minRateHz, maxRateHz);
+  auto front3D = FilterFrontierByRate(front3D_raw, minRateHz, maxRateHz);
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] raw frontier sizes: "
+            << "0L=" << front0L_raw.size()
+            << ", 0S=" << front0S_raw.size()
+            << ", 2L=" << front2L_raw.size()
+            << ", 2S=" << front2S_raw.size()
+            << ", 3D=" << front3D_raw.size() << "\n";
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] filtered ("
+            << minRateHz << "–" << maxRateHz << " Hz) frontier sizes: "
+            << "0L=" << front0L.size()
+            << ", 0S=" << front0S.size()
+            << ", 2L=" << front2L.size()
+            << ", 2S=" << front2S.size()
+            << ", 3D=" << front3D.size() << "\n";
+
+  // If a category has *no* usable points after filtering, treat it as "not used":
+  // give it a single dummy point with eff=0, rate=0 so it contributes nothing.
+  if (front0L.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 0L frontier empty, using dummy point (no contribution).\n";
+    front0L.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+  }
+  if (front0S.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 0S frontier empty, using dummy point (no contribution).\n";
+    front0S.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+  }
+  if (front2L.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 2L frontier empty, using dummy point (no contribution).\n";
+    front2L.push_back(Cat2DPoint{0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+  if (front2S.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 2S frontier empty, using dummy point (no contribution).\n";
+    front2S.push_back(Cat2DPoint{0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+  if (front3D.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 3D frontier empty, using dummy point (no contribution).\n";
+    front3D.push_back(Cat3DPoint{0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+
+  // --- (2) Enumerate combinations over *filtered frontier* points only -----
+  std::vector<GlobalPoint> globalFrontier;
+
+  // We assume each frontier is sorted by rate ascending (as in BuildFrontier*).
+  for (const auto& p0L : front0L) {
+    const double eff0L_cat = p0L.eff_cat;
+    const double rate0L    = p0L.rate_cat;
+    const double err0L     = p0L.err_cat;
+    const double etCut0L   = p0L.thrEt;
+
+    for (const auto& p0S : front0S) {
+      const double eff0S_cat = p0S.eff_cat;
+      const double rate0S    = p0S.rate_cat;
+      const double err0S     = p0S.err_cat;
+      const double etCut0S   = p0S.thrEt;
+
+      const double rate01 = rate0L + rate0S;
+      if (rate01 > maxRateHz) break; // front0S sorted by rate
+
+      for (const auto& p2L : front2L) {
+        const double eff2L_cat = p2L.eff_cat;
+        const double rate2L    = p2L.rate_cat;
+        const double err2L     = p2L.err_cat;
+        const double etCut2L   = p2L.thrEt;
+        const double massCut2L = p2L.thrMass;
+
+        const double rate012 = rate01 + rate2L;
+        if (rate012 > maxRateHz) break; // front2L sorted by rate
+
+        for (const auto& p2S : front2S) {
+          const double eff2S_cat = p2S.eff_cat;
+          const double rate2S    = p2S.rate_cat;
+          const double err2S     = p2S.err_cat;
+          const double etCut2S   = p2S.thrEt;
+          const double massCut2S = p2S.thrMass;
+
+          const double rate0123 = rate012 + rate2S;
+          if (rate0123 > maxRateHz) break; // front2S sorted by rate
+
+          for (const auto& p3D : front3D) {
+            const double eff3D_cat = p3D.eff_cat;
+            const double rate3D    = p3D.rate_cat;
+            const double err3D     = p3D.err_cat;
+            const double etCut3D_sub    = p3D.thrEtSub;
+            const double massCut3D_lead = p3D.thrMassLead;
+            const double massCut3D_sub  = p3D.thrMassSub;
+
+            const double rateTot = rate0123 + rate3D;
+            if (rateTot > maxRateHz) break; // front3D sorted by rate
+
+            // per-category global contributions
+            const double eff0L_tot = eff0L_cat * frac0L;
+            const double eff0S_tot = eff0S_cat * frac0S;
+            const double eff2L_tot = eff2L_cat * frac2L;
+            const double eff2S_tot = eff2S_cat * frac2S;
+            const double eff3D_tot = eff3D_cat * frac3D;
+
+            const double effTot =
+                eff0L_tot + eff0S_tot + eff2L_tot + eff2S_tot + eff3D_tot;
+
+            const double errTot =
+                std::sqrt(err0L*err0L + err0S*err0S +
+                          err2L*err2L + err2S*err2S + err3D*err3D);
+
+            GlobalPoint gp;
+            gp.eff = effTot;
+
+            gp.eff_cat[0] = eff0L_cat;
+            gp.eff_cat[1] = eff0S_cat;
+            gp.eff_cat[2] = eff2L_cat;
+            gp.eff_cat[3] = eff2S_cat;
+            gp.eff_cat[4] = eff3D_cat;
+
+            gp.eff_tot[0] = eff0L_tot;
+            gp.eff_tot[1] = eff0S_tot;
+            gp.eff_tot[2] = eff2L_tot;
+            gp.eff_tot[3] = eff2S_tot;
+            gp.eff_tot[4] = eff3D_tot;
+
+            gp.rate        = rateTot;
+            gp.rate_cat[0] = rate0L;
+            gp.rate_cat[1] = rate0S;
+            gp.rate_cat[2] = rate2L;
+            gp.rate_cat[3] = rate2S;
+            gp.rate_cat[4] = rate3D;
+
+            gp.rateErr = errTot;
+
+            gp.etCut0_lead      = etCut0L;
+            gp.etCut0_sub       = etCut0S;
+            gp.etCut_lead2      = etCut2L;
+            gp.massCut_lead2    = massCut2L;
+            gp.etCut_sub2       = etCut2S;
+            gp.massCut_sub2     = massCut2S;
+            gp.etCut_3D_sub     = etCut3D_sub;
+            gp.massCut_3D_lead  = massCut3D_lead;
+            gp.massCut_3D_sub   = massCut3D_sub;
+
+            UpdateGlobalFrontier(globalFrontier, gp);
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] global frontier size: "
+            << globalFrontier.size() << "\n";
+
+  // --- (3) Build TGraphErrors from globalFrontier & pick best point -------
+  auto* gCombined = new TGraphErrors(globalFrontier.size());
+  gCombined->SetName("gRate_vsEff_all5_frontier");
+  gCombined->SetTitle("Combined Trigger Rate vs Signal Efficiency;"
+                      "Signal (hh#rightarrow4b) Efficiency (all 5 selections);"
+                      "Total Estimated Background Rate [Hz]");
+
+  GlobalRateEffOut5 out{};
+  out.gRate_vsEff_combined = gCombined;
+
+  // store signal fractions for legend
+  out.fractionEventsPerCat[0] = frac0L;
+  out.fractionEventsPerCat[1] = frac0S;
+  out.fractionEventsPerCat[2] = frac2L;
+  out.fractionEventsPerCat[3] = frac2S;
+  out.fractionEventsPerCat[4] = frac3D;
+
+  out.bestEff  = 0.0;  // default: no selection → eff=0
+  out.bestRate = 0.0;  // default: rate=0
+
+  for (size_t i = 0; i < globalFrontier.size(); ++i) {
+    const auto& gp = globalFrontier[i];
+    gCombined->SetPoint(i, gp.eff, gp.rate);
+    gCombined->SetPointError(i, 0.0, gp.rateErr);
+
+    if (gp.eff > out.bestEff) {
+      out.bestEff = gp.eff;
+      out.bestRate = gp.rate;
+
+      out.bestEtCut_0_lead    = gp.etCut0_lead;
+      out.bestEtCut_0_sub     = gp.etCut0_sub;
+      out.bestEtCut_lead2     = gp.etCut_lead2;
+      out.bestMassCut_lead2   = gp.massCut_lead2;
+      out.bestEtCut_sub2      = gp.etCut_sub2;
+      out.bestMassCut_sub2    = gp.massCut_sub2;
+      out.bestEtCut_3D_sub    = gp.etCut_3D_sub;
+      out.bestMassCut_3D_lead = gp.massCut_3D_lead;
+      out.bestMassCut_3D_sub  = gp.massCut_3D_sub;
+
+      for (int c = 0; c < 5; ++c) {
+        out.bestEff_cat[c]  = gp.eff_cat[c];
+        out.bestEff_tot[c]  = gp.eff_tot[c];
+        out.bestRate_cat[c] = gp.rate_cat[c];
+      }
+    }
+  }
+
+  return out;
+}
+
+
+
+
 
 constexpr unsigned int nJZSlices_ = 10;
 
@@ -750,7 +2230,7 @@ constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
 constexpr unsigned int psi_R_bit_length_ = 10; 
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - eta_bit_length_ - et_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
 constexpr double eta_min_ = -5.0;

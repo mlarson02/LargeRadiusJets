@@ -325,6 +325,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
     std::vector<TH1* > lead_ET_Scan_RateVsThresh_vec;
     std::vector<TH1* > sublead_ET_Scan_RateVsThresh_vec;
     std::vector<TGraphErrors* > lead_ET_Pmax_Scan_RatesVsEff_vec;
+    std::vector<TGraphErrors* > lead_ET_Pmin_Scan_RatesVsEff_vec;
     std::vector<TGraphErrors* > sublead_ET_Pmax_Scan_RatesVsEff_vec;
 
 
@@ -363,6 +364,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         double sumOfBackgroundEventWeight = 0;
         // Parse file info (input object type & seed object type from ntuple file name)
         std::string inputObjectType = ParseFileName(backgroundRootFileNames[fileIt]).inputObjectType;
+
+        double jetRadius = sqrt(ParseFileName(backgroundRootFileNames[fileIt]).jetRadiusSquared);
 
         const unsigned int variableIOCutOff_2 = 2;
         const unsigned int variableIOCutOff_3 = 3;
@@ -1438,7 +1441,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         subleadingInTimeAntiKt4TruthJetsTreeBack->SetBranchAddress("Eta", &inTimeAntiKt4TruthSRJSubleadingEtaValuesBack);
         subleadingInTimeAntiKt4TruthJetsTreeBack->SetBranchAddress("Phi", &inTimeAntiKt4TruthSRJSubleadingPhiValuesBack);
 
-        //gSystem->RedirectOutput("output5.log", "w");
+        //gSystem->RedirectOutput("output_psi_R.log", "w");
         const int num_processed_events_background = eventInfoTreeBack->GetEntries();
         const int num_processed_events_signal = eventInfoTreeSignal->GetEntries();
         std::cout << "num_processed_events_background: " << num_processed_events_background << "\n";
@@ -1704,35 +1707,47 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         prof_AvgDR_vs_HpT->SetLineColor(kBlack);
         prof_AvgDR_vs_HpT->SetMarkerColor(kBlack);
 
+        TH2F *leadingHiggsVsSubleadingHiggspT = new TH2F("leadingHiggsVsSubleadingHiggspT", "Sum of Topo422 E_{T} in Each Bin; Leading Higgs p_{T} [GeV]; Subleading Higgs p_{T}", 
+                            60, 0, 1000,  
+                            60, 0, 1000);  
+
+        TH2F *leadingbVsSubleadingbpT_LeadingHiggs = new TH2F("leadingbVsSubleadingbpT_LeadingHiggs", "Sum of Topo422 E_{T} in Each Bin; Leading b p_{T} [GeV] [Leading Higgs]; Subleading b p_{T} [Leading Higgs]", 
+                            50, 0, 1000,
+                            50, 0, 1000); 
+
+        TH2F *leadingbVsSubleadingbpT_SubleadingHiggs = new TH2F("leadingbVsSubleadingbpT_SubleadingHiggs", "Sum of Topo422 E_{T} in Each Bin; Leading b p_{T} [GeV] [Leading Higgs]; Subleading b p_{T} [Subleading Higgs]", 
+                            50, 0, 1000, 
+                            50, 0, 1000); 
+
         TH1F* sig_h_LRJ_substruct = new TH1F("sig_h_LRJ_substruct", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
         TH2F *sigDiamvsEt = new TH2F("sigDiamvsEt", "Sum of Topo422 E_{T} in Each Bin; LRJ E_{T} [GeV];LRJ 'Diameter'", 
-                            20, 0, 800,   // 100 bins from -5 to 5 on eta axis
-                            32, 0, 1.0);  // 64 bins from -3.2 to 3.2 on phi axis
+                            20, 0, 800,  
+                            32, 0, 1.0);
 
 
         TH2F *sigOfflineLeadingLRJMassvsEt = new TH2F("sigOfflineLeadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Leading LRJ Mass [GeV]", 
-                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            60, 0, 1200,   
+                            25, 0, 250);  
 
         TH2F *sigOfflineSubleadingLRJMassvsEt = new TH2F("sigOfflineSubleadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Subleading LRJ Mass [GeV]", 
-                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            60, 0, 1200,   
+                            25, 0, 250);  
 
         TH2F *sigOfflineSubleadingLRJMassvsLeadingLRJMass = new TH2F("sigOfflineSubleadingLRJMassvsLeadingLRJMass", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ Mass [GeV];Offline Subleading LRJ Mass [GeV]", 
-                            25, 0, 250,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            25, 0, 250,   
+                            25, 0, 250);  
 
         TH2F *backOfflineLeadingLRJMassvsEt = new TH2F("backOfflineLeadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Leading LRJ Mass [GeV]", 
-                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            60, 0, 1200,   
+                            25, 0, 250);  
 
         TH2F *backOfflineSubleadingLRJMassvsEt = new TH2F("backOfflineSubleadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Subleading LRJ Mass [GeV]", 
-                            60, 0, 1200,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            60, 0, 1200,   
+                            25, 0, 250);  
         
         TH2F *backOfflineSubleadingLRJMassvsLeadingLRJMass = new TH2F("backOfflineSubleadingLRJMassvsLeadingLRJMass", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ Mass [GeV];Offline Subleading LRJ Mass [GeV]", 
-                            25, 0, 250,   // 100 bins from -5 to 5 on eta axis
-                            25, 0, 250);  // 64 bins from -3.2 to 3.2 on phi axis
+                            25, 0, 250,   
+                            25, 0, 250);  
 
 
         TH2F *sigOfflineLeadingLRJMassvsSubjetMult = new TH2F("sigOfflineLeadingLRJMassvsSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Number of Subjets; Offline Leading LRJ Mass [GeV]", 
@@ -1750,11 +1765,21 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                             40, 0, 800,// x axis
                             4, 0, 4 ); //y axis
 
+        TH2F *sigJetTaggerLeadingLRJEtvsSubleadingLRJEt = new TH2F("sigJetTaggerLeadingLRJEtvsSubleadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; JetTagger Subleading LRJ E_{T} [GeV]", 
+                            40, 0, 800,  //x axis
+                            4, 0, 4 );  // y axis
+        TH2F *backJetTaggerLeadingLRJEtvsSubleadingLRJEt = new TH2F("backJetTaggerLeadingLRJEtvsSubleadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; JetTagger Subleading LRJ E_{T} [GeV]", 
+                            40, 0, 800,// x axis
+                            4, 0, 4 ); //y axis
+
         TH1F* sigOfflineLeadingLRJMass = new TH1F("sigOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 20, 0, 200);
         TH1F* backOfflineLeadingLRJMass = new TH1F("backOfflineLeadingLRJMass", "LRJ Et Distribution;Offline Leading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 20, 0, 200);
 
         TH1F* sigOfflineSubleadingLRJMass = new TH1F("sigOfflineSubleadingLRJMass", "LRJ Et Distribution;Offline Subleading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
         TH1F* backOfflineSubleadingLRJMass = new TH1F("backOfflineSubleadingLRJMass", "LRJ Et Distribution;Offline Subleading LRJ Mass [GeV];% of Leading LRJs / 10 GeV", 25, 0, 250);
+
+        TH1F* sigDeltaRLeadingSubleadingTruthJets = new TH1F("sigDeltaRLeadingSubleadingTruthJets", "LRJ Et Distribution;#Delta R Leading, Subleading Truth Jets / 0.2", 50, 0, 10);
+        TH1F* backDeltaRLeadingSubleadingTruthJets = new TH1F("backDeltaRLeadingSubleadingTruthJets", "LRJ Et Distribution;#Delta R Leading, Subleading Truth Jets / 0.2", 50, 0, 10);
 
         TH1F* sig_h_LeadingOfflineLRJ_SubjetMultiplicity = new TH1F("sig_h_LeadingOfflineLRJ_SubjetMultiplicity", "LRJ Et Distribution;Number of Subjets;% of Leading LRJs", 4, 0, 4);
         TH1F* back_h_LeadingOfflineLRJ_SubjetMultiplicity = new TH1F("back_h_LeadingOfflineLRJ_SubjetMultiplicity", "LRJ Et Distribution;Number of Subjets;% of Leading LRJs", 4, 0, 4);
@@ -1770,6 +1795,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         const double inputObjectEtBinsEdges[] = {1, 2, 5, 10, 25, 50, 100, 200, 400, 1000};
         const int inputObjectNBins = (int)(sizeof(inputObjectEtBinsEdges)/sizeof(inputObjectEtBinsEdges[0])) - 1;
+
+        TH1F* sig_h_JetTagger_CellsTowersEt = new TH1F("sig_h_JetTagger_CellsTowersEt", "LRJ Et Distribution;CellsTowers E_{T}; CellsTowers / Bin / Event", inputObjectNBins, inputObjectEtBinsEdges);
+        TH1F* back_h_JetTagger_CellsTowersEt = new TH1F("back_h_JetTagger_CellsTowersEt", "LRJ Et Distribution;CellsTowers E_{T};CellsTowers / Bin / Event", inputObjectNBins, inputObjectEtBinsEdges);
 
         TH1F* sig_h_JetTagger_Leading_MergedIO_Et = new TH1F("sig_h_JetTagger_Leading_MergedIO_Et", "LRJ Et Distribution;Merged IOs E_{T}; Merged IOs [Leading Jet] / Bin / Event", inputObjectNBins, inputObjectEtBinsEdges);
         TH1F* back_h_JetTagger_Leading_MergedIO_Et = new TH1F("back_h_JetTagger_Leading_MergedIO_Et", "LRJ Et Distribution;Merged IOs E_{T};Merged IOs [Leading Jet] / Bin / Event", inputObjectNBins, inputObjectEtBinsEdges);
@@ -1813,6 +1841,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_12 = new TH1F("sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_12", "LRJ Et Distribution;#tau_{2} / #tau_{1} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
         TH1F* back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_12 = new TH1F("back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Tau_12", "LRJ Et Distribution;#tau_{2} / #tau_{1} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
 
+        TH1F* sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product = new TH1F("sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product", "LRJ Et Distribution;#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [ConeCellsTowers Subjets];% of Events / 0.05", 20, 0, 1);
+        TH1F* back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product = new TH1F("back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product", "LRJ Et Distribution;#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [ConeCellsTowers Subjets];% of Events / 0.05", 20, 0, 1);
+
+        TH1F* sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product = new TH1F("sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product", "LRJ Et Distribution;#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets];% of Events / 0.05", 20, 0, 1);
+        TH1F* back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product = new TH1F("back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product", "LRJ Et Distribution;#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets];% of Events / 0.05", 20, 0, 1);
+
         TH1F* sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2 = new TH1F("sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2", "LRJ Et Distribution;#tau_{2, Lead. JetTag LRJ} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
         TH1F* back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2 = new TH1F("back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Tau_2", "LRJ Et Distribution;tau_{2, Lead. JetTag LRJ} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
 
@@ -1824,6 +1858,22 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         TH1F* sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2 = new TH1F("sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2", "LRJ Et Distribution;#tau_{2, Lead. JetTag LRJ} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
         TH1F* back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2 = new TH1F("back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_Tau_2", "LRJ Et Distribution;tau_{2, Lead. JetTag LRJ} [ConeCellsTowers as Subjets];% of Events / 0.05", 20, 0, 1);
+
+        TH2F *sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt = new TH2F("sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; Leading JetTagger LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]", 
+                            52, 0, 1040,// x axis
+                            20, 0, 1 ); //y axis
+
+        TH2F *back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt = new TH2F("back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; Leading JetTagger LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]", 
+                            52, 0, 1040,// x axis
+                            20, 0, 1 ); //y axis
+
+        TH2F *sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt = new TH2F("sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; Leading JetTagger LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]", 
+                            52, 0, 1040,// x axis
+                            20, 0, 1 ); //y axis
+
+        TH2F *back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt = new TH2F("back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt", "Sum of Topo422 E_{T} in Each Bin; Leading JetTagger LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]", 
+                            52, 0, 1040,// x axis
+                            20, 0, 1 ); //y axis
         
         TH2F *sig_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2 = new TH2F("sig_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2", "Sum of Topo422 E_{T} in Each Bin; #tau_{1, Lead. JetTag LRJ} [jFEX SRJs as Subjets]; #tau_{2, Lead. JetTag LRJ} [ConeCellsTowers as Subjets]", 
                             20, 0, 1,// x axis
@@ -1910,111 +1960,603 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_jFEX_subleading_LRJ_Et = new TH1F("sig_h_jFEX_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs / 25 GeV", rateVsEffBins.size() - 1, rateVsEffBins.data());
 
         // with deltaR metric
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R = new TH2F("sigOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Leading JetTagger LRJ #Psi_{R}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+
+        TH2F *sigOfflineLeadingLRJMassvsPsi_R = new TH2F("sigOfflineLeadingLRJMassvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ Mass [GeV]; Leading JetTagger LRJ #Psi_{R}", 
+                            25, 0, 250, // x axis
+                            20, 0, 1 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
                             20, 0, 1, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R = new TH2F("backOfflineLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *backOfflineLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("backOfflineLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
+        TH2F *backOfflineLeadingLRJMassvsPsi_R = new TH2F("backOfflineLeadingLRJMassvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ Mass [GeV]; Leading JetTagger LRJ #Psi_{R}", 
+                            25, 0, 250, // x axis
+                            20, 0, 1 ); //y axis
+        TH2F *backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R = new TH2F("backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R} [Subleading Jet]; #Psi_{R} [Leading Jet]", 
                             20, 0, 1, // x axis
                             20, 0, 1 ); //y axis
 
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_R = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_R = new TH2F("backOfflineSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
                             35, 0, 0.7); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
                             35, 0, 0.7); //y axis                    
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_squared = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
                             35, 0, 0.7); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_R_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_squared = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+
+        /// TH3F of Psi_R_squared + Leading LRJ E_T + Tau_2 / Tau_1 (Leading) * Tau_2 / Tau_1 (Subleading)
+        TH3F *sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct = new TH3F("sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]",
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH3F *backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct = new TH3F("backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]",
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+        
+        TH2F *sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct = new TH2F("sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct", "Sum of Topo422 E_{T} in Each Bin;#Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]",
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct = new TH2F("backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct", "Sum of Topo422 E_{T} in Each Bin;#Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [jFEX Subjets]",
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH3F *sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct = new TH3F("sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]",
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH3F *backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct = new TH3F("backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]",
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+        
+        TH2F *sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct = new TH2F("sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct", "Sum of Topo422 E_{T} in Each Bin;#Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]",
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct = new TH2F("backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct", "Sum of Topo422 E_{T} in Each Bin;#Psi_{R, Leading} #times #Psi_{R, Subleading};#tau_{2} / #tau_{1} (Leading) #times #tau_{2} / #tau_{1} (Subleading)  [Cone Subjets]",
+                            35, 0, 0.7,
+                            20, 0, 1); //y axis
+
+        TH1F* sig_h_leading_LRJ_psi_R_squared_NoConeSubjets = new TH1F("sig_h_leading_LRJ_psi_R_squared_NoConeSubjets", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [No Cone Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_NoConeSubjets = new TH1F("back_h_leading_LRJ_psi_R_squared_NoConeSubjets", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [No Cone Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        
+        TH1F* sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets = new TH1F("sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [No jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_NojFEXSubjets = new TH1F("back_h_leading_LRJ_psi_R_squared_NojFEXSubjets", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [No jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+
+        TH1F* sig_h_leading_LRJ_Et_NoConeSubjets = new TH1F("sig_h_leading_LRJ_Et_NoConeSubjets", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_NoConeSubjets = new TH1F("back_h_leading_LRJ_Et_squared_NoConeSubjets", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        
+        TH1F* sig_h_leading_LRJ_Et_NojFEXSubjets = new TH1F("sig_h_leading_LRJ_Et_NojFEXSubjets", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No jFEX Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_NojFEXSubjets = new TH1F("back_h_leading_LRJ_Et_NojFEXSubjets", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No jFEX Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [No Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [No Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [No jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [No jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [No Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [No Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [No jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [No jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1); //y axis
+
+        TH1F* sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet = new TH1F("sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [1 Cone Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_With1ConeSubjet = new TH1F("back_h_leading_LRJ_psi_R_squared_With1ConeSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [1 Cone Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        
+        TH1F* sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet = new TH1F("sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [1 jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet = new TH1F("back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [1 jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+
+        TH1F* sig_h_leading_LRJ_Et_With1ConeSubjet = new TH1F("sig_h_leading_LRJ_Et_With1ConeSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [1 Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_With1ConeSubjet = new TH1F("back_h_leading_LRJ_Et_With1ConeSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [1 Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        
+        TH1F* sig_h_leading_LRJ_Et_With1jFEXSubjet = new TH1F("sig_h_leading_LRJ_Et_With1jFEXSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [1 jFEX Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_With1jFEXSubjet = new TH1F("back_h_leading_LRJ_Et_With1jFEXSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [1 jFEX Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [1 Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [1 Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [1 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [1 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [1 Cone Subjets]", 
+                            52, 0, 1040, // x axis
                             50, 0, 1.0); //y axis
 
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [1 Cone Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead Subjet E_{T} / Total E_{T}", 
+                            52, 0, 1040, // x axis
+                            25, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead Subjet E_{T} / Total E_{T}", 
+                            52, 0, 1040, // x axis
+                            25, 0, 1.0); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [1 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [1 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH1F* sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet = new TH1F("sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 cone subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet = new TH1F("back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 cone subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        
+        TH1F* sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet = new TH1F("sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+        TH1F* back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet = new TH1F("back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution;#Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 jFEX Subjets];% of Leading LRJs / 0.02", 35, 0, 0.7);
+
+        TH1F* sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet = new TH1F("sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 cone subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_WithGrEq2ConeSubjet = new TH1F("back_h_leading_LRJ_Et_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 cone subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        
+        TH1F* sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet = new TH1F("sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet = new TH1F("back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 cone subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 cone subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} #times #Psi_{R, subl.} [>= 2 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7 ); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [>= 2 cone subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [>= 2 cone subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [>= 2 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead.} [>= 2 jFEX Subjets]", 
+                            52, 0, 1040, // x axis
+                            50, 0, 1.0); //y axis
+
+        // Mass approx (deltaR(subjets) * E_T) 
+        TH1F* sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet = new TH1F("sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 10 GeV", 103, 0, 2060);
+        TH1F* back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet = new TH1F("back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 10 GeV", 103, 0, 2060);
+
+        TH1F* sig_h_leading_LRJ_Z = new TH1F("sig_h_leading_LRJ_Z", "Leading LRJ Et Distribution; Lead Subjet E_{T} / Jet E_{T};% of Leading JetTagger LRJs / 0.04", 25, 0, 1);
+        TH1F* back_h_leading_LRJ_Z = new TH1F("back_h_leading_LRJ_Z", "Leading LRJ Et Distribution; Lead Subjet E_{T} / Jet E_{T};% of Leading JetTagger LRJs / 0.04", 25, 0, 1);
+
+        TH1F* sig_h_subleading_LRJ_Z = new TH1F("sig_h_subleading_LRJ_Z", "Leading LRJ Et Distribution; Lead. Subjet E_{T} / Jet E_{T};% of Subleading JetTagger LRJs / 0.04", 25, 0, 1);
+        TH1F* back_h_subleading_LRJ_Z = new TH1F("back_h_subleading_LRJ_Z", "Leading LRJ Et Distribution; Lead. Subjet E_{T} / Jet E_{T};% of Subleading JetTagger LRJs / 0.04", 25, 0, 1);
+
+        TH2F *sigJetTaggerLeadingLRJEtvsZ = new TH2F("sigJetTaggerLeadingLRJEtvsZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsZ = new TH2F("backJetTaggerLeadingLRJEtvsZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsZ = new TH2F("sigJetTaggerSubleadingLRJEtvsZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsZ = new TH2F("backJetTaggerSubleadingLRJEtvsZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvs1MinusZ = new TH2F("sigJetTaggerLeadingLRJEtvs1MinusZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvs1MinusZ = new TH2F("backJetTaggerLeadingLRJEtvs1MinusZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvs1MinusZ = new TH2F("sigJetTaggerSubleadingLRJEtvs1MinusZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvs1MinusZ = new TH2F("backJetTaggerSubleadingLRJEtvs1MinusZ", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; Lead. Subjet E_{T} / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsEtOutsideSubjets = new TH2F("sigJetTaggerLeadingLRJEtvsEtOutsideSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; 1 - (Lead. + Subl. Subjets E_{T}) / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsEtOutsideSubjets = new TH2F("backJetTaggerLeadingLRJEtvsEtOutsideSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; 1 - (Lead. + Subl. Subjets E_{T}) / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsEtOutsideSubjets = new TH2F("sigJetTaggerSubleadingLRJEtvsEtOutsideSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; 1 - (Lead. + Subl. Subjets E_{T}) / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsEtOutsideSubjets = new TH2F("backJetTaggerSubleadingLRJEtvsEtOutsideSubjets", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; 1 - (Lead. + Subl. Subjets E_{T}) / Jet E_{T}", 
+                            35, 0, 700,
+                            25, 0, 1); //y axis
+        
+        TH1F* sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet = new TH1F("sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 10 GeV", 103, 0, 2060);
+        TH1F* back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet = new TH1F("back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 10 GeV", 103, 0, 2060);
+
+        TH1F* sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet = new TH1F("sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. Cone Subjets];% of Leading JetTagger LRJs / 0.02", 80, 0.4, 2.0);
+        TH1F* back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet = new TH1F("back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. Cone Subjets];% of Leading JetTagger LRJs / 0.02", 80, 0.4, 2.0);
+
+        TH1F* sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2jFEXSubjet = new TH1F("sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 0.02", 80, 0.4, 2.0);
+        TH1F* back_h_leading_LRJ_DeltaRSubjets_WithGrEq2jFEXSubjet = new TH1F("back_h_leading_LRJ_DeltaRSubjets_WithGrEq2jFEXSubjet", "Leading LRJ Et Distribution; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.};% of Leading JetTagger LRJs / 0.02", 80, 0.4, 2.0);
+
+        TH2F *sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult = new TH2F("sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Cone Subjet Multiplcity [Lead. JetTagger LRJ]; Cone Subjet Multiplcity [Subl. JetTagger LRJ]", 
+                            3, 0, 3, // x axis
+                            3, 0, 3); //y axis
+
+        TH2F *backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult = new TH2F("backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult", "Sum of Topo422 E_{T} in Each Bin; Cone Subjet Multiplcity [Lead. JetTagger LRJ]; Cone Subjet Multiplcity [Subl. JetTagger LRJ]", 
+                            3, 0, 3, // x axis
+                            3, 0, 3); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, subjets}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, subjets}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead Subjet E_{T} / Total E_{T}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; Lead Subjet E_{T} / Total E_{T}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+        
+        /*TH2F *sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040, // x axis
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet = new TH2F("backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040, // x axis
+                            103, 0, 2060); //y axis*/
+        
+                            
+        TH2F *sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. jFEX Subjets] #times E_{T, lead.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2jFEXSubjet = new TH2F("sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. jFEX Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2jFEXSubjet = new TH2F("backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2jFEXSubjet", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. jFEX Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
         // with deltaR^2 Metric
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+        TH2F *sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
                             35, 0, 0.7, // x axis
                             35, 0, 0.7); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
+        TH2F *backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2 = new TH2F("backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2", "Sum of Topo422 E_{T} in Each Bin; #Psi_{R^{2}} [Subleading Jet]; #Psi_{R^{2}} [Leading Jet]", 
                             35, 0, 0.7, // x axis
                             35, 0, 0.7); //y axis
 
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R2 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_R2 = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R2 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}}", 
+                            52, 0, 1040, // x axis
                             20, 0, 1 ); //y axis
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_squared = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
                             30, 0, 0.3); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_squared = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
                             30, 0, 0.3); //y axis                    
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R2_squared = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
                             30, 0, 0.3); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_R2_squared = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R2_squared = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R2_squared", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
                             30, 0, 0.3); //y axis
-        TH2F *sigOfflineLeadingLRJEtvsPsi_12 = new TH2F("sigOfflineLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_12 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_12 = new TH2F("backOfflineLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_12 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
 
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_12 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_12 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_12 = new TH2F("backOfflineSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_12 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
 
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_12 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_12 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_12 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_12 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        TH2F *sigOfflineSubleadingLRJEtvsPsi_R2_12 = new TH2F("sigOfflineSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R2_12 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        TH2F *backOfflineSubleadingLRJEtvsPsi_R2_12 = new TH2F("backOfflineSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
-                            35, 0, 700, // x axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R2_12 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R2_12", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #frac{#Psi_{R^{2}, Leading}}{#Psi_{R^{2}, Subleading}}", 
+                            52, 0, 1040, // x axis
                             40, 0, 4); //y axis
-        
+
+        // For new selection sbased on 3x3 matrix of # of subjet selections. 
+        TH1F* sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead = new TH1F("sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead = new TH1F("back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+
+        TH1F* sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead = new TH1F("sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+        TH1F* back_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead = new TH1F("back_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [No Cone Subjets];% of Leading LRJs / 10 GeV", 52, 0, 1040);
+
+        TH1F* sig_h_leading_LRJ_Et_With1ConeSubjet_Lead_Sublead = new TH1F("sig_h_leading_LRJ_Et_With1ConeSubjet_Lead_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_With1ConeSubjet_Lead_Sublead= new TH1F("back_h_leading_LRJ_Et_With1ConeSubjet_Lead_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+
+        /*TH1F* sig_h_leading_LRJ_Et_With1ConeSubjet_Lead= new TH1F("sig_h_leading_LRJ_Et_With1ConeSubjet_Lead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_With1ConeSubjet_Lead= new TH1F("back_h_leading_LRJ_Et_With1ConeSubjet_Lead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+
+        TH1F* sig_h_leading_LRJ_Et_With1ConeSubjet_Sublead= new TH1F("sig_h_leading_LRJ_Et_With1ConeSubjet_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);
+        TH1F* back_h_leading_LRJ_Et_With1ConeSubjet_Sublead= new TH1F("back_h_leading_LRJ_Et_With1ConeSubjet_Sublead", "Leading LRJ Et Distribution;JetTagger Lead. LRJ E_{T} [>= 2 jFEX Subjets];% of Leading LRJs / 20 GeV", 52, 0, 1040);*/
+
+        /*TH2F *sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead = new TH2F("sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead = new TH2F("backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis*/
+
+        TH2F *sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead = new TH2F("sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead = new TH2F("backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead = new TH2F("sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead = new TH2F("backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead = new TH2F("sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead", "Sum of Topo422 E_{T} in Each Bin; Leading Subjet LRJ E_{T} [GeV]; Subleading Subjet LRJ E_{T} [GeV]", 
+                            40, 0, 400,
+                            40, 0, 400); //y axis
+
+        TH2F *backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead = new TH2F("backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead", "Sum of Topo422 E_{T} in Each Bin; Leading Subjet LRJ E_{T} [GeV]; Subleading Subjet LRJ E_{T} [GeV]", 
+                            40, 0, 400,
+                            40, 0, 400); //y axis
+
+        TH2F *sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead = new TH2F("sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead", "Sum of Topo422 E_{T} in Each Bin; Leading Subjet LRJ E_{T} [GeV]; Subleading Subjet LRJ E_{T} [GeV]", 
+                            40, 0, 400,
+                            40, 0, 400); //y axis
+
+        TH2F *backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead = new TH2F("backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead", "Sum of Topo422 E_{T} in Each Bin; Leading Subjet LRJ E_{T} [GeV]; Subleading Subjet LRJ E_{T} [GeV]", 
+                            40, 0, 400,
+                            40, 0, 400); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead = new TH2F("sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead = new TH2F("backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets] #times E_{T, Subl.}", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis // probably won't use MassApprox for now.... deltaR is better!  FIXME use variable binning for this. would reduce combinatorics greatly, don't need such fine bins for high mass
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead = new TH2F("sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead = new TH2F("backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060); //y axis // probably won't use MassApprox for now.... deltaR is better!  FIXME use variable binning for this. would reduce combinatorics greatly, don't need such fine bins for high mass
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead = new TH2F("sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} [Subleading JetTagger LRJ]", 
+                            52, 0, 1040,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead = new TH2F("backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} [Subleading JetTagger LRJ]", 
+                            52, 0, 1040,
+                            25, 0, 1); //y axis 
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead = new TH2F("sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} [Leading JetTagger LRJ]", 
+                            52, 0, 1040,
+                            25, 0, 1); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead = new TH2F("backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #tau_{2} / #tau_{1} [Leading JetTagger LRJ]", 
+                            52, 0, 1040,
+                            25, 0, 1); //y axis 
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, lead} #times #Psi_{R, subl}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, lead} #times #Psi_{R, subl}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis // probably won't use MassApprox for now.... deltaR is better! 
+
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead} #times #Psi_{R, subl}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis
+
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, lead} #times #Psi_{R, subl}", 
+                            52, 0, 1040,
+                            25, 0, 1.0); //y axis // probably won't use MassApprox for now.... deltaR is better! 
+
+        TH3F *sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0,
+                            80, 0.4, 2.0); //z axis // FIXME this should be a TH3F with mass, mass, E_T
+
+        TH3F *backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0,
+                            80, 0.4, 2.0); //z axis
+
+        TH3F *sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) #times E_{T, subl.}  [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            103, 0, 2060,
+                            103, 0, 2060); //z axis // FIXME this should be a TH3F with mass, mass, E_T
+
+        TH3F *backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) #times E_{T, subl.} [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            103, 0, 2060,
+                            103, 0, 2060); //z axis
+
+        TH3F *sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; sqrt(d_{12}); sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060,
+                            103, 0, 2060); //z axis // FIXME this should be a TH3F with mass, mass, E_T
+
+        TH3F *backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; sqrt(d_{12}); sqrt(d_{12})", 
+                            52, 0, 1040,
+                            103, 0, 2060,
+                            103, 0, 2060); //z axis
+
+        /*TH3F *sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0,
+                            80, 0.4, 2.0); //z axis // FIXME this should be a TH3F with mass, mass, E_T
+
+        TH3F *backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead = new TH3F("backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0,
+                            80, 0.4, 2.0); //z axis*/
+
+        /*TH2F *sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_1ConeJetSublead = new TH2F("sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_1ConeJetSublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_1ConeJetSublead = new TH2F("backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_1ConeJetSublead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Sublead_1ConeJetLead = new TH2F("sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Sublead_1ConeJetLead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis
+
+        TH2F *backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Sublead_1ConeJetLead = new TH2F("backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Sublead_1ConeJetLead", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Delta(R) [Lead., Subl. Cone Subjets]", 
+                            52, 0, 1040,
+                            80, 0.4, 2.0); //y axis*/ // PROBBALY WONT USE DELTAR SUBEJTS FOR NOW!
+
         // New psi_R values - cut off after few highest E_T values have contributed. targetting jets which have 2 high energy distributions within opposite sides of cone in eta-phi plane. This would ideally take advantage of separation bewteen two highest E_T towers,
         // meant to bring back signal vs. background separation by cutting on this when using towers as input
         TH1F* sig_h_leading_LRJ_psi_R_VariableIOs_2 = new TH1F("sig_h_leading_LRJ_psi_R_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R, Leading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_subleading_LRJ_psi_R_VariableIOs_2 = new TH1F("sig_h_subleading_LRJ_psi_R_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_psi_R_squared_VariableIOs_2 = new TH1F("sig_h_LRJ_psi_R_squared_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading} [2 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_psi_R_VariableIOs_2 = new TH1F("back_h_leading_LRJ_psi_R_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R, Leading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_psi_R_VariableIOs_2 = new TH1F("back_h_subleading_LRJ_psi_R_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2024,12 +2566,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_subleading_LRJ_psi_R_VariableIOs_3 = new TH1F("sig_h_subleading_LRJ_psi_R_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_psi_R_squared_VariableIOs_3 = new TH1F("sig_h_LRJ_psi_R_squared_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading} [3 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 14); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_psi_R_VariableIOs_3 = new TH1F("back_h_leading_LRJ_psi_R_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R, Leading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_psi_R_VariableIOs_3 = new TH1F("back_h_subleading_LRJ_psi_R_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2039,12 +2588,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_subleading_LRJ_psi_R_VariableIOs_4 = new TH1F("sig_h_subleading_LRJ_psi_R_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_psi_R_squared_VariableIOs_4 = new TH1F("sig_h_LRJ_psi_R_squared_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading} [4 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_psi_R_VariableIOs_4 = new TH1F("back_h_leading_LRJ_psi_R_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R, Leading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_psi_R_VariableIOs_4 = new TH1F("back_h_subleading_LRJ_psi_R_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2058,23 +2614,30 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_subleading_LRJ_psi_R_VariableIOs_5 = new TH1F("back_h_subleading_LRJ_psi_R_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R, Subleading} [5 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_LRJ_psi_R_squared_VariableIOs_5 = new TH1F("back_h_LRJ_psi_R_squared_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading} [5 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+
+        TH2F *sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5 = new TH2F("backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Subleading LRJ E_{T} [GeV]; #Psi_{R, Leading} #times #Psi_{R, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* sig_h_leading_LRJ_Psi_R2_VariableIOs_2 = new TH1F("sig_h_leading_LRJ_Psi_R2_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_subleading_LRJ_Psi_R2_VariableIOs_2 = new TH1F("sig_h_subleading_LRJ_Psi_R2_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_Psi_R2_squared_VariableIOs_2 = new TH1F("sig_h_LRJ_Psi_R2_squared_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading} [2 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_Psi_R2_VariableIOs_2 = new TH1F("back_h_leading_LRJ_Psi_R2_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_Psi_R2_VariableIOs_2 = new TH1F("back_h_subleading_LRJ_Psi_R2_VariableIOs_2", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [2 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2084,12 +2647,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_subleading_LRJ_Psi_R2_VariableIOs_3 = new TH1F("sig_h_subleading_LRJ_Psi_R2_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_Psi_R2_squared_VariableIOs_3 = new TH1F("sig_h_LRJ_Psi_R2_squared_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading} [3 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 14); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_Psi_R2_VariableIOs_3 = new TH1F("back_h_leading_LRJ_Psi_R2_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_Psi_R2_VariableIOs_3 = new TH1F("back_h_subleading_LRJ_Psi_R2_VariableIOs_3", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [3 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2099,12 +2662,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_subleading_LRJ_Psi_R2_VariableIOs_4 = new TH1F("sig_h_subleading_LRJ_Psi_R2_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_Psi_R2_squared_VariableIOs_4 = new TH1F("sig_h_LRJ_Psi_R2_squared_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading} [4 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_Psi_R2_VariableIOs_4 = new TH1F("back_h_leading_LRJ_Psi_R2_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_Psi_R2_VariableIOs_4 = new TH1F("back_h_subleading_LRJ_Psi_R2_VariableIOs_4", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [4 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
@@ -2114,22 +2677,26 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_subleading_LRJ_Psi_R2_VariableIOs_5 = new TH1F("sig_h_subleading_LRJ_Psi_R2_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [5 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_Psi_R2_squared_VariableIOs_5 = new TH1F("sig_h_LRJ_Psi_R2_squared_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading} [5 IOs Only];% of Events / 0.02", 35, 0, 0.7);     
         
-        TH2F *sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5 = new TH2F("sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
-        TH2F *backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5 = new TH2F("backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
-                            35, 0, 700, // x axis
-                            20, 0, 1); //y axis
+        TH2F *sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5 = new TH2F("sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
+        TH2F *backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5 = new TH2F("backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5", "Sum of Topo422 E_{T} in Each Bin; JetTagger Leading LRJ E_{T} [GeV]; #Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading}", 
+                            52, 0, 1040, // x axis
+                            35, 0, 0.7); //y axis
 
         TH1F* back_h_leading_LRJ_Psi_R2_VariableIOs_5 = new TH1F("back_h_leading_LRJ_Psi_R2_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} [5 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_subleading_LRJ_Psi_R2_VariableIOs_5 = new TH1F("back_h_subleading_LRJ_Psi_R2_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R^{2}, Subleading} [5 IOs Only];% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_LRJ_Psi_R2_squared_VariableIOs_5 = new TH1F("back_h_LRJ_Psi_R2_squared_VariableIOs_5", "Leading LRJ Et Distribution;#Psi_{R^{2}, Leading} #times #Psi_{R^{2}, Subleading} [5 IOs Only];% of Events / 0.02", 35, 0, 0.7);
 
         TH1F* sig_h_leading_LRJ_psi_R = new TH1F("sig_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_leading_LRJ_psi_R_MassWindow = new TH1F("sig_h_leading_LRJ_psi_R_MassWindow", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* sig_h_leading_LRJ_psi_R_OutsideMassWindow = new TH1F("sig_h_leading_LRJ_psi_R_OutsideMassWindow", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* sig_h_LRJ_psi_R_squared = new TH1F("sig_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 35, 0, 0.7);
         TH1F* sig_h_LRJ_psi_R_12 = new TH1F("sig_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* sig_h_subleading_LRJ_psi_R = new TH1F("sig_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05 ", 20, 0, 1);
         TH1F* back_h_leading_LRJ_psi_R = new TH1F("back_h_leading_LRJ_psi_R", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_leading_LRJ_psi_R_MassWindow = new TH1F("back_h_leading_LRJ_psi_R_MassWindow", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
+        TH1F* back_h_leading_LRJ_psi_R_OutsideMassWindow = new TH1F("back_h_leading_LRJ_psi_R_OutsideMassWindow", "Leading LRJ Et Distribution;#Psi_{R};% of Leading LRJs / 0.05", 20, 0, 1);
         TH1F* back_h_LRJ_psi_R_squared = new TH1F("back_h_LRJ_psi_R_squared", "Leading LRJ Et Distribution;#Psi_{R, Leading} #times #Psi_{R, Subleading};% of Events / 0.02", 35, 0, 0.7);
         TH1F* back_h_LRJ_psi_R_12 = new TH1F("back_h_LRJ_psi_R_12", "Leading LRJ Et Distribution; #frac{#Psi_{R, Leading}}{#Psi_{R, Subleading}};% of Events / 0.2", 25, 0, 5);
         TH1F* back_h_subleading_LRJ_psi_R = new TH1F("back_h_subleading_LRJ_psi_R", "Subleading LRJ Et Distribution;#Psi_{R};% of Subleading LRJs / 0.05", 20, 0, 1);
@@ -2661,8 +3228,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* sig_h_Mjj = new TH1F("sig_h_Mjj", "Invariant Mass of 2 LRJs;Invariant Mass of 2 LRJs [GeV]; % Events / 20 GeV", 75, 0, 1500);
 
         TH2F *sigTopo422Highest128SeedPositionsEv0 = new TH2F("sigTopo422Highest128SeedPositionsEv0", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double > > jFexSeedPositionsSigEv0;
         std::vector<std::pair<double, double > > jFexAdditionalSRJPositionsSigEv0;
@@ -2670,12 +3237,13 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<std::pair<double, double  > > gFexLRJPositionSigEv0;
         std::vector<std::pair<double, double  > > offlineLRJPositionSigEv0;
         std::vector<double > sigLRJEtEv0;
+        std::vector<double > sigLRJPsi_REv0;
         std::vector<double > siggFexLRJEtEv0;
         std::vector<double > sigOfflineLRJEtEv0;
 
         TH2F *sigTopo422Highest128SeedPositionsEv1 = new TH2F("sigTopo422Highest128SeedPositionsEv1", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsSigEv1;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsSigEv1;
@@ -2683,12 +3251,13 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<std::pair<double, double  > > gFexLRJPositionSigEv1;
         std::vector<std::pair<double, double  > > offlineLRJPositionSigEv1;
         std::vector<double > sigLRJEtEv1;
+        std::vector<double > sigLRJPsi_REv1;
         std::vector<double > siggFexLRJEtEv1;
         std::vector<double > sigOfflineLRJEtEv1;
 
         TH2F *sigTopo422Highest128SeedPositionsEv2 = new TH2F("sigTopo422Highest128SeedPositionsEv2", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
         
         std::vector<std::pair<double, double  > > jFexSeedPositionsSigEv2;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsSigEv2;
@@ -2696,12 +3265,13 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<std::pair<double, double  > > gFexLRJPositionSigEv2;
         std::vector<std::pair<double, double  > > offlineLRJPositionSigEv2;
         std::vector<double > sigLRJEtEv2;
+        std::vector<double > sigLRJPsi_REv2;
         std::vector<double > siggFexLRJEtEv2;
         std::vector<double > sigOfflineLRJEtEv2;
 
         TH2F *sigTopo422Highest128SeedPositionsEv3 = new TH2F("sigTopo422Highest128SeedPositionsEv3", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsSigEv3;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsSigEv3;
@@ -2709,12 +3279,13 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<std::pair<double, double  > > gFexLRJPositionSigEv3;
         std::vector<std::pair<double, double  > > offlineLRJPositionSigEv3;
         std::vector<double > sigLRJEtEv3;
+        std::vector<double > sigLRJPsi_REv3;
         std::vector<double > siggFexLRJEtEv3;
         std::vector<double > sigOfflineLRJEtEv3;
 
         TH2F *sigTopo422Highest128SeedPositionsEv4 = new TH2F("sigTopo422Highest128SeedPositionsEv4", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsSigEv4;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsSigEv4;
@@ -2722,13 +3293,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         std::vector<std::pair<double, double  > > gFexLRJPositionSigEv4;
         std::vector<std::pair<double, double  > > offlineLRJPositionSigEv4;
         std::vector<double > sigLRJEtEv4;
+        std::vector<double > sigLRJPsi_REv4;
         std::vector<double > siggFexLRJEtEv4;
         std::vector<double > sigOfflineLRJEtEv4;
 
         TH1F* back_h_LRJ_substruct = new TH1F("back_h_LRJ_substruct", "LRJ 'Diameter';LRJ 'Diameter';% of LRJs / ~0.03", 32, 0, 1);
         TH2F *backDiamvsEt = new TH2F("backDiamvsEt", "Sum of Topo422 E_{T} in Each Bin; LRJ E_{T} [GeV];LRJ 'Diameter'", 
-                            20, 0, 800,   // 100 bins from -5 to 5 on eta axis
-                            32, 0, 1.0);  // 64 bins from -3.2 to 3.2 on phi axis
+                            20, 0, 800,   
+                            32, 0, 1.0);  
         TH1F* back_h_LRJ_Et = new TH1F("back_h_LRJ_Et", "LRJ Et Distribution;E_{T} [GeV];% of LRJs / 50 GeV", 16, 0, 800);
         TH1F* back_h_leading_LRJ_Et = new TH1F("back_h_leading_LRJ_Et", "Leading LRJ Et Distribution;E_{T} [GeV];% of Leading LRJs", rateVsEffBins.size() - 1, rateVsEffBins.data());
         TH1F* back_h_subleading_LRJ_Et = new TH1F("back_h_subleading_LRJ_Et", "Subleading LRJ Et Distribution;E_{T} [GeV];% of Subleading LRJs", rateVsEffBins.size() - 1, rateVsEffBins.data());
@@ -2803,49 +3375,54 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         TH1F* back_h_Mjj = new TH1F("back_h_Mjj", "Invariant Mass of 2 LRJs;Invariant Mass of 2 LRJs [GeV]; % Events / 20 GeV", 75, 0, 1500);
 
         TH2F *backTopo422Highest128SeedPositionsEv0 = new TH2F("backTopo422Highest128SeedPositionsEv0", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double > > jFexSeedPositionsBackEv0;
         std::vector<std::pair<double, double > > jFexAdditionalSRJPositionsBackEv0;
         std::vector<std::pair<double, double > > newSeedPositionsBackEv0;
         std::vector<double > backLRJEtEv0;
+        std::vector<double > backLRJPsi_REv0;
 
         TH2F *backTopo422Highest128SeedPositionsEv1 = new TH2F("backTopo422Highest128SeedPositionsEv1", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsBackEv1;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsBackEv1;
         std::vector<std::pair<double, double  > > newSeedPositionsBackEv1;
         std::vector<double > backLRJEtEv1;
+        std::vector<double > backLRJPsi_REv1;
 
         TH2F *backTopo422Highest128SeedPositionsEv2 = new TH2F("backTopo422Highest128SeedPositionsEv2", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
         
         std::vector<std::pair<double, double  > > jFexSeedPositionsBackEv2;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsBackEv2;
         std::vector<std::pair<double, double  > > newSeedPositionsBackEv2;
         std::vector<double > backLRJEtEv2;
+        std::vector<double > backLRJPsi_REv2;
 
         TH2F *backTopo422Highest128SeedPositionsEv3 = new TH2F("backTopo422Highest128SeedPositionsEv3", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsBackEv3;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsBackEv3;
         std::vector<std::pair<double, double  > > newSeedPositionsBackEv3;
         std::vector<double > backLRJEtEv3;
+        std::vector<double > backLRJPsi_REv3;
 
         TH2F *backTopo422Highest128SeedPositionsEv4 = new TH2F("backTopo422Highest128SeedPositionsEv4", "Sum of Topo422 E_{T} in Each Bin; #eta;#phi", 
-                            100, -5, 5,   // 100 bins from -5 to 5 on eta axis
-                            64, -3.2, 3.2);  // 64 bins from -3.2 to 3.2 on phi axis
+                            100, -5, 5,   
+                            64, -3.2, 3.2);  
 
         std::vector<std::pair<double, double  > > jFexSeedPositionsBackEv4;
         std::vector<std::pair<double, double  > > jFexAdditionalSRJPositionsBackEv4;
         std::vector<std::pair<double, double  > > newSeedPositionsBackEv4;
         std::vector<double > backLRJEtEv4;
+        std::vector<double > backLRJPsi_REv4;
 
         //if (fileIt > 0) break;
         std::cout << "-------------------------------------" << "\n";
@@ -2989,7 +3566,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         ax->SetTitleOffset(1.25);
         };
 
-        TString rateVsEffFileDir = "rateVsEff_" + algorithmConfigurations[fileIt] + "/";
+        TString rateVsEffFileDir = "rateVsEff_" + algorithmConfigurations[fileIt] + "SubjetEtMassApprox_25GeVSubjets/";
 
         gSystem->mkdir(rateVsEffFileDir);
 
@@ -3533,6 +4110,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             subleadingRecoAntiKt10UFOCSSKJetsSignal->GetEntry(i);
             leadingRecoAntiKt10UFOCSSKJetsSignal->GetEntry(i);
             truthAntiKt4TruthDressedWZJetsSignal->GetEntry(i);
+            leadingTruthAntiKt4TruthDressedWZJetsSignal->GetEntry(i);
+            subleadingTruthAntiKt4TruthDressedWZJetsSignal->GetEntry(i);
             gFexLeadingLRJTreeSignal->GetEntry(i);
             jFexLeadingLRJTreeSignal->GetEntry(i);
             jFexLeadingSRJTreeSignal->GetEntry(i);
@@ -3560,6 +4139,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexSRJTreeSignal->GetEntry(i);
             truthbTreeSignal->GetEntry(i);
 
+            sigDeltaRLeadingSubleadingTruthJets->Fill(sqrt(calcDeltaR2(truthAntiKt4WZSRJLeadingEtaValuesSignal->at(0), truthAntiKt4WZSRJLeadingPhiValuesSignal->at(0), truthAntiKt4WZSRJSubleadingEtaValuesSignal->at(0), truthAntiKt4WZSRJSubleadingPhiValuesSignal->at(0))));
+
             double jetTaggerLeadingEta = jetTaggerLeadingLRJEtaValuesSignal->at(0);
             double jetTaggerLeadingPhi= jetTaggerLeadingLRJEtaValuesSignal->at(0);
             double jetTaggerSubleadingEta = jetTaggerSubleadingLRJEtaValuesSignal->at(0);
@@ -3576,16 +4157,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             unsigned int nSubjetConeCellsTowersJetTaggerSubleading = 0;
             for(unsigned int iSubjet = 0; iSubjet < jFexSRJEtaValuesSignal->size(); iSubjet++ ){ 
                 double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), jFexSRJEtaValuesSignal->at(iSubjet), jFexSRJPhiValuesSignal->at(iSubjet))); // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
-                if(deltaRJetTaggerSubjet < 1.0 && jFexSRJEtValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+                if(deltaRJetTaggerSubjet < jetRadius && jFexSRJEtValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetjFEXJetTaggerLeading++;
                     leadingJetTaggerjFEXSubjets.push_back({jFexSRJEtValuesSignal->at(iSubjet), jFexSRJEtaValuesSignal->at(iSubjet), jFexSRJPhiValuesSignal->at(iSubjet)});
                 }
             }
-            for(unsigned int iSubjet = 0; iSubjet < gepConeCellsTowersJetsEtaValuesSignal->size(); iSubjet++ ){
-                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepConeCellsTowersJetsPhiValuesSignal->at(iSubjet)));
-                if(deltaRJetTaggerSubjet < 1.0 && gepConeCellsTowersJetspTValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+            for(unsigned int iSubjet = 0; iSubjet < gepWTAConeCellsTowersJetsEtaValuesSignal->size(); iSubjet++ ){
+                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesSignal->at(iSubjet)));
+                if(deltaRJetTaggerSubjet < jetRadius && gepWTAConeCellsTowersJetspTValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetConeCellsTowersJetTaggerLeading++;
-                    leadingJetTaggerConeCellsTowersSubjets.push_back({gepConeCellsTowersJetspTValuesSignal->at(iSubjet), gepConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepConeCellsTowersJetsPhiValuesSignal->at(iSubjet)});
+                    //std::cout << "jet tagger eta, phi: " << jetTaggerLeadingLRJEtaValuesSignal->at(0) << " , " << jetTaggerLeadingLRJPhiValuesSignal->at(0) << "\n";
+                    //std::cout << "cone jet pT, eta, phi: " << gepWTAConeCellsTowersJetspTValuesSignal->at(iSubjet) << " , " << gepWTAConeCellsTowersJetsEtaValuesSignal->at(iSubjet) << " , " << gepWTAConeCellsTowersJetsPhiValuesSignal->at(iSubjet) << "\n";
+                    //std::cout << "deltaRJetTaggerSubjet : " << deltaRJetTaggerSubjet << "\n";
+                    leadingJetTaggerConeCellsTowersSubjets.push_back({gepWTAConeCellsTowersJetspTValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesSignal->at(iSubjet)});
                 }
             }
 
@@ -3593,16 +4177,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             for(unsigned int iSubjet = 0; iSubjet < jFexSRJEtaValuesSignal->size(); iSubjet++ ){
                 //std::cout << "jFexSRJEtaValuesSignal->at(iSubjet): " << jFexSRJEtaValuesSignal->at(iSubjet) << " and phi: " << jFexSRJPhiValuesSignal->at(iSubjet) << "\n";
                 double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), jFexSRJEtaValuesSignal->at(iSubjet), jFexSRJPhiValuesSignal->at(iSubjet)));
-                if(deltaRJetTaggerSubjet < 1.0 && jFexSRJEtValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+                if(deltaRJetTaggerSubjet < jetRadius && jFexSRJEtValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetjFEXJetTaggerSubleading++;
                     subleadingJetTaggerjFEXSubjets.push_back({jFexSRJEtValuesSignal->at(iSubjet), jFexSRJEtaValuesSignal->at(iSubjet), jFexSRJPhiValuesSignal->at(iSubjet)});
                 }
             }
-            for(unsigned int iSubjet = 0; iSubjet < gepConeCellsTowersJetsEtaValuesSignal->size(); iSubjet++ ){ 
-                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepConeCellsTowersJetsPhiValuesSignal->at(iSubjet)));
-                if(deltaRJetTaggerSubjet < 1.0 && gepConeCellsTowersJetspTValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+            for(unsigned int iSubjet = 0; iSubjet < gepWTAConeCellsTowersJetsEtaValuesSignal->size(); iSubjet++ ){  // FIXME use WTA cone jets for these. IN GENERAL SHOULD USE ONLY WTA CONE JETS!!!
+                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesSignal->at(iSubjet)));
+                if(deltaRJetTaggerSubjet < jetRadius && gepWTAConeCellsTowersJetspTValuesSignal->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetConeCellsTowersJetTaggerSubleading++;
-                    subleadingJetTaggerConeCellsTowersSubjets.push_back({gepConeCellsTowersJetspTValuesSignal->at(iSubjet), gepConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepConeCellsTowersJetsPhiValuesSignal->at(iSubjet)});
+                    subleadingJetTaggerConeCellsTowersSubjets.push_back({gepWTAConeCellsTowersJetspTValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsEtaValuesSignal->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesSignal->at(iSubjet)});
                 }
             }
 
@@ -3631,10 +4215,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             double tau_2_SubleadingJetTaggerConeCellsTowersSubjet = 0; 
 
             // deltaR for jFEX , ConeCellsTowers subjets
-            //std::vector<double > deltaRLeadingJetTaggerjFEXSubjet;  // FIXME unneeded?
+            //std::vector<double > deltaRLeadingJetTaggerjFEXSubjet;  
             //std::vector<double > deltaRSubleadingJetTaggerjFEXSubjet; 
             //std::vector<double > deltaRLeadingJetTaggerjFEXSubjet; 
-            //std::vector<double > deltaRSubleadingJetTaggerjFEXSubjet; 
+            //std::vector<double > deltaRSubleadingJetTaggerjFEXSubjet;     
+            for(unsigned int iTower = 0; iTower < gepCellsTowersEtValuesSignal->size(); iTower++){
+                sig_h_JetTagger_CellsTowersEt->Fill(gepCellsTowersEtValuesSignal->at(iTower));
+            }
+            
 
             // First for leading JetTagger LRJ
             //std::cout << "jetTaggerLeadingLRJMergedIndicesValuesSignal->size() " << jetTaggerLeadingLRJMergedIndicesValuesSignal->size() << "\n";
@@ -3689,6 +4277,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
             sig_h_LeadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerLeading);
             sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerLeading);
+            sig_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerSubleading);
+            sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerSubleading);
 
             sig_h_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1->Fill(tau_1_LeadingJetTaggerjFEXSubjet);
             sig_h_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_2->Fill(tau_2_LeadingJetTaggerjFEXSubjet);
@@ -3775,6 +4365,188 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet);
             sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet);
 
+            sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+
+            sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+            //std::cout << "(tau_1_LeadingJetTaggerConeCellsTowersSubjet/tau_2_LeadingJetTaggerConeCellsTowersSubjet) * (tau_1_SubleadingJetTaggerConeCellsTowersSubjet/tau_2_SubleadingJetTaggerConeCellsTowersSubjet): " << (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet) << "\n";
+
+            if(tau_1_LeadingJetTaggerConeCellsTowersSubjet == 0 || tau_1_SubleadingJetTaggerConeCellsTowersSubjet == 0){
+                sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), 0.0);
+            }
+            else{
+                sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+            }
+            
+            sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+
+            sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+            sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+
+            sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+            sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+
+            // Fill 0 or 1
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                
+                sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, nSubjetConeCellsTowersJetTaggerSubleading);
+            }
+            // Fill >= 2 with just 2 for histogram purposes
+            else if(nSubjetConeCellsTowersJetTaggerLeading > 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(2, nSubjetConeCellsTowersJetTaggerSubleading);
+            }
+            else if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading > 1){
+                sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, 2);
+            }
+            else if(nSubjetConeCellsTowersJetTaggerLeading > 1 && nSubjetConeCellsTowersJetTaggerSubleading > 1){
+                sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(2, 2);
+            }
+
+            
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1)){
+                sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+                sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0));
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerLeadingLRJEtValuesSignal->at(0);
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet);
+                sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone_SubjetEt);
+
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesSignal->at(0);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesSignal->at(0) * jetTaggerLeadingLRJEtValuesSignal->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), d12_lead);
+                sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Fill(leadingJetTaggerConeCellsTowersSubjets[0][0], leadingJetTaggerConeCellsTowersSubjets[1][0]);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(subleadingJetTaggerConeCellsTowersSubjets[0][1], subleadingJetTaggerConeCellsTowersSubjets[0][2], subleadingJetTaggerConeCellsTowersSubjets[1][1], subleadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerSubleadingMassApproxCone = deltaRConeSubjets * jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                double jetTaggerSubleadingMassApproxCone_SubjetEt = deltaRConeSubjets * (subleadingJetTaggerConeCellsTowersSubjets[0][0] + subleadingJetTaggerConeCellsTowersSubjets[1][0]);
+                sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), jetTaggerSubleadingMassApproxCone_SubjetEt);
+                sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet);
+                sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+
+                double Z_subl = subleadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                double d12_subl = sqrt(Z_subl * Z_subl * jetTaggerSubleadingLRJEtValuesSignal->at(0) * jetTaggerSubleadingLRJEtValuesSignal->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), d12_subl);
+                sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Fill(subleadingJetTaggerConeCellsTowersSubjets[0][0], subleadingJetTaggerConeCellsTowersSubjets[1][0]);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                double deltaRConeSubjetsSubleading = sqrt(calcDeltaR2(subleadingJetTaggerConeCellsTowersSubjets[0][1], subleadingJetTaggerConeCellsTowersSubjets[0][2], subleadingJetTaggerConeCellsTowersSubjets[1][1], subleadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerSubleadingMassApproxCone = deltaRConeSubjetsSubleading * jetTaggerSubleadingLRJEtValuesSignal->at(0);
+
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                double jetTaggerSubleadingMassApproxCone_SubjetEt = deltaRConeSubjets * (subleadingJetTaggerConeCellsTowersSubjets[0][0] + subleadingJetTaggerConeCellsTowersSubjets[1][0]);
+                sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), deltaRConeSubjets, deltaRConeSubjetsSubleading);
+                sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone_SubjetEt, jetTaggerSubleadingMassApproxCone_SubjetEt);
+
+                double Z_subl = subleadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                double d12_subl = sqrt(Z_subl * Z_subl * jetTaggerSubleadingLRJEtValuesSignal->at(0) * jetTaggerSubleadingLRJEtValuesSignal->at(0) * deltaRConeSubjetsSubleading * deltaRConeSubjetsSubleading);
+                
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesSignal->at(0);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesSignal->at(0) * jetTaggerLeadingLRJEtValuesSignal->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), d12_lead, d12_subl);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 0){
+                sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+            }  
+            else if(nSubjetConeCellsTowersJetTaggerLeading == 1){
+                sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerLeadingLRJEtValuesSignal->at(0); // NOTE this is not actually "z"
+
+                sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), Z_lead);
+            } 
+            
+            else if (nSubjetConeCellsTowersJetTaggerLeading > 1){
+                sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+                // compute delta R of leading, subleading subjets:
+                double deltaRConeSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                //std::cout << "deltaRConeSubjets: " << deltaRConeSubjets << "\n";
+                double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerLeadingLRJEtValuesSignal->at(0);
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApproxCone);
+                sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Fill(deltaRConeSubjets);
+                sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone);
+                sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone_SubjetEt);
+                sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), deltaRConeSubjets);
+
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesSignal->at(0);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesSignal->at(0) * jetTaggerLeadingLRJEtValuesSignal->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), Z_lead);
+                sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), d12_lead);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 1){
+                double Z = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesSignal->at(0);
+                
+                sig_h_leading_LRJ_Z->Fill(Z);
+                sigJetTaggerLeadingLRJEtvsZ->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), Z);
+                sigJetTaggerLeadingLRJEtvs1MinusZ->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), 1 - Z);
+                if(nSubjetConeCellsTowersJetTaggerLeading >= 2){
+                    double Z_lead = leadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerLeadingLRJEtValuesSignal->at(0);
+                    sigJetTaggerLeadingLRJEtvsEtOutsideSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), 1 - (Z + Z_lead));
+                }
+            }
+            if(nSubjetConeCellsTowersJetTaggerSubleading >= 1){
+                double Z = subleadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                sig_h_subleading_LRJ_Z->Fill(Z);
+                sigJetTaggerSubleadingLRJEtvsZ->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), Z);
+                sigJetTaggerSubleadingLRJEtvs1MinusZ->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), 1 - Z);
+                if(nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                    double Z_lead = subleadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerSubleadingLRJEtValuesSignal->at(0);
+                    sigJetTaggerSubleadingLRJEtvsEtOutsideSubjets->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), 1 - (Z + Z_lead));
+                }
+            }
+            if(nSubjetjFEXJetTaggerLeading == 0){
+                sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+            }
+            else if(nSubjetjFEXJetTaggerLeading == 1){
+                sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+            }
+            else if(nSubjetjFEXJetTaggerLeading > 1){
+                sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0));
+                sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingLRJPsi_RValuesSignal->at(0));
+                // compute delta R of leading, subleading subjets:
+                double deltaRSubjets = sqrt(calcDeltaR2(leadingJetTaggerjFEXSubjets[0][1], leadingJetTaggerjFEXSubjets[0][2], leadingJetTaggerjFEXSubjets[1][1], leadingJetTaggerjFEXSubjets[1][2]));
+                double jetTaggerLeadingMassApprox = deltaRSubjets* jetTaggerLeadingLRJEtValuesSignal->at(0);
+                sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingMassApprox);
+                sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2jFEXSubjet->Fill(deltaRSubjets);
+                sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApprox);
+                sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), deltaRSubjets);
+            }
+
             unsigned int highestEtIndexLRJSig = -1;
             if(sig_LRJ_Et[i][0] >= sig_LRJ_Et[i][1]) highestEtIndexLRJSig = 0;
             else highestEtIndexLRJSig = 1;
@@ -3793,7 +4565,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
              
             double jFEXSRJSubleadingEta; 
             double jFEXSRJSubleadingPhi;
-            if(jFexSRJSubleadingEtaValuesSignal->size() > 0){ // Account for the case when there aren't any jFEX subleading jets FIXME do this in the ntupler potentially?
+            if(jFexSRJSubleadingEtaValuesSignal->size() > 0){ 
                 jFEXSRJSubleadingEta = jFexSRJSubleadingEtaValuesSignal->at(0);
                 jFEXSRJSubleadingPhi = jFexSRJSubleadingPhiValuesSignal->at(0);
             }   
@@ -3875,7 +4647,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             psi_R_SigJet1 = jetTaggerLeadingLRJPsi_RValuesSignal->at(0);
             psi_R_SigJet2 = jetTaggerSubleadingLRJPsi_RValuesSignal->at(0);
 
-            if(i == evDisplay3Sig_){
+            if((i >= evDisplay0Sig_) && (i <= evDisplay4Sig_)){
                 std::cout << "psi_R leading jet: " << psi_R_SigJet1 << "\n";
                 std::cout << "psi_R subleading jet: " << psi_R_SigJet2 << "\n";
             }
@@ -4119,62 +4891,73 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_h_leading_LRJ_psi_R_VariableIOs_2->Fill(psi_R_SigJet1_VariableIOs_2);
             sig_h_subleading_LRJ_psi_R_VariableIOs_2->Fill(psi_R_SigJet2_VariableIOs_2);
             sig_h_LRJ_psi_R_squared_VariableIOs_2->Fill(psi_R_SigJet1_VariableIOs_2 * psi_R_SigJet2_VariableIOs_2); 
-            sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_2 * psi_R_SigJet2_VariableIOs_2);
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_2 * psi_R_SigJet2_VariableIOs_2);
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_2 * psi_R_SigJet2_VariableIOs_2);
 
             sig_h_leading_LRJ_psi_R_VariableIOs_3->Fill(psi_R_SigJet1_VariableIOs_3);
             sig_h_subleading_LRJ_psi_R_VariableIOs_3->Fill(psi_R_SigJet2_VariableIOs_3);
             sig_h_LRJ_psi_R_squared_VariableIOs_3->Fill(psi_R_SigJet1_VariableIOs_3 * psi_R_SigJet2_VariableIOs_3); 
-            sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_3 * psi_R_SigJet2_VariableIOs_3);
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_3 * psi_R_SigJet2_VariableIOs_3);
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_3 * psi_R_SigJet2_VariableIOs_3);
 
             sig_h_leading_LRJ_psi_R_VariableIOs_4->Fill(psi_R_SigJet1_VariableIOs_4);
             sig_h_subleading_LRJ_psi_R_VariableIOs_4->Fill(psi_R_SigJet2_VariableIOs_4);
             sig_h_LRJ_psi_R_squared_VariableIOs_4->Fill(psi_R_SigJet1_VariableIOs_4 * psi_R_SigJet2_VariableIOs_4); 
-            sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_4 * psi_R_SigJet2_VariableIOs_4);
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_4 * psi_R_SigJet2_VariableIOs_4);
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_4 * psi_R_SigJet2_VariableIOs_4);
 
             sig_h_leading_LRJ_psi_R_VariableIOs_5->Fill(psi_R_SigJet1_VariableIOs_5);
             sig_h_subleading_LRJ_psi_R_VariableIOs_5->Fill(psi_R_SigJet2_VariableIOs_5);
             sig_h_LRJ_psi_R_squared_VariableIOs_5->Fill(psi_R_SigJet1_VariableIOs_5 * psi_R_SigJet2_VariableIOs_5); 
-            sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_5 * psi_R_SigJet2_VariableIOs_5);
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_5 * psi_R_SigJet2_VariableIOs_5);
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1_VariableIOs_5 * psi_R_SigJet2_VariableIOs_5);
 
             sig_h_leading_LRJ_Psi_R2_VariableIOs_2->Fill(psi_R2_SigJet1_VariableIOs_2);
             sig_h_subleading_LRJ_Psi_R2_VariableIOs_2->Fill(psi_R2_SigJet2_VariableIOs_2);
             sig_h_LRJ_Psi_R2_squared_VariableIOs_2->Fill(psi_R2_SigJet1_VariableIOs_2 * psi_R2_SigJet2_VariableIOs_2); 
-            sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_2 * psi_R2_SigJet2_VariableIOs_2);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_2 * psi_R2_SigJet2_VariableIOs_2);
 
             sig_h_leading_LRJ_Psi_R2_VariableIOs_3->Fill(psi_R2_SigJet1_VariableIOs_3);
             sig_h_subleading_LRJ_Psi_R2_VariableIOs_3->Fill(psi_R2_SigJet2_VariableIOs_3);
             sig_h_LRJ_Psi_R2_squared_VariableIOs_3->Fill(psi_R2_SigJet1_VariableIOs_3 * psi_R2_SigJet2_VariableIOs_3); 
-            sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_3 * psi_R2_SigJet2_VariableIOs_3);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_3 * psi_R2_SigJet2_VariableIOs_3);
 
             sig_h_leading_LRJ_Psi_R2_VariableIOs_4->Fill(psi_R2_SigJet1_VariableIOs_4);
             sig_h_subleading_LRJ_Psi_R2_VariableIOs_4->Fill(psi_R2_SigJet2_VariableIOs_4);
             sig_h_LRJ_Psi_R2_squared_VariableIOs_4->Fill(psi_R2_SigJet1_VariableIOs_4 * psi_R2_SigJet2_VariableIOs_4); 
-            sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_4 * psi_R2_SigJet2_VariableIOs_4);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_4 * psi_R2_SigJet2_VariableIOs_4);
 
             sig_h_leading_LRJ_Psi_R2_VariableIOs_5->Fill(psi_R2_SigJet1_VariableIOs_5);
             sig_h_subleading_LRJ_Psi_R2_VariableIOs_5->Fill(psi_R2_SigJet2_VariableIOs_5);
             sig_h_LRJ_Psi_R2_squared_VariableIOs_5->Fill(psi_R2_SigJet1_VariableIOs_5 * psi_R2_SigJet2_VariableIOs_5); 
-            sigOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_5 * psi_R2_SigJet2_VariableIOs_5);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1_VariableIOs_5 * psi_R2_SigJet2_VariableIOs_5);
 
             sig_h_LRJ_psi_R_squared->Fill(psi_R_SigJet1 * psi_R_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
-            sigOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            sigJetTaggerLeadingLRJEtvsPsi_R_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
+            sigJetTaggerSubleadingLRJEtvsPsi_R_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R_SigJet1 * psi_R_SigJet2);
             sig_h_LRJ_psi_R2_squared->Fill(psi_R2_SigJet1 * psi_R2_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
-            sigOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_squared->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
+            sigJetTaggerSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), psi_R2_SigJet1 * psi_R2_SigJet2);
 
             // Fill psi_R for leading, subleading, signal, background
             // Fill with regular deltaR metric
             sig_h_leading_LRJ_psi_R->Fill(psi_R_SigJet1);
+            if (recoAntiKt10LRJLeadingEtValuesSignal->size() > 0){
+                if((recoAntiKt10LRJLeadingMassValuesSignal->at(0) >= 100.0) && (recoAntiKt10LRJLeadingMassValuesSignal->at(0) <= 150.0)){
+                    sig_h_leading_LRJ_psi_R_MassWindow->Fill(psi_R_SigJet1);
+                }
+                else sig_h_leading_LRJ_psi_R_OutsideMassWindow->Fill(psi_R_SigJet1);
+                sigOfflineLeadingLRJMassvsPsi_R->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0), psi_R_SigJet1);
+            }
             sig_h_subleading_LRJ_psi_R->Fill(psi_R_SigJet2);
             sig_h_LRJ_psi_R_12->Fill(psi_R_SigJet1 / psi_R_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
-            sigOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
-            sigOfflineSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1);
-            sigOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_SigJet2);
-            sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet2, psi_R_SigJet1); // subleading filled to x-axis
+            sigJetTaggerLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
+            sigJetTaggerSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R_SigJet1 / psi_R_SigJet2);
+            sigJetTaggerLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
+            sigJetTaggerSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R2_SigJet1 / psi_R2_SigJet2);
+            sigJetTaggerLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R_SigJet1);
+            sigJetTaggerSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R_SigJet2);
+            sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_SigJet2, psi_R_SigJet1); // subleading filled to x-axis
 
             // Fill with deltaR^2 metric
             //std::cout << "psi_R2_SigJet1: " << psi_R2_SigJet1 << "\n";
@@ -4182,14 +4965,14 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_h_leading_LRJ_psi_R2->Fill(psi_R2_SigJet1);
             sig_h_subleading_LRJ_psi_R2->Fill(psi_R2_SigJet2);
             sig_h_LRJ_psi_R2_12->Fill(psi_R2_SigJet1 / psi_R2_SigJet2);
-            sigOfflineLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1);
-            sigOfflineSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_SigJet2);
-            sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_SigJet2, psi_R2_SigJet1); 
+            sigJetTaggerLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), psi_R2_SigJet1);
+            sigJetTaggerSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0), psi_R2_SigJet2);
+            sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_SigJet2, psi_R2_SigJet1); 
             //std::cout << "SIGNAL final psi1_R: " << psi_R_SigJet1 << " and final psi_R_SigJet2 : " << psi_R_SigJet2 << "\n";
             //std::cout << "filling 1 sig" << "\n";
 
             // Fill deltaEt for digitized, undigitized algorithm configuration (can also serve to compare for using seed position recalculation algorithm version)
-            sig_h_LRJ1_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesSignal->at(0))); // FIXME this is no longer useful....
+            sig_h_LRJ1_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesSignal->at(0))); 
             sig_h_LRJ2_deltaEt_digitized_double->Fill((sig_LRJ_Et[i][1] - jetTaggerSubleadingLRJEtValuesSignal->at(0)));
 
             // Map: Higgs index -> list of b-quark indices
@@ -4221,7 +5004,54 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
                 prof_AvgDR_vs_HpT->Fill(hpT, dR);
                 h2_DR_vs_HpT     ->Fill(hpT, dR);
+                
             }
+            if(truthHiggspTValuesSignal->at(0) >= truthHiggspTValuesSignal->at(1)){
+                leadingHiggsVsSubleadingHiggspT->Fill(truthHiggspTValuesSignal->at(0), truthHiggspTValuesSignal->at(1));
+
+                // Find b's associated with leading higgs
+                auto it_leading = higgsToB.find(indexOfHiggsValuesSignal->at(0));
+                if (it_leading == higgsToB.end() || it_leading->second.size() < 2) continue;
+
+                const int ib1_leading = it_leading->second[0];
+                const int ib2_leading = it_leading->second[1];
+
+                if(truthbquarkspTValuesSignal->at(ib1_leading) >= truthbquarkspTValuesSignal->at(ib2_leading) ) leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib1_leading), truthbquarkspTValuesSignal->at(ib2_leading));
+                else leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib2_leading), truthbquarkspTValuesSignal->at(ib1_leading));
+
+                // Find b's associated with subleading higgs
+                auto it_subleading = higgsToB.find(indexOfHiggsValuesSignal->at(1));
+                if (it_subleading == higgsToB.end() || it_subleading->second.size() < 2) continue;
+
+                const int ib1_subleading = it_subleading->second[0];
+                const int ib2_subleading = it_subleading->second[1];
+                if(truthbquarkspTValuesSignal->at(ib1_subleading) >= truthbquarkspTValuesSignal->at(ib2_subleading) ) leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib1_subleading), truthbquarkspTValuesSignal->at(ib2_subleading));
+                else leadingbVsSubleadingbpT_SubleadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib2_subleading), truthbquarkspTValuesSignal->at(ib1_subleading));
+            } 
+            else{
+                leadingHiggsVsSubleadingHiggspT->Fill(truthHiggspTValuesSignal->at(1), truthHiggspTValuesSignal->at(0));
+
+                // Find b's associated with leading higgs
+                auto it_leading = higgsToB.find(indexOfHiggsValuesSignal->at(1));
+                if (it_leading == higgsToB.end() || it_leading->second.size() < 2) continue;
+
+                const int ib1_leading = it_leading->second[0];
+                const int ib2_leading = it_leading->second[1];
+
+                if(truthbquarkspTValuesSignal->at(ib1_leading) >= truthbquarkspTValuesSignal->at(ib2_leading) ) leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib1_leading), truthbquarkspTValuesSignal->at(ib2_leading));
+                else leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib2_leading), truthbquarkspTValuesSignal->at(ib1_leading));
+
+                // Find b's associated with subleading higgs
+                auto it_subleading = higgsToB.find(indexOfHiggsValuesSignal->at(0));
+                if (it_subleading == higgsToB.end() || it_subleading->second.size() < 2) continue;
+
+                const int ib1_subleading = it_subleading->second[0];
+                const int ib2_subleading = it_subleading->second[1];
+                if(truthbquarkspTValuesSignal->at(ib1_subleading) >= truthbquarkspTValuesSignal->at(ib2_subleading) ) leadingbVsSubleadingbpT_LeadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib1_subleading), truthbquarkspTValuesSignal->at(ib2_subleading));
+                else leadingbVsSubleadingbpT_SubleadingHiggs->Fill(truthbquarkspTValuesSignal->at(ib2_subleading), truthbquarkspTValuesSignal->at(ib1_subleading));
+            }
+
+            
 
             // FIXME don't want to skip over all these events??
             if(recoAntiKt10LRJLeadingEtValuesSignal->size() == 0) continue;
@@ -4319,6 +5149,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sig_h_leading_offlineLRJ_gFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - gFexLRJLeadingEtValuesSignal->at(0));
             sig_h_leading_offlineLRJ_jFexLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jFexLRJLeadingEtValuesSignal->at(0));
             sig_h_leading_LRJ_offlineLRJ_deltaEt->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0));   
+
+            sigJetTaggerLeadingLRJEtvsSubleadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerSubleadingLRJEtValuesSignal->at(0));
 
             // Fill Et "resolution"]
             //std::cout << "(gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) /gFexLRJLeadingEtValuesSignal->at(0): " << (gFexLRJLeadingEtValuesSignal->at(0) - jetTaggerLeadingLRJEtValuesSignal->at(0)) /gFexLRJLeadingEtValuesSignal->at(0) << "\n";
@@ -4945,12 +5777,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                         newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
                         sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJPsi_REv0.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv0.push_back(psi_R_SigJet2);
                     }
                     else{
                         newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         newSeedPositionsSigEv0.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
                         sigLRJEtEv0.push_back(sig_LRJ_Et[i][1]);
                         sigLRJEtEv0.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJPsi_REv0.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv0.push_back(psi_R_SigJet2);
                     }
                     gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
                     gFexLRJPositionSigEv0.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
@@ -4978,12 +5814,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                         newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
                         sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJPsi_REv1.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv1.push_back(psi_R_SigJet2);
                     }
                     else{
                         newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         newSeedPositionsSigEv1.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
                         sigLRJEtEv1.push_back(sig_LRJ_Et[i][1]);
                         sigLRJEtEv1.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJPsi_REv1.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv1.push_back(psi_R_SigJet2);
                     }
                     gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
                     gFexLRJPositionSigEv1.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
@@ -5013,12 +5853,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                         newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
                         sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJPsi_REv2.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv2.push_back(psi_R_SigJet2);
                     }
                     else{
                         newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         newSeedPositionsSigEv2.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
                         sigLRJEtEv2.push_back(sig_LRJ_Et[i][1]);
                         sigLRJEtEv2.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJPsi_REv2.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv2.push_back(psi_R_SigJet2);
                     }
                     gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
                     gFexLRJPositionSigEv2.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
@@ -5047,12 +5891,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                         newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
                         sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJPsi_REv3.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv3.push_back(psi_R_SigJet2);
                     }
                     else{
                         newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         newSeedPositionsSigEv3.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
                         sigLRJEtEv3.push_back(sig_LRJ_Et[i][1]);
                         sigLRJEtEv3.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJPsi_REv3.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv3.push_back(psi_R_SigJet2);
                     }
                     gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
                     gFexLRJPositionSigEv3.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
@@ -5081,12 +5929,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                         newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
                         sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
+                        sigLRJPsi_REv4.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv4.push_back(psi_R_SigJet2);
                     }
                     else{
                         newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][1], sig_LRJ_Phi[i][1]));
                         newSeedPositionsSigEv4.push_back(std::make_pair(sig_LRJ_Eta[i][0], sig_LRJ_Phi[i][0]));
                         sigLRJEtEv4.push_back(sig_LRJ_Et[i][1]);
                         sigLRJEtEv4.push_back(sig_LRJ_Et[i][0]);
+                        sigLRJPsi_REv4.push_back(psi_R_SigJet1);
+                        sigLRJPsi_REv4.push_back(psi_R_SigJet2);
                     }
                     gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJLeadingEtaValuesSignal->at(0), gFexLRJLeadingPhiValuesSignal->at(0)));
                     gFexLRJPositionSigEv4.push_back(std::make_pair(gFexLRJSubleadingEtaValuesSignal->at(0), gFexLRJSubleadingPhiValuesSignal->at(0)));
@@ -5100,6 +5952,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     std::cout << "Event 4 Sig LRJ 2 Et, Eta, Phi: " << sig_LRJ_Et[i][1] << " , " << sig_LRJ_Eta[i][1] << " , " << sig_LRJ_Phi[i][1] << "\n";
                 }
             }
+
             if(i <= evDisplayMaxSig_){
                 for(unsigned int iTopo = 0; iTopo < nInputObjectsAlgorithmConfiguration; iTopo++){
                     if(inputObjectType == "gepBasicClusters"){
@@ -5192,11 +6045,13 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             gepSubleadingWTAConeCellsTowersJetsTreeBack->GetEntry(i);
             gepSubleadingConeBasicClustersJetsTreeBack->GetEntry(i);
             gepSubleadingWTAConeBasicClustersJetsTreeBack->GetEntry(i);
+            leadingInTimeAntiKt4TruthJetsTreeBack->GetEntry(i);
 
             double backgroundEventWeight = eventWeightsValuesBack->at(0);
 
-            
-
+            if(truthAntiKt4WZSRJSubleadingEtaValuesBack->size() > 0){
+                backDeltaRLeadingSubleadingTruthJets->Fill(sqrt(calcDeltaR2(truthAntiKt4WZSRJLeadingEtaValuesBack->at(0), truthAntiKt4WZSRJLeadingPhiValuesBack->at(0), truthAntiKt4WZSRJSubleadingEtaValuesBack->at(0), truthAntiKt4WZSRJSubleadingPhiValuesBack->at(0))));
+            }
 
             double jetTaggerLeadingEta = jetTaggerLeadingLRJEtaValuesBack->at(0);
             double jetTaggerLeadingPhi= jetTaggerLeadingLRJEtaValuesBack->at(0);
@@ -5207,6 +6062,15 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             std::vector<std::array<double, 3 > > subleadingJetTaggerjFEXSubjets;
             std::vector<std::array<double, 3 > > leadingJetTaggerConeCellsTowersSubjets; 
             std::vector<std::array<double, 3 > > subleadingJetTaggerConeCellsTowersSubjets;
+
+            /*if(sampleJZSliceValuesBack == 1 && jetTaggerLeadingLRJEtValuesBack->at(0) > 150.0){
+                std::cout << "EVENT WITH SPIKE i: " << i << "\n";
+                std::cout << "background event weight: " << backgroundEventWeight << "\n";
+                std::cout << "leading pileup jet E_T, eta, phi: " << inTimeAntiKt4TruthSRJLeadingEtValuesBack->at(0) << " , " << inTimeAntiKt4TruthSRJLeadingEtaValuesBack->at(0) << " , " << inTimeAntiKt4TruthSRJLeadingPhiValuesBack->at(0) << "\n";
+                std::cout << "leading truth jet E_T, eta, phi: " << truthAntiKt4WZSRJLeadingEtValuesBack->at(0) << " , " << truthAntiKt4WZSRJLeadingEtaValuesBack->at(0) << " , " << truthAntiKt4WZSRJLeadingPhiValuesBack->at(0) << "\n";
+            } */
+
+
             double nsubjetinessSubjetEtThreshold = 25.0; // GeV
             unsigned int nSubjetjFEXJetTaggerLeading = 0;
             unsigned int nSubjetConeCellsTowersJetTaggerLeading = 0;
@@ -5214,32 +6078,32 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             unsigned int nSubjetConeCellsTowersJetTaggerSubleading = 0;
             for(unsigned int iSubjet = 0; iSubjet < jFexSRJEtaValuesBack->size(); iSubjet++ ){ 
                 double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), jFexSRJEtaValuesBack->at(iSubjet), jFexSRJPhiValuesBack->at(iSubjet))); // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
-                if(deltaRJetTaggerSubjet < 1.0 && jFexSRJEtValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+                if(deltaRJetTaggerSubjet < jetRadius && jFexSRJEtValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetjFEXJetTaggerLeading++;
                     leadingJetTaggerjFEXSubjets.push_back({jFexSRJEtValuesBack->at(iSubjet), jFexSRJEtaValuesBack->at(iSubjet), jFexSRJPhiValuesBack->at(iSubjet)});
                 }
             }
-            for(unsigned int iSubjet = 0; iSubjet < gepConeCellsTowersJetsEtaValuesBack->size(); iSubjet++ ){
-                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepConeCellsTowersJetsPhiValuesBack->at(iSubjet)));
-                if(deltaRJetTaggerSubjet < 1.0 && gepConeCellsTowersJetspTValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+            for(unsigned int iSubjet = 0; iSubjet < gepWTAConeCellsTowersJetsEtaValuesBack->size(); iSubjet++ ){
+                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesBack->at(iSubjet)));
+                if(deltaRJetTaggerSubjet < jetRadius && gepWTAConeCellsTowersJetspTValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetConeCellsTowersJetTaggerLeading++;
-                    leadingJetTaggerConeCellsTowersSubjets.push_back({gepConeCellsTowersJetspTValuesBack->at(iSubjet), gepConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepConeCellsTowersJetsPhiValuesBack->at(iSubjet)});
+                    leadingJetTaggerConeCellsTowersSubjets.push_back({gepWTAConeCellsTowersJetspTValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesBack->at(iSubjet)});
                 }
             }
 
             // Find subjets (jFEX and cone jets) - now for subleading JetTagger jet
             for(unsigned int iSubjet = 0; iSubjet < jFexSRJEtaValuesBack->size(); iSubjet++ ){
-                double deltaRJetTaggerSubjet =calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), jFexSRJEtaValuesBack->at(iSubjet), jFexSRJPhiValuesBack->at(iSubjet));
-                if(deltaRJetTaggerSubjet < 1.0 && jFexSRJEtValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), jFexSRJEtaValuesBack->at(iSubjet), jFexSRJPhiValuesBack->at(iSubjet)));
+                if(deltaRJetTaggerSubjet < jetRadius && jFexSRJEtValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetjFEXJetTaggerSubleading++;
                     subleadingJetTaggerjFEXSubjets.push_back({jFexSRJEtValuesBack->at(iSubjet), jFexSRJEtaValuesBack->at(iSubjet), jFexSRJPhiValuesBack->at(iSubjet)});
                 }
             }
-            for(unsigned int iSubjet = 0; iSubjet < gepConeCellsTowersJetsEtaValuesBack->size(); iSubjet++ ){ 
-                double deltaRJetTaggerSubjet =calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepConeCellsTowersJetsPhiValuesBack->at(iSubjet));
-                if(deltaRJetTaggerSubjet < 1.0 && gepConeCellsTowersJetspTValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
+            for(unsigned int iSubjet = 0; iSubjet < gepWTAConeCellsTowersJetsEtaValuesBack->size(); iSubjet++ ){ 
+                double deltaRJetTaggerSubjet = sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesBack->at(iSubjet)));
+                if(deltaRJetTaggerSubjet < jetRadius && gepWTAConeCellsTowersJetspTValuesBack->at(iSubjet) > nsubjetinessSubjetEtThreshold){ // FIXME ensure delta R threshold is dynamically calculated from algorithm configuration
                     nSubjetConeCellsTowersJetTaggerSubleading++;
-                    subleadingJetTaggerConeCellsTowersSubjets.push_back({gepConeCellsTowersJetspTValuesBack->at(iSubjet), gepConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepConeCellsTowersJetsPhiValuesBack->at(iSubjet)});
+                    subleadingJetTaggerConeCellsTowersSubjets.push_back({gepWTAConeCellsTowersJetspTValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsEtaValuesBack->at(iSubjet), gepWTAConeCellsTowersJetsPhiValuesBack->at(iSubjet)});
                 }
             }
 
@@ -5267,12 +6131,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             double tau_2_LeadingJetTaggerConeCellsTowersSubjet = 0; 
             double tau_2_SubleadingJetTaggerConeCellsTowersSubjet = 0; 
 
+            for(unsigned int iTower = 0; iTower < gepCellsTowersEtValuesBack->size(); iTower++){
+                back_h_JetTagger_CellsTowersEt->Fill(gepCellsTowersEtValuesBack->at(iTower));
+            }
+
             // deltaR for jFEX , ConeCellsTowers subjets
             //std::vector<double > deltaRLeadingJetTaggerjFEXSubjet;  // FIXME unneeded?
             //std::vector<double > deltaRSubleadingJetTaggerjFEXSubjet; 
             //std::vector<double > deltaRLeadingJetTaggerjFEXSubjet; 
             //std::vector<double > deltaRSubleadingJetTaggerjFEXSubjet; 
             // First for leading JetTagger LRJ
+
             for(auto& idxSigJet1 : *jetTaggerLeadingLRJMergedIndicesValuesBack){ // Loop through jet tagger merged indices
                 std::array<double, 3 > inputObjectEtEtaPhi;
                 if (inputObjectType == "gepBasicClusters"){
@@ -5407,11 +6276,184 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
             back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Fill(tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet, tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet, backgroundEventWeight);
 
-            back_h_LeadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerLeading);
-            back_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerLeading);
+            back_h_LeadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerLeading, backgroundEventWeight);
+            back_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerLeading, backgroundEventWeight);
+            back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerSubleading, backgroundEventWeight);
+            back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerSubleading, backgroundEventWeight);
 
             back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet, backgroundEventWeight);
             back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet, backgroundEventWeight);
+
+            back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+            back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+
+            //std::cout << "tau21 lead * tau21 sublead: " << (tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet) << "\n";
+            //std::cout << "for weight: " << backgroundEventWeight << "\n";
+            if(tau_1_LeadingJetTaggerConeCellsTowersSubjet == 0 || tau_1_SubleadingJetTaggerConeCellsTowersSubjet == 0){ // NOTE this is necessary, the nan values are not nominally filled
+                back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), 0.0, backgroundEventWeight);
+            }
+            else{
+                back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+            }
+            
+            back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+
+            backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+            backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+
+            backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+            backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+            // Fill 0 or 1
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, nSubjetConeCellsTowersJetTaggerSubleading, backgroundEventWeight);
+            }
+            // Fill >= 2 with just 2 for histogram purposes
+            else if(nSubjetConeCellsTowersJetTaggerLeading > 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(2, nSubjetConeCellsTowersJetTaggerSubleading, backgroundEventWeight);
+            }
+            else if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading > 1){
+                backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, 2, backgroundEventWeight);
+            }
+            else if(nSubjetConeCellsTowersJetTaggerLeading > 1 && nSubjetConeCellsTowersJetTaggerSubleading > 1){
+                backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(2, 2, backgroundEventWeight);
+            }
+
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1)){
+                back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+                back_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerLeadingLRJEtValuesBack->at(0);
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApproxCone_SubjetEt, backgroundEventWeight);
+
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesBack->at(0) * jetTaggerLeadingLRJEtValuesBack->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), d12_lead, backgroundEventWeight);
+                backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Fill(leadingJetTaggerConeCellsTowersSubjets[0][0], leadingJetTaggerConeCellsTowersSubjets[1][0], backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(subleadingJetTaggerConeCellsTowersSubjets[0][1], subleadingJetTaggerConeCellsTowersSubjets[0][2], subleadingJetTaggerConeCellsTowersSubjets[1][1], subleadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerSubleadingMassApproxCone = deltaRConeSubjets * jetTaggerSubleadingLRJEtValuesBack->at(0);
+                double jetTaggerSubleadingMassApproxCone_SubjetEt = deltaRConeSubjets * (subleadingJetTaggerConeCellsTowersSubjets[0][0] + subleadingJetTaggerConeCellsTowersSubjets[1][0]);
+                backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), jetTaggerSubleadingMassApproxCone_SubjetEt, backgroundEventWeight);
+                backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet, backgroundEventWeight);
+                backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+
+                double Z_subl = subleadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerSubleadingLRJEtValuesBack->at(0);
+                double d12_subl = sqrt(Z_subl * Z_subl * jetTaggerSubleadingLRJEtValuesBack->at(0) * jetTaggerSubleadingLRJEtValuesBack->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+
+                backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), d12_subl, backgroundEventWeight);
+                backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Fill(subleadingJetTaggerConeCellsTowersSubjets[0][0], subleadingJetTaggerConeCellsTowersSubjets[1][0], backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                double deltaRConeSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerSubleadingLRJEtValuesBack->at(0);
+                double deltaRConeSubjetsSubleading = sqrt(calcDeltaR2(subleadingJetTaggerConeCellsTowersSubjets[0][1], subleadingJetTaggerConeCellsTowersSubjets[0][2], subleadingJetTaggerConeCellsTowersSubjets[1][1], subleadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerSubleadingMassApproxCone = deltaRConeSubjetsSubleading * jetTaggerSubleadingLRJEtValuesBack->at(0);
+
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                double jetTaggerSubleadingMassApproxCone_SubjetEt = deltaRConeSubjetsSubleading * (subleadingJetTaggerConeCellsTowersSubjets[0][0] + subleadingJetTaggerConeCellsTowersSubjets[1][0]);
+                backJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), deltaRConeSubjets, deltaRConeSubjetsSubleading, backgroundEventWeight);
+                backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApproxCone_SubjetEt, jetTaggerSubleadingMassApproxCone_SubjetEt, backgroundEventWeight);
+
+                double Z_subl = subleadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerSubleadingLRJEtValuesBack->at(0);
+                double d12_subl = sqrt(Z_subl * Z_subl * jetTaggerSubleadingLRJEtValuesBack->at(0) * jetTaggerSubleadingLRJEtValuesBack->at(0) * deltaRConeSubjetsSubleading * deltaRConeSubjetsSubleading);
+                
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesBack->at(0) * jetTaggerLeadingLRJEtValuesBack->at(0) * deltaRConeSubjets * deltaRConeSubjets);
+                
+
+                backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), d12_lead, d12_subl, backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 0){
+                back_h_leading_LRJ_psi_R_squared_NoConeSubjets->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+            }   
+            else if(nSubjetConeCellsTowersJetTaggerLeading == 1){
+                back_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+
+                backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), Z_lead, backgroundEventWeight); // NOTE this is not really "z"
+            }
+            else if(nSubjetConeCellsTowersJetTaggerLeading > 1){
+                back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                // compute delta R of leading, subleading subjets:
+                double deltaRSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
+                double jetTaggerLeadingMassApprox = deltaRSubjets * jetTaggerLeadingLRJEtValuesBack->at(0);
+                double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
+                back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApprox, backgroundEventWeight);
+                back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Fill(deltaRSubjets, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApprox, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApproxCone_SubjetEt, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), deltaRSubjets, backgroundEventWeight);
+
+                double Z_lead = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+                //double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesBack->at(0) * jetTaggerLeadingLRJEtValuesBack->at(0) * deltaRSubjets * deltaRSubjets);
+                double d12_lead = sqrt(Z_lead * Z_lead * jetTaggerLeadingLRJEtValuesBack->at(0) * jetTaggerLeadingLRJEtValuesBack->at(0) * deltaRSubjets * deltaRSubjets);
+
+                backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), Z_lead, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), d12_lead, backgroundEventWeight);
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 1){
+                double Z = leadingJetTaggerConeCellsTowersSubjets[1][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+                back_h_leading_LRJ_Z->Fill(Z, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsZ->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), Z, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvs1MinusZ->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), 1 - Z, backgroundEventWeight);
+                if(nSubjetConeCellsTowersJetTaggerLeading >= 2){
+                    double Z_lead = leadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerLeadingLRJEtValuesBack->at(0);
+                    backJetTaggerLeadingLRJEtvsEtOutsideSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), 1 - (Z + Z_lead), backgroundEventWeight);
+                }
+            }
+            if(nSubjetConeCellsTowersJetTaggerSubleading >= 1){
+                double Z = subleadingJetTaggerConeCellsTowersSubjets[0][0]/jetTaggerSubleadingLRJEtValuesBack->at(0);
+                back_h_subleading_LRJ_Z->Fill(Z, backgroundEventWeight);
+                backJetTaggerSubleadingLRJEtvsZ->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), Z, backgroundEventWeight);
+            }
+
+            if(nSubjetjFEXJetTaggerLeading == 0){
+                back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+            }
+            else if(nSubjetjFEXJetTaggerLeading == 1){
+                back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+            }
+            else if(nSubjetjFEXJetTaggerLeading > 1){
+                back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingLRJPsi_RValuesBack->at(0), backgroundEventWeight);
+                // compute delta R of leading, subleading subjets:
+                double deltaRSubjets = sqrt(calcDeltaR2(leadingJetTaggerjFEXSubjets[0][1], leadingJetTaggerjFEXSubjets[0][2], leadingJetTaggerjFEXSubjets[1][1], leadingJetTaggerjFEXSubjets[1][2]));
+                double jetTaggerLeadingMassApprox = deltaRSubjets * jetTaggerLeadingLRJEtValuesBack->at(0);
+                back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingMassApprox, backgroundEventWeight);
+                backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApprox, backgroundEventWeight);
+            }
 
             //std::cout << "test 0" << "\n";
             // Fill jetTagger, gFEX, jFEX LRJs E_T by JZ Slice
@@ -5739,76 +6781,83 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_leading_LRJ_psi_R_VariableIOs_2->Fill(psi_R_BackJet1_VariableIOs_2, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R_VariableIOs_2->Fill(psi_R_BackJet2_VariableIOs_2, backgroundEventWeight);
             back_h_LRJ_psi_R_squared_VariableIOs_2->Fill(psi_R_BackJet1_VariableIOs_2 * psi_R_BackJet2_VariableIOs_2, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_2 * psi_R_BackJet2_VariableIOs_2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_2 * psi_R_BackJet2_VariableIOs_2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_2 * psi_R_BackJet2_VariableIOs_2, backgroundEventWeight);
 
             back_h_leading_LRJ_Psi_R2_VariableIOs_2->Fill(psi_R2_BackJet1_VariableIOs_2, backgroundEventWeight);
             back_h_subleading_LRJ_Psi_R2_VariableIOs_2->Fill(psi_R2_BackJet2_VariableIOs_2, backgroundEventWeight);
             back_h_LRJ_Psi_R2_squared_VariableIOs_2->Fill(psi_R2_BackJet1_VariableIOs_2 * psi_R2_BackJet2_VariableIOs_2, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_2 * psi_R2_BackJet2_VariableIOs_2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_2->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_2 * psi_R2_BackJet2_VariableIOs_2, backgroundEventWeight);
 
             back_h_leading_LRJ_psi_R_VariableIOs_3->Fill(psi_R_BackJet1_VariableIOs_3, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R_VariableIOs_3->Fill(psi_R_BackJet2_VariableIOs_3, backgroundEventWeight);
             back_h_LRJ_psi_R_squared_VariableIOs_3->Fill(psi_R_BackJet1_VariableIOs_3 * psi_R_BackJet2_VariableIOs_3, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_3 * psi_R_BackJet2_VariableIOs_3, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_3 * psi_R_BackJet2_VariableIOs_3, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_3 * psi_R_BackJet2_VariableIOs_3, backgroundEventWeight);
 
             back_h_leading_LRJ_Psi_R2_VariableIOs_3->Fill(psi_R2_BackJet1_VariableIOs_3, backgroundEventWeight);
             back_h_subleading_LRJ_Psi_R2_VariableIOs_3->Fill(psi_R2_BackJet2_VariableIOs_3, backgroundEventWeight);
             back_h_LRJ_Psi_R2_squared_VariableIOs_3->Fill(psi_R2_BackJet1_VariableIOs_3 * psi_R2_BackJet2_VariableIOs_3, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_3->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_3 * psi_R2_BackJet2_VariableIOs_3, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_3->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_3 * psi_R2_BackJet2_VariableIOs_3, backgroundEventWeight);
 
             back_h_leading_LRJ_psi_R_VariableIOs_4->Fill(psi_R_BackJet1_VariableIOs_4, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R_VariableIOs_4->Fill(psi_R_BackJet2_VariableIOs_4, backgroundEventWeight);
             back_h_LRJ_psi_R_squared_VariableIOs_4->Fill(psi_R_BackJet1_VariableIOs_4 * psi_R_BackJet2_VariableIOs_4, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_4 * psi_R_BackJet2_VariableIOs_4, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_4 * psi_R_BackJet2_VariableIOs_4, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_4 * psi_R_BackJet2_VariableIOs_4, backgroundEventWeight);
 
             back_h_leading_LRJ_Psi_R2_VariableIOs_4->Fill(psi_R2_BackJet1_VariableIOs_4, backgroundEventWeight);
             back_h_subleading_LRJ_Psi_R2_VariableIOs_4->Fill(psi_R2_BackJet2_VariableIOs_4, backgroundEventWeight);
             back_h_LRJ_Psi_R2_squared_VariableIOs_4->Fill(psi_R2_BackJet1_VariableIOs_4 * psi_R2_BackJet2_VariableIOs_4, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_4->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_4 * psi_R2_BackJet2_VariableIOs_4, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_4->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_4 * psi_R2_BackJet2_VariableIOs_4, backgroundEventWeight);
 
             back_h_leading_LRJ_psi_R_VariableIOs_5->Fill(psi_R_BackJet1_VariableIOs_5, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R_VariableIOs_5->Fill(psi_R_BackJet2_VariableIOs_5, backgroundEventWeight);
             back_h_LRJ_psi_R_squared_VariableIOs_5->Fill(psi_R_BackJet1_VariableIOs_5 * psi_R_BackJet2_VariableIOs_5, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_5 * psi_R_BackJet2_VariableIOs_5, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_5 * psi_R_BackJet2_VariableIOs_5, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1_VariableIOs_5 * psi_R_BackJet2_VariableIOs_5, backgroundEventWeight);
 
             back_h_leading_LRJ_Psi_R2_VariableIOs_5->Fill(psi_R2_BackJet1_VariableIOs_5, backgroundEventWeight);
             back_h_subleading_LRJ_Psi_R2_VariableIOs_5->Fill(psi_R2_BackJet2_VariableIOs_5, backgroundEventWeight);
             back_h_LRJ_Psi_R2_squared_VariableIOs_5->Fill(psi_R2_BackJet1_VariableIOs_5 * psi_R2_BackJet2_VariableIOs_5, backgroundEventWeight); 
-            backOfflineLeadingLRJEtvsPsi_R2_VariableIOs_5->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_5 * psi_R2_BackJet2_VariableIOs_5, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_VariableIOs_5->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1_VariableIOs_5 * psi_R2_BackJet2_VariableIOs_5, backgroundEventWeight);
 
             psi_R_BackJet1 = jetTaggerLeadingLRJPsi_RValuesBack->at(0);
             psi_R_BackJet2 = jetTaggerSubleadingLRJPsi_RValuesBack->at(0);
 
             back_h_LRJ_psi_R_squared->Fill(psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R_BackJet1 * psi_R_BackJet2, backgroundEventWeight);
             back_h_LRJ_psi_R2_squared->Fill(psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_squared->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R2_squared->Fill(std::min(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
             back_h_leading_LRJ_psi_R->Fill(psi_R_BackJet1, backgroundEventWeight);
+            if(recoAntiKt10LRJLeadingEtValuesBack->size() > 0){
+                if(recoAntiKt10LRJLeadingMassValuesBack->at(0) >= 50.0) back_h_leading_LRJ_psi_R_MassWindow->Fill(psi_R_BackJet1, backgroundEventWeight);
+                else back_h_leading_LRJ_psi_R_OutsideMassWindow->Fill(psi_R_BackJet1, backgroundEventWeight);
+                backOfflineLeadingLRJMassvsPsi_R->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
+            }
             back_h_subleading_LRJ_psi_R->Fill(psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R2_squared->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R2_squared->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_squared->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R2_squared->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 * psi_R2_BackJet2, backgroundEventWeight);
             //std::cout << "test 2" << "\n";
             // Fill with regular deltaR metric
             back_h_LRJ_psi_R_12->Fill(psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet1 / psi_R_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R2_12->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R2_12->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
             
-            backOfflineLeadingLRJEtvsPsi_R->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R_BackJet1, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_BackJet2, psi_R_BackJet1, backgroundEventWeight); // subleading filled to x-axis
+            backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Fill(psi_R_BackJet2, psi_R_BackJet1, backgroundEventWeight); // subleading filled to x-axis
             // Fill with deltaR^2 metric
             back_h_leading_LRJ_psi_R2->Fill(psi_R2_BackJet1, backgroundEventWeight);
             back_h_subleading_LRJ_psi_R2->Fill(psi_R2_BackJet2, backgroundEventWeight);
             back_h_LRJ_psi_R2_12->Fill(psi_R2_BackJet1 / psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1, backgroundEventWeight);
-            backOfflineSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet2, backgroundEventWeight);
-            backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_BackJet2, psi_R2_BackJet1, backgroundEventWeight); // subleading filled to x-axis
+            backJetTaggerLeadingLRJEtvsPsi_R2->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), psi_R2_BackJet1, backgroundEventWeight);
+            backJetTaggerSubleadingLRJEtvsPsi_R2->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), psi_R2_BackJet2, backgroundEventWeight);
+            backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Fill(psi_R2_BackJet2, psi_R2_BackJet1, backgroundEventWeight); // subleading filled to x-axis
 
             //std::cout << "test 3" << "\n";
             back_h_LRJ1_deltaEt_digitized_double->Fill((back_LRJ_Et[i][0] - jetTaggerLeadingLRJEtValuesBack->at(0)), backgroundEventWeight);
@@ -5904,6 +6953,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             back_h_SubleadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounterSubleading, backgroundEventWeight);
             backOfflineLeadingLRJEtvsSubjetMult->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundSubjetCounterLeading, backgroundEventWeight);
             backOfflineLeadingLRJMassvsSubjetMult->Fill(backgroundSubjetCounterLeading, recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+
+            backJetTaggerLeadingLRJEtvsSubleadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
 
             // Delta R, delta Et for leading gFEX, jFEX SRJ (seeds), Offline LRJs
             back_h_leading_LRJ_gFexLRJ_deltaEt->Fill(gFexLRJLeadingEtValuesBack->at(0) - jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
@@ -6117,6 +7168,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     newSeedPositionsBackEv0.push_back(std::make_pair(back_LRJ_Eta[i][1], back_LRJ_Phi[i][1]));
                     backLRJEtEv0.push_back(back_LRJ_Et[i][0]);
                     backLRJEtEv0.push_back(back_LRJ_Et[i][1]);
+                    backLRJPsi_REv0.push_back(psi_R_BackJet1);
+                    backLRJPsi_REv0.push_back(psi_R_BackJet2);
                 }
                 
             }
@@ -6133,6 +7186,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     newSeedPositionsBackEv1.push_back(std::make_pair(back_LRJ_Eta[i][1], back_LRJ_Phi[i][1]));
                     backLRJEtEv1.push_back(back_LRJ_Et[i][0]);
                     backLRJEtEv1.push_back(back_LRJ_Et[i][1]);
+                    backLRJPsi_REv1.push_back(psi_R_BackJet1);
+                    backLRJPsi_REv1.push_back(psi_R_BackJet2);
                 }
                 
             }
@@ -6149,6 +7204,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     newSeedPositionsBackEv2.push_back(std::make_pair(back_LRJ_Eta[i][1], back_LRJ_Phi[i][1]));
                     backLRJEtEv2.push_back(back_LRJ_Et[i][0]);
                     backLRJEtEv2.push_back(back_LRJ_Et[i][1]);
+                    backLRJPsi_REv2.push_back(psi_R_BackJet1);
+                    backLRJPsi_REv2.push_back(psi_R_BackJet2);
                 }
                 
             }
@@ -6165,6 +7222,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     newSeedPositionsBackEv3.push_back(std::make_pair(back_LRJ_Eta[i][1], back_LRJ_Phi[i][1]));
                     backLRJEtEv3.push_back(back_LRJ_Et[i][0]);
                     backLRJEtEv3.push_back(back_LRJ_Et[i][1]);
+                    backLRJPsi_REv3.push_back(psi_R_BackJet1);
+                    backLRJPsi_REv3.push_back(psi_R_BackJet2);
                 }
                 
             }
@@ -6181,6 +7240,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                     newSeedPositionsBackEv4.push_back(std::make_pair(back_LRJ_Eta[i][1], back_LRJ_Phi[i][1]));
                     backLRJEtEv4.push_back(back_LRJ_Et[i][0]);
                     backLRJEtEv4.push_back(back_LRJ_Et[i][1]);
+                    backLRJPsi_REv4.push_back(psi_R_BackJet1);
+                    backLRJPsi_REv4.push_back(psi_R_BackJet2);
                 }
             }
             if(i <= evDisplayMaxBack_){
@@ -6308,7 +7369,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         // Start drawing and saving histograms and plots
         TString outputFileDir = "overlayLargeRJetHistograms/";
         
-        TString modifiedOutputFileDir = "overlayLargeRJetHistograms_" + algorithmConfigurations[fileIt] + "/";
+        TString modifiedOutputFileDir = "overlayLargeRJetHistograms_" + algorithmConfigurations[fileIt] + "_SubjetEtMassApprox_25GeVThresh/";
 
         gSystem->mkdir(modifiedOutputFileDir);
 
@@ -6383,11 +7444,701 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // Start of main plotting 
 
+        // Rates vs. Eff with different selections based on the number of subjets.
+        auto out_0subjetEtScan = MakeRateVsEff(sig_h_leading_LRJ_Et_NoConeSubjets, back_h_leading_LRJ_Et_NoConeSubjets);
+
+        // Titles & colors for TH1s
+        SetAxes(out_0subjetEtScan.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_0subjetEtScan.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_0Subjets = new TCanvas("c1_0Subjets","vs threshold",1200,500);
+        c1_0Subjets->Divide(2,1);
+        c1_0Subjets->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_0subjetEtScan.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_0Subjets->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_0subjetEtScan.hRate_vsThr->Draw("HIST");
+        c1_0Subjets->SaveAs(rateVsEffFileDir + "threshold_views_0subjets_EtScan.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_0Subjets = new TCanvas("c2_0Subjets","Rate vs Eff",700,600);
+        c2_0Subjets->SetLeftMargin(0.16); c2_0Subjets->SetBottomMargin(0.16); c2_0Subjets->SetTicks(1,1);
+        c2_0Subjets->SetLogy();
+        out_0subjetEtScan.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_0Subjets->SaveAs(rateVsEffFileDir + "rate_vs_eff_0subjets_EtScan.pdf");
+
+
+        // ===================== LEADING (ET_th vs Leading psi_R scan [1 Subjet!]) =======================
+        /*auto out2D_leading_1Subjet = MakeRateVsEff_ScanRMax(
+            sigJetTaggerLeadingLRJEtvsPsi,    backJetTaggerLeadingLRJEtvsPsi      // R = psi_lead/psi_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_1Subjet.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_1Subjet.hEff_vsThr_vsR ->GetYaxis(), "#psi_{R,lead} [1 SUBJET ONLY]");
+        SetAxes(out2D_leading_1Subjet.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_1Subjet.hRate_vsThr_vsR->GetYaxis(), "#psi_{R,lead} [1 SUBJET ONLY]");
+
+        SetAxes(out2D_leading_1Subjet.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out2D_leading_1Subjet.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_1Subjet = new TCanvas("c1_leading2D_1Subjet","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_1Subjet->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_1Subjet->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_1Subjet.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max. #psi_{R,lead};Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        out2D_leading_1Subjet.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_1Subjet->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_1Subjet.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max. #psi_{R,lead};Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+        out2D_leading_1Subjet.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_1Subjet->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_psi_R_leading_1Subjet.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_1Subjet = new TCanvas("c2_leading2D_1Subjet","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_1Subjet->SetLeftMargin(0.16); c2_leading2D_1Subjet->SetBottomMargin(0.16); c2_leading2D_1Subjet->SetTicks(1,1);
+        c2_leading2D_1Subjet->SetLogy();
+        out2D_leading_1Subjet.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_1Subjet->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_1Subjet.pdf");*/
+
+        // INSTEAD SCAN ONLY OVER E_T FOR 1 SUBJET CASE!
+        auto out_1subjetEtScan = MakeRateVsEff(sig_h_leading_LRJ_Et_With1ConeSubjet, back_h_leading_LRJ_Et_With1ConeSubjet);
+
+        // Titles & colors for TH1s
+        SetAxes(out_1subjetEtScan.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_1subjetEtScan.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out_1subjetEtScan.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_1subjetEtScan.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_1subjetEtScan.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out_1subjetEtScan.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_1Subjet = new TCanvas("c1_1Subjet","vs threshold",1200,500);
+        c1_1Subjet->Divide(2,1);
+        c1_1Subjet->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_1subjetEtScan.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_1Subjet->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_1subjetEtScan.hRate_vsThr->Draw("HIST");
+        c1_1Subjet->SaveAs(rateVsEffFileDir + "threshold_views_1Subjet_EtScan.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_1Subjet = new TCanvas("c2_1Subjet","Rate vs Eff",700,600);
+        c2_1Subjet->SetLeftMargin(0.16); c2_1Subjet->SetBottomMargin(0.16); c2_1Subjet->SetTicks(1,1);
+        c2_1Subjet->SetLogy();
+        out_1subjetEtScan.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_1Subjet->SaveAs(rateVsEffFileDir + "rate_vs_eff_1Subjet_EtScan.pdf");
+
+        // ===================== LEADING (ET_th vs Mass Approx [>= 2 Subjets!]) =======================
+        auto out2D_leading_GrEq2Subjets = MakeRateVsEff_ScanRMin(
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet,    backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet      // R = psi_lead/psi_subl
+            //sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet,    backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_GrEq2Subjets.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets.hEff_vsThr_vsR ->GetYaxis(), "Approx. Mass [>= 2 SUBJETS ONLY]");
+        SetAxes(out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->GetYaxis(), "Approx. Mass [>= 2 SUBJETS ONLY]");
+
+        SetAxes(out2D_leading_GrEq2Subjets.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [>= 2 SUBJETS ONLY]");
+        SetAxes(out2D_leading_GrEq2Subjets.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [>= 2 SUBJETS ONLY]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_GrEq2Subjets = new TCanvas("c1_leading2D_GrEq2Subjets","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_GrEq2Subjets->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_GrEq2Subjets->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_GrEq2Subjets.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Signal (hh#rightarrow4b) Efficiency [>= 2 SUBJETS ONLY]");
+        out2D_leading_GrEq2Subjets.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_GrEq2Subjets->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Estimated Background Rate [Hz] [>= 2 SUBJETS ONLY]");
+        out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_GrEq2Subjets->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_approxMass_GrEq2Subjets.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_GrEq2Subjets = new TCanvas("c2_leading2D_GrEq2Subjets","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_GrEq2Subjets->SetLeftMargin(0.16); c2_leading2D_GrEq2Subjets->SetBottomMargin(0.16); c2_leading2D_GrEq2Subjets->SetTicks(1,1);
+        c2_leading2D_GrEq2Subjets->SetLogy();
+        out2D_leading_GrEq2Subjets.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_GrEq2Subjets->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_GrEq2Subjets.pdf");
+
+        // Compute combined curve & best point for rate <= 10 kHz
+        auto globalOut = MakeCombinedRateVsEff_AllSubjets(
+            out_0subjetEtScan,
+            out_1subjetEtScan,
+            out2D_leading_GrEq2Subjets,
+            sig_h_leading_LRJ_Et_NoConeSubjets,   
+            sig_h_leading_LRJ_Et_With1ConeSubjet,          
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet, // >=2 subjets signal hist
+            1.0e4  // 25 kHz
+        );
+
+        // Print best selections to stdout
+        std::cout << "Best combined point with total rate <= 10 kHz:\n"
+          << "  Global eff = " << globalOut.bestEff << "\n"
+          << "  Total rate = " << globalOut.bestRate << " Hz\n"
+          << "  Selections:\n"
+          << "    0 subjets   : ET > " << globalOut.bestEtCut_0   << " GeV\n"
+          << "    1 subjet    : ET > " << globalOut.bestEtCut_1   << " GeV\n"
+          << "    >=2 subjets : ET > " << globalOut.bestEtCut_2
+          << " GeV, massApprox > " << globalOut.bestMassCut_2 << " GeV\n"
+          << "  Per-category at best point:\n"
+          << "    0 subjets   : eff_cat = " << globalOut.bestEff0_cat
+          << ", eff_tot = " << globalOut.bestEff0_tot
+          << ", rate = " << globalOut.bestRate0 << " Hz\n"
+          << "    1 subjet    : eff_cat = " << globalOut.bestEff1_cat
+          << ", eff_tot = " << globalOut.bestEff1_tot
+          << ", rate = " << globalOut.bestRate1 << " Hz\n"
+          << "    >=2 subjets : eff_cat = " << globalOut.bestEff2_cat
+          << ", eff_tot = " << globalOut.bestEff2_tot
+          << ", rate = " << globalOut.bestRate2 << " Hz\n";
+
+
+        auto c_combined = new TCanvas("c_combined","Combined Rate vs Eff",700,600);
+        c_combined->SetLeftMargin(0.16);
+        c_combined->SetBottomMargin(0.16);
+        c_combined->SetTicks(1,1);
+        c_combined->SetLogy();
+
+        // Draw frontier
+        globalOut.gRate_vsEff_combined->Draw("AP");
+
+        // Highlight the best point
+        auto* gBest = new TGraph();
+        gBest->SetPoint(0, globalOut.bestEff, globalOut.bestRate);
+        gBest->SetMarkerStyle(20);
+        gBest->SetMarkerSize(1.5);
+        gBest->Draw("P SAME");
+
+        // Text box with selections + per-category efficiencies & rates
+        auto* pt = new TPaveText(0.18, 0.18, 0.82, 0.72, "NDC");
+        pt->SetFillColor(0);
+        pt->SetBorderSize(1);
+        pt->SetTextSize(0.03);
+
+        pt->AddText(Form("Best point (rate #leq 10 kHz):"));
+        pt->AddText(Form("  #varepsilon_{tot} = %.3f, Rate_{tot} = %.1f Hz",
+                        globalOut.bestEff, globalOut.bestRate));
+
+        pt->AddText(Form("  0 subjets: E_{T} > %.1f GeV", globalOut.bestEtCut_0));
+        pt->AddText(Form("    eff_{cat} = %.3f, eff_{tot} = %.3f, Rate_{0} = %.1f Hz",
+                        globalOut.bestEff0_cat, globalOut.bestEff0_tot, globalOut.bestRate0));
+
+        pt->AddText(Form("  1 subjet:  E_{T} > %.1f GeV", globalOut.bestEtCut_1));
+        pt->AddText(Form("    eff_{cat} = %.3f, eff_{tot} = %.3f, Rate_{1} = %.1f Hz",
+                        globalOut.bestEff1_cat, globalOut.bestEff1_tot, globalOut.bestRate1));
+
+        pt->AddText(Form("  #geq 2 subjets: E_{T} > %.1f GeV, m_{approx} > %.3f GeV",
+                        globalOut.bestEtCut_2, globalOut.bestMassCut_2));
+        pt->AddText(Form("    eff_{cat} = %.3f, eff_{tot} = %.3f, Rate_{2} = %.1f Hz",
+                        globalOut.bestEff2_cat, globalOut.bestEff2_tot, globalOut.bestRate2));
+
+        pt->Draw("SAME");
+
+        c_combined->SaveAs(rateVsEffFileDir + "rate_vs_eff_combined_allSubjets.pdf");
+
+        // Rates vs. Eff - selectons based on number of subjets using LEADING & SUBLEADING
+        // Rates vs. Eff with different selections based on the number of subjets. // FIXME might need to split the 5 different selections into 9 for each case individually - might not be independent. 
+        auto out_0subjetEtScan_LeadingEt = MakeRateVsEff(sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead, back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead);
+
+        // Titles & colors for TH1s
+        SetAxes(out_0subjetEtScan_LeadingEt.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan_LeadingEt.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan_LeadingEt.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan_LeadingEt.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_0subjetEtScan_LeadingEt.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan_LeadingEt.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_0Subjets_Leading  = new TCanvas("c1_0Subjets_Leading ","vs threshold",1200,500);
+        c1_0Subjets_Leading ->Divide(2,1);
+        c1_0Subjets_Leading ->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_0subjetEtScan_LeadingEt.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_0Subjets_Leading ->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_0subjetEtScan_LeadingEt.hRate_vsThr->Draw("HIST");
+        c1_0Subjets_Leading ->SaveAs(rateVsEffFileDir + "threshold_views_0or1subjets_EtScan_Leading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_0Subjets_Leading = new TCanvas("c2_0Subjets_Leading ","Rate vs Eff",700,600);
+        c2_0Subjets_Leading ->SetLeftMargin(0.16); c2_0Subjets_Leading ->SetBottomMargin(0.16); c2_0Subjets_Leading ->SetTicks(1,1);
+        c2_0Subjets_Leading ->SetLogy();
+        out_0subjetEtScan_LeadingEt.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_0Subjets_Leading ->SaveAs(rateVsEffFileDir + "rate_vs_eff_0or1subjets_EtScan_Leading.pdf");
+
+        // Rates vs. Eff with different selections based on the number of subjets.
+        auto out_0subjetEtScan_SubleadingEt = MakeRateVsEff(sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead, back_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead);
+
+        // Titles & colors for TH1s
+        SetAxes(out_0subjetEtScan_SubleadingEt.hEff_vsThr ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan_SubleadingEt.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [0, 1 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan_SubleadingEt.hRate_vsThr->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan_SubleadingEt.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [0, 1 SUBJETS ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_0subjetEtScan_SubleadingEt.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [0, 1 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan_SubleadingEt.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [0, 1 SUBJETS ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_0Subjets_Subleading  = new TCanvas("c1_0Subjets_Subleading ","vs threshold",1200,500);
+        c1_0Subjets_Subleading ->Divide(2,1);
+        c1_0Subjets_Subleading ->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_0subjetEtScan_SubleadingEt.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_0Subjets_Subleading ->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_0subjetEtScan_SubleadingEt.hRate_vsThr->Draw("HIST");
+        c1_0Subjets_Subleading ->SaveAs(rateVsEffFileDir + "threshold_views_0or1subjets_EtScan_Subleading.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_0Subjets_Subleading = new TCanvas("c2_0Subjets_Subleading ","Rate vs Eff",700,600);
+        c2_0Subjets_Subleading ->SetLeftMargin(0.16); c2_0Subjets_Subleading ->SetBottomMargin(0.16); c2_0Subjets_Subleading ->SetTicks(1,1);
+        c2_0Subjets_Subleading ->SetLogy();
+        out_0subjetEtScan_SubleadingEt.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_0Subjets_Subleading ->SaveAs(rateVsEffFileDir + "rate_vs_eff_0or1subjets_EtScan_Subleading.pdf");
+        
+        // ===================== LEADING (ET_th vs Mass Approx [>= 2 Subjets!]) =======================
+        auto out2D_leading_GrEq2Subjets_LeadingOnly = MakeRateVsEff_ScanRMin(
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead,    backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead      // R = psi_lead/psi_subl
+            //sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet,    backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.hEff_vsThr_vsR ->GetYaxis(), "Approx. Mass [>= 2 lead SUBJETS]");
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.hRate_vsThr_vsR->GetYaxis(), "Approx. Mass [>= 2 lead SUBJETS]");
+
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [>= 2 lead SUBJETS]");
+        SetAxes(out2D_leading_GrEq2Subjets_LeadingOnly.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [>= 2 lead SUBJETS]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_GrEq2Subjets_LeadingOnly = new TCanvas("c1_leading2D_GrEq2Subjets_LeadingOnly","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_GrEq2Subjets_LeadingOnly->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_GrEq2Subjets_LeadingOnly->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_GrEq2Subjets_LeadingOnly.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Signal (hh#rightarrow4b) Efficiency [>= 2 lead SUBJETS]");
+        out2D_leading_GrEq2Subjets_LeadingOnly.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_GrEq2Subjets_LeadingOnly->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_GrEq2Subjets_LeadingOnly.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Estimated Background Rate [Hz] [>= 2 lead SUBJETS]");
+        out2D_leading_GrEq2Subjets_LeadingOnly.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_GrEq2Subjets_LeadingOnly->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_approxMass_GrEq2Subjets_LeadingOnly.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_GrEq2Subjets_LeadingOnly = new TCanvas("c2_leading2D_GrEq2Subjets_LeadingOnly","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_GrEq2Subjets_LeadingOnly->SetLeftMargin(0.16); c2_leading2D_GrEq2Subjets_LeadingOnly->SetBottomMargin(0.16); c2_leading2D_GrEq2Subjets_LeadingOnly->SetTicks(1,1);
+        c2_leading2D_GrEq2Subjets_LeadingOnly->SetLogy();
+        out2D_leading_GrEq2Subjets_LeadingOnly.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_GrEq2Subjets_LeadingOnly->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_GrEq2Subjets_LeadingOnly.pdf");
+
+        // ===================== LEADING (ET_th vs Mass Approx [>= 2 Subjets!]) =======================
+        auto out2D_leading_GrEq2Subjets_SubleadingOnly = MakeRateVsEff_ScanRMin(
+            sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead,    backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead      // R = psi_lead/psi_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.hEff_vsThr_vsR ->GetYaxis(), "Approx. Mass [>= 2 subl SUBJETS]");
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.hRate_vsThr_vsR->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.hRate_vsThr_vsR->GetYaxis(), "Approx. Mass [>= 2 subl SUBJETS]");
+
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [>= 2 subl SUBJETS]");
+        SetAxes(out2D_leading_GrEq2Subjets_SubleadingOnly.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [>= 2 subl SUBJETS]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_GrEq2Subjets_SubleadingOnly = new TCanvas("c1_leading2D_GrEq2Subjets_SubleadingOnly","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_GrEq2Subjets_SubleadingOnly->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_GrEq2Subjets_SubleadingOnly->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_GrEq2Subjets_SubleadingOnly.hEff_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Signal (hh#rightarrow4b) Efficiency [>= 2 subl SUBJETS]");
+        out2D_leading_GrEq2Subjets_SubleadingOnly.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_GrEq2Subjets_SubleadingOnly->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_GrEq2Subjets_SubleadingOnly.hRate_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Estimated Background Rate [Hz] [>= 2 subl SUBJETS]");
+        out2D_leading_GrEq2Subjets_SubleadingOnly.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_GrEq2Subjets_SubleadingOnly->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_approxMass_GrEq2Subjets_SubleadingOnly.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_GrEq2Subjets_SubleadingOnly = new TCanvas("c2_leading2D_GrEq2Subjets_SubleadingOnly","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_GrEq2Subjets_SubleadingOnly->SetLeftMargin(0.16); c2_leading2D_GrEq2Subjets_SubleadingOnly->SetBottomMargin(0.16); c2_leading2D_GrEq2Subjets_SubleadingOnly->SetTicks(1,1);
+        c2_leading2D_GrEq2Subjets_SubleadingOnly->SetLogy();
+        out2D_leading_GrEq2Subjets_SubleadingOnly.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_GrEq2Subjets_SubleadingOnly->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_GrEq2Subjets_SubleadingOnly.pdf");
+
+
+        auto out3D_sublead_GrEq2Subjets_Lead_Sublead = MakeRateVsEff_Scan3DMin(
+            sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead,
+            backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead_Sublead);
+
+
+        // 3D efficiency histogram
+        SetAxes(out3D_sublead_GrEq2Subjets_Lead_Sublead.gRate_vsEff_frontier->GetXaxis(),
+            "Signal (hh#rightarrow4b) Efficiency [>= 2 lead & subl SUBJETS]");
+        SetAxes(out3D_sublead_GrEq2Subjets_Lead_Sublead.gRate_vsEff_frontier->GetYaxis(),
+                "Estimated Background Rate [Hz] [>= 2 lead & subl SUBJETS]");
+
+        auto c_rateEff_3D_frontier = new TCanvas("c_rateEff_3D_frontier",
+            "Rate vs Eff (3D scan frontier: sublead Et, lead mass, sublead mass)",
+            700, 600);
+        c_rateEff_3D_frontier->SetLeftMargin(0.16);
+        c_rateEff_3D_frontier->SetBottomMargin(0.16);
+        c_rateEff_3D_frontier->SetTicks(1,1);
+        c_rateEff_3D_frontier->SetLogy();
+
+        out3D_sublead_GrEq2Subjets_Lead_Sublead.gRate_vsEff_frontier->Draw("AP");
+        c_rateEff_3D_frontier->SaveAs(
+            rateVsEffFileDir + "rate_vs_eff_scan3D_frontier_subleadingEt_leadSubleadMass_GrEq2Subjets.pdf");
+
+
+        auto global5 = MakeCombinedRateVsEff_AllFive(
+            out_0subjetEtScan_LeadingEt,
+            out_0subjetEtScan_SubleadingEt,
+            out2D_leading_GrEq2Subjets_LeadingOnly,
+            out2D_leading_GrEq2Subjets_SubleadingOnly,
+            out3D_sublead_GrEq2Subjets_Lead_Sublead,
+            sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead,
+            sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead,
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead,
+            sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead,
+            sigJetTaggerSubleadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet_Lead_Sublead,
+            1.0e4  // 10 kHz
+        );
+
+        std::cout << "Best combined point with total rate <= 10 kHz:\n"
+                << "  Global eff = " << global5.bestEff << "\n"
+                << "  Total rate = " << global5.bestRate << " Hz\n"
+                << "  Selections:\n"
+                << "    (0) 0/1 subjets, leading Et   : Et > " << global5.bestEtCut_0_lead << " GeV\n"
+                << "    (1) 0/1 subjets, subleading Et: Et > " << global5.bestEtCut_0_sub  << " GeV\n"
+                << "    (2) >=2 lead subjets          : Et > " << global5.bestEtCut_lead2
+                << " GeV, m > " << global5.bestMassCut_lead2 << " GeV\n"
+                << "    (3) >=2 subl subjets          : Et > " << global5.bestEtCut_sub2
+                << " GeV, m > " << global5.bestMassCut_sub2 << " GeV\n"
+                << "    (4) >=2 lead & subl subjets   : Et_sub > " << global5.bestEtCut_3D_sub
+                << " GeV, m_lead > " << global5.bestMassCut_3D_lead
+                << " GeV, m_sub > "  << global5.bestMassCut_3D_sub << " GeV\n"
+                << "  Per-category at best point (cat, eff_cat, eff_tot, rate [Hz]):\n";
+
+        for (int c = 0; c < 5; ++c) {
+        std::cout << "    cat " << c
+                    << ": eff_cat = " << global5.bestEff_cat[c]
+                    << ", eff_tot = " << global5.bestEff_tot[c]
+                    << ", rate = "    << global5.bestRate_cat[c] << " Hz\n";
+        }
+
+        auto c_combined5 = new TCanvas("c_combined5","Combined Rate vs Eff (5 selections)",700,600);
+        c_combined5->SetLeftMargin(0.16);
+        c_combined5->SetBottomMargin(0.16);
+        c_combined5->SetTicks(1,1);
+        c_combined5->SetLogy();
+
+        global5.gRate_vsEff_combined->Draw("AP");
+
+        // highlight best point
+        auto* gBest5 = new TGraph();
+        gBest5->SetPoint(0, global5.bestEff, global5.bestRate);
+        gBest5->SetMarkerStyle(20);
+        gBest5->SetMarkerSize(1.5);
+        gBest5->Draw("P SAME");
+
+        // annotate
+        auto* pt5 = new TPaveText(0.18, 0.18, 0.85, 0.86, "NDC");
+        pt5->SetFillColor(0);
+        pt5->SetBorderSize(1);
+        pt5->SetTextSize(0.025);
+
+        pt5->AddText(Form("Best point (Rate #leq 10 kHz): #varepsilon_{tot} = %.3f, Rate = %.1f Hz",
+                  global5.bestEff, global5.bestRate));
+
+        pt5->AddText(Form("(0) lead Et (0/1 subj): Et > %.1f GeV", global5.bestEtCut_0_lead));
+        pt5->AddText(Form("    f_{sig} = %.3f, eff_cat = %.3f, eff_tot = %.3f, Rate = %.1f Hz",
+                        global5.fractionEventsPerCat[0],
+                        global5.bestEff_cat[0], global5.bestEff_tot[0], global5.bestRate_cat[0]));
+
+        pt5->AddText(Form("(1) subl Et (0/1 subj): Et > %.1f GeV", global5.bestEtCut_0_sub));
+        pt5->AddText(Form("    f_{sig} = %.3f, eff_cat = %.3f, eff_tot = %.3f, Rate = %.1f Hz",
+                        global5.fractionEventsPerCat[1],
+                        global5.bestEff_cat[1], global5.bestEff_tot[1], global5.bestRate_cat[1]));
+
+        pt5->AddText(Form("(2) lead (>=2 subj): Et > %.1f GeV, m > %.1f GeV",
+                        global5.bestEtCut_lead2, global5.bestMassCut_lead2));
+        pt5->AddText(Form("    f_{sig} = %.3f, eff_cat = %.3f, eff_tot = %.3f, Rate = %.1f Hz",
+                        global5.fractionEventsPerCat[2],
+                        global5.bestEff_cat[2], global5.bestEff_tot[2], global5.bestRate_cat[2]));
+
+        pt5->AddText(Form("(3) subl (>=2 subj): Et > %.1f GeV, m > %.1f GeV",
+                        global5.bestEtCut_sub2, global5.bestMassCut_sub2));
+        pt5->AddText(Form("    f_{sig} = %.3f, eff_cat = %.3f, eff_tot = %.3f, Rate = %.1f Hz",
+                        global5.fractionEventsPerCat[3],
+                        global5.bestEff_cat[3], global5.bestEff_tot[3], global5.bestRate_cat[3]));
+
+        pt5->AddText(Form("(4) both (>=2 subj): Et_sub > %.1f GeV, m_lead > %.1f GeV, m_sub > %.1f GeV",
+                        global5.bestEtCut_3D_sub,
+                        global5.bestMassCut_3D_lead,
+                        global5.bestMassCut_3D_sub));
+        pt5->AddText(Form("    f_{sig} = %.3f, eff_cat = %.3f, eff_tot = %.3f, Rate = %.1f Hz",
+                        global5.fractionEventsPerCat[4],
+                        global5.bestEff_cat[4], global5.bestEff_tot[4], global5.bestRate_cat[4]));
+
+
+        pt5->Draw("SAME");
+
+        c_combined5->SaveAs(rateVsEffFileDir + "rate_vs_eff_combined_5selections.pdf");
+
+
+
+        // Rates vs. Eff with different selections based on the number of subjets.
+        /*auto out_0subjetEtScan = MakeRateVsEff(sig_h_leading_LRJ_Et_NoConeSubjets, back_h_leading_LRJ_Et_NoConeSubjets);
+
+        // Titles & colors for TH1s
+        SetAxes(out_0subjetEtScan.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_0subjetEtScan.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_0subjetEtScan.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [0 SUBJETS ONLY]");
+        SetAxes(out_0subjetEtScan.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [0 SUBJETS ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_0Subjets = new TCanvas("c1_0Subjets","vs threshold",1200,500);
+        c1_0Subjets->Divide(2,1);
+        c1_0Subjets->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_0subjetEtScan.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_0Subjets->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_0subjetEtScan.hRate_vsThr->Draw("HIST");
+        c1_0Subjets->SaveAs(rateVsEffFileDir + "threshold_views_0subjets_EtScan.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_0Subjets = new TCanvas("c2_0Subjets","Rate vs Eff",700,600);
+        c2_0Subjets->SetLeftMargin(0.16); c2_0Subjets->SetBottomMargin(0.16); c2_0Subjets->SetTicks(1,1);
+        c2_0Subjets->SetLogy();
+        out_0subjetEtScan.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_0Subjets->SaveAs(rateVsEffFileDir + "rate_vs_eff_0subjets_EtScan.pdf");
+
+
+        // ===================== LEADING (ET_th vs Leading psi_R scan [1 Subjet!]) =======================
+        auto out2D_leading_1Subjet = MakeRateVsEff_ScanRMax(
+            sigJetTaggerLeadingLRJEtvsPsi,    backJetTaggerLeadingLRJEtvsPsi      // R = psi_lead/psi_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_1Subjet.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_1Subjet.hEff_vsThr_vsR ->GetYaxis(), "#psi_{R,lead} [1 SUBJET ONLY]");
+        SetAxes(out2D_leading_1Subjet.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_1Subjet.hRate_vsThr_vsR->GetYaxis(), "#psi_{R,lead} [1 SUBJET ONLY]");
+
+        SetAxes(out2D_leading_1Subjet.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out2D_leading_1Subjet.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_1Subjet = new TCanvas("c1_leading2D_1Subjet","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_1Subjet->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_1Subjet->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_1Subjet.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max. #psi_{R,lead};Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        out2D_leading_1Subjet.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_1Subjet->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_1Subjet.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max. #psi_{R,lead};Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+        out2D_leading_1Subjet.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_1Subjet->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_psi_R_leading_1Subjet.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_1Subjet = new TCanvas("c2_leading2D_1Subjet","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_1Subjet->SetLeftMargin(0.16); c2_leading2D_1Subjet->SetBottomMargin(0.16); c2_leading2D_1Subjet->SetTicks(1,1);
+        c2_leading2D_1Subjet->SetLogy();
+        out2D_leading_1Subjet.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_1Subjet->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_1Subjet.pdf");
+
+        // INSTEAD SCAN ONLY OVER E_T FOR 1 SUBJET CASE!
+        auto out_1subjetEtScan = MakeRateVsEff(sig_h_leading_LRJ_Et_With1ConeSubjet, back_h_leading_LRJ_Et_With1ConeSubjet);
+
+        // Titles & colors for TH1s
+        SetAxes(out_1subjetEtScan.hEff_vsThr ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_1subjetEtScan.hEff_vsThr ->GetYaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out_1subjetEtScan.hRate_vsThr->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out_1subjetEtScan.hRate_vsThr->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        // Titles & colors for TGraph
+        SetAxes(out_1subjetEtScan.gRate_vsEff->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [1 SUBJET ONLY]");
+        SetAxes(out_1subjetEtScan.gRate_vsEff->GetYaxis(), "Estimated Background Rate [Hz] [1 SUBJET ONLY]");
+
+        // Optional: vs-threshold views
+        auto c1_1Subjet = new TCanvas("c1_1Subjet","vs threshold",1200,500);
+        c1_1Subjet->Divide(2,1);
+        c1_1Subjet->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out_1subjetEtScan.hEff_vsThr->Draw("HIST");  // draw as histogram
+        c1_1Subjet->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogy();
+        out_1subjetEtScan.hRate_vsThr->Draw("HIST");
+        c1_1Subjet->SaveAs(rateVsEffFileDir + "threshold_views_1Subjet_EtScan.pdf");
+
+        // Main plot: rate vs efficiency (graph)
+        auto c2_1Subjet = new TCanvas("c2_1Subjet","Rate vs Eff",700,600);
+        c2_1Subjet->SetLeftMargin(0.16); c2_1Subjet->SetBottomMargin(0.16); c2_1Subjet->SetTicks(1,1);
+        c2_1Subjet->SetLogy();
+        out_1subjetEtScan.gRate_vsEff->Draw("AP");   // A=axes, P=points
+        c2_1Subjet->SaveAs(rateVsEffFileDir + "rate_vs_eff_1Subjet_EtScan.pdf");
+
+        // ===================== LEADING (ET_th vs Mass Approx [>= 2 Subjets!]) =======================
+        auto out2D_leading_GrEq2Subjets = MakeRateVsEff_ScanRMin(
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet,    backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet      // R = psi_lead/psi_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_GrEq2Subjets.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets.hEff_vsThr_vsR ->GetYaxis(), "Approx. Mass [>= 2 SUBJETS ONLY]");
+        SetAxes(out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->GetYaxis(), "Approx. Mass [>= 2 SUBJETS ONLY]");
+
+        SetAxes(out2D_leading_GrEq2Subjets.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency [>= 2 SUBJETS ONLY]");
+        SetAxes(out2D_leading_GrEq2Subjets.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz] [>= 2 SUBJETS ONLY]");
+
+        
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_GrEq2Subjets = new TCanvas("c1_leading2D_GrEq2Subjets","ET_thr vs Rmax surfaces",1200,520);
+        c1_leading2D_GrEq2Subjets->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_GrEq2Subjets->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_GrEq2Subjets.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Signal (hh#rightarrow4b) Efficiency [>= 2 SUBJETS ONLY]");
+        out2D_leading_GrEq2Subjets.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_GrEq2Subjets->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Min. Approx. Mass;Estimated Background Rate [Hz] [>= 2 SUBJETS ONLY]");
+        out2D_leading_GrEq2Subjets.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_GrEq2Subjets->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_approxMass_GrEq2Subjets.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_GrEq2Subjets = new TCanvas("c2_leading2D_GrEq2Subjets","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_GrEq2Subjets->SetLeftMargin(0.16); c2_leading2D_GrEq2Subjets->SetBottomMargin(0.16); c2_leading2D_GrEq2Subjets->SetTicks(1,1);
+        c2_leading2D_GrEq2Subjets->SetLogy();
+        out2D_leading_GrEq2Subjets.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_GrEq2Subjets->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_leading_GrEq2Subjets.pdf");
+
+        // Compute combined curve & best point for rate <= 10 kHz
+        auto globalOut = MakeCombinedRateVsEff_AllSubjets(
+            out_0subjetEtScan,
+            out_1subjetEtScan,
+            out2D_leading_GrEq2Subjets,
+            sig_h_leading_LRJ_Et_NoConeSubjets,   
+            sig_h_leading_LRJ_Et_With1ConeSubjet,          
+            sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet, // >=2 subjets signal hist
+            1.0e4  // 25 kHz
+        );
+
+        // Print best selections to stdout
+        std::cout << "Best combined point with total rate <= 10 kHz:\n"
+                << "  Global eff = " << globalOut.bestEff << "\n"
+                << "  Total rate = " << globalOut.bestRate << " Hz\n"
+                << "  Selections:\n"
+                << "    0 subjets   : ET > " << globalOut.bestEtCut_0   << " GeV\n"
+                << "    1 subjet    : ET > " << globalOut.bestEtCut_1   << " GeV\n"
+                << "    >=2 subjets : ET > " << globalOut.bestEtCut_2
+                << " GeV, massApprox > " << globalOut.bestMassCut_2 << " GeV\n";
+
+        auto c_combined = new TCanvas("c_combined","Combined Rate vs Eff",700,600);
+        c_combined->SetLeftMargin(0.16);
+        c_combined->SetBottomMargin(0.16);
+        c_combined->SetTicks(1,1);
+        c_combined->SetLogy();
+
+        // Draw all allowed combinations
+        globalOut.gRate_vsEff_combined->Draw("AP");
+
+        // Highlight the best point
+        auto* gBest = new TGraph();
+        gBest->SetPoint(0, globalOut.bestEff, globalOut.bestRate);
+        gBest->SetMarkerStyle(20);
+        gBest->SetMarkerSize(1.5);
+        gBest->Draw("P SAME");
+
+        // Add text box with the selections
+        auto* pt = new TPaveText(0.18, 0.18, 0.7, 0.45, "NDC");
+        pt->SetFillColor(0);
+        pt->SetBorderSize(1);
+        pt->AddText(Form("Best point (rate #leq 10 kHz):"));
+        pt->AddText(Form("  #varepsilon = %.3f, Rate = %.1f Hz", globalOut.bestEff, globalOut.bestRate));
+        pt->AddText(Form("  0 subjets   : E_{T} > %.1f GeV", globalOut.bestEtCut_0));
+        pt->AddText(Form("  1 subjet    : E_{T} > %.1f GeV", globalOut.bestEtCut_1));
+        pt->AddText(Form("  #geq 2 subjets : E_{T} > %.1f GeV, m_{approx} > %.1f GeV",
+                        globalOut.bestEtCut_2, globalOut.bestMassCut_2));
+        pt->Draw("SAME");
+
+        c_combined->SaveAs(rateVsEffFileDir + "rate_vs_eff_combined_allSubjets_jFEX.pdf");*/
+
 
         // ===================== LEADING (ET_th vs R_max scan) ======================= (R_max == psi_R_leading / psi_R_sublead)
         auto out2D_leading = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et,  back_h_leading_LRJ_Et,   // ET spectra
-            sig_h_LRJ_psi_R_12,    back_h_LRJ_psi_R_12      // R = psi_lead/psi_subl
+            sigJetTaggerLeadingLRJEtvsPsi_12,    backJetTaggerLeadingLRJEtvsPsi_12      // R = psi_lead/psi_subl
         );
 
         // Axis titles
@@ -6429,8 +8180,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_th vs R_max scan) =======================
         auto out2D_subl = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,  // ET spectra
-            sig_h_LRJ_psi_R_12,      back_h_LRJ_psi_R_12        // same R histos
+            sigJetTaggerSubleadingLRJEtvsPsi_12,      backJetTaggerSubleadingLRJEtvsPsi_12        // same R histos
         );
 
         // Axis titles
@@ -6469,10 +8219,58 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         out2D_subl.gRate_vsEff_all->Draw("AP");
         c2_subl2D->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_subleading.pdf");
 
+        // ===================== LEADING (ET_thr vs P_min scan) =======================
+        auto out2D_leading_Pmin = MakeRateVsEff_ScanRMin(
+            sigJetTaggerLeadingLRJEtvsPsi_R_squared,     backJetTaggerLeadingLRJEtvsPsi_R_squared       // P = psiR_lead * psiR_subl
+        );
+
+        // Axis titles
+        SetAxes(out2D_leading_Pmin.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_Pmin.hEff_vsThr_vsR ->GetYaxis(), "P_{min} = #psi_{R,lead}#times#psi_{R,subl}");
+        SetAxes(out2D_leading_Pmin.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_leading_Pmin.hRate_vsThr_vsR->GetYaxis(), "P_{min} = #psi_{R,lead}#times#psi_{R,subl}");
+
+        SetAxes(out2D_leading_Pmin.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_leading_Pmin.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        //lead_ET_Pmin_Scan_RatesVsEff_vec.push_back(out2D_leading.gRate_vsEff_all);
+        lead_ET_Pmin_Scan_RatesVsEff_vec.push_back(
+            (TGraphErrors*) out2D_leading_Pmin.gRate_vsEff_all->Clone(
+                Form("%s_clone_%u", out2D_leading.gRate_vsEff_all->GetName(), fileIt)
+            )
+        );
+
+        out2D_leading_Pmin.hEff_vsThr_vsR->GetZaxis()->SetTitleOffset(1.4);
+        out2D_leading_Pmin.hRate_vsThr_vsR->GetZaxis()->SetTitleOffset(1.6);
+
+        // 2D "vs-threshold & Pmin" views (surfaces)
+        auto c1_leading2D_Pmin = new TCanvas("c1_leading2D_Pmin","ET_thr vs Pmin surfaces (leading)",1200,520);
+        c1_leading2D_Pmin->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_Pmin->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_leading_Pmin.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];P_{min};Signal (hh#rightarrow4b) Efficiency");
+        out2D_leading_Pmin.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_Pmin->cd(2);
+        gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.2); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_leading_Pmin.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];P_{min};Estimated Background Rate [Hz]");
+        out2D_leading_Pmin.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_Pmin->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmin_leading.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_Pmin = new TCanvas("c2_leading2D_Pmin","Rate vs Eff (2D scan, leading, Pmin)",700,600);
+        c2_leading2D_Pmin->SetLeftMargin(0.16); c2_leading2D_Pmin->SetBottomMargin(0.16); c2_leading2D_Pmin->SetTicks(1,1);
+        c2_leading2D_Pmin->SetLogy();
+        out2D_leading_Pmin.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_Pmin->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmin_leading.pdf");
+
         // ===================== LEADING (ET_thr vs P_max scan) =======================
         auto out2D_leading_Pmax = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et,        back_h_leading_LRJ_Et,        // ET spectra
-            sig_h_LRJ_psi_R_squared,     back_h_LRJ_psi_R_squared       // P = psiR_lead * psiR_subl
+            sigJetTaggerLeadingLRJEtvsPsi_R_squared,     backJetTaggerLeadingLRJEtvsPsi_R_squared       // P = psiR_lead * psiR_subl
         );
 
         // Axis titles
@@ -6522,8 +8320,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_thr vs P_max scan) ======================
         auto out2D_subl_Pmax = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et,     back_h_subleading_LRJ_Et,     // ET spectra
-            sig_h_LRJ_psi_R_squared,     back_h_LRJ_psi_R_squared      // same P histos
+            sigJetTaggerSubleadingLRJEtvsPsi_R_squared,     backJetTaggerSubleadingLRJEtvsPsi_R_squared      // same P histos
         );
 
         // Axis titles
@@ -6571,8 +8368,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ===================== LEADING (ET_thr vs P_max scan) =======================
         auto out2D_leading_Pmax_R2 = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et,        back_h_leading_LRJ_Et,        // ET spectra
-            sig_h_LRJ_psi_R2_squared,     back_h_LRJ_psi_R2_squared       // P = psiR_lead * psiR_subl
+            sigJetTaggerLeadingLRJEtvsPsi_R2_squared,     backJetTaggerLeadingLRJEtvsPsi_R2_squared       // P = psiR_lead * psiR_subl
         );
 
         // Axis titles
@@ -6603,20 +8399,19 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         gPad->SetLogz();
         out2D_leading_Pmax_R2.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];P_{max};Estimated Background Rate [Hz]");
         out2D_leading_Pmax_R2.hRate_vsThr_vsR->Draw("COLZ");
-        c1_leading2D_Pmax_R2->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_leading.pdf");
+        c1_leading2D_Pmax_R2->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_leading_R2.pdf");
 
         // Main plot: rate vs efficiency (all points from the 2D scan)
         auto c2_leading2D_Pmax_R2 = new TCanvas("c2_leading2D_Pmax_R2","Rate vs Eff (2D scan, leading, Pmax)",700,600);
         c2_leading2D_Pmax_R2->SetLeftMargin(0.16); c2_leading2D_Pmax_R2->SetBottomMargin(0.16); c2_leading2D_Pmax_R2->SetTicks(1,1);
         c2_leading2D_Pmax_R2->SetLogy();
         out2D_leading_Pmax.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
-        c2_leading2D_Pmax_R2->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_leading.pdf");
+        c2_leading2D_Pmax_R2->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_leading_R2.pdf");
 
 
         // ================== SUBLEADING (ET_thr vs P_max scan) ======================
         auto out2D_subl_Pmax_R2 = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et,     back_h_subleading_LRJ_Et,     // ET spectra
-            sig_h_LRJ_psi_R2_squared,     back_h_LRJ_psi_R2_squared      // same P histos
+            sigJetTaggerSubleadingLRJEtvsPsi_R2_squared,     backJetTaggerSubleadingLRJEtvsPsi_R2_squared      // same P histos
         );
 
         // Axis titles
@@ -6646,19 +8441,18 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         gPad->SetLogz();
         out2D_subl_Pmax_R2.hRate_vsThr_vsR->SetTitle(";Subleading JetTagger LRJ E_{T} threshold [GeV];P_{max};Estimated Background Rate [Hz]");
         out2D_subl_Pmax_R2.hRate_vsThr_vsR->Draw("COLZ");
-        c1_subl2D_Pmax_R2->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_subleading.pdf");
+        c1_subl2D_Pmax_R2->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_Pmax_subleading_R2.pdf");
 
         // Main plot: rate vs efficiency (all points)
         auto c2_subl2D_Pmax_R2 = new TCanvas("c2_subl2D_Pmax_R2","Rate vs Eff (2D scan, subleading, Pmax)",700,600);
         c2_subl2D_Pmax_R2->SetLeftMargin(0.16); c2_subl2D_Pmax_R2->SetBottomMargin(0.16); c2_subl2D_Pmax_R2->SetTicks(1,1);
         c2_subl2D_Pmax_R2->SetLogy();
         out2D_subl_Pmax_R2.gRate_vsEff_all->Draw("AP");
-        c2_subl2D_Pmax_R2->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_subleading.pdf");
+        c2_subl2D_Pmax_R2->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_Pmax_subleading_R2.pdf");
 
         // ===================== LEADING (ET_thr vs P_max scan, N=2) =======================
         auto out2D_leading_Pmax_N2 = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et, back_h_leading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_2, back_h_LRJ_psi_R_squared_VariableIOs_2
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2, backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2
         );
 
         SetAxes(out2D_leading_Pmax_N2.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
@@ -6694,8 +8488,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_thr vs P_max scan, N=2) ======================
         auto out2D_subl_Pmax_N2 = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_2, back_h_LRJ_psi_R_squared_VariableIOs_2
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2, backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_2
         );
 
         SetAxes(out2D_subl_Pmax_N2.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
@@ -6732,8 +8525,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ===================== LEADING (ET_thr vs P_max scan, N=3) =======================
         auto out2D_leading_Pmax_N3 = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et, back_h_leading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_3, back_h_LRJ_psi_R_squared_VariableIOs_3
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3, backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3
         );
 
         // Axis titles
@@ -6774,8 +8566,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_thr vs P_max scan, N=3) ======================
         auto out2D_subl_Pmax_N3 = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_3, back_h_LRJ_psi_R_squared_VariableIOs_3
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3, backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_3
         );
 
         SetAxes(out2D_subl_Pmax_N3.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
@@ -6812,8 +8603,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ===================== LEADING (ET_thr vs P_max scan, N=4) =======================
         auto out2D_leading_Pmax_N4 = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et, back_h_leading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_4, back_h_LRJ_psi_R_squared_VariableIOs_4
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4, backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4
         );
 
         // Axis titles
@@ -6854,8 +8644,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_thr vs P_max scan, N=4) ======================
         auto out2D_subl_Pmax_N4 = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_4, back_h_LRJ_psi_R_squared_VariableIOs_4
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4, backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_4
         );
 
         SetAxes(out2D_subl_Pmax_N4.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
@@ -6893,8 +8682,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ===================== LEADING (ET_thr vs P_max scan, N=5) =======================
         auto out2D_leading_Pmax_N5 = MakeRateVsEff_ScanRMax(
-            sig_h_leading_LRJ_Et, back_h_leading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_5, back_h_LRJ_psi_R_squared_VariableIOs_5
+            sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5, backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5
         );
 
         // Axis titles
@@ -6935,8 +8723,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         // ================== SUBLEADING (ET_thr vs P_max scan, N=5) ======================
         auto out2D_subl_Pmax_N5 = MakeRateVsEff_ScanRMax(
-            sig_h_subleading_LRJ_Et, back_h_subleading_LRJ_Et,
-            sig_h_LRJ_psi_R_squared_VariableIOs_5, back_h_LRJ_psi_R_squared_VariableIOs_5
+            sigJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5, backJetTaggerSubleadingLRJEtvsPsi_R_VariableIOs_5
         );
 
         SetAxes(out2D_subl_Pmax_N5.hEff_vsThr_vsR ->GetXaxis(), "Subleading JetTagger LRJ E_{T} threshold [GeV]");
@@ -7611,6 +9398,182 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         cLeadOverlay_tau21_jFEX_leading->SaveAs(rateVsEffFileDir + "overlay_leading_1D_vs_2D_tau21_jFEX_scan.pdf");
 
 
+        // SCAN ON tau2/tau1_lead * tau2/tau1_sublead
+        // ================== Leading (ET_thr vs tau2/tau1 scan) ======================
+        auto out2D_lead_tau21_jFEXsubjetProduct = MakeRateVsEff_ScanRMax(
+            sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt, back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt
+        );
+
+        // Axis titles
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.hEff_vsThr_vsR ->GetYaxis(), " #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.}");
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.hRate_vsThr_vsR->GetYaxis(), " Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.}");
+
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_lead_tau21_jFEXsubjetProduct.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_tau21_jFEX_Product = new TCanvas("c1_leading2D_tau21_jFEX_Product","ET_thr vs tau21 surfaces",1200,520);
+        c1_leading2D_tau21_jFEX_Product->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_tau21_jFEX_Product->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_lead_tau21_jFEXsubjetProduct.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.};Signal (hh#rightarrow4b) Efficiency");
+        out2D_lead_tau21_jFEXsubjetProduct.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_tau21_jFEX_Product->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_lead_tau21_jFEXsubjetProduct.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV]; Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.};Estimated Background Rate [Hz]");
+        out2D_lead_tau21_jFEXsubjetProduct.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_tau21_jFEX_Product->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_tau21_leading_jFEX_Product.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_tau21_jFEX_Product = new TCanvas("c2_leading2D_tau21_jFEX_Product","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_tau21_jFEX_Product->SetLeftMargin(0.16); c2_leading2D_tau21_jFEX_Product->SetBottomMargin(0.16); c2_leading2D_tau21_jFEX_Product->SetTicks(1,1);
+        c2_leading2D_tau21_jFEX_Product->SetLogy();
+        out2D_lead_tau21_jFEXsubjetProduct.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_tau21_jFEX_Product->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_tau21_leading_jFEX_Product.pdf");
+        
+        // ===================== OVERLAY: LEADING (ET-only vs 2D tau21 max scan) =====================
+        TGraph*       gLead1D_tau21max_jFEX_Product = out.gRate_vsEff;
+        TGraphErrors* gLead2D_tau21max_jFEX_Product = out2D_lead_tau21_jFEXsubjetProduct.gRate_vsEff_all;
+
+        gLead1D_tau21max_jFEX_Product->SetMarkerStyle(20);
+        gLead1D_tau21max_jFEX_Product->SetMarkerSize(1.8);
+        gLead1D_tau21max_jFEX_Product->SetMarkerColor(kRed+1);
+        gLead1D_tau21max_jFEX_Product->SetLineColor(kRed+1);
+        gLead1D_tau21max_jFEX_Product->SetLineWidth(2);
+
+        gLead2D_tau21max_jFEX_Product->SetMarkerStyle(24);
+        gLead2D_tau21max_jFEX_Product->SetMarkerSize(0.9);
+        gLead2D_tau21max_jFEX_Product->SetMarkerColor(kBlack);
+        gLead2D_tau21max_jFEX_Product->SetLineColor(kBlack);
+        gLead2D_tau21max_jFEX_Product->SetLineWidth(1);
+
+        auto cLeadOverlay_tau21_jFEX_leading_Product = new TCanvas("cLeadOverlay_tau21_jFEX_leading_Product","Leading: 1D vs 2D Pmax Scan (N=5)",700,600);
+        cLeadOverlay_tau21_jFEX_leading_Product->SetLeftMargin(0.16);
+        cLeadOverlay_tau21_jFEX_leading_Product->SetBottomMargin(0.16);
+        cLeadOverlay_tau21_jFEX_leading_Product->SetTicks(1,1);
+        cLeadOverlay_tau21_jFEX_leading_Product->SetLogy();
+
+        gLead1D_tau21max_jFEX_Product->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gLead1D_tau21max_jFEX_Product->Draw("AP");
+        gLead2D_tau21max_jFEX_Product->Draw("P SAME");
+
+        auto legLead_tau21_jFEX_leading_Product = new TLegend(0.40,0.26,0.78,0.42);
+        legLead_tau21_jFEX_leading_Product->SetBorderSize(0); legLead_tau21_jFEX_leading_Product->SetFillStyle(0); legLead_tau21_jFEX_leading_Product->SetTextSize(0.04);
+        legLead_tau21_jFEX_leading_Product->AddEntry(gLead1D_tau21max_jFEX_Product, "Leading: E_{T}^{thr} only",            "lp");
+        legLead_tau21_jFEX_leading_Product->AddEntry(gLead2D_tau21max_jFEX_Product, "Leading: (E_{T}^{thr}, Max #tau_{2} / #tau_{1}) scan", "p");
+        legLead_tau21_jFEX_leading_Product->Draw();
+
+        TLine *line_tau21_jFEX_leading_Product  = new TLine(gLead1D_tau21max_jFEX_Product->GetXaxis()->GetXmin(), 1e4, gLead1D_tau21max_jFEX_Product->GetXaxis()->GetXmax(), 1e4);
+        line_tau21_jFEX_leading_Product->SetLineColor(kGray + 2);
+        line_tau21_jFEX_leading_Product->SetLineStyle(2);
+        line_tau21_jFEX_leading_Product->SetLineWidth(2);
+        line_tau21_jFEX_leading_Product->Draw("same");
+
+        cLeadOverlay_tau21_jFEX_leading_Product->SaveAs(rateVsEffFileDir + "overlay_leading_1D_vs_2D_tau21_jFEX_scan_Product.pdf");
+
+        // SCAN ON tau2/tau1_lead * tau2/tau1_sublead
+        // ================== Leading (ET_thr vs tau2/tau1 scan) ======================
+        auto out2D_lead_tau21_ConesubjetProduct = MakeRateVsEff_ScanRMax(
+            sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt, back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt
+        );
+
+        // Axis titles
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.hEff_vsThr_vsR ->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.hEff_vsThr_vsR ->GetYaxis(), " #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.}");
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.hRate_vsThr_vsR->GetXaxis(), "Leading JetTagger LRJ E_{T} threshold [GeV]");
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.hRate_vsThr_vsR->GetYaxis(), " Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.}");
+
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.gRate_vsEff_all->GetXaxis(), "Signal (hh#rightarrow4b) Efficiency");
+        SetAxes(out2D_lead_tau21_ConesubjetProduct.gRate_vsEff_all->GetYaxis(), "Estimated Background Rate [Hz]");
+
+        // 2D "vs-threshold & Rmax" views (surfaces)
+        auto c1_leading2D_tau21_Cone_Product = new TCanvas("c1_leading2D_tau21_Cone_Product","ET_thr vs tau21 surfaces",1200,520);
+        c1_leading2D_tau21_Cone_Product->Divide(2,1);
+
+        // Efficiency surface
+        c1_leading2D_tau21_Cone_Product->cd(1);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.18); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        out2D_lead_tau21_ConesubjetProduct.hEff_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV];Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.};Signal (hh#rightarrow4b) Efficiency");
+        out2D_lead_tau21_ConesubjetProduct.hEff_vsThr_vsR->Draw("COLZ");
+
+        // Background-rate surface (log Z)
+        c1_leading2D_tau21_Cone_Product->cd(2);
+        gPad->SetLeftMargin(0.16); gPad->SetRightMargin(0.16); gPad->SetBottomMargin(0.16); gPad->SetTicks(1,1);
+        gPad->SetLogz();
+        out2D_lead_tau21_ConesubjetProduct.hRate_vsThr_vsR->SetTitle(";Leading JetTagger LRJ E_{T} threshold [GeV]; Max #tau_{2,lead}/#tau_{1,lead} #times #tau_{2,subl.}/#tau_{1,subl.};Estimated Background Rate [Hz]");
+        out2D_lead_tau21_ConesubjetProduct.hRate_vsThr_vsR->Draw("COLZ");
+        c1_leading2D_tau21_Cone_Product->SaveAs(rateVsEffFileDir + "surfaces_ETthr_vs_tau21_leading_Cone_Product.pdf");
+
+        // Main plot: rate vs efficiency (all points from the 2D scan)
+        auto c2_leading2D_tau21_Cone_Product = new TCanvas("c2_leading2D_tau21_Cone_Product","Rate vs Eff (2D scan, leading)",700,600);
+        c2_leading2D_tau21_Cone_Product->SetLeftMargin(0.16); c2_leading2D_tau21_Cone_Product->SetBottomMargin(0.16); c2_leading2D_tau21_Cone_Product->SetTicks(1,1);
+        c2_leading2D_tau21_Cone_Product->SetLogy();
+        out2D_lead_tau21_ConesubjetProduct.gRate_vsEff_all->Draw("AP");   // A=axes, P=points
+        c2_leading2D_tau21_Cone_Product->SaveAs(rateVsEffFileDir + "rate_vs_eff_scan2D_tau21_leading_Cone_Product.pdf");
+        
+        // ===================== OVERLAY: LEADING (ET-only vs 2D tau21 max scan) =====================
+        TGraph*       gLead1D_tau21max_Cone_Product = out.gRate_vsEff;
+        TGraphErrors* gLead2D_tau21max_Cone_Product = out2D_lead_tau21_ConesubjetProduct.gRate_vsEff_all;
+
+        gLead1D_tau21max_Cone_Product->SetMarkerStyle(20);
+        gLead1D_tau21max_Cone_Product->SetMarkerSize(1.8);
+        gLead1D_tau21max_Cone_Product->SetMarkerColor(kRed+1);
+        gLead1D_tau21max_Cone_Product->SetLineColor(kRed+1);
+        gLead1D_tau21max_Cone_Product->SetLineWidth(2);
+
+        gLead2D_tau21max_Cone_Product->SetMarkerStyle(24);
+        gLead2D_tau21max_Cone_Product->SetMarkerSize(0.9);
+        gLead2D_tau21max_Cone_Product->SetMarkerColor(kBlack);
+        gLead2D_tau21max_Cone_Product->SetLineColor(kBlack);
+        gLead2D_tau21max_Cone_Product->SetLineWidth(1);
+
+        auto cLeadOverlay_tau21_Cone_leading_Product = new TCanvas("cLeadOverlay_tau21_Cone_leading_Product","Leading: 1D vs 2D Pmax Scan (N=5)",700,600);
+        cLeadOverlay_tau21_Cone_leading_Product->SetLeftMargin(0.16);
+        cLeadOverlay_tau21_Cone_leading_Product->SetBottomMargin(0.16);
+        cLeadOverlay_tau21_Cone_leading_Product->SetTicks(1,1);
+        cLeadOverlay_tau21_Cone_leading_Product->SetLogy();
+
+        gLead1D_tau21max_Cone_Product->SetTitle("Trigger Rate vs Signal Efficiency;Signal (hh#rightarrow4b) Efficiency;Estimated Background Rate [Hz]");
+        gLead1D_tau21max_Cone_Product->Draw("AP");
+        gLead2D_tau21max_Cone_Product->Draw("P SAME");
+
+        auto legLead_tau21_Cone_leading_Product = new TLegend(0.40,0.26,0.78,0.42);
+        legLead_tau21_Cone_leading_Product->SetBorderSize(0); legLead_tau21_Cone_leading_Product->SetFillStyle(0); legLead_tau21_Cone_leading_Product->SetTextSize(0.04);
+        legLead_tau21_Cone_leading_Product->AddEntry(gLead1D_tau21max_Cone_Product, "Leading: E_{T}^{thr} only",            "lp");
+        legLead_tau21_Cone_leading_Product->AddEntry(gLead2D_tau21max_Cone_Product, "Leading: (E_{T}^{thr}, Max #tau_{2} / #tau_{1}) scan", "p");
+        legLead_tau21_Cone_leading_Product->Draw();
+
+        TLine *line_tau21_Cone_leading_Product  = new TLine(gLead1D_tau21max_Cone_Product->GetXaxis()->GetXmin(), 1e4, gLead1D_tau21max_Cone_Product->GetXaxis()->GetXmax(), 1e4);
+        line_tau21_Cone_leading_Product->SetLineColor(kGray + 2);
+        line_tau21_Cone_leading_Product->SetLineStyle(2);
+        line_tau21_Cone_leading_Product->SetLineWidth(2);
+        line_tau21_Cone_leading_Product->Draw("same");
+
+        {auto best2D = FindBestPointBelowRate(gLead2D_tau21max_Cone_Product, 1e4);
+        double bestEff_2D = best2D.first;
+        double bestRate_2D = best2D.second;
+
+        // Draw vertical line at that efficiency
+        cLeadOverlay_Pmax->Update();
+        double ymin = gPad->GetUymin();
+        double ymax = gPad->GetUymax();
+
+        TLine *vline_2D = new TLine(bestEff_2D, ymin, bestEff_2D, 1e4);
+        vline_2D->SetLineColor(kGray + 2);
+        vline_2D->SetLineStyle(2);
+        vline_2D->SetLineWidth(2);
+        vline_2D->Draw("SAME");}
+
+        cLeadOverlay_tau21_Cone_leading_Product->SaveAs(rateVsEffFileDir + "overlay_leading_1D_vs_2D_tau21_Cone_scan_Product.pdf");
+
+
         //gSystem->RedirectOutput(0); // back to normal
         // Save histograms
         TCanvas c;
@@ -7718,6 +9681,56 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_JetTagger.pdf");
+
+        TLegend *legBackPsi_R_MassOverlay_Back = new TLegend(0.6,0.8,0.85,0.95);
+        legBackPsi_R_MassOverlay_Back->SetTextSize(0.025);
+        
+        back_h_leading_LRJ_psi_R->Scale(1.0 / back_h_leading_LRJ_psi_R->Integral());
+        back_h_leading_LRJ_psi_R_MassWindow->Scale(1.0 / back_h_leading_LRJ_psi_R_MassWindow->Integral());
+        back_h_leading_LRJ_psi_R_OutsideMassWindow->Scale(1.0 / back_h_leading_LRJ_psi_R_OutsideMassWindow->Integral());
+
+        back_h_leading_LRJ_psi_R->SetLineStyle(kSolid);
+        back_h_leading_LRJ_psi_R->SetLineStyle(kBlack);
+        back_h_leading_LRJ_psi_R_MassWindow->SetLineStyle(kDashed);
+        back_h_leading_LRJ_psi_R_MassWindow->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_OutsideMassWindow->SetLineStyle(kDashed);
+        back_h_leading_LRJ_psi_R_OutsideMassWindow->SetLineColor(kBlue);
+
+        back_h_leading_LRJ_psi_R->Draw("HIST");
+        back_h_leading_LRJ_psi_R_MassWindow->Draw("HIST SAME");
+        back_h_leading_LRJ_psi_R_OutsideMassWindow->Draw("HIST SAME");
+        legBackPsi_R_MassOverlay_Back->AddEntry(back_h_leading_LRJ_psi_R, "All Events", "l");
+        legBackPsi_R_MassOverlay_Back->AddEntry(back_h_leading_LRJ_psi_R_MassWindow, "m_{Lead. Offline} >= 50 GeV", "l");
+        legBackPsi_R_MassOverlay_Back->AddEntry(back_h_leading_LRJ_psi_R_OutsideMassWindow, "m_{Lead. Offline} < 50 GeV", "l");
+        legBackPsi_R_MassOverlay_Back->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_JetTagger_Back_MassOverlay.pdf");
+
+        TLegend *legBackPsi_R_MassOverlay_Sig = new TLegend(0.7,0.8,0.85,0.95);
+        legBackPsi_R_MassOverlay_Sig->SetTextSize(0.025);
+
+        sig_h_leading_LRJ_psi_R->Scale(1.0 / sig_h_leading_LRJ_psi_R->Integral());
+        sig_h_leading_LRJ_psi_R_MassWindow->Scale(1.0 / sig_h_leading_LRJ_psi_R_MassWindow->Integral());
+        sig_h_leading_LRJ_psi_R_OutsideMassWindow->Scale(1.0 / sig_h_leading_LRJ_psi_R_OutsideMassWindow->Integral());
+        
+        sig_h_leading_LRJ_psi_R->SetLineStyle(kSolid);
+        sig_h_leading_LRJ_psi_R->SetLineStyle(kBlack);
+        sig_h_leading_LRJ_psi_R_MassWindow->SetLineColor(kRed);
+        sig_h_leading_LRJ_psi_R_MassWindow->SetLineStyle(kDashed);
+        sig_h_leading_LRJ_psi_R_OutsideMassWindow->SetLineColor(kBlue);
+        sig_h_leading_LRJ_psi_R_OutsideMassWindow->SetLineStyle(kDashed);
+
+        sig_h_leading_LRJ_psi_R->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_OutsideMassWindow->Draw("HIST SAME");
+        sig_h_leading_LRJ_psi_R_MassWindow->Draw("HIST SAME");
+        legBackPsi_R_MassOverlay_Sig->AddEntry(sig_h_leading_LRJ_psi_R, "All Events", "l");
+        legBackPsi_R_MassOverlay_Sig->AddEntry(sig_h_leading_LRJ_psi_R_MassWindow, "m_{Lead. Offline} in [100, 150] GeV", "l");
+        legBackPsi_R_MassOverlay_Sig->AddEntry(sig_h_leading_LRJ_psi_R_OutsideMassWindow, "m_{Lead. Offline} outside [100, 150] GeV", "l");
+        legBackPsi_R_MassOverlay_Sig->Draw();
+        c.SaveAs(modifiedOutputFileDir + "leading_LRJ_psi_R_JetTagger_Signal_MassOverlay.pdf");
+        
+        //sigOfflineLeadingLRJMassvsPsi_R->Draw("COLZ");
+        //sigOfflineLeadingLRJMassvsPsi_R->Scale(1.0 / sigOfflineLeadingLRJMassvsPsi_R->Integral());
+        //c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsPsi_R.pdf");
 
         sig_h_leading_LRJ_psi_R_VariableIOs_2->Scale(1.0 / sig_h_leading_LRJ_psi_R_VariableIOs_2->Integral());
         back_h_leading_LRJ_psi_R_VariableIOs_2->Scale(1.0 / back_h_leading_LRJ_psi_R_VariableIOs_2->Integral());
@@ -7993,6 +10006,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         cLogYLogX.SaveAs(modifiedOutputFileDir + "JetTagger_Leading_MergedIO_Et.pdf");
 
+        sig_h_JetTagger_CellsTowersEt->SetLineColor(kRed);
+        back_h_JetTagger_CellsTowersEt->SetLineColor(kBlue);
+        back_h_JetTagger_CellsTowersEt->Scale(1.0 / sumOfBackgroundEventWeight);
+        back_h_JetTagger_CellsTowersEt->Draw("HIST");
+        sig_h_JetTagger_CellsTowersEt->Scale(1.0 / num_processed_events_signal);
+        sig_h_JetTagger_CellsTowersEt->Draw("HIST SAME");
+        leg->Draw();
+        cLogYLogX.SaveAs(modifiedOutputFileDir + "cellsTowersEtByEvent.pdf");
+        
+
         sig_h_JetTagger_Subleading_MergedIO_Et->SetLineColor(kRed);
         back_h_JetTagger_Subleading_MergedIO_Et->SetLineColor(kBlue);
         back_h_JetTagger_Subleading_MergedIO_Et->Scale(1.0 / sumOfBackgroundEventWeight);
@@ -8020,7 +10043,25 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Scale(1.0 / sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Integral());
         sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Draw("HIST SAME");
         leg->Draw();
-        cLogY2.SaveAs(modifiedOutputFileDir + "LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity.pdf"); // FIXME add subleading subjet mult. too
+        cLogY2.SaveAs(modifiedOutputFileDir + "LeadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity.pdf");
+
+        sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->SetLineColor(kRed);
+        back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->SetLineColor(kBlue);
+        back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Scale(1.0 / back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Integral());
+        back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Draw("HIST");
+        sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Scale(1.0 / sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Integral());
+        sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity.pdf");
+
+        sig_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->SetLineColor(kRed);
+        back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->SetLineColor(kBlue);
+        back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Scale(1.0 / back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Integral());
+        back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Draw("HIST");
+        sig_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Scale(1.0 / sig_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Integral());
+        sig_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity.pdf");
 
         sig_h_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1->SetLineColor(kRed);
         back_h_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1->SetLineColor(kBlue);
@@ -8058,6 +10099,24 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_12.pdf"); 
 
+        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->SetLineColor(kRed);
+        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->SetLineColor(kBlue);
+        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Scale(1.0 / back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Integral());
+        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Draw("HIST");
+        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Scale(1.0 / sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Integral());
+        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "JetTaggerLRJ_jFEX_Subjet_Tau_21_Product.pdf"); 
+        
+        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->SetLineColor(kRed);
+        back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->SetLineColor(kBlue);
+        back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Scale(1.0 / back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Integral());
+        back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Draw("HIST");
+        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Scale(1.0 / sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Integral());
+        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "JetTaggerLRJ_Cone_Subjet_Tau_21_Product.pdf"); 
+        
         sig_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1->SetLineColor(kRed);
         back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1->SetLineColor(kBlue);
         back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1->Scale(1.0 / back_h_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1->Integral());
@@ -8094,7 +10153,218 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         leg->Draw();
         cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_12.pdf"); 
 
-        
+        back_h_leading_LRJ_psi_R_squared_NoConeSubjets->Draw("HIST");
+        cLogY2.SaveAs(modifiedOutputFileDir + "Back_Leading_LRJ_psi_R_squared_NoConeSubjets.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->Draw("HIST");
+        cLogY2.SaveAs(modifiedOutputFileDir + "Sig_Leading_LRJ_psi_R_squared_NoConeSubjets.pdf"); 
+
+        back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Draw("HIST");
+        cLogY2.SaveAs(modifiedOutputFileDir + "Back_Leading_LRJ_psi_R_squared_NojFEXSubjets.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Draw("HIST");
+        cLogY2.SaveAs(modifiedOutputFileDir + "Sig_Leading_LRJ_psi_R_squared_NojFEXSubjets.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_NoConeSubjets->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_NoConeSubjets->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_NoConeSubjets->Integral());
+        back_h_leading_LRJ_psi_R_squared_NoConeSubjets->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->Integral());
+        sig_h_leading_LRJ_psi_R_squared_NoConeSubjets->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_NoConeSubjets.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Integral());
+        back_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Integral());
+        sig_h_leading_LRJ_psi_R_squared_NojFEXSubjets->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_NojFEXSubjets.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_With1ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Integral());
+        back_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Integral());
+        sig_h_leading_LRJ_psi_R_squared_With1ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_With1ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Integral());
+        back_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Integral());
+        sig_h_leading_LRJ_psi_R_squared_With1jFEXSubjet->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_With1jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Integral());
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Integral());
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_WithGrEq2ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Scale(1.0 / back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Integral());
+        back_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Draw("HIST");
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Scale(1.0 / sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Integral());
+        sig_h_leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_psi_R_squared_WithGrEq2jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Integral());
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Integral());
+        sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Integral());
+        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Integral());
+        sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_MassApprox_WithGrEq2ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Scale(1.0 / back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Integral());
+        back_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Draw("HIST");
+        sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Scale(1.0 / sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Integral());
+        sig_h_leading_LRJ_MassApprox_WithGrEq2jFEXSubjet->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_MassApprox_WithGrEq2jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Z->SetLineColor(kRed);
+        back_h_leading_LRJ_Z->SetLineColor(kBlue);
+        back_h_leading_LRJ_Z->Scale(1.0 / back_h_leading_LRJ_Z->Integral());
+        back_h_leading_LRJ_Z->Draw("HIST");
+        sig_h_leading_LRJ_Z->Scale(1.0 / sig_h_leading_LRJ_Z->Integral());
+        sig_h_leading_LRJ_Z->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Z.pdf"); 
+
+        sig_h_subleading_LRJ_Z->SetLineColor(kRed);
+        back_h_subleading_LRJ_Z->SetLineColor(kBlue);
+        back_h_subleading_LRJ_Z->Scale(1.0 / back_h_subleading_LRJ_Z->Integral());
+        back_h_subleading_LRJ_Z->Draw("HIST");
+        sig_h_subleading_LRJ_Z->Scale(1.0 / sig_h_subleading_LRJ_Z->Integral());
+        sig_h_subleading_LRJ_Z->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Subleading_LRJ_Z.pdf"); 
+
+        sig_h_leading_LRJ_Et_NojFEXSubjets->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_NojFEXSubjets.pdf"); 
+
+        back_h_leading_LRJ_Et_NojFEXSubjets->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_NojFEXSubjets.pdf"); 
+
+        sig_h_leading_LRJ_Et_NoConeSubjets->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_NoConeSubjets.pdf"); 
+
+        back_h_leading_LRJ_Et_NoConeSubjets->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_NoConeSubjets.pdf"); 
+
+        sig_h_leading_LRJ_Et_With1jFEXSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_With1jFEXSubjet.pdf"); 
+
+        back_h_leading_LRJ_Et_With1jFEXSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_With1jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_With1ConeSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_With1ConeSubjet.pdf"); 
+
+        back_h_leading_LRJ_Et_With1ConeSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_With1ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_WithGrEq2jFEXSubjet.pdf"); 
+
+        back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_WithGrEq2jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "sig_Leading_LRJ_Et_WithGrEq2ConeSubjet.pdf"); 
+
+        back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Draw("HIST");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "back_Leading_LRJ_Et_WithGrEq2ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_NoConeSubjets->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_NoConeSubjets->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_NoConeSubjets->Scale(1.0 / back_h_leading_LRJ_Et_NoConeSubjets->Integral());
+        back_h_leading_LRJ_Et_NoConeSubjets->Draw("HIST");
+        sig_h_leading_LRJ_Et_NoConeSubjets->Scale(1.0 / sig_h_leading_LRJ_Et_NoConeSubjets->Integral());
+        sig_h_leading_LRJ_Et_NoConeSubjets->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_NoConeSubjets.pdf"); 
+
+        sig_h_leading_LRJ_Et_NojFEXSubjets->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_NojFEXSubjets->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_NojFEXSubjets->Scale(1.0 / back_h_leading_LRJ_Et_NojFEXSubjets->Integral());
+        back_h_leading_LRJ_Et_NojFEXSubjets->Draw("HIST");
+        sig_h_leading_LRJ_Et_NojFEXSubjets->Scale(1.0 / sig_h_leading_LRJ_Et_NojFEXSubjets->Integral());
+        sig_h_leading_LRJ_Et_NojFEXSubjets->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_NojFEXSubjets.pdf"); 
+
+        sig_h_leading_LRJ_Et_With1ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_With1ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_With1ConeSubjet->Scale(1.0 / back_h_leading_LRJ_Et_With1ConeSubjet->Integral());
+        back_h_leading_LRJ_Et_With1ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_Et_With1ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_Et_With1ConeSubjet->Integral());
+        sig_h_leading_LRJ_Et_With1ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_With1ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_With1jFEXSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_With1jFEXSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_With1jFEXSubjet->Scale(1.0 / back_h_leading_LRJ_Et_With1jFEXSubjet->Integral());
+        back_h_leading_LRJ_Et_With1jFEXSubjet->Draw("HIST");
+        sig_h_leading_LRJ_Et_With1jFEXSubjet->Scale(1.0 / sig_h_leading_LRJ_Et_With1jFEXSubjet->Integral());
+        sig_h_leading_LRJ_Et_With1jFEXSubjet->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_With1jFEXSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Integral());
+        back_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Draw("HIST");
+        sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Integral());
+        sig_h_leading_LRJ_Et_WithGrEq2ConeSubjet->Draw("HIST SAME"); // FIXME add n events
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_WithGrEq2ConeSubjet.pdf"); 
+
+        sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->SetLineColor(kRed);
+        back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Scale(1.0 / back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Integral());
+        back_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Draw("HIST");
+        sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Scale(1.0 / sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Integral());
+        sig_h_leading_LRJ_Et_WithGrEq2jFEXSubjet->Draw("HIST SAME");
+        leg->Draw();
+        cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_Et_WithGrEq2jFEXSubjet.pdf"); 
 
         sig_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1->SetLineColor(kRed);
         back_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1->SetLineColor(kBlue);
@@ -8138,41 +10408,41 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         
         
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Integral());
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_2.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->Integral());
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2->SetMinimum(1e-14);
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_VariableIOs_2.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_2.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Integral());
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_3.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->Integral());
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3->SetMinimum(1e-14);
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_VariableIOs_3.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_3.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Integral());
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_4.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->Integral());
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4->SetMinimum(1e-14);
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_VariableIOs_4.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Integral());
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_VariableIOs_5.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->Integral());
-        backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5->SetMinimum(1e-14);
-        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_VariableIOs_5.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5.pdf");
 
         sig_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Draw("COLZ");
         sig_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / sig_LeadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Integral());
@@ -8238,9 +10508,365 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->SetMinimum(1e-14);
         cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt.pdf");
 
+        back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
+        //back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
+        //back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
+
+        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
+        //back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
+        //back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->SetMinimum(1e-14);
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
+
         sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Draw("COLZ");
         sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Scale(1.0 / sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Integral());
         cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt.pdf");
+
+        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
+        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
+
+        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
+        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
+
+        
+        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct.pdf");
+
+        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
+        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct.pdf");
+
+        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
+        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct.pdf");
+
+        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
+        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets.pdf");
+
+        sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead.pdf");
+
+        backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Scale(1.0 / backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsTau21_WithGrEq2ConeSubjet_Lead.pdf");
+
+        sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead.pdf");
+        
+        sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead.pdf");
+        
+        backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead.pdf");
+        
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Scale(1.0 / sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead.pdf");
+        
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Scale(1.0 / backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Lead.pdf");
+
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Scale(1.0 / sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead.pdf");
+
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Scale(1.0 / backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet_Lead.pdf");
+
+        sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsd12_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Draw("COLZ");
+        //sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Scale(1.0 / sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead.pdf");
+
+        backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Draw("COLZ");
+        //backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Scale(1.0 / backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Lead.pdf");
+
+        sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Draw("COLZ");
+        //sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Scale(1.0 / sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead.pdf");
+
+        backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Draw("COLZ");
+        //backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Scale(1.0 / backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead.pdf");
+
+        backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets.pdf");
+
+
+        backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Draw("COLZ");
+        //backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Scale(1.0 / backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult.pdf");
+
+        sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Draw("COLZ");
+        sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Scale(1.0 / sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult.pdf");
+
+        sigJetTaggerLeadingLRJEtvsZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsZ.pdf");
+
+        backJetTaggerLeadingLRJEtvsZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsZ.pdf");
+
+        sigJetTaggerSubleadingLRJEtvsZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsZ.pdf");
+
+        backJetTaggerSubleadingLRJEtvsZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsZ.pdf");
+
+        sigJetTaggerLeadingLRJEtvs1MinusZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvs1MinusZ.pdf");
+
+        backJetTaggerLeadingLRJEtvs1MinusZ->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvs1MinusZ.pdf");
+
+        sigJetTaggerLeadingLRJEtvsEtOutsideSubjets->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsEtOutsideSubjets.pdf");
+
+        backJetTaggerLeadingLRJEtvsEtOutsideSubjets->Draw("COLZ");
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsEtOutsideSubjets.pdf");
+        
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_With1jFEXSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_NoConeSubjets.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_NojFEXSubjets.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_With1ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_With1jFEXSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_WithGrEq2jFEXSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet.pdf");
+
+        
+        
+
+        backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsDeltaRSubjets_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsd12_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsZ_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsZ_With1ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsZ_With1ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet.pdf");
+
+        backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet.pdf");
+
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet.pdf");
+        
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->GetXaxis()->SetRangeUser(0.0, 700.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->GetYaxis()->SetRangeUser(0.0, 400.0);
+        backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Draw("COLZ");
+        //backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Scale(1.0 / backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2jFEXSubjet.pdf");
+
+        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
+        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Integral());
+        cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct.pdf");
 
         sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Draw("COLZ");
         sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Scale(1.0 / sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Integral());
@@ -8840,172 +11466,184 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigDiamvsEt->Draw("COLZ");
         c.SaveAs(modifiedOutputFileDir + "EtvsDiamSignal.pdf");
 
+        leadingHiggsVsSubleadingHiggspT->Draw("COLZ");
+        leadingHiggsVsSubleadingHiggspT->Scale(1.0 / leadingHiggsVsSubleadingHiggspT->Integral());
+        c.SaveAs(modifiedOutputFileDir + "leadingHiggsVsSubleadingHiggspT.pdf");
+
+        leadingbVsSubleadingbpT_LeadingHiggs->Draw("COLZ");
+        leadingbVsSubleadingbpT_LeadingHiggs->Scale(1.0 / leadingbVsSubleadingbpT_LeadingHiggs->Integral());
+        c.SaveAs(modifiedOutputFileDir + "leadingbVsSubleadingbpT_LeadingHiggs.pdf");
+
+        leadingbVsSubleadingbpT_SubleadingHiggs->Draw("COLZ");
+        leadingbVsSubleadingbpT_SubleadingHiggs->Scale(1.0 / leadingbVsSubleadingbpT_SubleadingHiggs->Integral());
+        c.SaveAs(modifiedOutputFileDir + "leadingbVsSubleadingbpT_SubleadingHiggs.pdf");
+
         backDiamvsEt->Draw("COLZ");
         c.SaveAs(modifiedOutputFileDir + "EtvsDiamBack.pdf");
 
+        sigJetTaggerLeadingLRJEtvsPsi_R->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R.pdf");
 
-        
+        sigJetTaggerSubleadingLRJEtvsPsi_R->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_R->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R_squared->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared.pdf");
 
-        sigOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R.pdf");
-
-        backOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R.pdf");
-
-        backOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
-
-        sigOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_squared.pdf");
-
-        sigOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+        sigJetTaggerSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R_squared.pdf");
 
         TCanvas cLogZ;
         cLogZ.SetLogz();
 
         cLogZ.cd();
         
-        backOfflineLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R_squared->Integral());
-        backOfflineLeadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_squared.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R_squared->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared.pdf");
         
-        backOfflineSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R_squared->Integral());
-        backOfflineSubleadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_squared.pdf");
+        backJetTaggerSubleadingLRJEtvsPsi_R_squared->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_R_squared->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R_squared->Integral());
+        backJetTaggerSubleadingLRJEtvsPsi_R_squared->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R_squared.pdf");
 
         c.cd();
         
         char rhoText_Sig_Psi_R[128];
-        sprintf(rhoText_Sig_Psi_R, "Pearson #rho = %.3f", sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
+        sprintf(rhoText_Sig_Psi_R, "Pearson #rho = %.3f", sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
         std::cout << "rhoText_Sig_Psi_R: " << rhoText_Sig_Psi_R << "\n";
         
-        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
-        sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
         mySmallText(0.15, 0.05, kBlack, rhoText_Sig_Psi_R);
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
 
         cLogZ.cd();
 
         
-        backOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_12->Integral());
-        backOfflineLeadingLRJEtvsPsi_12->SetMinimum(1e-14);
+        backJetTaggerLeadingLRJEtvsPsi_12->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_12->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_12->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_12->SetMinimum(1e-14);
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R_12.pdf");
 
         
-        backOfflineSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2_12->Integral());
-        backOfflineSubleadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2_12.pdf");
+        backJetTaggerSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R2_12->Integral());
+        backJetTaggerSubleadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R2_12.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R2_12->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2_12->Integral());
-        backOfflineLeadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2_12.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R2_12->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R2_12->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R2_12->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R2_12.pdf");
 
         
-        backOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_12->Integral());
-        backOfflineSubleadingLRJEtvsPsi_12->SetMinimum(1e-14);
+        backJetTaggerSubleadingLRJEtvsPsi_12->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_12->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_12->Integral());
+        backJetTaggerSubleadingLRJEtvsPsi_12->SetMinimum(1e-14);
         cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R_12.pdf");
 
         char rhoText_Back_Psi_R[128];
-        sprintf(rhoText_Back_Psi_R, "Pearson #rho = %.3f", backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
+        sprintf(rhoText_Back_Psi_R, "Pearson #rho = %.3f", backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->GetCorrelationFactor());
         
         
-        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
-        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
-        backOfflineLeadingLRJPsi_RvsSubleadingPsi_R->SetMinimum(1e-14);
+        backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Draw("COLZ");
+        backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Scale(1.0 / backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->Integral());
+        backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R->SetMinimum(1e-14);
         mySmallText(0.15, 0.05, kBlack, rhoText_Back_Psi_R);
         
         
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJPsi_RvsSubleadingPsi_R.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R->SetMinimum(1e-6);
-        backOfflineLeadingLRJEtvsPsi_R->Draw("COLZ");
-        //backOfflineLeadingLRJEtvsPsi_R->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R.pdf");
+        
+        backJetTaggerLeadingLRJEtvsPsi_R->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R->Integral());
+        backJetTaggerLeadingLRJEtvsPsi_R->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R.pdf");
 
-        backOfflineSubleadingLRJEtvsPsi_R->SetMinimum(1e-6);
-        backOfflineSubleadingLRJEtvsPsi_R->Draw("COLZ");
-        //backOfflineSubleadingLRJEtvsPsi_R->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R.pdf");
+        sigOfflineLeadingLRJMassvsPsi_R->Draw("COLZ");
+        sigOfflineLeadingLRJMassvsPsi_R->Scale(1.0 / sigOfflineLeadingLRJMassvsPsi_R->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsPsi_R.pdf");
+
+        
+        backOfflineLeadingLRJMassvsPsi_R->Draw("COLZ");
+        backOfflineLeadingLRJMassvsPsi_R->Scale(1.0 / backOfflineLeadingLRJMassvsPsi_R->Integral());
+        backOfflineLeadingLRJMassvsPsi_R->SetMinimum(1e-10);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJMassvsPsi_R.pdf");
+
+        
+        backJetTaggerSubleadingLRJEtvsPsi_R->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_R->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R->Integral());
+        backJetTaggerSubleadingLRJEtvsPsi_R->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R.pdf");
 
         c.cd();
 
         // Computed with deltaR^2 metric
-        sigOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R2->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R2.pdf");
 
-        sigOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2.pdf");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R2.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R2_squared.pdf");
         
         cLogZ.cd();
-        sigOfflineLeadingLRJEtvsPsi_12->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_12->Integral());
+        sigJetTaggerLeadingLRJEtvsPsi_12->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_12->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_12->Integral());
         cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R_12.pdf");
         
-        sigOfflineSubleadingLRJEtvsPsi_12->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_12->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_12->Integral());
+        sigJetTaggerSubleadingLRJEtvsPsi_12->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_12->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_12->Integral());
         cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R_12.pdf");
 
-        sigOfflineLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
-        sigOfflineLeadingLRJEtvsPsi_R2_12->Scale(1.0 / sigOfflineLeadingLRJEtvsPsi_R2_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsPsi_R2_12.pdf");
+        sigJetTaggerLeadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsPsi_R2_12->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R2_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R2_12.pdf");
         
-        sigOfflineSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_12->Integral());
-        cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2_12.pdf");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2_12->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2_12->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_12->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R2_12.pdf");
 
         c.cd();
-        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
-        sigOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        sigJetTaggerSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsPsi_R2_squared.pdf");
 
-        backOfflineLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2_squared.pdf");
+        backJetTaggerLeadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R2_squared->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R2_squared.pdf");
 
-        backOfflineSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2_squared->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2_squared.pdf");
+        backJetTaggerSubleadingLRJEtvsPsi_R2_squared->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_R2_squared->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R2_squared->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R2_squared.pdf");
 
-        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
-        sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
-        c.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
+        sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        c.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
 
-        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
-        backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
-
-        backOfflineLeadingLRJEtvsPsi_R2->Draw("COLZ");
-        backOfflineLeadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineLeadingLRJEtvsPsi_R2->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineLeadingLRJEtvsPsi_R2.pdf");
-
-        backOfflineSubleadingLRJEtvsPsi_R2->Draw("COLZ");
-        backOfflineSubleadingLRJEtvsPsi_R2->Scale(1.0 / backOfflineSubleadingLRJEtvsPsi_R2->Integral());
-        c.SaveAs(modifiedOutputFileDir + "backOfflineSubleadingLRJEtvsPsi_R2.pdf");
-
-        
+        backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Draw("COLZ");
+        backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Scale(1.0 / backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2->Integral());
+        c.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJPsi_R2vsSubleadingPsi_R2.pdf");
         cLogZ.cd();
+
+        backJetTaggerLeadingLRJEtvsPsi_R2->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsPsi_R2->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R2->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R2.pdf");
+
+        backJetTaggerSubleadingLRJEtvsPsi_R2->Draw("COLZ");
+        backJetTaggerSubleadingLRJEtvsPsi_R2->Scale(1.0 / backJetTaggerSubleadingLRJEtvsPsi_R2->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsPsi_R2.pdf");
+
         sigOfflineLeadingLRJMassvsEt->Scale(1.0 / sigOfflineLeadingLRJMassvsEt->Integral());
         sigOfflineLeadingLRJMassvsEt->Draw("COLZ");
         cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJMassvsEt.pdf");
@@ -9056,6 +11694,18 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigOfflineLeadingLRJEtvsSubjetMult->Draw("COLZ");
         sigOfflineLeadingLRJEtvsSubjetMult->Scale(1.0 / sigOfflineLeadingLRJEtvsSubjetMult->Integral());
         cLogZ.SaveAs(modifiedOutputFileDir + "sigOfflineLeadingLRJEtvsSubjetMult.pdf");
+
+        backJetTaggerLeadingLRJEtvsSubleadingLRJEt->Draw("COLZ");
+        backJetTaggerLeadingLRJEtvsSubleadingLRJEt->Scale(1.0 / backJetTaggerLeadingLRJEtvsSubleadingLRJEt->Integral());
+        backOfflineLeadingLRJEtvsSubjetMult->SetMinimum(1e-14);
+        cLogZ.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsSubleadingLRJEt.pdf");
+
+        sigJetTaggerLeadingLRJEtvsSubleadingLRJEt->Draw("COLZ");
+        sigJetTaggerLeadingLRJEtvsSubleadingLRJEt->Scale(1.0 / sigJetTaggerLeadingLRJEtvsSubleadingLRJEt->Integral());
+        cLogZ.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsSubleadingLRJEt.pdf");
+        
+
+        
 
         backOfflineLeadingLRJEtvsSubjetMult->Draw("COLZ");
         backOfflineLeadingLRJEtvsSubjetMult->Scale(1.0 / backOfflineLeadingLRJEtvsSubjetMult->Integral());
@@ -9237,6 +11887,16 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         sigOfflineSubleadingLRJMass->Draw("HIST SAME");
         leg->Draw();
         c.SaveAs(modifiedOutputFileDir + "subleadingOfflineLRJMass.pdf");
+
+        sigDeltaRLeadingSubleadingTruthJets->Scale(1.0 / sigDeltaRLeadingSubleadingTruthJets->Integral());
+        backDeltaRLeadingSubleadingTruthJets->Scale(1.0 / backDeltaRLeadingSubleadingTruthJets->Integral());
+        sigDeltaRLeadingSubleadingTruthJets->SetLineColor(kRed);
+        backDeltaRLeadingSubleadingTruthJets->SetLineColor(kBlue);
+        backDeltaRLeadingSubleadingTruthJets->Draw("HIST");
+        sigDeltaRLeadingSubleadingTruthJets->Draw("HIST SAME");
+        leg->Draw();
+        c.SaveAs(modifiedOutputFileDir + "deltaRLeadingSubleadingTruthJets.pdf");
+        
 
 
         sig_h_LRJ_substruct->Scale(1.0 / sig_h_LRJ_substruct->Integral());
@@ -10924,12 +13584,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         const double epsilon = 1e-12;
 
         // --- Leading jets ---
-        TH2F* LR_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_12->Clone("LR_Leading");
+        TH2F* LR_Leading = (TH2F*)sigJetTaggerLeadingLRJEtvsPsi_12->Clone("LR_Leading");
         LR_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
         for (int i = 1; i <= LR_Leading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Leading->GetNbinsY(); ++j) {
-            double s = sigOfflineLeadingLRJEtvsPsi_12->GetBinContent(i,j);
-            double b = backOfflineLeadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double s = sigJetTaggerLeadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backJetTaggerLeadingLRJEtvsPsi_12->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LR_Leading->SetBinContent(i, j, ratio);
         }
@@ -10946,12 +13606,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
 
         // --- Subleading jets ---
-        TH2F* LR_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
+        TH2F* LR_Subleading = (TH2F*)sigJetTaggerSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
         LR_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
         for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
-            double s = sigOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
-            double b = backOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double s = sigJetTaggerSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backJetTaggerSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LR_Subleading->SetBinContent(i, j, ratio);
         }
@@ -10985,12 +13645,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         //Psi_1 * Psi_2
         // --- Leading jets ---
-        TH2F* LRSquared_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_R_squared->Clone("LRSquared_Leading");
+        TH2F* LRSquared_Leading = (TH2F*)sigJetTaggerLeadingLRJEtvsPsi_R_squared->Clone("LRSquared_Leading");
         LRSquared_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
         for (int i = 1; i <= LRSquared_Leading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LRSquared_Leading->GetNbinsY(); ++j) {
-            double s = sigOfflineLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
-            double b = backOfflineLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double s = sigJetTaggerLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double b = backJetTaggerLeadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LRSquared_Leading->SetBinContent(i, j, ratio);
         }
@@ -11007,12 +13667,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
 
         // --- Subleading jets ---
-        TH2F* LRSquared_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_R_squared->Clone("LRSquared_Subleading");
+        TH2F* LRSquared_Subleading = (TH2F*)sigJetTaggerSubleadingLRJEtvsPsi_R_squared->Clone("LRSquared_Subleading");
         LRSquared_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
         for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
-            double s = sigOfflineSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
-            double b = backOfflineSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double s = sigJetTaggerSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
+            double b = backJetTaggerSubleadingLRJEtvsPsi_R_squared->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LRSquared_Subleading->SetBinContent(i, j, ratio);
         }
@@ -11046,12 +13706,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         //  Psi ratio computed with R^2 metric 
         // --- Leading jets ---
-        TH2F* LR2_Leading = (TH2F*)sigOfflineLeadingLRJEtvsPsi_R2_12->Clone("LR2_Leading");
+        TH2F* LR2_Leading = (TH2F*)sigJetTaggerLeadingLRJEtvsPsi_R2_12->Clone("LR2_Leading");
         LR2_Leading->SetTitle("Likelihood Ratio (Signal/Background) - Leading");
         for (int i = 1; i <= LR_Leading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Leading->GetNbinsY(); ++j) {
-            double s = sigOfflineLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
-            double b = backOfflineLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double s = sigJetTaggerLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double b = backJetTaggerLeadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LR2_Leading->SetBinContent(i, j, ratio);
         }
@@ -11068,12 +13728,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
 
         // --- Subleading jets ---
-        TH2F* LR2_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_R2_12->Clone("LR2_Subleading");
+        TH2F* LR2_Subleading = (TH2F*)sigJetTaggerSubleadingLRJEtvsPsi_R2_12->Clone("LR2_Subleading");
         LR2_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
         for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
-            double s = sigOfflineSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
-            double b = backOfflineSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double s = sigJetTaggerSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
+            double b = backJetTaggerSubleadingLRJEtvsPsi_R2_12->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LR2_Subleading->SetBinContent(i, j, ratio);
         }
@@ -11129,12 +13789,12 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         }
 
         // --- Subleading jets ---
-        /*TH2F* LR_Subleading = (TH2F*)sigOfflineSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
+        /*TH2F* LR_Subleading = (TH2F*)sigJetTaggerSubleadingLRJEtvsPsi_12->Clone("LR_Subleading");
         LR_Subleading->SetTitle("Likelihood Ratio (Signal/Background) - Subleading");
         for (int i = 1; i <= LR_Subleading->GetNbinsX(); ++i) {
         for (int j = 1; j <= LR_Subleading->GetNbinsY(); ++j) {
-            double s = sigOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
-            double b = backOfflineSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double s = sigJetTaggerSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
+            double b = backJetTaggerSubleadingLRJEtvsPsi_12->GetBinContent(i,j);
             double ratio = (b > 0) ? s / (b + epsilon) : 0.0;
             LR_Subleading->SetBinContent(i, j, ratio);
         }
@@ -11232,7 +13892,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigCircle7_Ev0->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString sigLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv0[0].first, newSeedPositionsSigEv0[0].second, sigLRJEtEv0[0]);
+            TString sigLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv0[0].first, newSeedPositionsSigEv0[0].second, sigLRJEtEv0[0], sigLRJPsi_REv0[0]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat1Ev0;
@@ -11241,7 +13901,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigLat1Ev0.DrawLatex(newSeedPositionsSigEv0[0].first, newSeedPositionsSigEv0[0].second + 0.6, sigLabel1Ev0); // Slightly above the sigCircle
 
             // Build the label text (2nd LRJ)
-            TString sigLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv0[1].first, newSeedPositionsSigEv0[1].second, sigLRJEtEv0[1]);
+            TString sigLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv0[1].first, newSeedPositionsSigEv0[1].second, sigLRJEtEv0[1], sigLRJPsi_REv0[1]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat2Ev0;
@@ -11316,7 +13976,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigCircle7_Ev1->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString sigLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv1[0].first, newSeedPositionsSigEv1[0].second, sigLRJEtEv1[0]);
+            TString sigLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv1[0].first, newSeedPositionsSigEv1[0].second, sigLRJEtEv1[0], sigLRJPsi_REv1[0]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat1Ev1;
@@ -11325,7 +13985,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigLat1Ev1.DrawLatex(newSeedPositionsSigEv1[0].first, newSeedPositionsSigEv1[0].second + 0.6, sigLabel1Ev1); // Slightly above the sigCircle
 
             // Build the label text (2nd LRJ)
-            TString sigLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv1[1].first, newSeedPositionsSigEv1[1].second, sigLRJEtEv1[1]);
+            TString sigLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv1[1].first, newSeedPositionsSigEv1[1].second, sigLRJEtEv1[1], sigLRJPsi_REv2[1]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat2Ev1;
@@ -11399,7 +14059,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigCircle7_Ev2->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString sigLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv2[0].first, newSeedPositionsSigEv2[0].second, sigLRJEtEv2[0]);
+            TString sigLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv2[0].first, newSeedPositionsSigEv2[0].second, sigLRJEtEv2[0], sigLRJPsi_REv2[0]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat1Ev2;
@@ -11408,7 +14068,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigLat1Ev2.DrawLatex(newSeedPositionsSigEv2[0].first, newSeedPositionsSigEv2[0].second + 0.6, sigLabel1Ev2); // Slightly above the sigCircle
 
             // Build the label text (2nd LRJ)
-            TString sigLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv2[1].first, newSeedPositionsSigEv2[1].second, sigLRJEtEv2[1]);
+            TString sigLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv2[1].first, newSeedPositionsSigEv2[1].second, sigLRJEtEv2[1], sigLRJPsi_REv2[1]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat2Ev2;
@@ -11481,7 +14141,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigCircle7_Ev3->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString sigLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv3[0].first, newSeedPositionsSigEv3[0].second, sigLRJEtEv3[0]);
+            TString sigLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv3[0].first, newSeedPositionsSigEv3[0].second, sigLRJEtEv3[0], sigLRJPsi_REv3[0]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat1Ev3;
@@ -11490,7 +14150,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigLat1Ev3.DrawLatex(newSeedPositionsSigEv3[0].first, newSeedPositionsSigEv3[0].second + 0.6, sigLabel1Ev3); // Slightly above the sigCircle
 
             // Build the label text (2nd LRJ)
-            TString sigLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv3[1].first, newSeedPositionsSigEv3[1].second, sigLRJEtEv3[1]);
+            TString sigLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv3[1].first, newSeedPositionsSigEv3[1].second, sigLRJEtEv3[1], sigLRJPsi_REv3[1]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat2Ev3;
@@ -11564,7 +14224,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigCircle7_Ev4->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString sigLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv4[0].first, newSeedPositionsSigEv4[0].second, sigLRJEtEv4[0]);
+            TString sigLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv4[0].first, newSeedPositionsSigEv4[0].second, sigLRJEtEv4[0], sigLRJPsi_REv4[0]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat1Ev4;
@@ -11573,7 +14233,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             sigLat1Ev4.DrawLatex(newSeedPositionsSigEv4[0].first, newSeedPositionsSigEv4[0].second + 0.6, sigLabel1Ev4); // Slightly above the sigCircle
 
             // Build the label text (2nd LRJ)
-            TString sigLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsSigEv4[1].first, newSeedPositionsSigEv4[1].second, sigLRJEtEv4[1]);
+            TString sigLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsSigEv4[1].first, newSeedPositionsSigEv4[1].second, sigLRJEtEv4[1], sigLRJPsi_REv4[1]);
 
             // Option 1: Use TLatex directly
             TLatex sigLat2Ev4;
@@ -12156,6 +14816,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         jFexAdditionalSRJPositionsSigEv0.clear();
         newSeedPositionsSigEv0.clear();
         sigLRJEtEv0.clear();
+        sigLRJPsi_REv0.clear();
         gFexLRJPositionSigEv0.clear();
         offlineLRJPositionSigEv0.clear();
         siggFexLRJEtEv0.clear();
@@ -12164,6 +14825,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         jFexAdditionalSRJPositionsSigEv1.clear();
         newSeedPositionsSigEv1.clear();
         sigLRJEtEv1.clear();
+        sigLRJPsi_REv1.clear();
         gFexLRJPositionSigEv1.clear();
         offlineLRJPositionSigEv1.clear();
         siggFexLRJEtEv1.clear();
@@ -12172,6 +14834,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         jFexAdditionalSRJPositionsSigEv2.clear();
         newSeedPositionsSigEv2.clear();
         sigLRJEtEv2.clear();
+        sigLRJPsi_REv2.clear();
         gFexLRJPositionSigEv2.clear();
         offlineLRJPositionSigEv2.clear();
         siggFexLRJEtEv2.clear();
@@ -12180,6 +14843,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         jFexAdditionalSRJPositionsSigEv3.clear();
         newSeedPositionsSigEv3.clear();
         sigLRJEtEv3.clear();
+        sigLRJPsi_REv3.clear();
         gFexLRJPositionSigEv3.clear();
         offlineLRJPositionSigEv3.clear();
         siggFexLRJEtEv3.clear();
@@ -12188,6 +14852,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         jFexAdditionalSRJPositionsSigEv4.clear();
         newSeedPositionsSigEv4.clear();
         sigLRJEtEv4.clear();
+        sigLRJPsi_REv4.clear();
         gFexLRJPositionSigEv4.clear();
         offlineLRJPositionSigEv4.clear();
         siggFexLRJEtEv4.clear();
@@ -12195,6 +14860,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
 
         // Draw background event displays //FIXME turn into a loop to reduce duplicate code
+        c.cd();
         if(displayEv0Back_){
             backTopo422Highest128SeedPositionsEv0->GetZaxis()->SetTitle("E_{T} [GeV]");
             backTopo422Highest128SeedPositionsEv0->Draw("COLZ");
@@ -12257,7 +14923,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backCircle7_Ev0->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString backLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, backLRJEtEv0[0]);
+            TString backLabel1Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second, backLRJEtEv0[0], backLRJPsi_REv0[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat1Ev0;
@@ -12266,7 +14932,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backLat1Ev0.DrawLatex(newSeedPositionsBackEv0[0].first, newSeedPositionsBackEv0[0].second + 0.6, backLabel1Ev0); // Slightly above the backCircle
 
             // Build the label text (2nd LRJ)
-            TString backLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, backLRJEtEv0[1]);
+            TString backLabel2Ev0 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv0[1].first, newSeedPositionsBackEv0[1].second, backLRJEtEv0[1], backLRJPsi_REv0[1]);
 
             // Option 1: Use TLatex directly
             TLatex backLat2Ev0;
@@ -12280,6 +14946,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexAdditionalSRJPositionsBackEv0.clear();
             newSeedPositionsBackEv0.clear();
             backLRJEtEv0.clear();
+            backLRJPsi_REv0.clear();
         }
         
         if(displayEv1Back_){
@@ -12344,7 +15011,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backCircle7_Ev1->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString backLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, backLRJEtEv1[0]);
+            TString backLabel1Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second, backLRJEtEv1[0], backLRJPsi_REv1[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat1Ev1;
@@ -12353,7 +15020,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backLat1Ev1.DrawLatex(newSeedPositionsBackEv1[0].first, newSeedPositionsBackEv1[0].second + 0.6, backLabel1Ev1); // Slightly above the backCircle
 
             // Build the label text (2nd LRJ)
-            TString backLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, backLRJEtEv1[1]);
+            TString backLabel2Ev1 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv1[1].first, newSeedPositionsBackEv1[1].second, backLRJEtEv1[1], backLRJPsi_REv0[1]);
 
             // Option 1: Use TLatex directly
             TLatex backLat2Ev1;
@@ -12368,6 +15035,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexAdditionalSRJPositionsBackEv1.clear();
             newSeedPositionsBackEv1.clear();
             backLRJEtEv1.clear();
+            backLRJPsi_REv1.clear();
         }
         
         if(displayEv2Back_){
@@ -12432,7 +15100,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backCircle7_Ev2->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString backLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, backLRJEtEv2[0]);
+            TString backLabel1Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second, backLRJEtEv2[0], backLRJPsi_REv2[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat1Ev2;
@@ -12441,7 +15109,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backLat1Ev2.DrawLatex(newSeedPositionsBackEv2[0].first, newSeedPositionsBackEv2[0].second + 0.6, backLabel1Ev2); // Slightly above the backCircle
 
             // Build the label text (2nd LRJ)
-            TString backLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, backLRJEtEv2[1]);
+            TString backLabel2Ev2 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv2[1].first, newSeedPositionsBackEv2[1].second, backLRJEtEv2[1], backLRJPsi_REv2[1]);
 
             // Option 1: Use TLatex directly
             TLatex backLat2Ev2;
@@ -12456,6 +15124,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexAdditionalSRJPositionsBackEv2.clear();
             newSeedPositionsBackEv2.clear();
             backLRJEtEv2.clear();
+            backLRJPsi_REv2.clear();
         }
         
 
@@ -12521,7 +15190,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backCircle7_Ev3->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString backLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, backLRJEtEv3[0]);
+            TString backLabel1Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second, backLRJEtEv3[0], backLRJPsi_REv3[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat1Ev3;
@@ -12530,7 +15199,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backLat1Ev3.DrawLatex(newSeedPositionsBackEv3[0].first, newSeedPositionsBackEv3[0].second + 0.6, backLabel1Ev3); // Slightly above the backCircle
 
             // Build the label text (2nd LRJ)
-            TString backLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, backLRJEtEv3[1]);
+            TString backLabel2Ev3 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv3[1].first, newSeedPositionsBackEv3[1].second, backLRJEtEv3[1], backLRJPsi_REv3[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat2Ev3;
@@ -12545,6 +15214,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexAdditionalSRJPositionsBackEv3.clear();
             newSeedPositionsBackEv3.clear();
             backLRJEtEv3.clear();
+            backLRJPsi_REv3.clear();
         }
 
         
@@ -12611,7 +15281,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backCircle7_Ev4->Draw("same");    // overlay on the existing plot
 
             // Build the label text (1st LRJ)
-            TString backLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, backLRJEtEv4[0]);
+            TString backLabel1Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second, backLRJEtEv4[0], backLRJPsi_REv4[0]);
 
             // Option 1: Use TLatex directly
             TLatex backLat1Ev4;
@@ -12620,7 +15290,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             backLat1Ev4.DrawLatex(newSeedPositionsBackEv4[0].first, newSeedPositionsBackEv4[0].second + 0.6, backLabel1Ev4); // Slightly above the backCircle
 
             // Build the label text (2nd LRJ)
-            TString backLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV", newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, backLRJEtEv4[1]);
+            TString backLabel2Ev4 = Form("#eta=%.2f, #phi=%.2f, E_{T}=%.1f GeV, #psi_{R}=%.2f", newSeedPositionsBackEv4[1].first, newSeedPositionsBackEv4[1].second, backLRJEtEv4[1], backLRJPsi_REv4[1]);
 
             // Option 1: Use TLatex directly
             TLatex backLat2Ev4;
@@ -12634,6 +15304,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             jFexAdditionalSRJPositionsBackEv4.clear();
             newSeedPositionsBackEv4.clear();
             backLRJEtEv4.clear();
+            backLRJPsi_REv4.clear();
         }
 
         cSigEffLRJ.cd();
@@ -14111,47 +16782,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
     } // End of original loop through files
 
     // Do overlay plots for multiple files here
-    /*
-    std::vector<TH1F* > sig_h_leading_LRJ_Et_vec; // These will later be filled with clones of the original histograms
-    std::vector<TH1F* > sig_h_subleading_LRJ_Et_vec;
-    std::vector<TH1F* > back_h_leading_LRJ_Et_vec;
-    std::vector<TH1F* > back_h_subleading_LRJ_Et_vec;
-    std::vector<TH1F* > sig_h_leading_LRJ_psi_R_vec;
-    std::vector<TH1F* > sig_h_LRJ_psi_R_squared_vec;
-    std::vector<TH1F* > sig_h_LRJ_psi_R_12_vec;
-    std::vector<TH1F* > sig_h_subleading_LRJ_psi_R_vec;
-    std::vector<TH1F* > sig_h_leading_LRJ_psi_R2_vec;
-    std::vector<TH1F* > sig_h_LRJ_psi_R2_squared_vec;
-    std::vector<TH1F* > sig_h_LRJ_psi_R2_12_vec;
-    std::vector<TH1F* > sig_h_subleading_LRJ_psi_R2_vec;
-    std::vector<TH1F* > back_h_leading_LRJ_psi_R_vec;
-    std::vector<TH1F* > back_h_LRJ_psi_R_squared_vec;
-    std::vector<TH1F* > back_h_LRJ_psi_R_12_vec;
-    std::vector<TH1F* > back_h_subleading_LRJ_psi_R_vec;
-    std::vector<TH1F* > back_h_leading_LRJ_psi_R2_vec;
-    std::vector<TH1F* > back_h_LRJ_psi_R2_squared_vec;
-    std::vector<TH1F* > back_h_LRJ_psi_R2_12_vec;
-    std::vector<TH1F* > back_h_subleading_LRJ_psi_R2_vec;
-
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_HiggsMassWindow_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_1Subjet_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_GrEq2Subjets_vec;
-
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_Subleading_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_HiggsMassWindow_Subleading_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_1Subjet_Subleading_vec;
-    std::vector<TH1F* > sig_eff_offlineLRJ10kHz_GrEq2Subjets_Subleading_vec;
-    
-    std::vector<TGraph* > lead_ET_Scan_RatesVsEff_vec;
-    std::vector<TGraph* > sublead_ET_Scan_RatesVsEff_vec;
-    std::vector<TH1* > lead_ET_Scan_EffVsThresh_vec;
-    std::vector<TH1* > sublead_ET_Scan_EffVsThresh_vec;
-    std::vector<TH1* > lead_ET_Scan_RateVsThresh_vec;
-    std::vector<TH1* > sublead_ET_Scan_RateVsThresh_vec;
-    std::vector<TGraphErrors* > lead_ET_Pmax_Scan_RatesVsEff_vec;
-    std::vector<TGraphErrors* > sublead_ET_Pmax_Scan_RatesVsEff_vec;*/
-
 
     // Need different canvases for each sets of plots when overlaying like this.... very annoying FIXME
     TCanvas c1_Log = new TCanvas("c1_Log", "Overlays (log)", 800, 600);
@@ -14226,6 +16856,8 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         auto fileInfo = ParseFileName(backgroundRootFileNames[fileIt]);
         std::string inputObjectType = fileInfo.inputObjectType;
         std::string seedObjectType = fileInfo.seedObjectType;
+        std::string rMergeValue = fileInfo.rMergeValue;
+        
         unsigned int nInputObjectsAlgorithmConfiguration = 0;
         std::regex re("_IOs_(\\d+)_");
         std::smatch match;
@@ -14265,15 +16897,17 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
 
         // --- Legend entries ---
-        std::string legLabelSig = Form("Sig. (hh->4b): IO type %s, seed %s, N IO = %u",
+        std::string legLabelSig = Form("Sig. (hh->4b): IO %s, seed %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     seedObjectType.c_str(),
-                                    nInputObjectsAlgorithmConfiguration);
+                                    nInputObjectsAlgorithmConfiguration,
+                                    rMergeValue.c_str());
 
-        std::string legLabelBkg = Form("Bkg. (dijet): IO type %s, seed %s, N IO = %u",
+        std::string legLabelBkg = Form("Bkg. (dijet): IO %s, seed %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     seedObjectType.c_str(),
-                                    nInputObjectsAlgorithmConfiguration);
+                                    nInputObjectsAlgorithmConfiguration,
+                                    rMergeValue.c_str());
         leg->AddEntry(sig_h_leading_LRJ_Et_vec[fileIt], legLabelSig.c_str(), "l");
         leg->AddEntry(back_h_leading_LRJ_Et_vec[fileIt], legLabelBkg.c_str(), "l");
 
@@ -14412,11 +17046,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         // --- Legend entries ---
         std::string legLabelEff_10kHz = Form(
-            "Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u)",
+            "Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N_{IO}: %u, rMerge: %s)",
             jetTagger_10kHz_Threshold_Leading_vec[fileIt],
             inputObjectType.c_str(),
             seedObjectType.c_str(),
-            nInputObjectsAlgorithmConfiguration
+            nInputObjectsAlgorithmConfiguration, rMergeValue.c_str()
         );
         leg_10kHz_effs->AddEntry(sig_eff_offlineLRJ10kHz_vec[fileIt],
                          legLabelEff_10kHz.c_str(),
@@ -14449,11 +17083,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                          legLabelEff_10kHz.c_str(),
                          "lp");
         std::string legLabelEff_10kHz_HiggsMassWindow = Form(
-            "[m_{H} Window] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u)",
+            "[m_{H} Window] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N_{IO}: %u, rMerge: %s)",
             jetTagger_10kHz_Threshold_Leading_vec[fileIt],
             inputObjectType.c_str(),
             seedObjectType.c_str(),
-            nInputObjectsAlgorithmConfiguration
+            nInputObjectsAlgorithmConfiguration, rMergeValue.c_str()
         );
         leg_10kHz_effs_HiggsMassWindow->AddEntry(sig_eff_offlineLRJ10kHz_HiggsMassWindow_vec[fileIt],
                          legLabelEff_10kHz_HiggsMassWindow.c_str(),
@@ -14492,22 +17126,22 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         
         // --- Legend entries ---
         std::string legLabelEff_10kHz_1Subjet = Form(
-            "[1 Subjet] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u)",
+            "[1 Subjet] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u, rMerge: %s)",
             jetTagger_10kHz_Threshold_Leading_vec[fileIt],
             inputObjectType.c_str(),
             seedObjectType.c_str(),
-            nInputObjectsAlgorithmConfiguration
+            nInputObjectsAlgorithmConfiguration, rMergeValue.c_str()
         );
         leg_10kHz_effs_Subjets->AddEntry(sig_eff_offlineLRJ10kHz_1Subjet_vec[fileIt],
                          legLabelEff_10kHz_1Subjet.c_str(),
                          "lp");
         // --- Legend entries ---
         std::string legLabelEff_10kHz_GrEq2Subjets = Form(
-            "[>= Subjet] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u)",
+            "[>= Subjet] Lead. LRJ E_{T} > %.1f GeV  (IO: %s, Seed: %s, N IO: %u, rMerge: %s)",
             jetTagger_10kHz_Threshold_Leading_vec[fileIt],
             inputObjectType.c_str(),
             seedObjectType.c_str(),
-            nInputObjectsAlgorithmConfiguration
+            nInputObjectsAlgorithmConfiguration, rMergeValue.c_str()
         );
         leg_10kHz_effs_Subjets->AddEntry(sig_eff_offlineLRJ10kHz_GrEq2Subjets_vec[fileIt],
                          legLabelEff_10kHz_GrEq2Subjets.c_str(),
@@ -14524,15 +17158,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             leg_10kHz_effs_Subjets->Draw();
             c6.SaveAs(overlayOutputFileDir + "sig_eff_offline_LRJ10kHz_Subjets.pdf");
         }
-        /*
-        std::vector<TGraph* > lead_ET_Scan_RatesVsEff_vec;
-        std::vector<TGraph* > sublead_ET_Scan_RatesVsEff_vec;
-        std::vector<TH1* > lead_ET_Scan_EffVsThresh_vec;
-        std::vector<TH1* > sublead_ET_Scan_EffVsThresh_vec;
-        std::vector<TH1* > lead_ET_Scan_RateVsThresh_vec;
-        std::vector<TH1* > sublead_ET_Scan_RateVsThresh_vec;
-        std::vector<TGraphErrors* > lead_ET_Pmax_Scan_RatesVsEff_vec;
-        std::vector<TGraphErrors* > sublead_ET_Pmax_Scan_RatesVsEff_vec;*/
 
         // Eff. vs Rates, etc. plots
         c7.cd();
@@ -15246,24 +17871,145 @@ void callAnalyzer(bool overlayThreeFiles = false){
     //const std::string backgroundLargeRJetDataFileName = "/eos/home-m/mlarson/LargeRadiusJets/MemPrints/largeRJets/mc21_14TeV_jj_JZ3_largeR.dat";
     constexpr bool vbfBool = true;
     std::vector<std::string > signalRootFileNames = {//"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_64_Seeds_2_R2_1_gepCellsTowers.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                    
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.75_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.25_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",*/
+
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.75_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.25_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root"*/
+
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root"
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_64_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root"
+
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepBasicClusters_Seed_jFEXSRJ.root"
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepConeCellsTowersJets.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepConeCellsTowersJets_Seed_gepConeCellsTowersJets.root"
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepConeCellsTowersJets.root",
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root"
+                                                    //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepConeCellsTowersJets_Seed_gepConeCellsTowersJets.root"
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepBasicClusters.root"
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_64_Seeds_2_R2_1_gepConeCellsTowersJets.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepConeCellsTowersJets.root"
                                                         };
     std::vector<std::string > backgroundRootFileNames = {//"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_64_Seeds_2_R2_1_gepCellsTowers.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                        
+                                                        
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.75_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.25_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ_OR.root"*/
+
+
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.75_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.25_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root"*/
+
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_64_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+
+                                                        
+
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_NSeedsInput4/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_OR/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",*/
+
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_jFEXSRJ.root",
+
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepBasicClusters_Seed_jFEXSRJ.root"
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepConeCellsTowersJets.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepConeCellsTowersJets_Seed_gepConeCellsTowersJets.root"
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepConeCellsTowersJets.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets.root"
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_IO_gepConeCellsTowersJets_Seed_gepConeCellsTowersJets.root"
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepBasicClusters.root"
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_64_Seeds_2_R2_1_gepConeCellsTowersJets.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1_gepConeCellsTowersJets.root"
                                                         };
-    TString overlayOutputFileDir = "overlayMultipleFilesLargeRJetHistograms_jFEXvsConeSeeding/";            
+    TString overlayOutputFileDir = "overlayMultipleFilesLargeRJetHistograms_rMergeCutPsi_RStudies/";            
     gSystem->mkdir(overlayOutputFileDir);                                    
     analyze_files(signalRootFileNames, backgroundRootFileNames, overlayOutputFileDir, overlayThreeFiles);
     gSystem->Exit(0);

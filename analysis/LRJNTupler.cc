@@ -22,6 +22,7 @@ struct OutputFiles {
     std::string caloTopoTowers;
     std::string gepBasicClusters;
     std::string gepCellTowers;
+    std::string gepCellTowersSort;
     std::string gepBasicTopoTowers;
     std::string gepConeJetsCellsTowers;
     std::string gepConeJetsBasicClusters;
@@ -91,11 +92,12 @@ inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSl
     OutputFiles out;
     out.topo422         = base + "CaloTopo_422/"    + tag + "_topo422.dat";
     out.caloTopoTowers  = base + "CaloTopoTowers/"  + tag + "_calotopotowers.dat";
-    out.gepBasicClusters= base + "GEPBasicClusters/"+ tag + "_gepbasicclusters.dat";
-    out.gepCellTowers= base + "GEPCellsTowers/"+ tag + "_gepcellstowers.dat";
-    out.gepBasicTopoTowers= base + "GEPBasicTopoTowers/"+ tag + "_gepbasictopotowers.dat";
-    out.gepConeJetsCellsTowers= base + "GEPConeJetsCellsTowers/"+ tag + "_gepconejetscellstowers.dat";
-    out.gepConeJetsBasicClusters= base + "GEPConeJetsBasicClusters/"+ tag + "_gepconejetsbasicclusters.dat";
+    out.gepBasicClusters = base + "GEPBasicClusters/"+ tag + "_gepbasicclusters.dat";
+    out.gepCellTowers = base + "GEPCellsTowers/"+ tag + "_gepcellstowers.dat";
+    out.gepCellTowersSort =base + "GEPCellsTowers_Sort/" + tag + "_gepcellstowers.dat";
+    out.gepBasicTopoTowers = base + "GEPBasicTopoTowers/"+ tag + "_gepbasictopotowers.dat";
+    out.gepConeJetsCellsTowers = base + "GEPConeJetsCellsTowers/"+ tag + "_gepconejetscellstowers.dat";
+    out.gepConeJetsBasicClusters = base + "GEPConeJetsBasicClusters/"+ tag + "_gepconejetsbasicclusters.dat";
     out.gFex            = base + "gFex/"            + tag + "_gfex_smallrj.dat";
     out.jFex            = base + "jFex/"            + tag + "_jfex_smallrj.dat";
     return out;
@@ -150,15 +152,15 @@ unsigned int digitize(double value, int bit_length, double min_val, double max_v
     // Check if value is in range
     if (value < min_val) {
         value = min_val;
-        std::cout << "Warning: Value " << value
-          << " is out of range (" << min_val
-          << ", " << max_val << ")\n";
+        //std::cout << "Warning: Value " << value
+        //  << " is out of range (" << min_val
+        //  << ", " << max_val << ")\n";
     }
     if (value > max_val){
         value = max_val;
-        std::cout << "Warning: Value " << value
-          << " is out of range (" << min_val
-          << ", " << max_val << ")\n";
+        //std::cout << "Warning: Value " << value
+        //  << " is out of range (" << min_val
+        //  << ", " << max_val << ")\n";
     }
 
     double scale = (std::pow(2, bit_length) - 1) / (max_val - min_val);
@@ -202,7 +204,7 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     //ServiceHandle<StoreGateSvc> inputMetaStore("StoreGateSvc/InputMetaDataStore","");
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
-    std::string fileDir =  //makeFileDir(vbfBool, signalBool, jzSlice);
+    std::string fileDir =  makeFileDir(vbfBool, signalBool, jzSlice);
     std::cout << "fileDir: " << fileDir << "\n";
     //xAOD::Init().ignore();
 
@@ -213,6 +215,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     std::ofstream f_topotower(out.caloTopoTowers);
     std::ofstream f_gepbasicclusters(out.gepBasicClusters);
     std::ofstream f_gepcellstowers(out.gepCellTowers);
+    std::ofstream f_gepcellstowers_sort(out.gepCellTowersSort);
     std::ofstream f_gepbasictopotowers(out.gepBasicTopoTowers);
     std::ofstream f_conejetscellstowers(out.gepConeJetsCellsTowers);
     std::ofstream f_conejetsbasicclusters(out.gepConeJetsBasicClusters);
@@ -886,8 +889,10 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 
         unsigned int passedEventsCounter = 0;
         unsigned int skippedEventsEmptyTruth = 0;
+        unsigned int truthLeadingNot0 = 0;
+        unsigned int puLeadingNot0 = 0;
         unsigned int skippedEventsHSTP = 0;
-        for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
+        for (Long64_t iEvt = 0; iEvt < 1000; ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
             //std::cout << "iEvt: " << iEvt << "\n";
             // Retrieve truth and in time pileup jets first to apply hard-scatter-softer-than-PU (HSTP) filter (described here: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/JetEtMissMCSamples#Dijet_normalization_procedure_HS)
             // Also require that truth jet collection is not empty
@@ -900,11 +905,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 skippedEventsEmptyTruth++;
                 continue;
             }
-
-            if ( AntiKt4TruthDressedWZJets->size() == 0 ){
-                skippedEventsEmptyTruth++;
-                continue;
-            } 
+            if(!signalBool){
+                if ( AntiKt4TruthDressedWZJets->size() == 0 ){
+                    skippedEventsEmptyTruth++;
+                    continue;
+                } 
+            }
+            
 
             
 
@@ -914,17 +921,86 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 continue;
             }
 
+            // IMPORTANT NOTE: must first sort both jet collections by pT, most (but NOT ALL) are already sorted with element 0 representing leading jet, 
+            // but failing to sort for ALL events will result in rate spikes (observed for ~200 GeV pileup jets for ~25 GeV truth jets!)
+            // --- Sort AntiKt4TruthDressedWZJets by pT (descending)
+            ConstDataVector<xAOD::JetContainer> sortedWZJets(SG::VIEW_ELEMENTS);
+            sortedWZJets.reserve(AntiKt4TruthDressedWZJets->size());
+
+            for (const xAOD::Jet* jet : *AntiKt4TruthDressedWZJets) {
+                sortedWZJets.push_back(jet);
+            }
+
+            std::sort(sortedWZJets.begin(), sortedWZJets.end(),
+                    [](const xAOD::Jet* a, const xAOD::Jet* b) {
+                        return a->pt() > b->pt();
+                    });
+
+            // Print cases where original[0] is NOT the leading jet
+            if (!AntiKt4TruthDressedWZJets->empty()) {
+                const xAOD::Jet* orig0 = AntiKt4TruthDressedWZJets->at(0);
+                const xAOD::Jet* lead  = sortedWZJets.at(0);
+
+                // pointer compare is the most robust check; pt compare can be ambiguous with ties
+                if (orig0 != lead) {
+                    truthLeadingNot0++;
+                    /*std::cout
+                        << "[Truth Jets UNSORTED] original[0] not leading jet! "
+                        << "orig0_pt=" << orig0->pt()
+                        << " lead_pt=" << lead->pt()
+                        << " size=" << AntiKt4TruthDressedWZJets->size()
+                        // optional: helps identify the objects
+                        << " orig0_eta=" << orig0->eta() << " orig0_phi=" << orig0->phi()
+                        << " lead_eta=" << lead->eta()  << " lead_phi=" << lead->phi()
+                        << std::endl;*/
+                }
+            }
+
+            // --- Sort InTimeAntiKt4TruthJets by pT (descending)
+            ConstDataVector<xAOD::JetContainer> sortedTruthJets(SG::VIEW_ELEMENTS);
+            sortedTruthJets.reserve(InTimeAntiKt4TruthJets->size());
+
+            for (const xAOD::Jet* jet : *InTimeAntiKt4TruthJets) {
+                sortedTruthJets.push_back(jet);
+            }
+
+            std::sort(sortedTruthJets.begin(), sortedTruthJets.end(),
+                    [](const xAOD::Jet* a, const xAOD::Jet* b) {
+                        return a->pt() > b->pt();
+                    });
+
+            // Print cases where original[0] is NOT the leading jet
+            if (!InTimeAntiKt4TruthJets->empty()) {
+                const xAOD::Jet* orig0 = InTimeAntiKt4TruthJets->at(0);
+                const xAOD::Jet* lead  = sortedTruthJets.at(0);
+
+                if (orig0 != lead) {
+                    puLeadingNot0++;
+                    /*std::cout
+                        << "[PU Jets UNSORTED] original[0] not leading jet! "
+                        << "orig0_pt=" << orig0->pt()
+                        << " lead_pt=" << lead->pt()
+                        << " size=" << InTimeAntiKt4TruthJets->size()
+                        << " orig0_eta=" << orig0->eta() << " orig0_phi=" << orig0->phi()
+                        << " lead_eta=" << lead->eta()  << " lead_phi=" << lead->phi()
+                        << std::endl;*/
+                }
+            }
+
             // Filter out events where hard scatter is softer than PU
-            if(AntiKt4TruthDressedWZJets->at(0)->pt() <= InTimeAntiKt4TruthJets->at(0)->pt()){
-                skippedEventsHSTP++;
-                continue; 
-            } 
+            if(!signalBool){
+                if(sortedWZJets.at(0)->pt() <= sortedTruthJets.at(0)->pt()){
+                    skippedEventsHSTP++;
+                    continue; 
+                } 
+            }
+            
 
             passedEventsCounter++;
             
             
 
-            if ((iEvt % 100) == 0) std::cout << "iEvt: " << iEvt << "\n";
+            if ((iEvt % 1000) == 0) std::cout << "iEvt: " << iEvt << "\n";
             
 
             // -- retrieve collections from DAOD ---
@@ -1386,6 +1462,37 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     int eta_bin = digitize(gepCellsTowersEtaValue, eta_bit_length_, eta_min_, eta_max_);
                     int et_bin  = digitize(gepCellsTowersEtValue,  et_bit_length_,
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    int et_bin_sort_purposes = digitize(gepCellsTowersEtValue, 12, static_cast<double>(et_min_), static_cast<double>(et_max_));
+                    int phi_bin_sort_purposes = digitize(gepCellsTowersPhiValue, 6, phi_min_, phi_max_);
+                    int eta_bin_sort_purposes = digitize(gepCellsTowersEtValue, 7, static_cast<double>(et_min_), static_cast<double>(et_max_));
+                    int error_bin_sort_purposes = digitize(0, 7, 0, 1 << 7);
+
+                    // Build binary string
+                    {std::stringstream binary_ss;
+                    binary_ss << std::bitset<7>(error_bin_sort_purposes)  << "|"
+                            << std::bitset<7>(eta_bin_sort_purposes)  << "|"
+                            << std::bitset<6>(phi_bin_sort_purposes) << "|"
+                            << std::bitset<12>(et_bin_sort_purposes);
+                    std::string binary_word = binary_ss.str();
+
+                    // Pack into 27-bit word
+                    uint32_t packed_word = (error_bin_sort_purposes  << (12 + 6 + 7)) |
+                                        (eta_bin_sort_purposes  << (12 + 6)) |
+                                        (phi_bin_sort_purposes <<  12) |
+                                        (et_bin_sort_purposes);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepcellstowers_it == 0) {
+                            f_gepcellstowers_sort << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_gepcellstowers_sort << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        //++gepcellstowers_it;
+                    }
+                    } // Fixing scope since using the same variable names here
+                    
 
                     // Build binary string
                     std::stringstream binary_ss;
@@ -2222,6 +2329,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         } // loop through events
         std::cout << "for jz: " << jzSlice << " these many events passed: " << passedEventsCounter << " out of: " << event.getEntries() << "\n";
         std::cout << " these many events skipped due to empty truth container: " << skippedEventsEmptyTruth << " these many events skipped due to pt hard < pt pileup: " << skippedEventsHSTP << "\n";
+        std::cout << "leading not 0 truth: " << truthLeadingNot0 << " , PU leading not 0: " << puLeadingNot0 << "\n";
         std::cout << "closing files" << "\n";
         gf->Close();
         f->Close();
@@ -2281,7 +2389,8 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 // processes all jzSlices + signal
 void callNTupler(){
     //gSystem->RedirectOutput("NTupler.log", "w");
-    std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<unsigned int > jzSlices = {3};
+    //std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<std::string > jzOutputFilenames;
     for(auto jzSlice : jzSlices){
@@ -2299,7 +2408,7 @@ void callNTupler(){
     //    Error("callNTupler", "hadd failed with code %d", rc);
     //}
 
-    nTupler(true, true); // call for signal
+    //nTupler(true, true); // call for signal
     for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing for now
         std::cout << jzOutputFileName << "\n";
     }
