@@ -3566,7 +3566,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         ax->SetTitleOffset(1.25);
         };
 
-        TString rateVsEffFileDir = "rateVsEff_" + algorithmConfigurations[fileIt] + "SubjetEtMassApprox_25GeVSubjets/";
+        TString rateVsEffFileDir = "rateVsEff_" + algorithmConfigurations[fileIt] + "SubjetEtMassApprox_30GeVSubjets/";
 
         gSystem->mkdir(rateVsEffFileDir);
 
@@ -4150,7 +4150,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             std::vector<std::array<double, 3 > > subleadingJetTaggerjFEXSubjets;
             std::vector<std::array<double, 3 > > leadingJetTaggerConeCellsTowersSubjets; 
             std::vector<std::array<double, 3 > > subleadingJetTaggerConeCellsTowersSubjets;
-            double nsubjetinessSubjetEtThreshold = 25.0; // GeV
+            double nsubjetinessSubjetEtThreshold = 30.0; // GeV
             unsigned int nSubjetjFEXJetTaggerLeading = 0;
             unsigned int nSubjetConeCellsTowersJetTaggerLeading = 0;
             unsigned int nSubjetjFEXJetTaggerSubleading = 0;
@@ -4402,11 +4402,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
             }
 
             
-            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1)){
+            if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
                 sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
             }
 
-            if(nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0)){
                 sig_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0));
             }
 
@@ -4487,7 +4487,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 //std::cout << "deltaRConeSubjets: " << deltaRConeSubjets << "\n";
                 double jetTaggerLeadingMassApproxCone = deltaRConeSubjets * jetTaggerLeadingLRJEtValuesSignal->at(0);
                 double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRConeSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
-                sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApproxCone);
+                sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApproxCone_SubjetEt);
                 sig_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Fill(deltaRConeSubjets);
                 sigJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone);
                 sigJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), jetTaggerLeadingMassApproxCone_SubjetEt);
@@ -5085,7 +5085,6 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 lrjEtaSigSubleading = recoAntiKt10LRJSubleadingEtaValuesSignal->at(0);
                 lrjPhiSigSubleading = recoAntiKt10LRJSubleadingPhiValuesSignal->at(0);
             } 
-            
 
             // ---- Tunable parameters ----
             const double subjetEtCutoff           = 25.0;  // as before
@@ -6070,8 +6069,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 std::cout << "leading truth jet E_T, eta, phi: " << truthAntiKt4WZSRJLeadingEtValuesBack->at(0) << " , " << truthAntiKt4WZSRJLeadingEtaValuesBack->at(0) << " , " << truthAntiKt4WZSRJLeadingPhiValuesBack->at(0) << "\n";
             } */
 
-
-            double nsubjetinessSubjetEtThreshold = 25.0; // GeV
+            double nsubjetinessSubjetEtThreshold = 30.0; // GeV
             unsigned int nSubjetjFEXJetTaggerLeading = 0;
             unsigned int nSubjetConeCellsTowersJetTaggerLeading = 0;
             unsigned int nSubjetjFEXJetTaggerSubleading = 0;
@@ -6318,11 +6316,11 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(2, 2, backgroundEventWeight);
             }
 
-            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1)){
+            if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
                 back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
             }
 
-            if(nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0)){
                 back_h_subleading_LRJ_Et_1ConeSubjet_Lead_or_1ConeJetLead_Sublead->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
             }
 
@@ -6401,7 +6399,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
                 double deltaRSubjets = sqrt(calcDeltaR2(leadingJetTaggerConeCellsTowersSubjets[0][1], leadingJetTaggerConeCellsTowersSubjets[0][2], leadingJetTaggerConeCellsTowersSubjets[1][1], leadingJetTaggerConeCellsTowersSubjets[1][2]));
                 double jetTaggerLeadingMassApprox = deltaRSubjets * jetTaggerLeadingLRJEtValuesBack->at(0);
                 double jetTaggerLeadingMassApproxCone_SubjetEt = deltaRSubjets * (leadingJetTaggerConeCellsTowersSubjets[0][0] + leadingJetTaggerConeCellsTowersSubjets[1][0]);
-                back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApprox, backgroundEventWeight);
+                back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingMassApproxCone_SubjetEt, backgroundEventWeight);
                 back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Fill(deltaRSubjets, backgroundEventWeight);
                 backJetTaggerLeadingLRJEtvsMassApprox_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApprox, backgroundEventWeight);
                 backJetTaggerLeadingLRJEtvsMassApprox_SubjetEt_WithGrEq2ConeSubjet->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), jetTaggerLeadingMassApproxCone_SubjetEt, backgroundEventWeight);
@@ -7369,7 +7367,7 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         // Start drawing and saving histograms and plots
         TString outputFileDir = "overlayLargeRJetHistograms/";
         
-        TString modifiedOutputFileDir = "overlayLargeRJetHistograms_" + algorithmConfigurations[fileIt] + "_SubjetEtMassApprox_25GeVThresh/";
+        TString modifiedOutputFileDir = "overlayLargeRJetHistograms_" + algorithmConfigurations[fileIt] + "_SubjetEtMassApprox_30GeVThresh/";
 
         gSystem->mkdir(modifiedOutputFileDir);
 
@@ -10008,10 +10006,10 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
 
         sig_h_JetTagger_CellsTowersEt->SetLineColor(kRed);
         back_h_JetTagger_CellsTowersEt->SetLineColor(kBlue);
-        back_h_JetTagger_CellsTowersEt->Scale(1.0 / sumOfBackgroundEventWeight);
-        back_h_JetTagger_CellsTowersEt->Draw("HIST");
         sig_h_JetTagger_CellsTowersEt->Scale(1.0 / num_processed_events_signal);
-        sig_h_JetTagger_CellsTowersEt->Draw("HIST SAME");
+        back_h_JetTagger_CellsTowersEt->Scale(1.0 / sumOfBackgroundEventWeight);
+        sig_h_JetTagger_CellsTowersEt->Draw("HIST");
+        back_h_JetTagger_CellsTowersEt->Draw("HIST SAME");
         leg->Draw();
         cLogYLogX.SaveAs(modifiedOutputFileDir + "cellsTowersEtByEvent.pdf");
         
@@ -10229,9 +10227,9 @@ void analyze_files(std::vector<std::string > signalRootFileNames, std::vector<st
         cLogY2.SaveAs(modifiedOutputFileDir + "Leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet.pdf"); 
 
         sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->SetLineColor(kRed);
-        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->SetLineColor(kBlue);
-        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Integral());
-        back_h_leading_LRJ_DeltaRSubjets_WithGrEq2ConeSubjet->Draw("HIST");
+        back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->SetLineColor(kBlue);
+        back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Scale(1.0 / back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Integral());
+        back_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Draw("HIST");
         sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Scale(1.0 / sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Integral());
         sig_h_leading_LRJ_MassApprox_WithGrEq2ConeSubjet->Draw("HIST SAME"); // FIXME add n events
         leg->Draw();
@@ -17908,6 +17906,7 @@ void callAnalyzer(bool overlayThreeFiles = false){
 
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                     "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_64_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                     "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
@@ -17978,6 +17977,7 @@ void callAnalyzer(bool overlayThreeFiles = false){
 
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_1.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                         "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_64_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                         "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2.5_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root",
