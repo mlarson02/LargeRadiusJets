@@ -2006,6 +2006,22 @@ GlobalRateEffOut5 MakeCombinedRateVsEff_AllFive(
             << ", 2S=" << front2S.size()
             << ", 3D=" << front3D.size() << "\n";
 
+    // -------------------------------------------------------------------------
+    // OPTION: completely disable the (1) 0/1-subjets subleading Et category
+    // in the *numerator* (rate/eff contributions), but KEEP its signal events
+    // in the denominator via totalSig (i.e. keep frac0S as computed above).
+    // -------------------------------------------------------------------------
+    const bool disableCat1_subEt = true;
+
+    if (disableCat1_subEt) {
+      std::cerr << "[MakeCombinedRateVsEff_AllFive] INFO: disabling category (1) out0_subEt "
+                << "in combination (eff/rate set to 0), but keeping its signal fraction in denominator.\n";
+
+      // Force the category-1 frontier to a single dummy point (no contribution).
+      front0S.clear();
+      front0S.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+    }
+
   // If a category has *no* usable points after filtering, treat it as "not used":
   // give it a single dummy point with eff=0, rate=0 so it contributes nothing.
   if (front0L.empty()) {
@@ -2126,6 +2142,295 @@ GlobalRateEffOut5 MakeCombinedRateVsEff_AllFive(
             gp.etCut_3D_sub     = etCut3D_sub;
             gp.massCut_3D_lead  = massCut3D_lead;
             gp.massCut_3D_sub   = massCut3D_sub;
+
+            UpdateGlobalFrontier(globalFrontier, gp);
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] global frontier size: "
+            << globalFrontier.size() << "\n";
+
+  // --- (3) Build TGraphErrors from globalFrontier & pick best point -------
+  auto* gCombined = new TGraphErrors(globalFrontier.size());
+  gCombined->SetName("gRate_vsEff_all5_frontier");
+  gCombined->SetTitle("Combined Trigger Rate vs Signal Efficiency;"
+                      "Signal (hh#rightarrow4b) Efficiency (all 5 selections);"
+                      "Total Estimated Background Rate [Hz]");
+
+  GlobalRateEffOut5 out{};
+  out.gRate_vsEff_combined = gCombined;
+
+  // store signal fractions for legend
+  out.fractionEventsPerCat[0] = frac0L;
+  out.fractionEventsPerCat[1] = frac0S;
+  out.fractionEventsPerCat[2] = frac2L;
+  out.fractionEventsPerCat[3] = frac2S;
+  out.fractionEventsPerCat[4] = frac3D;
+
+  out.bestEff  = 0.0;  // default: no selection → eff=0
+  out.bestRate = 0.0;  // default: rate=0
+
+  for (size_t i = 0; i < globalFrontier.size(); ++i) {
+    const auto& gp = globalFrontier[i];
+    gCombined->SetPoint(i, gp.eff, gp.rate);
+    gCombined->SetPointError(i, 0.0, gp.rateErr);
+
+    if (gp.eff > out.bestEff) {
+      out.bestEff = gp.eff;
+      out.bestRate = gp.rate;
+
+      out.bestEtCut_0_lead    = gp.etCut0_lead;
+      out.bestEtCut_0_sub     = gp.etCut0_sub;
+      out.bestEtCut_lead2     = gp.etCut_lead2;
+      out.bestMassCut_lead2   = gp.massCut_lead2;
+      out.bestEtCut_sub2      = gp.etCut_sub2;
+      out.bestMassCut_sub2    = gp.massCut_sub2;
+      out.bestEtCut_3D_sub    = gp.etCut_3D_sub;
+      out.bestMassCut_3D_lead = gp.massCut_3D_lead;
+      out.bestMassCut_3D_sub  = gp.massCut_3D_sub;
+
+      for (int c = 0; c < 5; ++c) {
+        out.bestEff_cat[c]  = gp.eff_cat[c];
+        out.bestEff_tot[c]  = gp.eff_tot[c];
+        out.bestRate_cat[c] = gp.rate_cat[c];
+      }
+    }
+  }
+
+  return out;
+}
+
+// Designed for 5 separate selections depending on the number of subjets
+GlobalRateEffOut5 MakeCombinedRateVsEff_AllFive_NSubjetiness(
+    const RateEffOut&   out0_leadEt,   // 1D: leading Et (0/1 subjets)
+    const RateEffOut&   out0_subEt,    // 1D: subleading Et (0/1 subjets)
+    const RateEff2DOut& out2D_lead2,   // 2D: leading Et vs mass (>=2 lead subjets)
+    const RateEff2DOut& out2D_sub2,    // 2D: subleading Et vs mass (>=2 subl subjets)
+    const RateEff2DOut& out2D_both2,   // 3D: subleading Et vs m_lead vs m_sub (>=2 lead & subl)
+    TH1* sig0_leadEt,                  // signal hist for 1D leading Et
+    TH1* sig0_subEt,                   // signal hist for 1D subleading Et
+    TH2* sig2D_lead2,                  // signal hist for 2D leading (Et,mass)
+    TH2* sig2D_sub2,                   // signal hist for 2D subleading (Et,mass)
+    TH2* sig2D_both2,                  // signal hist for 3D (Et_sub,m_lead,m_sub)
+    double maxRateHz)                  // e.g. 10 kHz constraint
+{
+  // Only consider per-category frontier points with rate in [minRateHz, maxRateHz]
+  const double minRateHz = 500.0;
+
+  // Basic null checks
+  if (!sig0_leadEt || !sig0_subEt || !sig2D_lead2 || !sig2D_sub2 || !sig2D_both2) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: null signal hist");
+  }
+
+  if (!out0_leadEt.hEff_vsThr || !out0_leadEt.hRate_vsThr ||
+      !out0_subEt .hEff_vsThr || !out0_subEt .hRate_vsThr ||
+      !out2D_lead2.hEff_vsThr_vsR || !out2D_lead2.hRate_vsThr_vsR ||
+      !out2D_sub2 .hEff_vsThr_vsR || !out2D_sub2 .hRate_vsThr_vsR ||
+      !out2D_both2.hEff_vsThr_vsR  || !out2D_both2.hRate_vsThr_vsR) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: one or more RateEff*Out hists are null");
+  }
+
+  // --- (0) Signal fractions per category -----------------------------------
+  const int nb0L  = out0_leadEt.hEff_vsThr->GetNbinsX();
+  const int nb0S  = out0_subEt .hEff_vsThr->GetNbinsX();
+  const int nb2Lx = out2D_lead2.hEff_vsThr_vsR->GetNbinsX();
+  const int nb2Ly = out2D_lead2.hEff_vsThr_vsR->GetNbinsY();
+  const int nb2Sx = out2D_sub2 .hEff_vsThr_vsR->GetNbinsX();
+  const int nb2Sy = out2D_sub2 .hEff_vsThr_vsR->GetNbinsY();
+  const int nb2BX  = out2D_both2.hEff_vsThr_vsR->GetNbinsX();
+  const int nb2BY  = out2D_both2.hEff_vsThr_vsR->GetNbinsY();
+
+
+  const double nSig0L = sig0_leadEt->Integral(1, nb0L);
+  const double nSig0S = sig0_subEt ->Integral(1, nb0S);
+  const double nSig2L = sig2D_lead2->Integral(1, nb2Lx, 1, nb2Ly);
+
+  const double nSig2S = sig2D_sub2 ->Integral(1, nb2Sx, 1, nb2Sy);
+  const double nSig2Both = sig2D_both2->Integral(1, nb2BX, 1, nb2BY);
+
+  const double totalSig = nSig0L + nSig0S + nSig2L + nSig2S + nSig2Both;
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] nSig0L,0S,2L,2S,both: "
+            << nSig0L << " , " << nSig0S << " , "
+            << nSig2L << " , " << nSig2S << " , "
+            << nSig2Both << "\n";
+  std::cout << "[MakeCombinedRateVsEff_AllFive] totalSig: " << totalSig << "\n";
+
+  if (totalSig <= 0.0) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive: totalSig <= 0");
+  }
+
+  const double frac0L = nSig0L / totalSig;
+  const double frac0S = nSig0S / totalSig;
+  const double frac2L = nSig2L / totalSig;
+  const double frac2S = nSig2S / totalSig;
+  const double frac3D = nSig2Both / totalSig;
+
+  // --- (1) Build per-category frontiers -----------------------------------
+  auto front0L_raw = BuildFrontier1D(out0_leadEt, maxRateHz);
+  auto front0S_raw = BuildFrontier1D(out0_subEt , maxRateHz);
+  auto front2L_raw = BuildFrontier2D(out2D_lead2, maxRateHz);
+  auto front2S_raw = BuildFrontier2D(out2D_sub2 , maxRateHz);
+  auto front2D_raw = BuildFrontier2D(out2D_both2, maxRateHz);
+
+  // Further restrict to per-category rate in [minRateHz, maxRateHz]
+  auto front0L = FilterFrontierByRate(front0L_raw, minRateHz, maxRateHz);
+  auto front0S = FilterFrontierByRate(front0S_raw, minRateHz, maxRateHz);
+  auto front2L = FilterFrontierByRate(front2L_raw, minRateHz, maxRateHz);
+  auto front2S = FilterFrontierByRate(front2S_raw, minRateHz, maxRateHz);
+  auto front2D = FilterFrontierByRate(front2D_raw, minRateHz, maxRateHz);
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] raw frontier sizes: "
+            << "0L=" << front0L_raw.size()
+            << ", 0S=" << front0S_raw.size()
+            << ", 2L=" << front2L_raw.size()
+            << ", 2S=" << front2S_raw.size()
+            << ", 3D=" << front2D_raw.size() << "\n";
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive] filtered ("
+            << minRateHz << "–" << maxRateHz << " Hz) frontier sizes: "
+            << "0L=" << front0L.size()
+            << ", 0S=" << front0S.size()
+            << ", 2L=" << front2L.size()
+            << ", 2S=" << front2S.size()
+            << ", 3D=" << front2D.size() << "\n";
+
+    // -------------------------------------------------------------------------
+    // OPTION: completely disable the (1) 0/1-subjets subleading Et category
+    // in the *numerator* (rate/eff contributions), but KEEP its signal events
+    // in the denominator via totalSig (i.e. keep frac0S as computed above).
+    // -------------------------------------------------------------------------
+    const bool disableCat1_subEt = true;
+
+    if (disableCat1_subEt) {
+      std::cerr << "[MakeCombinedRateVsEff_AllFive] INFO: disabling category (1) out0_subEt "
+                << "in combination (eff/rate set to 0), but keeping its signal fraction in denominator.\n";
+
+      // Force the category-1 frontier to a single dummy point (no contribution).
+      front0S.clear();
+      front0S.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+    }
+
+  // If a category has *no* usable points after filtering, treat it as "not used":
+  // give it a single dummy point with eff=0, rate=0 so it contributes nothing.
+  if (front0L.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 0L frontier empty, using dummy point (no contribution).\n";
+    front0L.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+  }
+  if (front0S.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 0S frontier empty, using dummy point (no contribution).\n";
+    front0S.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+  }
+  if (front2L.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 2L frontier empty, using dummy point (no contribution).\n";
+    front2L.push_back(Cat2DPoint{0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+  if (front2S.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 2S frontier empty, using dummy point (no contribution).\n";
+    front2S.push_back(Cat2DPoint{0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+  if (front2D.empty()) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive] WARNING: 3D frontier empty, using dummy point (no contribution).\n";
+    front2D.push_back(Cat2DPoint{0.0, 0.0, 0.0, 0.0, 0.0});
+  }
+
+  // --- (2) Enumerate combinations over *filtered frontier* points only -----
+  std::vector<GlobalPoint> globalFrontier;
+
+  // We assume each frontier is sorted by rate ascending (as in BuildFrontier*).
+  for (const auto& p0L : front0L) {
+    const double eff0L_cat = p0L.eff_cat;
+    const double rate0L    = p0L.rate_cat;
+    const double err0L     = p0L.err_cat;
+    const double etCut0L   = p0L.thrEt;
+
+    for (const auto& p0S : front0S) {
+      const double eff0S_cat = p0S.eff_cat;
+      const double rate0S    = p0S.rate_cat;
+      const double err0S     = p0S.err_cat;
+      const double etCut0S   = p0S.thrEt;
+
+      const double rate01 = rate0L + rate0S;
+      if (rate01 > maxRateHz) break; // front0S sorted by rate
+
+      for (const auto& p2L : front2L) {
+        const double eff2L_cat = p2L.eff_cat;
+        const double rate2L    = p2L.rate_cat;
+        const double err2L     = p2L.err_cat;
+        const double etCut2L   = p2L.thrEt;
+        const double massCut2L = p2L.thrMass;
+
+        const double rate012 = rate01 + rate2L;
+        if (rate012 > maxRateHz) break; // front2L sorted by rate
+
+        for (const auto& p2S : front2S) {
+          const double eff2S_cat = p2S.eff_cat;
+          const double rate2S    = p2S.rate_cat;
+          const double err2S     = p2S.err_cat;
+          const double etCut2S   = p2S.thrEt;
+          const double massCut2S = p2S.thrMass;
+
+          const double rate0123 = rate012 + rate2S;
+          if (rate0123 > maxRateHz) break; // front2S sorted by rate
+
+          for (const auto& p3D : front2D) {
+            const double eff3D_cat = p3D.eff_cat;
+            const double rate3D    = p3D.rate_cat;
+            const double err3D     = p3D.err_cat;
+            const double etCut3D_sub    = p3D.thrEt;
+            const double massCut3D_lead = p3D.thrMass;
+
+            const double rateTot = rate0123 + rate3D;
+            if (rateTot > maxRateHz) break; // front3D sorted by rate
+
+            // per-category global contributions
+            const double eff0L_tot = eff0L_cat * frac0L;
+            const double eff0S_tot = eff0S_cat * frac0S;
+            const double eff2L_tot = eff2L_cat * frac2L;
+            const double eff2S_tot = eff2S_cat * frac2S;
+            const double eff3D_tot = eff3D_cat * frac3D;
+
+            const double effTot =
+                eff0L_tot + eff0S_tot + eff2L_tot + eff2S_tot + eff3D_tot;
+
+            const double errTot =
+                std::sqrt(err0L*err0L + err0S*err0S +
+                          err2L*err2L + err2S*err2S + err3D*err3D);
+
+            GlobalPoint gp;
+            gp.eff = effTot;
+
+            gp.eff_cat[0] = eff0L_cat;
+            gp.eff_cat[1] = eff0S_cat;
+            gp.eff_cat[2] = eff2L_cat;
+            gp.eff_cat[3] = eff2S_cat;
+            gp.eff_cat[4] = eff3D_cat;
+
+            gp.eff_tot[0] = eff0L_tot;
+            gp.eff_tot[1] = eff0S_tot;
+            gp.eff_tot[2] = eff2L_tot;
+            gp.eff_tot[3] = eff2S_tot;
+            gp.eff_tot[4] = eff3D_tot;
+
+            gp.rate        = rateTot;
+            gp.rate_cat[0] = rate0L;
+            gp.rate_cat[1] = rate0S;
+            gp.rate_cat[2] = rate2L;
+            gp.rate_cat[3] = rate2S;
+            gp.rate_cat[4] = rate3D;
+
+            gp.rateErr = errTot;
+
+            gp.etCut0_lead      = etCut0L;
+            gp.etCut0_sub       = etCut0S;
+            gp.etCut_lead2      = etCut2L;
+            gp.massCut_lead2    = massCut2L;
+            gp.etCut_sub2       = etCut2S;
+            gp.massCut_sub2     = massCut2S;
+            gp.etCut_3D_sub     = etCut3D_sub;
 
             UpdateGlobalFrontier(globalFrontier, gp);
           }

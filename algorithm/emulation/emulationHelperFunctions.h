@@ -96,14 +96,14 @@ unsigned int index_of_min(unsigned int (&in)[nSeedsDeltaR_]) { // FIXME can't us
         min_val = in[1];
         min_idx = 1;
     }
-    if (in[2] < min_val) {
+    /*if (in[2] < min_val) {
         min_val = in[2];
-        min_idx = 2;
-    }
-    if (in[3] < min_val) {
+        min_idx = 2; // FIXME this should be set dynamically based on how big nSeedsDeltaR_ is...
+    }*/
+    /*if (in[3] < min_val) {
         min_val = in[3];
         min_idx = 3;
-    }
+    }*/
 
     return min_idx;
 }
@@ -162,7 +162,7 @@ std::string makeOutputFileName(double rMergeCut,
                                bool signalBool,
                                std::string inputObjectType,
                                std::string seedObjectType,
-                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev/") {
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP_EtWeighted/") {
     std::ostringstream ss;
     if (signalBool) {
         ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
@@ -172,7 +172,7 @@ std::string makeOutputFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".root";
+       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_OR" << ".root";
 
     return ss.str();
 }
@@ -194,7 +194,7 @@ std::string makeOutputTextFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(2) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".dat";
+       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".dat";
 
     return ss.str();
 }
@@ -304,7 +304,7 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;\n";
     out << "constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;\n";
 
-    out << "constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;\n"; // FIXME unhard code this to account for when using cone jets! 
+    out << "constexpr unsigned int nSeedsDeltaR_ = 2;//nSeedsInput_ - nSeedsOutput_;\n"; // FIXME unhard code this to account for when using cone jets! 
 
     out << "static const bool lut_[max_R2lut_size_] =\n";
     out << "#include \"deltaR2LUT.h\"\n";

@@ -409,7 +409,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
     // open multipage pdf_ED
     cEventDisplay.Print(pdf_ED + "(");
     //gErrorIgnoreLevel = kWarning;
-    const unsigned int maxDisplays = 50;
+    const unsigned int maxDisplays = 200;
     unsigned int nAccepted = 0;
 
     const int numProcessedEvents = eventInfoTree->GetEntries();
@@ -429,6 +429,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         inTimeAntiKt4TruthJetsTree->GetEntry(iEvt); // NOTE all of these are pT / Et sorted!
         gepCellsTowersTree->GetEntry(iEvt);
         jetTaggerLeadingLRJs->GetEntry(iEvt);
+        eventInfoTree->GetEntry(iEvt);
         jetTaggerSubleadingLRJs->GetEntry(iEvt);
         
         truthbTree->GetEntry(iEvt);
@@ -456,7 +457,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         std::array<double, 2 > lrjEtRatioSubjets;
         
         double subjetEtThreshold;
-        if(subjetType == "WTACone") subjetEtThreshold = 15.0;
+        if(subjetType == "WTACone") subjetEtThreshold = 10.0;
         else if(subjetType == "jFEXSRJ") subjetEtThreshold = 50.0;
         const double truthJetEtThreshold = 15.0;
         const double pileupJetEtThreshold = 15.0;
@@ -884,6 +885,12 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             lat.DrawLatexNDC(0.05, y,
                 Form("Subl. LRJ: E_{T}=%.1f GeV, #psi_{R}=%.2f, #DeltaR=%.2f, r_{E_{T}}=%.2f, #DeltaR #times r_{E_{T}}=%.2f",
                     lrjEt[1], lrjPsi_R[1], deltaRSubjetsSublead, lrjEtRatioSublead, deltaRSubjetsSublead*lrjEtRatioSublead));
+            if(!signalBool){
+                y -= 0.10;
+                lat.DrawLatexNDC(0.05, y,
+                    Form("Event Weight (Rate Contribution):%.1f",
+                        eventWeightsValues->at(0)));
+            }
 
             cEventDisplay.Print(pdf_ED);   // ===== PAGE 2 =====
         }
@@ -905,23 +912,23 @@ void callMakeEventDisplays(){
     //bool signalBool = false;
     std::string subjetType = "WTACone";
     // Call for signal, both subjet types
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         -1, true, "WTACone");
     
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         -1, true, "jFEXSRJ");
 
     // Call for background (jz2, jz3)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         2, false, "WTACone");
 
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         2, false, "jFEXSRJ");
 
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         3, false, "WTACone");
 
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         3, false, "jFEXSRJ");
     
     gSystem->Exit(0);
