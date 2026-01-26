@@ -21,11 +21,14 @@ struct OutputFiles {
     std::string topo422;
     std::string caloTopoTowers;
     std::string gepBasicClusters;
+    std::string gepBasicClustersSK;
+    std::string gepCellTowersSK; 
     std::string gepCellTowers;
     std::string gepCellTowersSort;
-    std::string gepBasicTopoTowers;
-    std::string gepConeJetsCellsTowers;
-    std::string gepConeJetsBasicClusters;
+    std::string gepWTAConeJetsCellsTowers;
+    std::string gepWTAConeJetsBasicClusters;
+    std::string gepWTAConeJetsCellsTowersSK;
+    std::string gepWTAConeJetsBasicClustersSK;
     std::string gFex;
     std::string jFex;
 };
@@ -93,11 +96,14 @@ inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSl
     out.topo422         = base + "CaloTopo_422/"    + tag + "_topo422.dat";
     out.caloTopoTowers  = base + "CaloTopoTowers/"  + tag + "_calotopotowers.dat";
     out.gepBasicClusters = base + "GEPBasicClusters/"+ tag + "_gepbasicclusters.dat";
+    out.gepBasicClustersSK = base + "GEPBasicClustersSK/"+ tag + "_gepbasicclusters.dat";
     out.gepCellTowers = base + "GEPCellsTowers/"+ tag + "_gepcellstowers.dat";
+    out.gepCellTowersSK = base + "GEPCellsTowersSK/"+ tag + "_gepcellstowerssk.dat";
     out.gepCellTowersSort =base + "GEPCellsTowers_Sort/" + tag + "_gepcellstowers.dat";
-    out.gepBasicTopoTowers = base + "GEPBasicTopoTowers/"+ tag + "_gepbasictopotowers.dat";
-    out.gepConeJetsCellsTowers = base + "GEPConeJetsCellsTowers/"+ tag + "_gepconejetscellstowers.dat";
-    out.gepConeJetsBasicClusters = base + "GEPConeJetsBasicClusters/"+ tag + "_gepconejetsbasicclusters.dat";
+    out.gepWTAConeJetsCellsTowers = base + "GEPConeJetsCellsTowers/"+ tag + "_gepconejetscellstowers.dat";
+    out.gepWTAConeJetsBasicClusters = base + "GEPConeJetsBasicClusters/"+ tag + "_gepconejetsbasicclusters.dat";
+    out.gepWTAConeJetsCellsTowersSK = base + "GEPConeJetsCellsTowersSK/"+ tag + "_gepconejetscellstowerssk.dat";
+    out.gepWTAConeJetsBasicClustersSK = base + "GEPConeJetsBasicClustersSK/"+ tag + "_gepconejetsbasicclusterssk.dat";
     out.gFex            = base + "gFex/"            + tag + "_gfex_smallrj.dat";
     out.jFex            = base + "jFex/"            + tag + "_jfex_smallrj.dat";
     return out;
@@ -109,9 +115,8 @@ std::string makeFileDir(bool vbfBool, bool signalBool, int jzSlice) {
 
     if (signalBool) {
         return vbfBool
-            ? kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_VBF"
-            : kRoot + "/Signal_HHbbbb_DAODAOD/DAOD/ggF/"
-              "mc21_14TeV.603277.PhPy8EG_PDF4LHC21_HHbbbb_HLLHC_chhh1p0.deriv.DAOD_JETM42.e8564_s4422_r16130_p6658";
+            ? kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_VBF" 
+            : kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_ggF";
     }
 
     // background path
@@ -215,15 +220,18 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     std::ofstream f_topotower(out.caloTopoTowers);
     std::ofstream f_gepbasicclusters(out.gepBasicClusters);
     std::ofstream f_gepcellstowers(out.gepCellTowers);
+    std::ofstream f_gepbasicclusterssk(out.gepBasicClustersSK);
+    std::ofstream f_gepcellstowerssk(out.gepCellTowersSK);
     std::ofstream f_gepcellstowers_sort(out.gepCellTowersSort);
-    std::ofstream f_gepbasictopotowers(out.gepBasicTopoTowers);
-    std::ofstream f_conejetscellstowers(out.gepConeJetsCellsTowers);
-    std::ofstream f_conejetsbasicclusters(out.gepConeJetsBasicClusters);
+    std::ofstream f_wtaconejetscellstowers(out.gepWTAConeJetsCellsTowers);
+    std::ofstream f_wtaconejetsbasicclusters(out.gepWTAConeJetsBasicClusters);
+    std::ofstream f_wtaconejetscellstowerssk(out.gepWTAConeJetsCellsTowersSK);
+    std::ofstream f_wtaconejetsbasicclusterssk(out.gepWTAConeJetsBasicClustersSK);
     std::ofstream f_topo(out.topo422);
     std::ofstream f_gfex(out.gFex);
     std::ofstream f_jfex(out.jFex);
 
-    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open() || !f_gepcellstowers.is_open() || !f_gepbasictopotowers.is_open() || !f_conejetscellstowers.is_open() || !f_conejetsbasicclusters.is_open()) {
+    if (!f_topotower.is_open() || !f_topo.is_open() || !f_gfex.is_open() || !f_jfex.is_open() || !f_gepbasicclusters.is_open() || !f_gepcellstowers.is_open() || !f_gepbasicclusterssk.is_open() || !f_gepcellstowerssk.is_open() || !f_wtaconejetscellstowers.is_open() || !f_wtaconejetsbasicclusters.is_open() || !f_wtaconejetscellstowerssk.is_open() || !f_wtaconejetsbasicclusterssk.is_open()) {
         std::cerr << "Error: One or more output files could not be opened for writing!" << std::endl;
         // handle error or return
     }
@@ -241,20 +249,21 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     //TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
     TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gepBasicClustersTree = new TTree("gepBasicClustersTree", "Tree storing event-wise Et, Eta, Phi");
+    TTree* gepBasicClustersSKTree = new TTree("gepBasicClustersSKTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gepCellsTowersTree = new TTree("gepCellsTowersTree", "Tree storing event-wise Et, Eta, Phi");
-    TTree* gepBasicTopoTowersTree = new TTree("gepBasicTopoTowersTree", "Tree storing event-wise Et, Eta, Phi");
-    TTree* gepConeCellsTowersJetsTree = new TTree("gepConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
-    TTree* gepLeadingConeCellsTowersJetsTree = new TTree("gepLeadingConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
-    TTree* gepSubleadingConeCellsTowersJetsTree = new TTree("gepSubleadingConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepCellsTowersSKTree = new TTree("gepCellsTowersSKTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gepWTAConeCellsTowersJetsTree = new TTree("gepWTAConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* gepLeadingWTAConeCellsTowersJetsTree = new TTree("gepLeadingWTAConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* gepSubleadingWTAConeCellsTowersJetsTree = new TTree("gepSubleadingWTAConeCellsTowersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
-    TTree* gepConeBasicClustersJetsTree = new TTree("gepConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
-    TTree* gepLeadingConeBasicClustersJetsTree = new TTree("gepLeadingConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
-    TTree* gepSubleadingConeBasicClustersJetsTree = new TTree("gepSubleadingConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepWTAConeCellsTowersSKJetsTree = new TTree("gepWTAConeCellsTowersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepLeadingWTAConeCellsTowersSKJetsTree = new TTree("gepLeadingWTAConeCellsTowersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepSubleadingWTAConeCellsTowersSKJetsTree = new TTree("gepSubleadingWTAConeCellsTowersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* gepWTAConeBasicClustersJetsTree = new TTree("gepWTAConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* gepLeadingWTAConeBasicClustersJetsTree = new TTree("gepLeadingWTAConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* gepSubleadingWTAConeBasicClustersJetsTree = new TTree("gepSubleadingWTAConeBasicClustersJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepWTAConeBasicClustersSKJetsTree = new TTree("gepWTAConeBasicClustersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepLeadingWTAConeBasicClustersSKJetsTree = new TTree("gepLeadingWTAConeBasicClustersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
+    TTree* gepSubleadingWTAConeBasicClustersSKJetsTree = new TTree("gepSubleadingWTAConeBasicClustersSKJetsTree", "Tree storing event-wise Pt, Eta, Phi, Mass, NConstituents");
     TTree* topo422Tree = new TTree("topo422Tree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexSRJTree = new TTree("gFexSRJTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gFexLeadingSRJTree = new TTree("gFexLeadingSRJTree", "Tree storing event-wise Et, Eta, Phi");
@@ -304,39 +313,46 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     // Tower / cluster vectors
     std::vector<double> caloTopoTowerEtValues, caloTopoTowerEtaValues, caloTopoTowerPhiValues;
     std::vector<double> gepBasicClustersEtValues, gepBasicClustersEtaValues, gepBasicClustersPhiValues;
+    std::vector<double> gepBasicClustersSKEtValues, gepBasicClustersSKEtaValues, gepBasicClustersSKPhiValues;
     std::vector<double> gepCellsTowersEtValues, gepCellsTowersEtaValues, gepCellsTowersPhiValues;
-    std::vector<double> gepBasicTopoTowersEtValues, gepBasicTopoTowersEtaValues, gepBasicTopoTowersPhiValues;
+    std::vector<double> gepCellsTowersSKEtValues, gepCellsTowersSKEtaValues, gepCellsTowersSKPhiValues;
     std::vector<double> topo422EtValues, topo422EtaValues, topo422PhiValues;
 
     // Cone jets from TrigGepPerf
-    std::vector<double> gepConeCellsTowersJetspTValues, gepConeCellsTowersJetsEtaValues, gepConeCellsTowersJetsPhiValues, gepConeCellsTowersJetsMassValues;
-    std::vector<unsigned int > gepConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepWTAConeCellsTowersJetspTValues, gepWTAConeCellsTowersJetsEtaValues, gepWTAConeCellsTowersJetsPhiValues, gepWTAConeCellsTowersJetsMassValues;
+    std::vector<double> gepWTAConeCellsTowersJetspTValues, gepWTAConeCellsTowersJetsEtaValues, gepWTAConeCellsTowersJetsPhiValues;
     std::vector<unsigned int > gepWTAConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepConeGEPBasicClustersJetspTValues, gepConeGEPBasicClustersJetsEtaValues, gepConeGEPBasicClustersJetsPhiValues, gepConeGEPBasicClustersJetsMassValues;
-    std::vector<unsigned int > gepConeGEPBasicClustersJetsNConstituentsValues;
-    std::vector<double> gepWTAConeGEPBasicClustersJetspTValues, gepWTAConeGEPBasicClustersJetsEtaValues, gepWTAConeGEPBasicClustersJetsPhiValues, gepWTAConeGEPBasicClustersJetsMassValues;
+    std::vector<double> gepWTAConeGEPBasicClustersJetspTValues, gepWTAConeGEPBasicClustersJetsEtaValues, gepWTAConeGEPBasicClustersJetsPhiValues;
     std::vector<unsigned int > gepWTAConeGEPBasicClustersJetsNConstituentsValues;
 
-    // Leading one jets from TrigGepPerf
-    std::vector<double> gepLeadingConeCellsTowersJetspTValues, gepLeadingConeCellsTowersJetsEtaValues, gepLeadingConeCellsTowersJetsPhiValues, gepLeadingConeCellsTowersJetsMassValues;
-    std::vector<unsigned int > gepLeadingConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepLeadingWTAConeCellsTowersJetspTValues, gepLeadingWTAConeCellsTowersJetsEtaValues, gepLeadingWTAConeCellsTowersJetsPhiValues, gepLeadingWTAConeCellsTowersJetsMassValues;
+    // SK PU-suppressed cone jets from TrigGepPerf
+    std::vector<double> gepWTAConeCellsTowersSKJetspTValues, gepWTAConeCellsTowersSKJetsEtaValues, gepWTAConeCellsTowersSKJetsPhiValues;
+    std::vector<unsigned int > gepWTAConeCellsTowersSKJetsNConstituentsValues;
+    std::vector<double> gepWTAConeGEPBasicClustersSKJetspTValues, gepWTAConeGEPBasicClustersSKJetsEtaValues, gepWTAConeGEPBasicClustersSKJetsPhiValues;
+    std::vector<unsigned int > gepWTAConeGEPBasicClustersSKJetsNConstituentsValues;
+
+    // Leading cone jets from TrigGepPerf
+    std::vector<double> gepLeadingWTAConeCellsTowersJetspTValues, gepLeadingWTAConeCellsTowersJetsEtaValues, gepLeadingWTAConeCellsTowersJetsPhiValues;
     std::vector<unsigned int > gepLeadingWTAConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepLeadingConeGEPBasicClustersJetspTValues, gepLeadingConeGEPBasicClustersJetsEtaValues, gepLeadingConeGEPBasicClustersJetsPhiValues, gepLeadingConeGEPBasicClustersJetsMassValues;
-    std::vector<unsigned int > gepLeadingConeGEPBasicClustersJetsNConstituentsValues;
-    std::vector<double> gepLeadingWTAConeGEPBasicClustersJetspTValues, gepLeadingWTAConeGEPBasicClustersJetsEtaValues, gepLeadingWTAConeGEPBasicClustersJetsPhiValues, gepLeadingWTAConeGEPBasicClustersJetsMassValues;
+    std::vector<double> gepLeadingWTAConeGEPBasicClustersJetspTValues, gepLeadingWTAConeGEPBasicClustersJetsEtaValues, gepLeadingWTAConeGEPBasicClustersJetsPhiValues;
     std::vector<unsigned int > gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValues;
 
-    // Subleading one jets from TrigGepPerf
-    std::vector<double> gepSubleadingConeCellsTowersJetspTValues, gepSubleadingConeCellsTowersJetsEtaValues, gepSubleadingConeCellsTowersJetsPhiValues, gepSubleadingConeCellsTowersJetsMassValues;
-    std::vector<unsigned int > gepSubleadingConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepSubleadingWTAConeCellsTowersJetspTValues, gepSubleadingWTAConeCellsTowersJetsEtaValues, gepSubleadingWTAConeCellsTowersJetsPhiValues, gepSubleadingWTAConeCellsTowersJetsMassValues;
+    // Leading SK PU-suppressed jets from TrigGepPerf
+    std::vector<double> gepLeadingWTAConeCellsTowersSKJetspTValues, gepLeadingWTAConeCellsTowersSKJetsEtaValues, gepLeadingWTAConeCellsTowersSKJetsPhiValues;
+    std::vector<unsigned int > gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues;
+    std::vector<double> gepLeadingWTAConeGEPBasicClustersSKJetspTValues, gepLeadingWTAConeGEPBasicClustersSKJetsEtaValues, gepLeadingWTAConeGEPBasicClustersSKJetsPhiValues;
+    std::vector<unsigned int > gepLeadingWTAConeGEPBasicClustersSKJetsNConstituentsValues;
+
+    // Subleading cone jets from TrigGepPerf
+    std::vector<double> gepSubleadingWTAConeCellsTowersJetspTValues, gepSubleadingWTAConeCellsTowersJetsEtaValues, gepSubleadingWTAConeCellsTowersJetsPhiValues;
     std::vector<unsigned int > gepSubleadingWTAConeCellsTowersJetsNConstituentsValues;
-    std::vector<double> gepSubleadingConeGEPBasicClustersJetspTValues, gepSubleadingConeGEPBasicClustersJetsEtaValues, gepSubleadingConeGEPBasicClustersJetsPhiValues, gepSubleadingConeGEPBasicClustersJetsMassValues;
-    std::vector<unsigned int > gepSubleadingConeGEPBasicClustersJetsNConstituentsValues;
-    std::vector<double> gepSubleadingWTAConeGEPBasicClustersJetspTValues, gepSubleadingWTAConeGEPBasicClustersJetsEtaValues, gepSubleadingWTAConeGEPBasicClustersJetsPhiValues, gepSubleadingWTAConeGEPBasicClustersJetsMassValues;
+    std::vector<double> gepSubleadingWTAConeGEPBasicClustersJetspTValues, gepSubleadingWTAConeGEPBasicClustersJetsEtaValues, gepSubleadingWTAConeGEPBasicClustersJetsPhiValues;
     std::vector<unsigned int > gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValues;
+
+    // Subleading SK PU-suppressed cone jets from TrigGepPerf
+    std::vector<double> gepSubleadingWTAConeCellsTowersSKJetspTValues, gepSubleadingWTAConeCellsTowersSKJetsEtaValues, gepSubleadingWTAConeCellsTowersSKJetsPhiValues;
+    std::vector<unsigned int > gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues;
+    std::vector<double> gepSubleadingWTAConeGEPBasicClustersSKJetspTValues, gepSubleadingWTAConeGEPBasicClustersSKJetsEtaValues, gepSubleadingWTAConeGEPBasicClustersSKJetsPhiValues;
+    std::vector<unsigned int > gepSubleadingWTAConeGEPBasicClustersSKJetsNConstituentsValues;
 
     // L1Calo jets vectors
     std::vector<unsigned int> gFexSRJEtIndexValues; // stores index in sorted by Et list of jets
@@ -443,100 +459,92 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     gepBasicClustersTree->Branch("Eta", &gepBasicClustersEtaValues);
     gepBasicClustersTree->Branch("Phi", &gepBasicClustersPhiValues);
 
+    // gepBasicClustersSKTree
+    gepBasicClustersSKTree->Branch("Et", &gepBasicClustersSKEtValues);
+    gepBasicClustersSKTree->Branch("Eta", &gepBasicClustersSKEtaValues);
+    gepBasicClustersSKTree->Branch("Phi", &gepBasicClustersSKPhiValues);
+
     // gepCellsTowersTree
     gepCellsTowersTree->Branch("Et", &gepCellsTowersEtValues);
     gepCellsTowersTree->Branch("Eta", &gepCellsTowersEtaValues);
     gepCellsTowersTree->Branch("Phi", &gepCellsTowersPhiValues);
 
-    // gepBasicTopoTowersTree
-    gepBasicTopoTowersTree->Branch("Et", &gepBasicTopoTowersEtValues);
-    gepBasicTopoTowersTree->Branch("Eta", &gepBasicTopoTowersEtaValues);
-    gepBasicTopoTowersTree->Branch("Phi", &gepBasicTopoTowersPhiValues);
-
-    // gep cone cells towers jets
-    gepConeCellsTowersJetsTree->Branch("pT", &gepConeCellsTowersJetspTValues);
-    gepConeCellsTowersJetsTree->Branch("Eta", &gepConeCellsTowersJetsEtaValues);
-    gepConeCellsTowersJetsTree->Branch("Phi", &gepConeCellsTowersJetsPhiValues);
-    gepConeCellsTowersJetsTree->Branch("Mass", &gepConeCellsTowersJetsMassValues);
-    gepConeCellsTowersJetsTree->Branch("NConstituents", &gepConeCellsTowersJetsNConstituentsValues);
-
-    // gep cone cells towers jets
-    gepLeadingConeCellsTowersJetsTree->Branch("pT", &gepLeadingConeCellsTowersJetspTValues);
-    gepLeadingConeCellsTowersJetsTree->Branch("Eta", &gepLeadingConeCellsTowersJetsEtaValues);
-    gepLeadingConeCellsTowersJetsTree->Branch("Phi", &gepLeadingConeCellsTowersJetsPhiValues);
-    gepLeadingConeCellsTowersJetsTree->Branch("Mass", &gepLeadingConeCellsTowersJetsMassValues);
-    gepLeadingConeCellsTowersJetsTree->Branch("NConstituents", &gepLeadingConeCellsTowersJetsNConstituentsValues);
-
-    // gep cone cells towers jets
-    gepSubleadingConeCellsTowersJetsTree->Branch("pT", &gepSubleadingConeCellsTowersJetspTValues);
-    gepSubleadingConeCellsTowersJetsTree->Branch("Eta", &gepSubleadingConeCellsTowersJetsEtaValues);
-    gepSubleadingConeCellsTowersJetsTree->Branch("Phi", &gepSubleadingConeCellsTowersJetsPhiValues);
-    gepSubleadingConeCellsTowersJetsTree->Branch("Mass", &gepSubleadingConeCellsTowersJetsMassValues);
-    gepSubleadingConeCellsTowersJetsTree->Branch("NConstituents", &gepSubleadingConeCellsTowersJetsNConstituentsValues);
+    // gepCellsTowersSKTree
+    gepCellsTowersSKTree->Branch("Et", &gepCellsTowersSKEtValues);
+    gepCellsTowersSKTree->Branch("Eta", &gepCellsTowersSKEtaValues);
+    gepCellsTowersSKTree->Branch("Phi", &gepCellsTowersSKPhiValues);
 
     // gep wta cone cells towers jets
     gepWTAConeCellsTowersJetsTree->Branch("pT", &gepWTAConeCellsTowersJetspTValues);
     gepWTAConeCellsTowersJetsTree->Branch("Eta", &gepWTAConeCellsTowersJetsEtaValues);
     gepWTAConeCellsTowersJetsTree->Branch("Phi", &gepWTAConeCellsTowersJetsPhiValues);
-    gepWTAConeCellsTowersJetsTree->Branch("Mass", &gepWTAConeCellsTowersJetsMassValues);
     gepWTAConeCellsTowersJetsTree->Branch("NConstituents", &gepWTAConeCellsTowersJetsNConstituentsValues);
 
     // gep wta cone cells towers jets
     gepLeadingWTAConeCellsTowersJetsTree->Branch("pT", &gepLeadingWTAConeCellsTowersJetspTValues);
     gepLeadingWTAConeCellsTowersJetsTree->Branch("Eta", &gepLeadingWTAConeCellsTowersJetsEtaValues);
     gepLeadingWTAConeCellsTowersJetsTree->Branch("Phi", &gepLeadingWTAConeCellsTowersJetsPhiValues);
-    gepLeadingWTAConeCellsTowersJetsTree->Branch("Mass", &gepLeadingWTAConeCellsTowersJetsMassValues);
     gepLeadingWTAConeCellsTowersJetsTree->Branch("NConstituents", &gepLeadingWTAConeCellsTowersJetsNConstituentsValues);
 
     // gep wta cone cells towers jets
     gepSubleadingWTAConeCellsTowersJetsTree->Branch("pT", &gepSubleadingWTAConeCellsTowersJetspTValues);
     gepSubleadingWTAConeCellsTowersJetsTree->Branch("Eta", &gepSubleadingWTAConeCellsTowersJetsEtaValues);
     gepSubleadingWTAConeCellsTowersJetsTree->Branch("Phi", &gepSubleadingWTAConeCellsTowersJetsPhiValues);
-    gepSubleadingWTAConeCellsTowersJetsTree->Branch("Mass", &gepSubleadingWTAConeCellsTowersJetsMassValues);
     gepSubleadingWTAConeCellsTowersJetsTree->Branch("NConstituents", &gepSubleadingWTAConeCellsTowersJetsNConstituentsValues);
 
-    // gep cone basic clusters jets
-    gepConeBasicClustersJetsTree->Branch("pT", &gepConeGEPBasicClustersJetspTValues);
-    gepConeBasicClustersJetsTree->Branch("Eta", &gepConeGEPBasicClustersJetsEtaValues);
-    gepConeBasicClustersJetsTree->Branch("Phi", &gepConeGEPBasicClustersJetsPhiValues);
-    gepConeBasicClustersJetsTree->Branch("Mass", &gepConeGEPBasicClustersJetsMassValues);
-    gepConeBasicClustersJetsTree->Branch("NConstituents", &gepConeGEPBasicClustersJetsNConstituentsValues);
+     // gep wta cone cells towers SK jets
+    gepWTAConeCellsTowersSKJetsTree->Branch("pT", &gepWTAConeCellsTowersSKJetspTValues);
+    gepWTAConeCellsTowersSKJetsTree->Branch("Eta", &gepWTAConeCellsTowersSKJetsEtaValues);
+    gepWTAConeCellsTowersSKJetsTree->Branch("Phi", &gepWTAConeCellsTowersSKJetsPhiValues);
+    gepWTAConeCellsTowersSKJetsTree->Branch("NConstituents", &gepWTAConeCellsTowersSKJetsNConstituentsValues);
 
-    // gep cone basic clusters jets
-    gepLeadingConeBasicClustersJetsTree->Branch("pT", &gepLeadingConeGEPBasicClustersJetspTValues);
-    gepLeadingConeBasicClustersJetsTree->Branch("Eta", &gepLeadingConeGEPBasicClustersJetsEtaValues);
-    gepLeadingConeBasicClustersJetsTree->Branch("Phi", &gepLeadingConeGEPBasicClustersJetsPhiValues);
-    gepLeadingConeBasicClustersJetsTree->Branch("Mass", &gepLeadingConeGEPBasicClustersJetsMassValues);
-    gepLeadingConeBasicClustersJetsTree->Branch("NConstituents", &gepLeadingConeGEPBasicClustersJetsNConstituentsValues);
+    // gep wta cone cells towers SK jets
+    gepLeadingWTAConeCellsTowersSKJetsTree->Branch("pT", &gepLeadingWTAConeCellsTowersSKJetspTValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->Branch("Eta", &gepLeadingWTAConeCellsTowersSKJetsEtaValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->Branch("Phi", &gepLeadingWTAConeCellsTowersSKJetsPhiValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->Branch("NConstituents", &gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues);
 
-    // gep cone basic clusters jets
-    gepSubleadingConeBasicClustersJetsTree->Branch("pT", &gepSubleadingConeGEPBasicClustersJetspTValues);
-    gepSubleadingConeBasicClustersJetsTree->Branch("Eta", &gepSubleadingConeGEPBasicClustersJetsEtaValues);
-    gepSubleadingConeBasicClustersJetsTree->Branch("Phi", &gepSubleadingConeGEPBasicClustersJetsPhiValues);
-    gepSubleadingConeBasicClustersJetsTree->Branch("Mass", &gepSubleadingConeGEPBasicClustersJetsMassValues);
-    gepSubleadingConeBasicClustersJetsTree->Branch("NConstituents", &gepSubleadingConeGEPBasicClustersJetsNConstituentsValues);
+    // gep wta cone cells towers SK jets
+    gepSubleadingWTAConeCellsTowersSKJetsTree->Branch("pT", &gepSubleadingWTAConeCellsTowersSKJetspTValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->Branch("Eta", &gepSubleadingWTAConeCellsTowersSKJetsEtaValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->Branch("Phi", &gepSubleadingWTAConeCellsTowersSKJetsPhiValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->Branch("NConstituents", &gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues);
 
     // gep wta cone basic clusters jets
     gepWTAConeBasicClustersJetsTree->Branch("pT", &gepWTAConeGEPBasicClustersJetspTValues);
     gepWTAConeBasicClustersJetsTree->Branch("Eta", &gepWTAConeGEPBasicClustersJetsEtaValues);
     gepWTAConeBasicClustersJetsTree->Branch("Phi", &gepWTAConeGEPBasicClustersJetsPhiValues);
-    gepWTAConeBasicClustersJetsTree->Branch("Mass", &gepWTAConeGEPBasicClustersJetsMassValues);
     gepWTAConeBasicClustersJetsTree->Branch("NConstituents", &gepWTAConeGEPBasicClustersJetsNConstituentsValues);
 
     // gep wta cone basic clusters jets
     gepLeadingWTAConeBasicClustersJetsTree->Branch("pT", &gepLeadingWTAConeGEPBasicClustersJetspTValues);
     gepLeadingWTAConeBasicClustersJetsTree->Branch("Eta", &gepLeadingWTAConeGEPBasicClustersJetsEtaValues);
     gepLeadingWTAConeBasicClustersJetsTree->Branch("Phi", &gepLeadingWTAConeGEPBasicClustersJetsPhiValues);
-    gepLeadingWTAConeBasicClustersJetsTree->Branch("Mass", &gepLeadingWTAConeGEPBasicClustersJetsMassValues);
     gepLeadingWTAConeBasicClustersJetsTree->Branch("NConstituents", &gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValues);
 
     // gep wta cone basic clusters jets
     gepSubleadingWTAConeBasicClustersJetsTree->Branch("pT", &gepSubleadingWTAConeGEPBasicClustersJetspTValues);
     gepSubleadingWTAConeBasicClustersJetsTree->Branch("Eta", &gepSubleadingWTAConeGEPBasicClustersJetsEtaValues);
     gepSubleadingWTAConeBasicClustersJetsTree->Branch("Phi", &gepSubleadingWTAConeGEPBasicClustersJetsPhiValues);
-    gepSubleadingWTAConeBasicClustersJetsTree->Branch("Mass", &gepSubleadingWTAConeGEPBasicClustersJetsMassValues);
     gepSubleadingWTAConeBasicClustersJetsTree->Branch("NConstituents", &gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValues);
 
+    // gep wta cone basic clusters SK jets
+    gepWTAConeBasicClustersSKJetsTree->Branch("pT", &gepWTAConeGEPBasicClustersSKJetspTValues);
+    gepWTAConeBasicClustersSKJetsTree->Branch("Eta", &gepWTAConeGEPBasicClustersSKJetsEtaValues);
+    gepWTAConeBasicClustersSKJetsTree->Branch("Phi", &gepWTAConeGEPBasicClustersSKJetsPhiValues);
+    gepWTAConeBasicClustersSKJetsTree->Branch("NConstituents", &gepWTAConeGEPBasicClustersSKJetsNConstituentsValues);
+
+    // gep wta cone basic clusters SK jets
+    gepLeadingWTAConeBasicClustersSKJetsTree->Branch("pT", &gepLeadingWTAConeGEPBasicClustersSKJetspTValues);
+    gepLeadingWTAConeBasicClustersSKJetsTree->Branch("Eta", &gepLeadingWTAConeGEPBasicClustersSKJetsEtaValues);
+    gepLeadingWTAConeBasicClustersSKJetsTree->Branch("Phi", &gepLeadingWTAConeGEPBasicClustersSKJetsPhiValues);
+    gepLeadingWTAConeBasicClustersSKJetsTree->Branch("NConstituents", &gepLeadingWTAConeGEPBasicClustersSKJetsNConstituentsValues);
+
+    // gep wta cone basic clusters SK jets
+    gepSubleadingWTAConeBasicClustersSKJetsTree->Branch("pT", &gepSubleadingWTAConeGEPBasicClustersSKJetspTValues);
+    gepSubleadingWTAConeBasicClustersSKJetsTree->Branch("Eta", &gepSubleadingWTAConeGEPBasicClustersSKJetsEtaValues);
+    gepSubleadingWTAConeBasicClustersSKJetsTree->Branch("Phi", &gepSubleadingWTAConeGEPBasicClustersSKJetsPhiValues);
+    gepSubleadingWTAConeBasicClustersSKJetsTree->Branch("NConstituents", &gepSubleadingWTAConeGEPBasicClustersSKJetsNConstituentsValues);
 
     // topo422Tree
     topo422Tree->Branch("Et", &topo422EtValues);
@@ -677,28 +685,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     subleadingTruthAntiKt4TruthDressedWZJets->Branch("Phi", &truthAntiKt4WZSRJSubleadingPhiValues);
     subleadingTruthAntiKt4TruthDressedWZJets->Branch("Mass", &truthAntiKt4WZSRJSubleadingMassValues);
 
-    
-
-    // recoAntiKt10LCTopoJets - unsure if want to use these at all?? 
-    /*
-    recoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJEtValues);
-    recoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJEtaValues);
-    recoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJPhiValues);
-
-    // leadingRecoAntiKt10LCTopoJets
-    leadingRecoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJLeadingEtValues);
-    leadingRecoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJLeadingEtaValues);
-    leadingRecoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJLeadingPhiValues);
-
-    // subleadingRecoAntiKt10LCTopoJets
-    subleadingRecoAntiKt10LCTopoJets->Branch("Et", &recoAntiKt10LRJSubleadingEtValues);
-    subleadingRecoAntiKt10LCTopoJets->Branch("Eta", &recoAntiKt10LRJSubleadingEtaValues);
-    subleadingRecoAntiKt10LCTopoJets->Branch("Phi", &recoAntiKt10LRJSubleadingPhiValues);*/
-
-    // gFexRhoRoI
-    /*gFexRhoRoI->Branch("Et", &gFexRhoRoIEtValues);
-    gFexRhoRoI->Branch("Eta", &gFexRhoRoIEtaValues);
-    gFexRhoRoI->Branch("Phi", &gFexRhoRoIPhiValues);*/
     int higgsPassEventCounter = 0;
     namespace fs = std::filesystem;
     // Collect input file names
@@ -779,120 +765,121 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 
         // Enable needed branches from TrigGepPerf 
         gt->SetBranchStatus("*", 0);
+
         gt->SetBranchStatus("GEPBasicClusters_et",  1);
         gt->SetBranchStatus("GEPBasicClusters_eta", 1);
         gt->SetBranchStatus("GEPBasicClusters_phi", 1);
+
+        gt->SetBranchStatus("GEPBasicClustersSK_et",  1);
+        gt->SetBranchStatus("GEPBasicClustersSK_eta", 1);
+        gt->SetBranchStatus("GEPBasicClustersSK_phi", 1);
+
         gt->SetBranchStatus("GEPCellsTower_et",  1);
         gt->SetBranchStatus("GEPCellsTower_eta", 1);
         gt->SetBranchStatus("GEPCellsTower_phi", 1);
-        gt->SetBranchStatus("GEPBasicTopoTower_et",  1);
-        gt->SetBranchStatus("GEPBasicTopoTower_eta", 1);
-        gt->SetBranchStatus("GEPBasicTopoTower_phi", 1);
 
-        gt->SetBranchStatus("ConeGEPCellsTowerJets_pt",  1);
-        gt->SetBranchStatus("ConeGEPCellsTowerJets_eta", 1);
-        gt->SetBranchStatus("ConeGEPCellsTowerJets_phi", 1);
-        gt->SetBranchStatus("ConeGEPCellsTowerJets_m", 1);
-        gt->SetBranchStatus("ConeGEPCellsTowerJets_nConstituents", 1);
+        gt->SetBranchStatus("GEPCellsTowerSK_et",  1);
+        gt->SetBranchStatus("GEPCellsTowerSK_eta", 1);
+        gt->SetBranchStatus("GEPCellsTowerSK_phi", 1);
 
         gt->SetBranchStatus("WTAConeGEPCellsTowerJets_pt",  1);
         gt->SetBranchStatus("WTAConeGEPCellsTowerJets_eta", 1);
         gt->SetBranchStatus("WTAConeGEPCellsTowerJets_phi", 1);
-        gt->SetBranchStatus("WTAConeGEPCellsTowerJets_m", 1);
         gt->SetBranchStatus("WTAConeGEPCellsTowerJets_nConstituents", 1);
 
-        gt->SetBranchStatus("ConeGEPBasicClustersJets_pt",  1);
-        gt->SetBranchStatus("ConeGEPBasicClustersJets_eta", 1);
-        gt->SetBranchStatus("ConeGEPBasicClustersJets_phi", 1);
-        gt->SetBranchStatus("ConeGEPBasicClustersJets_m", 1);
-        gt->SetBranchStatus("ConeGEPBasicClustersJets_nConstituents", 1);
+        gt->SetBranchStatus("WTAConeGEPCellsTowerSKJets_pt",  1);
+        gt->SetBranchStatus("WTAConeGEPCellsTowerSKJets_eta", 1);
+        gt->SetBranchStatus("WTAConeGEPCellsTowerSKJets_phi", 1);
+        gt->SetBranchStatus("WTAConeGEPCellsTowerSKJets_nConstituents", 1);
 
         gt->SetBranchStatus("WTAConeGEPBasicClustersJets_pt",  1);
         gt->SetBranchStatus("WTAConeGEPBasicClustersJets_eta", 1);
         gt->SetBranchStatus("WTAConeGEPBasicClustersJets_phi", 1);
-        gt->SetBranchStatus("WTAConeGEPBasicClustersJets_m", 1);
         gt->SetBranchStatus("WTAConeGEPBasicClustersJets_nConstituents", 1);
+
+        gt->SetBranchStatus("WTAConeGEPBasicClustersSKJets_pt",  1);
+        gt->SetBranchStatus("WTAConeGEPBasicClustersSKJets_eta", 1);
+        gt->SetBranchStatus("WTAConeGEPBasicClustersSKJets_phi", 1);
+        gt->SetBranchStatus("WTAConeGEPBasicClustersSKJets_nConstituents", 1);
 
         std::vector<float>* gepBasicClustersEt  = nullptr;
         std::vector<float>* gepBasicClustersEta = nullptr;
         std::vector<float>* gepBasicClustersPhi = nullptr;
 
+        std::vector<float>* gepBasicClustersSKEt  = nullptr;
+        std::vector<float>* gepBasicClustersSKEta = nullptr;
+        std::vector<float>* gepBasicClustersSKPhi = nullptr;
+
         std::vector<float>* gepCellsTowersEt  = nullptr;
         std::vector<float>* gepCellsTowersEta = nullptr;
         std::vector<float>* gepCellsTowersPhi = nullptr;
 
-        std::vector<float>* gepBasicTopoTowersEt  = nullptr;
-        std::vector<float>* gepBasicTopoTowersEta = nullptr;
-        std::vector<float>* gepBasicTopoTowersPhi = nullptr;
-
-        std::vector<float>* gepConeCellsTowersJetsPt  = nullptr;
-        std::vector<float>* gepConeCellsTowersJetsEta = nullptr;
-        std::vector<float>* gepConeCellsTowersJetsPhi = nullptr;
-        std::vector<float>* gepConeCellsTowersJetsMass = nullptr;
-        std::vector<float>* gepConeCellsTowersJetsNConstituents = nullptr;
+        std::vector<float>* gepCellsTowersSKEt  = nullptr;
+        std::vector<float>* gepCellsTowersSKEta = nullptr;
+        std::vector<float>* gepCellsTowersSKPhi = nullptr;
 
         std::vector<float>* gepWTAConeCellsTowersJetsPt  = nullptr;
         std::vector<float>* gepWTAConeCellsTowersJetsEta = nullptr;
         std::vector<float>* gepWTAConeCellsTowersJetsPhi = nullptr;
-        std::vector<float>* gepWTAConeCellsTowersJetsMass = nullptr;
         std::vector<float>* gepWTAConeCellsTowersJetsNConstituents = nullptr;
 
-        std::vector<float>* gepConeBasicClustersJetsPt  = nullptr;
-        std::vector<float>* gepConeBasicClustersJetsEta = nullptr;
-        std::vector<float>* gepConeBasicClustersJetsPhi = nullptr;
-        std::vector<float>* gepConeBasicClustersJetsMass = nullptr;
-        std::vector<float>* gepConeBasicClustersJetsNConstituents = nullptr;
+        std::vector<float>* gepWTAConeCellsTowersSKJetsPt  = nullptr;
+        std::vector<float>* gepWTAConeCellsTowersSKJetsEta = nullptr;
+        std::vector<float>* gepWTAConeCellsTowersSKJetsPhi = nullptr;
+        std::vector<float>* gepWTAConeCellsTowersSKJetsNConstituents = nullptr;
 
         std::vector<float>* gepWTAConeBasicClustersJetsPt  = nullptr;
         std::vector<float>* gepWTAConeBasicClustersJetsEta = nullptr;
         std::vector<float>* gepWTAConeBasicClustersJetsPhi = nullptr;
-        std::vector<float>* gepWTAConeBasicClustersJetsMass = nullptr;
         std::vector<float>* gepWTAConeBasicClustersJetsNConstituents = nullptr;
+
+        std::vector<float>* gepWTAConeBasicClustersSKJetsPt  = nullptr;
+        std::vector<float>* gepWTAConeBasicClustersSKJetsEta = nullptr;
+        std::vector<float>* gepWTAConeBasicClustersSKJetsPhi = nullptr;
+        std::vector<float>* gepWTAConeBasicClustersSKJetsNConstituents = nullptr;
 
         gt->SetBranchAddress("GEPBasicClusters_et",  &gepBasicClustersEt);
         gt->SetBranchAddress("GEPBasicClusters_eta", &gepBasicClustersEta);
         gt->SetBranchAddress("GEPBasicClusters_phi", &gepBasicClustersPhi);
 
+        gt->SetBranchAddress("GEPBasicClustersSK_et",  &gepBasicClustersSKEt);
+        gt->SetBranchAddress("GEPBasicClustersSK_eta", &gepBasicClustersSKEta);
+        gt->SetBranchAddress("GEPBasicClustersSK_phi", &gepBasicClustersSKPhi);
+
         gt->SetBranchAddress("GEPCellsTower_et",  &gepCellsTowersEt);
         gt->SetBranchAddress("GEPCellsTower_eta", &gepCellsTowersEta);
         gt->SetBranchAddress("GEPCellsTower_phi", &gepCellsTowersPhi);
 
-        gt->SetBranchAddress("GEPBasicTopoTower_et",  &gepBasicTopoTowersEt);
-        gt->SetBranchAddress("GEPBasicTopoTower_eta", &gepBasicTopoTowersEta);
-        gt->SetBranchAddress("GEPBasicTopoTower_phi", &gepBasicTopoTowersPhi); 
-
-        gt->SetBranchAddress("ConeGEPCellsTowerJets_pt", &gepConeCellsTowersJetsPt);
-        gt->SetBranchAddress("ConeGEPCellsTowerJets_eta", &gepConeCellsTowersJetsEta);
-        gt->SetBranchAddress("ConeGEPCellsTowerJets_phi", &gepConeCellsTowersJetsPhi); 
-        gt->SetBranchAddress("ConeGEPCellsTowerJets_m", &gepConeCellsTowersJetsMass); 
-        gt->SetBranchAddress("ConeGEPCellsTowerJets_nConstituents", &gepConeCellsTowersJetsNConstituents); 
+        gt->SetBranchAddress("GEPCellsTowerSK_et",  &gepCellsTowersSKEt);
+        gt->SetBranchAddress("GEPCellsTowerSK_eta", &gepCellsTowersSKEta);
+        gt->SetBranchAddress("GEPCellsTowerSK_phi", &gepCellsTowersSKPhi);
 
         gt->SetBranchAddress("WTAConeGEPCellsTowerJets_pt",  &gepWTAConeCellsTowersJetsPt);
         gt->SetBranchAddress("WTAConeGEPCellsTowerJets_eta", &gepWTAConeCellsTowersJetsEta);
         gt->SetBranchAddress("WTAConeGEPCellsTowerJets_phi", &gepWTAConeCellsTowersJetsPhi); 
-        gt->SetBranchAddress("WTAConeGEPCellsTowerJets_m", &gepWTAConeCellsTowersJetsMass); 
         gt->SetBranchAddress("WTAConeGEPCellsTowerJets_nConstituents", &gepWTAConeCellsTowersJetsNConstituents); 
 
-        gt->SetBranchAddress("ConeGEPBasicClustersJets_pt",  &gepConeBasicClustersJetsPt);
-        gt->SetBranchAddress("ConeGEPBasicClustersJets_eta", &gepConeBasicClustersJetsEta);
-        gt->SetBranchAddress("ConeGEPBasicClustersJets_phi", &gepConeBasicClustersJetsPhi); 
-        gt->SetBranchAddress("ConeGEPBasicClustersJets_m", &gepConeBasicClustersJetsMass); 
-        gt->SetBranchAddress("ConeGEPBasicClustersJets_nConstituents", &gepConeBasicClustersJetsNConstituents); 
+        gt->SetBranchAddress("WTAConeGEPCellsTowerSKJets_pt",  &gepWTAConeCellsTowersSKJetsPt);
+        gt->SetBranchAddress("WTAConeGEPCellsTowerSKJets_eta", &gepWTAConeCellsTowersSKJetsEta);
+        gt->SetBranchAddress("WTAConeGEPCellsTowerSKJets_phi", &gepWTAConeCellsTowersSKJetsPhi); 
+        gt->SetBranchAddress("WTAConeGEPCellsTowerSKJets_nConstituents", &gepWTAConeCellsTowersSKJetsNConstituents); 
 
         gt->SetBranchAddress("WTAConeGEPBasicClustersJets_pt",  &gepWTAConeBasicClustersJetsPt);
         gt->SetBranchAddress("WTAConeGEPBasicClustersJets_eta", &gepWTAConeBasicClustersJetsEta);
         gt->SetBranchAddress("WTAConeGEPBasicClustersJets_phi", &gepWTAConeBasicClustersJetsPhi); 
-        gt->SetBranchAddress("WTAConeGEPBasicClustersJets_m", &gepWTAConeBasicClustersJetsMass); 
         gt->SetBranchAddress("WTAConeGEPBasicClustersJets_nConstituents", &gepWTAConeBasicClustersJetsNConstituents); 
+
+        gt->SetBranchAddress("WTAConeGEPBasicClustersSKJets_pt",  &gepWTAConeBasicClustersSKJetsPt);
+        gt->SetBranchAddress("WTAConeGEPBasicClustersSKJets_eta", &gepWTAConeBasicClustersSKJetsEta);
+        gt->SetBranchAddress("WTAConeGEPBasicClustersSKJets_phi", &gepWTAConeBasicClustersSKJetsPhi); 
+        gt->SetBranchAddress("WTAConeGEPBasicClustersSKJets_nConstituents", &gepWTAConeBasicClustersSKJetsNConstituents); 
 
         std::cout << "  Number of events: " << event.getEntries() << endl;
 
         unsigned int passedEventsCounter = 0;
         unsigned int skippedEventsEmptyTruth = 0;
-        unsigned int truthLeadingNot0 = 0;
-        unsigned int puLeadingNot0 = 0;
         unsigned int skippedEventsHSTP = 0;
-        for (Long64_t iEvt = 0; iEvt < 1000; ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
+        for (Long64_t iEvt = 0; iEvt < event.getEntries(); ++iEvt) { // NOTE assume that # of events for GEP and DAOD files is the same, else will get a seg fault.
             //std::cout << "iEvt: " << iEvt << "\n";
             // Retrieve truth and in time pileup jets first to apply hard-scatter-softer-than-PU (HSTP) filter (described here: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/JetEtMissMCSamples#Dijet_normalization_procedure_HS)
             // Also require that truth jet collection is not empty
@@ -911,9 +898,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     continue;
                 } 
             }
-            
-
-            
 
             const xAOD::JetContainer* InTimeAntiKt4TruthJets = nullptr;
             if (!event.retrieve(InTimeAntiKt4TruthJets, "InTimeAntiKt4TruthJets").isSuccess()) {
@@ -936,26 +920,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                         return a->pt() > b->pt();
                     });
 
-            // Print cases where original[0] is NOT the leading jet
-            if (!AntiKt4TruthDressedWZJets->empty()) {
-                const xAOD::Jet* orig0 = AntiKt4TruthDressedWZJets->at(0);
-                const xAOD::Jet* lead  = sortedWZJets.at(0);
-
-                // pointer compare is the most robust check; pt compare can be ambiguous with ties
-                if (orig0 != lead) {
-                    truthLeadingNot0++;
-                    /*std::cout
-                        << "[Truth Jets UNSORTED] original[0] not leading jet! "
-                        << "orig0_pt=" << orig0->pt()
-                        << " lead_pt=" << lead->pt()
-                        << " size=" << AntiKt4TruthDressedWZJets->size()
-                        // optional: helps identify the objects
-                        << " orig0_eta=" << orig0->eta() << " orig0_phi=" << orig0->phi()
-                        << " lead_eta=" << lead->eta()  << " lead_phi=" << lead->phi()
-                        << std::endl;*/
-                }
-            }
-
             // --- Sort InTimeAntiKt4TruthJets by pT (descending)
             ConstDataVector<xAOD::JetContainer> sortedTruthJets(SG::VIEW_ELEMENTS);
             sortedTruthJets.reserve(InTimeAntiKt4TruthJets->size());
@@ -968,24 +932,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     [](const xAOD::Jet* a, const xAOD::Jet* b) {
                         return a->pt() > b->pt();
                     });
-
-            // Print cases where original[0] is NOT the leading jet
-            if (!InTimeAntiKt4TruthJets->empty()) {
-                const xAOD::Jet* orig0 = InTimeAntiKt4TruthJets->at(0);
-                const xAOD::Jet* lead  = sortedTruthJets.at(0);
-
-                if (orig0 != lead) {
-                    puLeadingNot0++;
-                    /*std::cout
-                        << "[PU Jets UNSORTED] original[0] not leading jet! "
-                        << "orig0_pt=" << orig0->pt()
-                        << " lead_pt=" << lead->pt()
-                        << " size=" << InTimeAntiKt4TruthJets->size()
-                        << " orig0_eta=" << orig0->eta() << " orig0_phi=" << orig0->phi()
-                        << " lead_eta=" << lead->eta()  << " lead_phi=" << lead->phi()
-                        << std::endl;*/
-                }
-            }
 
             // Filter out events where hard scatter is softer than PU
             if(!signalBool){
@@ -1059,9 +1005,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 continue;
             }
 
-            
-
-
             // Retrieve the CaloTopoClusters422 container
             const DataVector<xAOD::CaloCluster_v1>* CaloTopoClusters422 = nullptr;
             if (!event.retrieve(CaloTopoClusters422, "CaloTopoClusters422").isSuccess()) {
@@ -1075,7 +1018,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 std::cerr << "Failed to retrieve CaloCalAllTopoTowers" << std::endl;
                 continue;
             }
-
 
             // FIXME add all this, fill trees and clear vectors:
             hltAntiKt4SRJEtaValues.clear();
@@ -1177,69 +1119,60 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
             gepCellsTowersEtValues.clear();
             gepCellsTowersEtaValues.clear();
             gepCellsTowersPhiValues.clear();
-            gepBasicTopoTowersEtValues.clear();
-            gepBasicTopoTowersEtaValues.clear();
-            gepBasicTopoTowersPhiValues.clear();
-            gepConeCellsTowersJetspTValues.clear();
-            gepConeCellsTowersJetsEtaValues.clear();
-            gepConeCellsTowersJetsPhiValues.clear();
-            gepConeCellsTowersJetsMassValues.clear();
-            gepConeCellsTowersJetsNConstituentsValues.clear();
+            gepBasicClustersSKEtValues.clear();
+            gepBasicClustersSKEtaValues.clear();
+            gepBasicClustersSKPhiValues.clear();
+            gepCellsTowersSKEtValues.clear();
+            gepCellsTowersSKEtaValues.clear();
+            gepCellsTowersSKPhiValues.clear();
             gepWTAConeCellsTowersJetspTValues.clear();
             gepWTAConeCellsTowersJetsEtaValues.clear();
             gepWTAConeCellsTowersJetsPhiValues.clear();
-            gepWTAConeCellsTowersJetsMassValues.clear();
             gepWTAConeCellsTowersJetsNConstituentsValues.clear();
-            gepConeGEPBasicClustersJetspTValues.clear();
-            gepConeGEPBasicClustersJetsEtaValues.clear();
-            gepConeGEPBasicClustersJetsPhiValues.clear();
-            gepConeGEPBasicClustersJetsMassValues.clear();
-            gepConeGEPBasicClustersJetsNConstituentsValues.clear();
             gepWTAConeGEPBasicClustersJetspTValues.clear();
             gepWTAConeGEPBasicClustersJetsEtaValues.clear();
             gepWTAConeGEPBasicClustersJetsPhiValues.clear();
-            gepWTAConeGEPBasicClustersJetsMassValues.clear();
             gepWTAConeGEPBasicClustersJetsNConstituentsValues.clear();
-            gepLeadingConeCellsTowersJetspTValues.clear();
-            gepLeadingConeCellsTowersJetsEtaValues.clear();
-            gepLeadingConeCellsTowersJetsPhiValues.clear();
-            gepLeadingConeCellsTowersJetsMassValues.clear();
-            gepLeadingConeCellsTowersJetsNConstituentsValues.clear();
             gepLeadingWTAConeCellsTowersJetspTValues.clear();
             gepLeadingWTAConeCellsTowersJetsEtaValues.clear();
             gepLeadingWTAConeCellsTowersJetsPhiValues.clear();
-            gepLeadingWTAConeCellsTowersJetsMassValues.clear();
             gepLeadingWTAConeCellsTowersJetsNConstituentsValues.clear();
-            gepLeadingConeGEPBasicClustersJetspTValues.clear();
-            gepLeadingConeGEPBasicClustersJetsEtaValues.clear();
-            gepLeadingConeGEPBasicClustersJetsPhiValues.clear();
-            gepLeadingConeGEPBasicClustersJetsMassValues.clear();
-            gepLeadingConeGEPBasicClustersJetsNConstituentsValues.clear();
             gepLeadingWTAConeGEPBasicClustersJetspTValues.clear();
             gepLeadingWTAConeGEPBasicClustersJetsEtaValues.clear();
             gepLeadingWTAConeGEPBasicClustersJetsPhiValues.clear();
-            gepLeadingWTAConeGEPBasicClustersJetsMassValues.clear();
             gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValues.clear();
-            gepSubleadingConeCellsTowersJetspTValues.clear();
-            gepSubleadingConeCellsTowersJetsEtaValues.clear();
-            gepSubleadingConeCellsTowersJetsPhiValues.clear();
-            gepSubleadingConeCellsTowersJetsMassValues.clear();
-            gepSubleadingConeCellsTowersJetsNConstituentsValues.clear();
             gepSubleadingWTAConeCellsTowersJetspTValues.clear();
             gepSubleadingWTAConeCellsTowersJetsEtaValues.clear();
             gepSubleadingWTAConeCellsTowersJetsPhiValues.clear();
-            gepSubleadingWTAConeCellsTowersJetsMassValues.clear();
             gepSubleadingWTAConeCellsTowersJetsNConstituentsValues.clear();
-            gepSubleadingConeGEPBasicClustersJetspTValues.clear();
-            gepSubleadingConeGEPBasicClustersJetsEtaValues.clear();
-            gepSubleadingConeGEPBasicClustersJetsPhiValues.clear();
-            gepSubleadingConeGEPBasicClustersJetsMassValues.clear();
-            gepSubleadingConeGEPBasicClustersJetsNConstituentsValues.clear();
             gepSubleadingWTAConeGEPBasicClustersJetspTValues.clear();
             gepSubleadingWTAConeGEPBasicClustersJetsEtaValues.clear();
             gepSubleadingWTAConeGEPBasicClustersJetsPhiValues.clear();
-            gepSubleadingWTAConeGEPBasicClustersJetsMassValues.clear();
             gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValues.clear();
+            gepWTAConeCellsTowersSKJetspTValues.clear();
+            gepWTAConeCellsTowersSKJetsEtaValues.clear();
+            gepWTAConeCellsTowersSKJetsPhiValues.clear();
+            gepWTAConeCellsTowersSKJetsNConstituentsValues.clear();
+            gepWTAConeGEPBasicClustersSKJetspTValues.clear();
+            gepWTAConeGEPBasicClustersSKJetsEtaValues.clear();
+            gepWTAConeGEPBasicClustersSKJetsPhiValues.clear();
+            gepWTAConeGEPBasicClustersSKJetsNConstituentsValues.clear();
+            gepLeadingWTAConeCellsTowersSKJetspTValues.clear();
+            gepLeadingWTAConeCellsTowersSKJetsEtaValues.clear();
+            gepLeadingWTAConeCellsTowersSKJetsPhiValues.clear();
+            gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues.clear();
+            gepLeadingWTAConeGEPBasicClustersSKJetspTValues.clear();
+            gepLeadingWTAConeGEPBasicClustersSKJetsEtaValues.clear();
+            gepLeadingWTAConeGEPBasicClustersSKJetsPhiValues.clear();
+            gepLeadingWTAConeGEPBasicClustersSKJetsNConstituentsValues.clear();
+            gepSubleadingWTAConeCellsTowersSKJetspTValues.clear();
+            gepSubleadingWTAConeCellsTowersSKJetsEtaValues.clear();
+            gepSubleadingWTAConeCellsTowersSKJetsPhiValues.clear();
+            gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues.clear();
+            gepSubleadingWTAConeGEPBasicClustersSKJetspTValues.clear();
+            gepSubleadingWTAConeGEPBasicClustersSKJetsEtaValues.clear();
+            gepSubleadingWTAConeGEPBasicClustersSKJetsPhiValues.clear();
+            gepSubleadingWTAConeGEPBasicClustersSKJetsNConstituentsValues.clear();
             truthHiggsInvMassValues.clear();
             truthHiggsEtValues.clear();
             truthHiggsEtaValues.clear();
@@ -1399,9 +1332,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 gepBasicClustersEtaValues.push_back(gepBasicClusterEta);
                 gepBasicClustersPhiValues.push_back(gepBasicClusterPhi);
 
-
                 if (gepBasicClusterEt < 0) continue; // don't store to digitized memories
-
 
                 // Digitize each variable
                 int phi_bin = digitize(gepBasicClusterPhi, phi_bit_length_, phi_min_, phi_max_);
@@ -1431,6 +1362,50 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                 << " " << binary_word
                                 << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                     gepbasicclusters_it++;
+                }
+            }
+
+            // SK basic clusters
+            unsigned int gepbasicclusterssk_it = 0;
+            for (unsigned int i = 0; i < gepBasicClustersSKEt->size(); ++i) {
+                float gepBasicClusterSKEt  = (*gepBasicClustersSKEt)[i] / 1000.0;
+                float gepBasicClusterSKEta = (*gepBasicClustersSKEta)[i];
+                float gepBasicClusterSKPhi = (*gepBasicClustersSKPhi)[i];
+
+                gepBasicClustersSKEtValues.push_back(gepBasicClusterSKEt);
+                gepBasicClustersSKEtaValues.push_back(gepBasicClusterSKEta);
+                gepBasicClustersSKPhiValues.push_back(gepBasicClusterSKPhi);
+
+                if (gepBasicClusterSKEt <= 0) continue; // don't store to digitized memories - and remove 0 Et clusters, which were already "removed" by the soft killer algorith
+
+                // Digitize each variable
+                int phi_bin = digitize(gepBasicClusterSKPhi, phi_bit_length_, phi_min_, phi_max_);
+                int eta_bin = digitize(gepBasicClusterSKEta, eta_bit_length_, eta_min_, eta_max_);
+                int et_bin  = digitize(gepBasicClusterSKEt, et_bit_length_,
+                              static_cast<double>(et_min_), static_cast<double>(et_max_));
+                                        
+                // 2. Build binary string (for debug or text output)
+                std::stringstream binary_ss;
+                binary_ss << std::bitset<et_bit_length_>(et_bin) << "|"
+                        << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                        << std::bitset<phi_bit_length_>(phi_bin);
+                std::string binary_word = binary_ss.str();
+
+                // 3. Pack into 27-bit word (stored as uint32_t)
+                uint32_t packed_word = (et_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                    (eta_bin << phi_bit_length_) |
+                                    (phi_bin);
+                                    
+                
+                if (higgsPtCutsPassed || !signalBool){
+                    if (gepbasicclusterssk_it == 0) {
+                        f_gepbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
+                    }
+                    // 4. Write to output file
+                    f_gepbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusterssk_it
+                                << " " << binary_word
+                                << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    gepbasicclusterssk_it++;
                 }
             }
 
@@ -1469,28 +1444,28 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     int error_bin_sort_purposes = digitize(0, 7, 0, 1 << 7);
 
                     // Build binary string
-                    {std::stringstream binary_ss;
-                    binary_ss << std::bitset<7>(error_bin_sort_purposes)  << "|"
-                            << std::bitset<7>(eta_bin_sort_purposes)  << "|"
-                            << std::bitset<6>(phi_bin_sort_purposes) << "|"
-                            << std::bitset<12>(et_bin_sort_purposes);
-                    std::string binary_word = binary_ss.str();
+                    {   
+                        std::stringstream binary_ss;
+                        binary_ss << std::bitset<7>(error_bin_sort_purposes)  << "|"
+                                << std::bitset<7>(eta_bin_sort_purposes)  << "|"
+                                << std::bitset<6>(phi_bin_sort_purposes) << "|"
+                                << std::bitset<12>(et_bin_sort_purposes);
+                        std::string binary_word = binary_ss.str();
 
-                    // Pack into 27-bit word
-                    uint32_t packed_word = (error_bin_sort_purposes  << (12 + 6 + 7)) |
-                                        (eta_bin_sort_purposes  << (12 + 6)) |
-                                        (phi_bin_sort_purposes <<  12) |
-                                        (et_bin_sort_purposes);
+                        // Pack into 27-bit word
+                        uint32_t packed_word = (error_bin_sort_purposes  << (12 + 6 + 7)) |
+                                            (eta_bin_sort_purposes  << (12 + 6)) |
+                                            (phi_bin_sort_purposes <<  12) |
+                                            (et_bin_sort_purposes);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepcellstowers_it == 0) {
-                            f_gepcellstowers_sort << "Event : " << std::dec << iEvt << "\n";
+                        if (higgsPtCutsPassed || !signalBool){
+                            if (gepcellstowers_it == 0) {
+                                f_gepcellstowers_sort << "Event : " << std::dec << iEvt << "\n";
+                            }
+                            f_gepcellstowers_sort << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                         }
-                        f_gepcellstowers_sort << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
-                                        << " "  << binary_word
-                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        //++gepcellstowers_it;
-                    }
                     } // Fixing scope since using the same variable names here
                     
 
@@ -1518,54 +1493,60 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 }
             }
 
-            // ---------- gepBasicTopoTowers ----------
+            // ---------- gepCellsTowers SK PU Suppression applied ----------
             {
-                std::vector<unsigned int> order(gepBasicTopoTowersEt->size());
+                // Build index order sorted by Et (descending)
+                std::vector<unsigned int> order(gepCellsTowersSKEt->size());
                 std::iota(order.begin(), order.end(), 0u);
                 std::sort(order.begin(), order.end(),
                         [&](unsigned int a, unsigned int b){
-                            return (*gepBasicTopoTowersEt)[a] > (*gepBasicTopoTowersEt)[b];
+                            return (*gepCellsTowersSKEt)[a] > (*gepCellsTowersSKEt)[b];
                         });
 
-                unsigned int gepbasictopotowers_it = 0;
+                unsigned int gepcellstowerssk_it = 0;
                 for (unsigned int i : order) {
-                    float gepBasicTopoTowersEtValue  = (*gepBasicTopoTowersEt)[i] / 1000.0f;
-                    float gepBasicTopoTowersEtaValue = (*gepBasicTopoTowersEta)[i];
-                    float gepBasicTopoTowersPhiValue = (*gepBasicTopoTowersPhi)[i];
+                    float gepCellsTowersSKEtValue  = (*gepCellsTowersSKEt)[i] / 1000.0f;
+                    float gepCellsTowersSKEtaValue = (*gepCellsTowersSKEta)[i];
+                    float gepCellsTowersSKPhiValue = (*gepCellsTowersSKPhi)[i];
 
                     // push in Et-sorted order
-                    gepBasicTopoTowersEtValues.push_back(gepBasicTopoTowersEtValue);
-                    gepBasicTopoTowersEtaValues.push_back(gepBasicTopoTowersEtaValue);
-                    gepBasicTopoTowersPhiValues.push_back(gepBasicTopoTowersPhiValue);
+                    gepCellsTowersSKEtValues.push_back(gepCellsTowersSKEtValue);
+                    gepCellsTowersSKEtaValues.push_back(gepCellsTowersSKEtaValue);
+                    gepCellsTowersSKPhiValues.push_back(gepCellsTowersSKPhiValue);
 
-                    if (gepBasicTopoTowersEtValue < 0) continue;
+                    if (gepCellsTowersSKEtValue < 0) continue; // keep your existing rule
 
-                    int phi_bin = digitize(gepBasicTopoTowersPhiValue, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(gepBasicTopoTowersEtaValue, eta_bit_length_, eta_min_, eta_max_);
-                    int et_bin  = digitize(gepBasicTopoTowersEtValue,  et_bit_length_,
+                    // Digitize
+                    int phi_bin = digitize(gepCellsTowersSKPhiValue, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(gepCellsTowersSKEtaValue, eta_bit_length_, eta_min_, eta_max_);
+                    int et_bin  = digitize(gepCellsTowersSKEtValue,  et_bit_length_,
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
+                    
 
+                    // Build binary string
                     std::stringstream binary_ss;
                     binary_ss << std::bitset<et_bit_length_>(et_bin)  << "|"
                             << std::bitset<eta_bit_length_>(eta_bin) << "|"
                             << std::bitset<phi_bit_length_>(phi_bin);
                     std::string binary_word = binary_ss.str();
 
+                    // Pack into 27-bit word
                     uint32_t packed_word = (et_bin  << (eta_bit_length_ + phi_bit_length_)) |
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
                     if (higgsPtCutsPassed || !signalBool){
-                        if (gepbasictopotowers_it == 0) {
-                            f_gepbasictopotowers << "Event : " << std::dec << iEvt << "\n";
+                        if (gepcellstowerssk_it == 0) {
+                            f_gepcellstowerssk << "Event : " << std::dec << iEvt << "\n";
                         }
-                        f_gepbasictopotowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasictopotowers_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepbasictopotowers_it;
+                        f_gepcellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowerssk_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepcellstowerssk_it;
                     }
                 }
             }
+
 
             // Loop over clusters and fill Et, Eta, Phi
             unsigned int topotower_it = 0;
@@ -1598,7 +1579,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (phi_bin);
                                     
                 
-                if (higgsPtCutsPassed || !signalBool){
+                /*if (higgsPtCutsPassed || !signalBool){
                     if (topotower_it == 0) {
                         f_topotower << "Event : " << std::dec << iEvt << "\n";
                     }
@@ -1607,7 +1588,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                 << " " << binary_word
                                 << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                     topotower_it++;
-                }
+                }*/
             }
 
             unsigned int topocluster422_it = 0;
@@ -1619,8 +1600,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 topo422EtValues.push_back(et);
                 topo422EtaValues.push_back(cluster->eta());
                 topo422PhiValues.push_back(cluster->phi());
-
-                
 
                 if (et < 0) continue; // FIXME for now don't store negative Et to digitized memories
                 // Digitize each variable
@@ -1647,7 +1626,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 
                 // 4. Write to output file
                 
-                if(higgsPtCutsPassed || !signalBool){
+                /*if(higgsPtCutsPassed || !signalBool){
                     if (topocluster422_it == 0) {
                         f_topo << "Event : " << std::dec << iEvt << "\n";
                     }
@@ -1655,77 +1634,10 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                             << " " << binary_word
                             << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                     topocluster422_it++; 
-                }
+                }*/
             }
 
             // GEP cone jets from GEPCellsTowers
-            {
-                std::vector<unsigned int> indices(gepConeCellsTowersJetsPt->size());
-                std::iota(indices.begin(), indices.end(), 0);
-
-                std::sort(indices.begin(), indices.end(),
-                        [&](unsigned int a, unsigned int b) {
-                            return (*gepConeCellsTowersJetsPt)[a] > (*gepConeCellsTowersJetsPt)[b];
-                        });
-                unsigned int gepconecellstowers_it = 0;
-                for (unsigned int i = 0; i < indices.size(); i++) {
-                    unsigned int idx = indices[i];
-                    float coneCellsTowersJetspT  = (*gepConeCellsTowersJetsPt)[idx] / 1000.0;
-                    float coneCellsTowersJetsEta = (*gepConeCellsTowersJetsEta)[idx];
-                    float coneCellsTowersJetsPhi = (*gepConeCellsTowersJetsPhi)[idx];
-                    float coneCellsTowersJetsMass = (*gepConeCellsTowersJetsMass)[idx] / 1000.0;
-                    unsigned int coneCellsTowersJetsNConstituents = (*gepConeCellsTowersJetsNConstituents)[idx];
-                    if(i == 0){
-                        gepLeadingConeCellsTowersJetspTValues.push_back(coneCellsTowersJetspT);
-                        gepLeadingConeCellsTowersJetsEtaValues.push_back(coneCellsTowersJetsEta);
-                        gepLeadingConeCellsTowersJetsPhiValues.push_back(coneCellsTowersJetsPhi);
-                        gepLeadingConeCellsTowersJetsMassValues.push_back(coneCellsTowersJetsMass);
-                        gepLeadingConeCellsTowersJetsNConstituentsValues.push_back(coneCellsTowersJetsNConstituents);
-                    }
-                    if (i == 1){
-                        gepSubleadingConeCellsTowersJetspTValues.push_back(coneCellsTowersJetspT);
-                        gepSubleadingConeCellsTowersJetsEtaValues.push_back(coneCellsTowersJetsEta);
-                        gepSubleadingConeCellsTowersJetsPhiValues.push_back(coneCellsTowersJetsPhi);
-                        gepSubleadingConeCellsTowersJetsMassValues.push_back(coneCellsTowersJetsMass);
-                        gepSubleadingConeCellsTowersJetsNConstituentsValues.push_back(coneCellsTowersJetsNConstituents);
-                    }
-                
-                    gepConeCellsTowersJetspTValues.push_back(coneCellsTowersJetspT);
-                    gepConeCellsTowersJetsEtaValues.push_back(coneCellsTowersJetsEta);
-                    gepConeCellsTowersJetsPhiValues.push_back(coneCellsTowersJetsPhi);
-                    gepConeCellsTowersJetsMassValues.push_back(coneCellsTowersJetsMass);
-                    gepConeCellsTowersJetsNConstituentsValues.push_back(coneCellsTowersJetsNConstituents);
-
-                    if (coneCellsTowersJetspT < 0) continue;
-
-                    int phi_bin = digitize(coneCellsTowersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(coneCellsTowersJetsEta, eta_bit_length_, eta_min_, eta_max_);
-                    int pt_bin  = digitize(coneCellsTowersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
-                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
-
-                    std::stringstream binary_ss;
-                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
-                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
-                            << std::bitset<phi_bit_length_>(phi_bin);
-                    std::string binary_word = binary_ss.str();
-
-                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
-                                        (eta_bin <<  phi_bit_length_) |
-                                        (phi_bin);
-
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepconecellstowers_it == 0) {
-                            f_conejetscellstowers << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_conejetscellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepconecellstowers_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepconecellstowers_it;
-                    }
-                }
-            }
-
-
             {
                 std::vector<unsigned int> indices(gepWTAConeCellsTowersJetsPt->size());
                 std::iota(indices.begin(), indices.end(), 0);
@@ -1734,80 +1646,36 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                         [&](unsigned int a, unsigned int b) {
                             return (*gepWTAConeCellsTowersJetsPt)[a] > (*gepWTAConeCellsTowersJetsPt)[b];
                         });
-
+                unsigned int gepwtaconecellstowers_it = 0;
                 for (unsigned int i = 0; i < indices.size(); i++) {
                     unsigned int idx = indices[i];
                     float WTAConeCellsTowersJetspT  = (*gepWTAConeCellsTowersJetsPt)[idx] / 1000.0;
                     float WTAConeCellsTowersJetsEta = (*gepWTAConeCellsTowersJetsEta)[idx];
                     float WTAConeCellsTowersJetsPhi = (*gepWTAConeCellsTowersJetsPhi)[idx];
-                    float WTAConeCellsTowersJetsMass = (*gepWTAConeCellsTowersJetsMass)[idx] / 1000.0;
                     unsigned int WTAConeCellsTowersJetsNConstituents = (*gepWTAConeCellsTowersJetsNConstituents)[idx];
                     if(i == 0){
                         gepLeadingWTAConeCellsTowersJetspTValues.push_back(WTAConeCellsTowersJetspT);
                         gepLeadingWTAConeCellsTowersJetsEtaValues.push_back(WTAConeCellsTowersJetsEta);
                         gepLeadingWTAConeCellsTowersJetsPhiValues.push_back(WTAConeCellsTowersJetsPhi);
-                        gepLeadingWTAConeCellsTowersJetsMassValues.push_back(WTAConeCellsTowersJetsMass);
                         gepLeadingWTAConeCellsTowersJetsNConstituentsValues.push_back(WTAConeCellsTowersJetsNConstituents);
                     }
                     if (i == 1){
                         gepSubleadingWTAConeCellsTowersJetspTValues.push_back(WTAConeCellsTowersJetspT);
                         gepSubleadingWTAConeCellsTowersJetsEtaValues.push_back(WTAConeCellsTowersJetsEta);
                         gepSubleadingWTAConeCellsTowersJetsPhiValues.push_back(WTAConeCellsTowersJetsPhi);
-                        gepSubleadingWTAConeCellsTowersJetsMassValues.push_back(WTAConeCellsTowersJetsMass);
                         gepSubleadingWTAConeCellsTowersJetsNConstituentsValues.push_back(WTAConeCellsTowersJetsNConstituents);
                     }
-
+                
                     gepWTAConeCellsTowersJetspTValues.push_back(WTAConeCellsTowersJetspT);
                     gepWTAConeCellsTowersJetsEtaValues.push_back(WTAConeCellsTowersJetsEta);
                     gepWTAConeCellsTowersJetsPhiValues.push_back(WTAConeCellsTowersJetsPhi);
-                    gepWTAConeCellsTowersJetsMassValues.push_back(WTAConeCellsTowersJetsMass);
                     gepWTAConeCellsTowersJetsNConstituentsValues.push_back(WTAConeCellsTowersJetsNConstituents);
-                }
-            }
 
+                    if (WTAConeCellsTowersJetspT < 0) continue;
 
-            {
-                std::vector<unsigned int> indices(gepConeBasicClustersJetsPt->size());
-                std::iota(indices.begin(), indices.end(), 0);
-
-                std::sort(indices.begin(), indices.end(),
-                        [&](unsigned int a, unsigned int b) {
-                            return (*gepConeBasicClustersJetsPt)[a] > (*gepConeBasicClustersJetsPt)[b];
-                        });
-                unsigned int gepconebasicclusters_it = 0;
-                for (unsigned int i = 0; i < indices.size(); i++) {
-                    unsigned int idx = indices[i];
-                    float coneGEPBasicClustersJetspT  = (*gepConeBasicClustersJetsPt)[idx] / 1000.0;
-                    float coneGEPBasicClustersJetsEta = (*gepConeBasicClustersJetsEta)[idx];
-                    float coneGEPBasicClustersJetsPhi = (*gepConeBasicClustersJetsPhi)[idx];
-                    float coneGEPBasicClustersJetsMass = (*gepConeBasicClustersJetsMass)[idx] / 1000.0;
-                    unsigned int coneGEPBasicClustersJetsNConstituents = (*gepConeBasicClustersJetsNConstituents)[idx];
-                    if(i == 0){
-                        gepLeadingConeGEPBasicClustersJetspTValues.push_back(coneGEPBasicClustersJetspT);
-                        gepLeadingConeGEPBasicClustersJetsEtaValues.push_back(coneGEPBasicClustersJetsEta);
-                        gepLeadingConeGEPBasicClustersJetsPhiValues.push_back(coneGEPBasicClustersJetsPhi);
-                        gepLeadingConeGEPBasicClustersJetsMassValues.push_back(coneGEPBasicClustersJetsMass);
-                        gepLeadingConeGEPBasicClustersJetsNConstituentsValues.push_back(coneGEPBasicClustersJetsNConstituents);
-                    }
-                    if (i == 1){
-                        gepSubleadingConeGEPBasicClustersJetspTValues.push_back(coneGEPBasicClustersJetspT);
-                        gepSubleadingConeGEPBasicClustersJetsEtaValues.push_back(coneGEPBasicClustersJetsEta);
-                        gepSubleadingConeGEPBasicClustersJetsPhiValues.push_back(coneGEPBasicClustersJetsPhi);
-                        gepSubleadingConeGEPBasicClustersJetsMassValues.push_back(coneGEPBasicClustersJetsMass);
-                        gepSubleadingConeGEPBasicClustersJetsNConstituentsValues.push_back(coneGEPBasicClustersJetsNConstituents);
-                    }   
-                    
-                    gepConeGEPBasicClustersJetspTValues.push_back(coneGEPBasicClustersJetspT);
-                    gepConeGEPBasicClustersJetsEtaValues.push_back(coneGEPBasicClustersJetsEta);
-                    gepConeGEPBasicClustersJetsPhiValues.push_back(coneGEPBasicClustersJetsPhi);
-                    gepConeGEPBasicClustersJetsMassValues.push_back(coneGEPBasicClustersJetsMass);
-                    gepConeGEPBasicClustersJetsNConstituentsValues.push_back(coneGEPBasicClustersJetsNConstituents);
-
-                    if (coneGEPBasicClustersJetspT < 0) continue;
-
-                    int phi_bin = digitize(coneGEPBasicClustersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(coneGEPBasicClustersJetsEta, eta_bit_length_, eta_min_, eta_max_);
-                    int pt_bin  = digitize(coneGEPBasicClustersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                    int phi_bin = digitize(WTAConeCellsTowersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(WTAConeCellsTowersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(WTAConeCellsTowersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
 
                     std::stringstream binary_ss;
@@ -1821,18 +1689,81 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (phi_bin);
 
                     if (higgsPtCutsPassed || !signalBool){
-                        if (gepconebasicclusters_it == 0) {
-                            f_conejetsbasicclusters << "Event : " << std::dec << iEvt << "\n";
+                        if (gepwtaconecellstowers_it == 0) {
+                            f_wtaconejetscellstowers << "Event : " << std::dec << iEvt << "\n";
                         }
-                        f_conejetsbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepconebasicclusters_it
+                        f_wtaconejetscellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowers_it
                                             << " "  << binary_word
                                             << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepconebasicclusters_it;
+                        ++gepwtaconecellstowers_it;
                     }
                 }
             }
 
+            // GEP cone jets from GEPCellsTowers with SoftKiller PU Suppression applied
+            {
+                std::vector<unsigned int> indices(gepWTAConeCellsTowersSKJetsPt->size());
+                std::iota(indices.begin(), indices.end(), 0);
 
+                std::sort(indices.begin(), indices.end(),
+                        [&](unsigned int a, unsigned int b) {
+                            return (*gepWTAConeCellsTowersSKJetsPt)[a] > (*gepWTAConeCellsTowersSKJetsPt)[b];
+                        });
+                unsigned int gepwtaconecellstowerssk_it = 0;
+                for (unsigned int i = 0; i < indices.size(); i++) {
+                    unsigned int idx = indices[i];
+                    float WTAConeCellsTowersSKJetspT  = (*gepWTAConeCellsTowersSKJetsPt)[idx] / 1000.0;
+                    float WTAConeCellsTowersSKJetsEta = (*gepWTAConeCellsTowersSKJetsEta)[idx];
+                    float WTAConeCellsTowersSKJetsPhi = (*gepWTAConeCellsTowersSKJetsPhi)[idx];
+                    unsigned int WTAConeCellsTowersSKJetsNConstituents = (*gepWTAConeCellsTowersSKJetsNConstituents)[idx];
+                    if(i == 0){
+                        gepLeadingWTAConeCellsTowersSKJetspTValues.push_back(WTAConeCellsTowersSKJetspT);
+                        gepLeadingWTAConeCellsTowersSKJetsEtaValues.push_back(WTAConeCellsTowersSKJetsEta);
+                        gepLeadingWTAConeCellsTowersSKJetsPhiValues.push_back(WTAConeCellsTowersSKJetsPhi);
+                        gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues.push_back(WTAConeCellsTowersSKJetsNConstituents);
+                    }
+                    if (i == 1){
+                        gepSubleadingWTAConeCellsTowersSKJetspTValues.push_back(WTAConeCellsTowersSKJetspT);
+                        gepSubleadingWTAConeCellsTowersSKJetsEtaValues.push_back(WTAConeCellsTowersSKJetsEta);
+                        gepSubleadingWTAConeCellsTowersSKJetsPhiValues.push_back(WTAConeCellsTowersSKJetsPhi);
+                        gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues.push_back(WTAConeCellsTowersSKJetsNConstituents);
+                    }
+                
+                    gepWTAConeCellsTowersSKJetspTValues.push_back(WTAConeCellsTowersSKJetspT);
+                    gepWTAConeCellsTowersSKJetsEtaValues.push_back(WTAConeCellsTowersSKJetsEta);
+                    gepWTAConeCellsTowersSKJetsPhiValues.push_back(WTAConeCellsTowersSKJetsPhi);
+                    gepWTAConeCellsTowersSKJetsNConstituentsValues.push_back(WTAConeCellsTowersSKJetsNConstituents);
+
+                    if (WTAConeCellsTowersSKJetspT < 0) continue; // don't want to skip over  == 0 Et cone jets 
+
+                    int phi_bin = digitize(WTAConeCellsTowersSKJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(WTAConeCellsTowersSKJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(WTAConeCellsTowersSKJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    std::stringstream binary_ss;
+                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
+                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                            << std::bitset<phi_bit_length_>(phi_bin);
+                    std::string binary_word = binary_ss.str();
+
+                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                        (eta_bin <<  phi_bit_length_) |
+                                        (phi_bin);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepwtaconecellstowerssk_it == 0) {
+                            f_wtaconejetscellstowerssk << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_wtaconejetscellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowerssk_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepwtaconecellstowerssk_it;
+                    }
+                }
+            }
+
+            // GEP cone jets from basic clusters
             {
                 std::vector<unsigned int> indices(gepWTAConeBasicClustersJetsPt->size());
                 std::iota(indices.begin(), indices.end(), 0);
@@ -1841,34 +1772,120 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                         [&](unsigned int a, unsigned int b) {
                             return (*gepWTAConeBasicClustersJetsPt)[a] > (*gepWTAConeBasicClustersJetsPt)[b];
                         });
-
+                unsigned int gepwtaconebasicclusters_it = 0;
                 for (unsigned int i = 0; i < indices.size(); i++) {
                     unsigned int idx = indices[i];
-                    float WTAConeGEPBasicClustersJetspT  = (*gepWTAConeBasicClustersJetsPt)[idx] / 1000.0;
-                    float WTAConeGEPBasicClustersJetsEta = (*gepWTAConeBasicClustersJetsEta)[idx];
-                    float WTAConeGEPBasicClustersJetsPhi = (*gepWTAConeBasicClustersJetsPhi)[idx];
-                    float WTAConeGEPBasicClustersJetsMass = (*gepWTAConeBasicClustersJetsMass)[idx] / 1000.0;
-                    unsigned int WTAConeGEPBasicClustersJetsNConstituents = (*gepWTAConeBasicClustersJetsNConstituents)[idx];
+                    float coneWTAGEPBasicClustersJetspT  = (*gepWTAConeBasicClustersJetsPt)[idx] / 1000.0;
+                    float coneWTAGEPBasicClustersJetsEta = (*gepWTAConeBasicClustersJetsEta)[idx];
+                    float coneWTAGEPBasicClustersJetsPhi = (*gepWTAConeBasicClustersJetsPhi)[idx];
+                    unsigned int coneWTAGEPBasicClustersJetsNConstituents = (*gepWTAConeBasicClustersJetsNConstituents)[idx];
                     if(i == 0){
-                        gepLeadingWTAConeGEPBasicClustersJetspTValues.push_back(WTAConeGEPBasicClustersJetspT);
-                        gepLeadingWTAConeGEPBasicClustersJetsEtaValues.push_back(WTAConeGEPBasicClustersJetsEta);
-                        gepLeadingWTAConeGEPBasicClustersJetsPhiValues.push_back(WTAConeGEPBasicClustersJetsPhi);
-                        gepLeadingWTAConeGEPBasicClustersJetsMassValues.push_back(WTAConeGEPBasicClustersJetsMass);
-                        gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(WTAConeGEPBasicClustersJetsNConstituents);
+                        gepLeadingWTAConeGEPBasicClustersJetspTValues.push_back(coneWTAGEPBasicClustersJetspT);
+                        gepLeadingWTAConeGEPBasicClustersJetsEtaValues.push_back(coneWTAGEPBasicClustersJetsEta);
+                        gepLeadingWTAConeGEPBasicClustersJetsPhiValues.push_back(coneWTAGEPBasicClustersJetsPhi);
+                        gepLeadingWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersJetsNConstituents);
                     }
                     if (i == 1){
-                        gepSubleadingWTAConeGEPBasicClustersJetspTValues.push_back(WTAConeGEPBasicClustersJetspT);
-                        gepSubleadingWTAConeGEPBasicClustersJetsEtaValues.push_back(WTAConeGEPBasicClustersJetsEta);
-                        gepSubleadingWTAConeGEPBasicClustersJetsPhiValues.push_back(WTAConeGEPBasicClustersJetsPhi);
-                        gepSubleadingWTAConeGEPBasicClustersJetsMassValues.push_back(WTAConeGEPBasicClustersJetsMass);
-                        gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(WTAConeGEPBasicClustersJetsNConstituents);
-                    }
+                        gepSubleadingWTAConeGEPBasicClustersJetspTValues.push_back(coneWTAGEPBasicClustersJetspT);
+                        gepSubleadingWTAConeGEPBasicClustersJetsEtaValues.push_back(coneWTAGEPBasicClustersJetsEta);
+                        gepSubleadingWTAConeGEPBasicClustersJetsPhiValues.push_back(coneWTAGEPBasicClustersJetsPhi);
+                        gepSubleadingWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersJetsNConstituents);
+                    }   
                     
-                    gepWTAConeGEPBasicClustersJetspTValues.push_back(WTAConeGEPBasicClustersJetspT);
-                    gepWTAConeGEPBasicClustersJetsEtaValues.push_back(WTAConeGEPBasicClustersJetsEta);
-                    gepWTAConeGEPBasicClustersJetsPhiValues.push_back(WTAConeGEPBasicClustersJetsPhi);
-                    gepWTAConeGEPBasicClustersJetsMassValues.push_back(WTAConeGEPBasicClustersJetsMass);
-                    gepWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(WTAConeGEPBasicClustersJetsNConstituents);
+                    gepWTAConeGEPBasicClustersJetspTValues.push_back(coneWTAGEPBasicClustersJetspT);
+                    gepWTAConeGEPBasicClustersJetsEtaValues.push_back(coneWTAGEPBasicClustersJetsEta);
+                    gepWTAConeGEPBasicClustersJetsPhiValues.push_back(coneWTAGEPBasicClustersJetsPhi);
+                    gepWTAConeGEPBasicClustersJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersJetsNConstituents);
+
+                    if (coneWTAGEPBasicClustersJetspT < 0) continue;
+
+                    int phi_bin = digitize(coneWTAGEPBasicClustersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(coneWTAGEPBasicClustersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(coneWTAGEPBasicClustersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    std::stringstream binary_ss;
+                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
+                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                            << std::bitset<phi_bit_length_>(phi_bin);
+                    std::string binary_word = binary_ss.str();
+
+                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                        (eta_bin <<  phi_bit_length_) |
+                                        (phi_bin);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepwtaconebasicclusters_it == 0) {
+                            f_wtaconejetsbasicclusters << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_wtaconejetsbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusters_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepwtaconebasicclusters_it;
+                    }
+                }
+            }
+
+            // GEP cone jets from basic clusters with SoftKiller PU Suppression applied
+            {
+                std::vector<unsigned int> indices(gepWTAConeBasicClustersSKJetsPt->size());
+                std::iota(indices.begin(), indices.end(), 0);
+
+                std::sort(indices.begin(), indices.end(),
+                        [&](unsigned int a, unsigned int b) {
+                            return (*gepWTAConeBasicClustersSKJetsPt)[a] > (*gepWTAConeBasicClustersSKJetsPt)[b];
+                        });
+                unsigned int gepwtaconebasicclusterssk_it = 0;
+                for (unsigned int i = 0; i < indices.size(); i++) {
+                    unsigned int idx = indices[i];
+                    float coneWTAGEPBasicClustersSKJetspT  = (*gepWTAConeBasicClustersSKJetsPt)[idx] / 1000.0;
+                    float coneWTAGEPBasicClustersSKJetsEta = (*gepWTAConeBasicClustersSKJetsEta)[idx];
+                    float coneWTAGEPBasicClustersSKJetsPhi = (*gepWTAConeBasicClustersSKJetsPhi)[idx];
+                    unsigned int coneWTAGEPBasicClustersSKJetsNConstituents = (*gepWTAConeBasicClustersJetsNConstituents)[idx];
+                    if(i == 0){
+                        gepLeadingWTAConeGEPBasicClustersSKJetspTValues.push_back(coneWTAGEPBasicClustersSKJetspT);
+                        gepLeadingWTAConeGEPBasicClustersSKJetsEtaValues.push_back(coneWTAGEPBasicClustersSKJetsEta);
+                        gepLeadingWTAConeGEPBasicClustersSKJetsPhiValues.push_back(coneWTAGEPBasicClustersSKJetsPhi);
+                        gepLeadingWTAConeGEPBasicClustersSKJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersSKJetsNConstituents);
+                    }
+                    if (i == 1){
+                        gepSubleadingWTAConeGEPBasicClustersSKJetspTValues.push_back(coneWTAGEPBasicClustersSKJetspT);
+                        gepSubleadingWTAConeGEPBasicClustersSKJetsEtaValues.push_back(coneWTAGEPBasicClustersSKJetsEta);
+                        gepSubleadingWTAConeGEPBasicClustersSKJetsPhiValues.push_back(coneWTAGEPBasicClustersSKJetsPhi);
+                        gepSubleadingWTAConeGEPBasicClustersSKJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersSKJetsNConstituents);
+                    }   
+                    
+                    gepWTAConeGEPBasicClustersSKJetspTValues.push_back(coneWTAGEPBasicClustersSKJetspT);
+                    gepWTAConeGEPBasicClustersSKJetsEtaValues.push_back(coneWTAGEPBasicClustersSKJetsEta);
+                    gepWTAConeGEPBasicClustersSKJetsPhiValues.push_back(coneWTAGEPBasicClustersSKJetsPhi);
+                    gepWTAConeGEPBasicClustersSKJetsNConstituentsValues.push_back(coneWTAGEPBasicClustersSKJetsNConstituents);
+
+                    if (coneWTAGEPBasicClustersSKJetspT < 0) continue;
+
+                    int phi_bin = digitize(coneWTAGEPBasicClustersSKJetsPhi, phi_bit_length_, phi_min_, phi_max_);
+                    int eta_bin = digitize(coneWTAGEPBasicClustersSKJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int pt_bin  = digitize(coneWTAGEPBasicClustersSKJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
+                                        static_cast<double>(et_min_), static_cast<double>(et_max_));
+
+                    std::stringstream binary_ss;
+                    binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
+                            << std::bitset<eta_bit_length_>(eta_bin) << "|"
+                            << std::bitset<phi_bit_length_>(phi_bin);
+                    std::string binary_word = binary_ss.str();
+
+                    uint32_t packed_word = (pt_bin  << (eta_bit_length_ + phi_bit_length_)) |
+                                        (eta_bin <<  phi_bit_length_) |
+                                        (phi_bin);
+
+                    if (higgsPtCutsPassed || !signalBool){
+                        if (gepwtaconebasicclusterssk_it == 0) {
+                            f_wtaconejetsbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
+                        }
+                        f_wtaconejetsbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusterssk_it
+                                            << " "  << binary_word
+                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        ++gepwtaconebasicclusterssk_it;
+                    }
                 }
             }
 
@@ -2287,19 +2304,20 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 caloTopoTowerTree->Fill();
                 gepBasicClustersTree->Fill();
                 gepCellsTowersTree->Fill();
-                gepBasicTopoTowersTree->Fill();
-                gepConeCellsTowersJetsTree->Fill();
+                gepBasicClustersSKTree->Fill();
+                gepCellsTowersSKTree->Fill();
                 gepWTAConeCellsTowersJetsTree->Fill();
-                gepConeBasicClustersJetsTree->Fill();
                 gepWTAConeBasicClustersJetsTree->Fill();
-                gepLeadingConeCellsTowersJetsTree->Fill();
                 gepLeadingWTAConeCellsTowersJetsTree->Fill();
-                gepLeadingConeBasicClustersJetsTree->Fill();
                 gepLeadingWTAConeBasicClustersJetsTree->Fill();
-                gepSubleadingConeCellsTowersJetsTree->Fill();
                 gepSubleadingWTAConeCellsTowersJetsTree->Fill();
-                gepSubleadingConeBasicClustersJetsTree->Fill();
                 gepSubleadingWTAConeBasicClustersJetsTree->Fill();
+                gepWTAConeCellsTowersSKJetsTree->Fill();
+                gepWTAConeBasicClustersSKJetsTree->Fill();
+                gepLeadingWTAConeCellsTowersSKJetsTree->Fill();
+                gepLeadingWTAConeBasicClustersSKJetsTree->Fill();
+                gepSubleadingWTAConeCellsTowersSKJetsTree->Fill();
+                gepSubleadingWTAConeBasicClustersSKJetsTree->Fill();
                 topo422Tree->Fill();
                 gFexSRJTree->Fill();
                 gFexLeadingSRJTree->Fill();
@@ -2329,7 +2347,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         } // loop through events
         std::cout << "for jz: " << jzSlice << " these many events passed: " << passedEventsCounter << " out of: " << event.getEntries() << "\n";
         std::cout << " these many events skipped due to empty truth container: " << skippedEventsEmptyTruth << " these many events skipped due to pt hard < pt pileup: " << skippedEventsHSTP << "\n";
-        std::cout << "leading not 0 truth: " << truthLeadingNot0 << " , PU leading not 0: " << puLeadingNot0 << "\n";
+        //std::cout << "leading not 0 truth: " << truthLeadingNot0 << " , PU leading not 0: " << puLeadingNot0 << "\n";
         std::cout << "closing files" << "\n";
         gf->Close();
         f->Close();
@@ -2342,20 +2360,21 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     // truthVBFQuark->Write();  // Optional, if used
     caloTopoTowerTree->Write("", TObject::kOverwrite);
     gepBasicClustersTree->Write("", TObject::kOverwrite);
+    gepBasicClustersSKTree->Write("", TObject::kOverwrite);
     gepCellsTowersTree->Write("", TObject::kOverwrite);
-    gepBasicTopoTowersTree->Write("", TObject::kOverwrite);
-    gepConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
+    gepCellsTowersSKTree->Write("", TObject::kOverwrite);
     gepWTAConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
-    gepConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
     gepWTAConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
-    gepLeadingConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
+    gepWTAConeCellsTowersSKJetsTree->Write("", TObject::kOverwrite);
+    gepWTAConeBasicClustersSKJetsTree->Write("", TObject::kOverwrite);
     gepLeadingWTAConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
-    gepLeadingConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
     gepLeadingWTAConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
-    gepSubleadingConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
+    gepLeadingWTAConeCellsTowersSKJetsTree->Write("", TObject::kOverwrite);
+    gepLeadingWTAConeBasicClustersSKJetsTree->Write("", TObject::kOverwrite);
     gepSubleadingWTAConeCellsTowersJetsTree->Write("", TObject::kOverwrite);
-    gepSubleadingConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
     gepSubleadingWTAConeBasicClustersJetsTree->Write("", TObject::kOverwrite);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->Write("", TObject::kOverwrite);
+    gepSubleadingWTAConeBasicClustersSKJetsTree->Write("", TObject::kOverwrite);
     topo422Tree->Write("", TObject::kOverwrite);
     gFexSRJTree->Write("", TObject::kOverwrite);
     gFexLeadingSRJTree->Write("", TObject::kOverwrite);
@@ -2389,12 +2408,12 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 // processes all jzSlices + signal
 void callNTupler(){
     //gSystem->RedirectOutput("NTupler.log", "w");
-    std::vector<unsigned int > jzSlices = {3};
-    //std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    //std::vector<unsigned int > jzSlices = {3};
+    std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<std::string > jzOutputFilenames;
     for(auto jzSlice : jzSlices){
-        nTupler(false, true, jzSlice); // call for each background jzSlice
+        //nTupler(false, true, jzSlice); // call for each background jzSlice
         TString out = makeOutputFileName(false, false, jzSlice);
         jzOutputFilenames.push_back(out.Data());
     }
@@ -2408,8 +2427,9 @@ void callNTupler(){
     //    Error("callNTupler", "hadd failed with code %d", rc);
     //}
 
-    //nTupler(true, true); // call for signal
-    for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing for now
+    //nTupler(true, true); // call for signal (hh->4b VBF)
+    nTupler(true, false); // call for signal (hh->4b ggF)
+    for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing into a combined JZ slice ntuple for now
         std::cout << jzOutputFileName << "\n";
     }
     gSystem->Exit(0);

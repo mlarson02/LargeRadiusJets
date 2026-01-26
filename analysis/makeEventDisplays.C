@@ -1,23 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <bitset>
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <fstream>
-#include <iomanip>
-#include <array>
-#include "TH1F.h"
-#include "TCanvas.h"
-#include "TFile.h"
-#include <cmath>
-#include <TMath.h>
-#include <cstdio>
-#include <iostream>
 #include "analysisHelperFunctions.h"
 
-void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool signalBool, std::string subjetType){
+void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool signalBool, bool vbfBool, std::string subjetType, bool skBool){
     SetPlotStyle();
 
     auto fileInfo = ParseFileName(inputFile);
@@ -58,9 +41,16 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         std::cerr << "\"16130_\" not found in string.\n";
     }
     std::string signalString;
-    if(signalBool) signalString = "hh_4b";
+    if(signalBool){
+        if(vbfBool){
+            signalString = "VBF_hh_4b";
+        }
+        else{
+            signalString = "ggF_hh_4b";
+        }
+    } 
     else signalString = "jj_" + std::to_string(desiredJZSlice);
-    TString modifiedOutputFileDir = "eventDisplays_" + signalString + "_" + algorithmConfigurations[0] + "_" + subjetType + "subjets/";
+    TString modifiedOutputFileDir = "eventDisplays/" + signalString + "_" + algorithmConfigurations[0] + "_" + subjetType + "subjets/";
     gSystem->mkdir(modifiedOutputFileDir);
 
     std::vector<double>* mcEventWeightsValues = nullptr;
@@ -104,21 +94,33 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
     std::vector<double>* gepCellsTowersEtValues = nullptr;
     std::vector<double>* gepCellsTowersEtaValues = nullptr;
     std::vector<double>* gepCellsTowersPhiValues = nullptr;
+    std::vector<double>* gepCellsTowersSKEtValues = nullptr;
+    std::vector<double>* gepCellsTowersSKEtaValues = nullptr;
+    std::vector<double>* gepCellsTowersSKPhiValues = nullptr;
     std::vector<double>* gepWTAConeCellsTowersJetspTValues = nullptr;
     std::vector<double>* gepWTAConeCellsTowersJetsEtaValues = nullptr;
     std::vector<double>* gepWTAConeCellsTowersJetsPhiValues = nullptr;
-    std::vector<double>* gepWTAConeCellsTowersJetsMassValues = nullptr;
     std::vector<unsigned int >* gepWTAConeCellsTowersJetsNConstituentsValues = nullptr;
     std::vector<double>* gepLeadingWTAConeCellsTowersJetspTValues = nullptr;
     std::vector<double>* gepLeadingWTAConeCellsTowersJetsEtaValues = nullptr;
     std::vector<double>* gepLeadingWTAConeCellsTowersJetsPhiValues = nullptr;
-    std::vector<double>* gepLeadingWTAConeCellsTowersJetsMassValues = nullptr;
     std::vector<unsigned int >* gepLeadingWTAConeCellsTowersJetsNConstituentsValues = nullptr;
     std::vector<double>* gepSubleadingWTAConeCellsTowersJetspTValues = nullptr;
     std::vector<double>* gepSubleadingWTAConeCellsTowersJetsEtaValues = nullptr;
     std::vector<double>* gepSubleadingWTAConeCellsTowersJetsPhiValues = nullptr;
-    std::vector<double>* gepSubleadingWTAConeCellsTowersJetsMassValues = nullptr;
     std::vector<unsigned int >* gepSubleadingWTAConeCellsTowersJetsNConstituentsValues = nullptr;
+    std::vector<double>* gepWTAConeCellsTowersSKJetspTValues = nullptr;
+    std::vector<double>* gepWTAConeCellsTowersSKJetsEtaValues = nullptr;
+    std::vector<double>* gepWTAConeCellsTowersSKJetsPhiValues = nullptr;
+    std::vector<unsigned int >* gepWTAConeCellsTowersSKJetsNConstituentsValues = nullptr;
+    std::vector<double>* gepLeadingWTAConeCellsTowersSKJetspTValues = nullptr;
+    std::vector<double>* gepLeadingWTAConeCellsTowersSKJetsEtaValues = nullptr;
+    std::vector<double>* gepLeadingWTAConeCellsTowersSKJetsPhiValues = nullptr;
+    std::vector<unsigned int >* gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues = nullptr;
+    std::vector<double>* gepSubleadingWTAConeCellsTowersSKJetspTValues = nullptr;
+    std::vector<double>* gepSubleadingWTAConeCellsTowersSKJetsEtaValues = nullptr;
+    std::vector<double>* gepSubleadingWTAConeCellsTowersSKJetsPhiValues = nullptr;
+    std::vector<unsigned int >* gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues = nullptr;
     std::vector<unsigned int>* gFexSRJEtIndexValues = nullptr;
     std::vector<double>* gFexSRJEtValues = nullptr;
     std::vector<double>* gFexSRJEtaValues = nullptr;
@@ -195,9 +197,13 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
     TTree* truthbTree = (TTree*)inputFileNTuple->Get("truthbTree");
     TTree* truthHiggsTree = (TTree*)inputFileNTuple->Get("truthHiggsTree");
     TTree* gepCellsTowersTree = (TTree*)inputFileNTuple->Get("gepCellsTowersTree");
+    TTree* gepCellsTowersSKTree = (TTree*)inputFileNTuple->Get("gepCellsTowersSKTree");
     TTree* gepWTAConeCellsTowersJetsTree = (TTree*)inputFileNTuple->Get("gepWTAConeCellsTowersJetsTree");
     TTree* gepLeadingWTAConeCellsTowersJetsTree = (TTree*)inputFileNTuple->Get("gepLeadingWTAConeCellsTowersJetsTree");
     TTree* gepSubleadingWTAConeCellsTowersJetsTree = (TTree*)inputFileNTuple->Get("gepSubleadingWTAConeCellsTowersJetsTree");
+    TTree* gepWTAConeCellsTowersSKJetsTree = (TTree*)inputFileNTuple->Get("gepWTAConeCellsTowersSKJetsTree");
+    TTree* gepLeadingWTAConeCellsTowersSKJetsTree = (TTree*)inputFileNTuple->Get("gepLeadingWTAConeCellsTowersSKJetsTree");
+    TTree* gepSubleadingWTAConeCellsTowersSKJetsTree = (TTree*)inputFileNTuple->Get("gepSubleadingWTAConeCellsTowersSKJetsTree");
     TTree* gFexSRJTree = (TTree*)inputFileNTuple->Get("gFexSRJTree");
     TTree* gFexLeadingSRJTree = (TTree*)inputFileNTuple->Get("gFexLeadingSRJTree");
     TTree* gFexSubleadingSRJTree = (TTree*)inputFileNTuple->Get("gFexSubleadingSRJTree");
@@ -272,26 +278,46 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
     gepCellsTowersTree->SetBranchAddress("Eta", &gepCellsTowersEtaValues);
     gepCellsTowersTree->SetBranchAddress("Phi", &gepCellsTowersPhiValues);
 
+    // === gepCellsTowerSK tree ===
+    gepCellsTowersSKTree->SetBranchAddress("Et", &gepCellsTowersSKEtValues);
+    gepCellsTowersSKTree->SetBranchAddress("Eta", &gepCellsTowersSKEtaValues);
+    gepCellsTowersSKTree->SetBranchAddress("Phi", &gepCellsTowersSKPhiValues);
+
     // gep wta cone cells towers jets
     gepWTAConeCellsTowersJetsTree->SetBranchAddress("pT", &gepWTAConeCellsTowersJetspTValues);
     gepWTAConeCellsTowersJetsTree->SetBranchAddress("Eta", &gepWTAConeCellsTowersJetsEtaValues);
     gepWTAConeCellsTowersJetsTree->SetBranchAddress("Phi", &gepWTAConeCellsTowersJetsPhiValues);
-    gepWTAConeCellsTowersJetsTree->SetBranchAddress("Mass", &gepWTAConeCellsTowersJetsMassValues);
     gepWTAConeCellsTowersJetsTree->SetBranchAddress("NConstituents", &gepWTAConeCellsTowersJetsNConstituentsValues);
 
-    // gep wta cone cells towers jets
+    // leading gep wta cone cells towers jets
     gepLeadingWTAConeCellsTowersJetsTree->SetBranchAddress("pT", &gepLeadingWTAConeCellsTowersJetspTValues);
     gepLeadingWTAConeCellsTowersJetsTree->SetBranchAddress("Eta", &gepLeadingWTAConeCellsTowersJetsEtaValues);
     gepLeadingWTAConeCellsTowersJetsTree->SetBranchAddress("Phi", &gepLeadingWTAConeCellsTowersJetsPhiValues);
-    gepLeadingWTAConeCellsTowersJetsTree->SetBranchAddress("Mass", &gepLeadingWTAConeCellsTowersJetsMassValues);
     gepLeadingWTAConeCellsTowersJetsTree->SetBranchAddress("NConstituents", &gepLeadingWTAConeCellsTowersJetsNConstituentsValues);
 
-    // gep wta cone cells towers jets
+    // subleading gep wta cone cells towers jets
     gepSubleadingWTAConeCellsTowersJetsTree->SetBranchAddress("pT", &gepSubleadingWTAConeCellsTowersJetspTValues);
     gepSubleadingWTAConeCellsTowersJetsTree->SetBranchAddress("Eta", &gepSubleadingWTAConeCellsTowersJetsEtaValues);
     gepSubleadingWTAConeCellsTowersJetsTree->SetBranchAddress("Phi", &gepSubleadingWTAConeCellsTowersJetsPhiValues);
-    gepSubleadingWTAConeCellsTowersJetsTree->SetBranchAddress("Mass", &gepSubleadingWTAConeCellsTowersJetsMassValues);
     gepSubleadingWTAConeCellsTowersJetsTree->SetBranchAddress("NConstituents", &gepSubleadingWTAConeCellsTowersJetsNConstituentsValues);
+
+    // gep wta cone cells towers SK jets
+    gepWTAConeCellsTowersSKJetsTree->SetBranchAddress("pT", &gepWTAConeCellsTowersSKJetspTValues);
+    gepWTAConeCellsTowersSKJetsTree->SetBranchAddress("Eta", &gepWTAConeCellsTowersSKJetsEtaValues);
+    gepWTAConeCellsTowersSKJetsTree->SetBranchAddress("Phi", &gepWTAConeCellsTowersSKJetsPhiValues);
+    gepWTAConeCellsTowersSKJetsTree->SetBranchAddress("NConstituents", &gepWTAConeCellsTowersSKJetsNConstituentsValues);
+
+    // leading gep wta cone cells towers SK jets
+    gepLeadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("pT", &gepLeadingWTAConeCellsTowersSKJetspTValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("Eta", &gepLeadingWTAConeCellsTowersSKJetsEtaValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("Phi", &gepLeadingWTAConeCellsTowersSKJetsPhiValues);
+    gepLeadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("NConstituents", &gepLeadingWTAConeCellsTowersSKJetsNConstituentsValues);
+
+    // subleading gep wta cone cells towers SK jets
+    gepSubleadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("pT", &gepSubleadingWTAConeCellsTowersSKJetspTValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("Eta", &gepSubleadingWTAConeCellsTowersSKJetsEtaValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("Phi", &gepSubleadingWTAConeCellsTowersSKJetsPhiValues);
+    gepSubleadingWTAConeCellsTowersSKJetsTree->SetBranchAddress("NConstituents", &gepSubleadingWTAConeCellsTowersSKJetsNConstituentsValues);
 
     // === gFexSRJTree ===
     gFexSRJTree->SetBranchAddress("EtIndex", &gFexSRJEtIndexValues);
@@ -428,6 +454,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         if(iEvt % 10 == 0) std::cout << "iEvt: " << iEvt << "\n";
         inTimeAntiKt4TruthJetsTree->GetEntry(iEvt); // NOTE all of these are pT / Et sorted!
         gepCellsTowersTree->GetEntry(iEvt);
+        gepCellsTowersSKTree->GetEntry(iEvt);
         jetTaggerLeadingLRJs->GetEntry(iEvt);
         eventInfoTree->GetEntry(iEvt);
         jetTaggerSubleadingLRJs->GetEntry(iEvt);
@@ -435,6 +462,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         truthbTree->GetEntry(iEvt);
         truthHiggsTree->GetEntry(iEvt);
         gepWTAConeCellsTowersJetsTree->GetEntry(iEvt);
+        gepWTAConeCellsTowersSKJetsTree->GetEntry(iEvt);
         jFexSRJTree->GetEntry(iEvt);
         gFexLRJTree->GetEntry(iEvt);
         recoAntiKt10UFOCSSKJets->GetEntry(iEvt);
@@ -455,9 +483,13 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         std::vector<double > lrjPsi_R;
         std::array<double, 2 > lrjDeltaRSubjets;
         std::array<double, 2 > lrjEtRatioSubjets;
+        std::array<double, 2 > lrjMassApprox;
+        std::array<double, 2 > lrjTau21;
+        
+        //std::cout << "seedObjectType: " << seedObjectType << "\n";
         
         double subjetEtThreshold;
-        if(subjetType == "WTACone") subjetEtThreshold = 10.0;
+        if(subjetType == "WTACone") subjetEtThreshold = 15.0;
         else if(subjetType == "jFEXSRJ") subjetEtThreshold = 50.0;
         const double truthJetEtThreshold = 15.0;
         const double pileupJetEtThreshold = 15.0;
@@ -468,10 +500,19 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         std::array< std::vector<std::pair<double, double > >, 2 > bQuarks;
         std::array<double, 2 > bQuarksDeltaR;
         std::vector<std::pair<double, double > > higgses;
+        std::vector<double > higgsPts;
+        std::array<std::vector<double >, 2 > bEts; 
 
         for(unsigned int iCellsTower = 0; iCellsTower < nInputObjectsAlgorithmConfiguration; iCellsTower++){
-            cellsTowersHighestEtSeedPositions->Fill(gepCellsTowersEtaValues->at(iCellsTower), gepCellsTowersPhiValues->at(iCellsTower), gepCellsTowersEtValues->at(iCellsTower));
-            cellsTowersHighestEtTruthAndPileupJets->Fill(gepCellsTowersEtaValues->at(iCellsTower), gepCellsTowersPhiValues->at(iCellsTower), gepCellsTowersEtValues->at(iCellsTower));
+            if(skBool){
+                cellsTowersHighestEtSeedPositions->Fill(gepCellsTowersSKEtaValues->at(iCellsTower), gepCellsTowersSKPhiValues->at(iCellsTower), gepCellsTowersSKEtValues->at(iCellsTower));
+                cellsTowersHighestEtTruthAndPileupJets->Fill(gepCellsTowersSKEtaValues->at(iCellsTower), gepCellsTowersSKPhiValues->at(iCellsTower), gepCellsTowersSKEtValues->at(iCellsTower));
+            }
+            else{
+                cellsTowersHighestEtSeedPositions->Fill(gepCellsTowersEtaValues->at(iCellsTower), gepCellsTowersPhiValues->at(iCellsTower), gepCellsTowersEtValues->at(iCellsTower));
+                cellsTowersHighestEtTruthAndPileupJets->Fill(gepCellsTowersEtaValues->at(iCellsTower), gepCellsTowersPhiValues->at(iCellsTower), gepCellsTowersEtValues->at(iCellsTower));
+            }
+            
         }
         if(seedObjectType == "jFEXSRJ"){
             seedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(0), jFexSRJPhiValues->at(0)));
@@ -482,15 +523,28 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             additionalSeedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(5), jFexSRJPhiValues->at(5)));
         }
         
-        else if(seedObjectType == "gepWTAConeCellsTowersJets"){
-            for(unsigned int iWTACone = 0; iWTACone < gepWTAConeCellsTowersJetsEtaValues->size(); iWTACone++){
-                if(iWTACone <= 1){
-                    seedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersJetsPhiValues->at(iWTACone)));
+        else if(seedObjectType == "gepWTAConeCellsTowersJets_NoSK" || seedObjectType == "gepWTAConeCellsTowersJets_SK"){
+            if(skBool){
+                for(unsigned int iWTACone = 0; iWTACone < gepWTAConeCellsTowersSKJetsEtaValues->size(); iWTACone++){
+                    if(iWTACone <= 1){
+                        seedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
+                    }
+                    else if(iWTACone <= 5){
+                        additionalSeedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
+                    }
+                    else break;
                 }
-                else if(iWTACone <= 5){
-                    additionalSeedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersJetsPhiValues->at(iWTACone)));
+            }
+            else{
+                for(unsigned int iWTACone = 0; iWTACone < gepWTAConeCellsTowersJetsEtaValues->size(); iWTACone++){
+                    if(iWTACone <= 1){
+                        seedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersJetsPhiValues->at(iWTACone)));
+                    }
+                    else if(iWTACone <= 5){
+                        additionalSeedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersJetsPhiValues->at(iWTACone)));
+                    }
+                    else break;
                 }
-                else break;
             }
         }
 
@@ -503,19 +557,38 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         std::array<std::vector<unsigned int >, 2 > subjetIndices;
         std::array<unsigned int, 2 > NSubjets = {0};
         if(subjetType == "WTACone"){
-            for(unsigned int iConeJet = 0; iConeJet < gepWTAConeCellsTowersJetspTValues->size(); iConeJet++){
-                if(gepWTAConeCellsTowersJetspTValues->at(iConeJet) > subjetEtThreshold){
-                    double deltaRPossibleSubjetsSeedLeading = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet), jetTaggerLeadingLRJEtaValues->at(0), jetTaggerLeadingLRJPhiValues->at(0)));
-                    double deltaRPossibleSubjetsSeedSubleading = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet), jetTaggerSubleadingLRJEtaValues->at(0), jetTaggerSubleadingLRJPhiValues->at(0)));
-                    if(deltaRPossibleSubjetsSeedLeading < jetRadius){
-                        NSubjets[0]++;
-                        subjetIndices[0].push_back(iConeJet);
+            if(skBool){
+                for(unsigned int iConeJet = 0; iConeJet < gepWTAConeCellsTowersSKJetspTValues->size(); iConeJet++){
+                    if(gepWTAConeCellsTowersSKJetspTValues->at(iConeJet) > subjetEtThreshold){
+                        double deltaRPossibleSubjetsSeedLeading = sqrt(calcDeltaR2(gepWTAConeCellsTowersSKJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersSKJetsPhiValues->at(iConeJet), jetTaggerLeadingLRJEtaValues->at(0), jetTaggerLeadingLRJPhiValues->at(0)));
+                        double deltaRPossibleSubjetsSeedSubleading = sqrt(calcDeltaR2(gepWTAConeCellsTowersSKJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersSKJetsPhiValues->at(iConeJet), jetTaggerSubleadingLRJEtaValues->at(0), jetTaggerSubleadingLRJPhiValues->at(0)));
+                        if(deltaRPossibleSubjetsSeedLeading < jetRadius){
+                            NSubjets[0]++;
+                            subjetIndices[0].push_back(iConeJet);
+                        }
+                        if(deltaRPossibleSubjetsSeedSubleading < jetRadius){
+                            NSubjets[1]++;
+                            subjetIndices[1].push_back(iConeJet);
+                        }
+                        possibleSubjets.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersSKJetsPhiValues->at(iConeJet)));
                     }
-                    if(deltaRPossibleSubjetsSeedSubleading < jetRadius){
-                        NSubjets[1]++;
-                        subjetIndices[1].push_back(iConeJet);
+                }
+            }
+            else{
+                for(unsigned int iConeJet = 0; iConeJet < gepWTAConeCellsTowersJetspTValues->size(); iConeJet++){
+                    if(gepWTAConeCellsTowersJetspTValues->at(iConeJet) > subjetEtThreshold){
+                        double deltaRPossibleSubjetsSeedLeading = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet), jetTaggerLeadingLRJEtaValues->at(0), jetTaggerLeadingLRJPhiValues->at(0)));
+                        double deltaRPossibleSubjetsSeedSubleading = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet), jetTaggerSubleadingLRJEtaValues->at(0), jetTaggerSubleadingLRJPhiValues->at(0)));
+                        if(deltaRPossibleSubjetsSeedLeading < jetRadius){
+                            NSubjets[0]++;
+                            subjetIndices[0].push_back(iConeJet);
+                        }
+                        if(deltaRPossibleSubjetsSeedSubleading < jetRadius){
+                            NSubjets[1]++;
+                            subjetIndices[1].push_back(iConeJet);
+                        }
+                        possibleSubjets.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet)));
                     }
-                    possibleSubjets.push_back(std::make_pair(gepWTAConeCellsTowersJetsEtaValues->at(iConeJet), gepWTAConeCellsTowersJetsPhiValues->at(iConeJet)));
                 }
             }
         }
@@ -539,26 +612,51 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
 
         if(NSubjets[0] >= 2){
             if(subjetType == "WTACone"){
-                // Note: this assumes that subjets were pre-sorted within ntupler
-                lrjDeltaRSubjets[0] = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[0][1]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[0][1])));
-                lrjEtRatioSubjets[0] = gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][0])/gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][1]);
+                if(skBool){
+                    // Note: this assumes that subjets were pre-sorted within ntupler
+                    double deltaRSubjets = sqrt(calcDeltaR2(gepWTAConeCellsTowersSKJetsEtaValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersSKJetsPhiValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersSKJetsEtaValues->at(subjetIndices[0][1]), gepWTAConeCellsTowersSKJetsPhiValues->at(subjetIndices[0][1])));
+                    lrjDeltaRSubjets[0] = deltaRSubjets;
+                    lrjEtRatioSubjets[0] = gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[0][0])/gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[0][1]);
+                    lrjMassApprox[0] = deltaRSubjets * (gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[0][0]) + gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[0][1]));
+                }
+                else{
+                    // Note: this assumes that subjets were pre-sorted within ntupler
+                    double deltaRSubjets = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[0][0]), gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[0][1]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[0][1])));
+                    lrjDeltaRSubjets[0] = deltaRSubjets;
+                    lrjEtRatioSubjets[0] = gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][0])/gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][1]);
+                    lrjMassApprox[0] = deltaRSubjets * (gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][0]) + gepWTAConeCellsTowersJetspTValues->at(subjetIndices[0][1]));
+                }
+                
             }
             else if(subjetType == "jFEXSRJ"){
-                lrjDeltaRSubjets[0] = sqrt(calcDeltaR2(jFexSRJEtaValues->at(subjetIndices[0][0]), jFexSRJPhiValues->at(subjetIndices[0][0]), jFexSRJEtaValues->at(subjetIndices[0][1]), jFexSRJPhiValues->at(subjetIndices[0][1])));
+                double deltaRSubjets = sqrt(calcDeltaR2(jFexSRJEtaValues->at(subjetIndices[0][0]), jFexSRJPhiValues->at(subjetIndices[0][0]), jFexSRJEtaValues->at(subjetIndices[0][1]), jFexSRJPhiValues->at(subjetIndices[0][1])));
+                lrjDeltaRSubjets[0] = deltaRSubjets;
                 lrjEtRatioSubjets[0] = jFexSRJEtValues->at(subjetIndices[0][0])/jFexSRJEtValues->at(subjetIndices[0][1]);
+                lrjMassApprox[0] = deltaRSubjets * (jFexSRJEtValues->at(subjetIndices[0][0]) + jFexSRJEtValues->at(subjetIndices[0][1]));
             }
         }
         if(NSubjets[1] >= 2){
             if(subjetType == "WTACone"){
-                lrjDeltaRSubjets[1] = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[1][1]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[1][1])));
-                lrjEtRatioSubjets[1] = gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][0])/gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][1]);
+                if(skBool){
+                    double deltaRSubjets = sqrt(calcDeltaR2(gepWTAConeCellsTowersSKJetsEtaValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersSKJetsPhiValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersSKJetsEtaValues->at(subjetIndices[1][1]), gepWTAConeCellsTowersSKJetsPhiValues->at(subjetIndices[1][1])));
+                    lrjDeltaRSubjets[1] = deltaRSubjets;
+                    lrjEtRatioSubjets[1] = gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[1][0])/gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[1][1]);
+                    lrjMassApprox[1] = deltaRSubjets * (gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[1][0]) + gepWTAConeCellsTowersSKJetspTValues->at(subjetIndices[1][1]));
+                }
+                else{
+                    double deltaRSubjets = sqrt(calcDeltaR2(gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[1][0]), gepWTAConeCellsTowersJetsEtaValues->at(subjetIndices[1][1]), gepWTAConeCellsTowersJetsPhiValues->at(subjetIndices[1][1])));
+                    lrjDeltaRSubjets[1] = deltaRSubjets;
+                    lrjEtRatioSubjets[1] = gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][0])/gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][1]);
+                    lrjMassApprox[1] = deltaRSubjets * (gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][0]) + gepWTAConeCellsTowersJetspTValues->at(subjetIndices[1][1]));
+                }
             }
             else if(subjetType == "jFEXSRJ"){
-                lrjDeltaRSubjets[1] = sqrt(calcDeltaR2(jFexSRJEtaValues->at(subjetIndices[1][0]), jFexSRJPhiValues->at(subjetIndices[1][0]), jFexSRJEtaValues->at(subjetIndices[1][1]), jFexSRJPhiValues->at(subjetIndices[1][1])));
+                double deltaRSubjets = sqrt(calcDeltaR2(jFexSRJEtaValues->at(subjetIndices[1][0]), jFexSRJPhiValues->at(subjetIndices[1][0]), jFexSRJEtaValues->at(subjetIndices[1][1]), jFexSRJPhiValues->at(subjetIndices[1][1])));
+                lrjDeltaRSubjets[1] = deltaRSubjets;
                 lrjEtRatioSubjets[1] = jFexSRJEtValues->at(subjetIndices[1][0])/jFexSRJEtValues->at(subjetIndices[1][1]);
+                lrjMassApprox[1] = deltaRSubjets * (jFexSRJEtValues->at(subjetIndices[1][0]) + jFexSRJEtValues->at(subjetIndices[1][1]));
             }
         }
-        
 
         for(unsigned int iTruthJet = 0; iTruthJet < truthAntiKt4WZSRJEtaValues->size(); iTruthJet++){
             if(truthAntiKt4WZSRJEtValues->at(iTruthJet) > truthJetEtThreshold){
@@ -582,26 +680,38 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             for (size_t ih = 0; ih < indexOfHiggsValues->size(); ++ih) {
 
                 const int hid = (*indexOfHiggsValues)[ih];
-
+                const double higgspT = (*truthHiggspTValues)[ih];
                 const double higgsEta = (*truthHiggsEtaValues)[ih];
                 const double higgsPhi = (*truthHiggsPhiValues)[ih];
 
 
                 higgses.push_back(std::make_pair(higgsEta, higgsPhi));
+                higgsPts.push_back(higgspT);
 
                 auto it = higgsToB.find(hid);
                 if (it == higgsToB.end() || it->second.size() < 2) continue;
 
                 const int ib1 = it->second[0];
                 const int ib2 = it->second[1];
-
+                const double et1 = (*truthbquarksEtValues)[ib1];
                 const double eta1 = (*truthbquarksEtaValues)[ib1];
                 const double phi1 = (*truthbquarksPhiValues)[ib1];
+                const double et2 = (*truthbquarksEtValues)[ib2];
                 const double eta2 = (*truthbquarksEtaValues)[ib2];
                 const double phi2 = (*truthbquarksPhiValues)[ib2];
-
-                bQuarks[ih].push_back(std::make_pair(eta1, phi1));
-                bQuarks[ih].push_back(std::make_pair(eta2, phi2));
+                if(et1 >= et2){
+                    bQuarks[ih].push_back(std::make_pair(eta1, phi1));
+                    bQuarks[ih].push_back(std::make_pair(eta2, phi2));
+                    bEts[ih].push_back(et1);
+                    bEts[ih].push_back(et2);
+                }
+                else{
+                    bQuarks[ih].push_back(std::make_pair(eta2, phi2));
+                    bQuarks[ih].push_back(std::make_pair(eta1, phi1));
+                    bEts[ih].push_back(et2);
+                    bEts[ih].push_back(et1);
+                }
+                
 
                 const double dr2 = calcDeltaR2(eta1, phi1, eta2, phi2);
                 const double dR  = std::sqrt(dr2);
@@ -619,7 +729,8 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             c.Clear();
             cellsTowersHighestEtSeedPositions->GetZaxis()->SetTitle("E_{T} [GeV]");
             cellsTowersHighestEtSeedPositions->Draw("COLZ");
-
+            //std::cout << "seedJetPositions.size(): " << seedJetPositions.size() << "\n";
+            //std::cout << "additionalSeedJetPositions.size(): " << additionalSeedJetPositions.size() << "\n";
             for(unsigned int iSeedOriginal = 0; iSeedOriginal < seedJetPositions.size(); iSeedOriginal++){
                 TEllipse *circle0 = new TEllipse(seedJetPositions[iSeedOriginal].first, seedJetPositions[iSeedOriginal].second, 1.1, 1.1); // R in both x and y
                 circle0->SetLineColor(kRed);
@@ -684,9 +795,11 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
 
             double deltaRSubjetsLead = -1; 
             double lrjEtRatioLead = -1;
+            double massApproxLead = -1;
             if(NSubjets[0] >= 2){
                 deltaRSubjetsLead = lrjDeltaRSubjets[0];
                 lrjEtRatioLead = lrjEtRatioSubjets[0];
+                massApproxLead = lrjMassApprox[0];
             }
 
             lat.DrawLatexNDC(0.10, y,
@@ -697,9 +810,11 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             
             double deltaRSubjetsSublead = -1; 
             double lrjEtRatioSublead = -1;
+            double massApproxSublead = -1;
             if(NSubjets[1] >= 2){
                 deltaRSubjetsSublead = lrjDeltaRSubjets[1];
                 lrjEtRatioSublead = lrjEtRatioSubjets[1];
+                massApproxSublead = lrjMassApprox[1]; 
             }
 
             lat.DrawLatexNDC(0.10, y,
@@ -863,9 +978,11 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
 
             double deltaRSubjetsLead = -1; 
             double lrjEtRatioLead = -1;
+            double massApproxLead = -1;
             if(NSubjets[0] >= 2){
                 deltaRSubjetsLead = lrjDeltaRSubjets[0];
                 lrjEtRatioLead = lrjEtRatioSubjets[0];
+                massApproxLead = lrjMassApprox[0];
             }
 
             lat.DrawLatexNDC(0.05, y,
@@ -876,20 +993,45 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             
             double deltaRSubjetsSublead = -1; 
             double lrjEtRatioSublead = -1;
-
+            double massApproxSublead = -1; 
             if(NSubjets[1] >= 2){
                 deltaRSubjetsSublead = lrjDeltaRSubjets[1];
                 lrjEtRatioSublead = lrjEtRatioSubjets[1];
+                massApproxSublead = lrjMassApprox[1];
             }
 
             lat.DrawLatexNDC(0.05, y,
                 Form("Subl. LRJ: E_{T}=%.1f GeV, #psi_{R}=%.2f, #DeltaR=%.2f, r_{E_{T}}=%.2f, #DeltaR #times r_{E_{T}}=%.2f",
                     lrjEt[1], lrjPsi_R[1], deltaRSubjetsSublead, lrjEtRatioSublead, deltaRSubjetsSublead*lrjEtRatioSublead));
+            if(signalBool){
+                //std::cout << "why not triggered" << "\n";
+                //std::cout << "y1: " << y << "\n";
+                y -= 0.10;
+                lat.DrawLatexNDC(0.05, y,
+                    Form("h_{1} p_{T}=%.1f, Lead. b E_{T}=%.1f, Subl. b E_{T}=%.1f [GeV], #DeltaR_{b's}=%.2f",
+                        higgsPts[0], bEts[0][0], bEts[0][1], bQuarksDeltaR[0]));
+                //std::cout << "y2: " << y << "\n";
+                y -= 0.10;        
+                lat.DrawLatexNDC(0.05, y,
+                    Form("h_{2} p_{T}=%.1f, Lead. b E_{T}=%.1f, Subl. b E_{T}=%.1f [GeV], #DeltaR_{b's}=%.2f",
+                        higgsPts[1], bEts[1][0], bEts[1][1], bQuarksDeltaR[1]));
+
+                y -= 0.10;        
+                lat.DrawLatexNDC(0.05, y,
+                    Form(" Leading Mass Approx=%.1f [GeV], Subleading Mass Approx =%.1f [GeV]",
+                        massApproxLead, massApproxSublead));
+                //std::cout << "y3: " << y << "\n";
+            }
             if(!signalBool){
+                y -= 0.10;        
+                lat.DrawLatexNDC(0.05, y,
+                    Form(" Leading Mass Approx=%.1f [GeV], Subleading Mass Approx =%.1f [GeV]",
+                        massApproxLead, massApproxSublead));
                 y -= 0.10;
                 lat.DrawLatexNDC(0.05, y,
                     Form("Event Weight (Rate Contribution):%.1f",
                         eventWeightsValues->at(0)));
+                
             }
 
             cEventDisplay.Print(pdf_ED);   // ===== PAGE 2 =====
@@ -904,6 +1046,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
 
 
 void callMakeEventDisplays(){
+    gErrorIgnoreLevel = kWarning;
     std::string inputFile = "";
     //std::string inputFile = "";
     unsigned int desiredJZSlice = -1;
@@ -912,14 +1055,43 @@ void callMakeEventDisplays(){
     //bool signalBool = false;
     std::string subjetType = "WTACone";
     // Call for signal, both subjet types
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
-        -1, true, "WTACone");
+    // VBF hh->4b (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
+        -1, true, true, "WTACone", false);
     
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
-        -1, true, "jFEXSRJ");
+    // VBF hh->4b PU Suppressed (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+        -1, true, true, "WTACone", true);
+
+    // ggF hh->4b (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
+        -1, true, false, "WTACone", false);
+    
+    // ggF hh->4b PU Suppressed (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+        -1, true, false, "WTACone", true);
+    
+    //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP_EtWeighted/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    //    -1, true, "jFEXSRJ");
+
+    // JZ2 background (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
+        2, false, false, "WTACone", false);
+
+    // JZ2 background PU suppressed (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+        2, false, false, "WTACone", true);
+
+    // JZ3 background (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
+        3, false, false, "WTACone", false);
+
+    // JZ3 background PU suppressed (Cone subjets)
+    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+        3, false, false, "WTACone", true);
 
     // Call for background (jz2, jz3)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
+    /*makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
         2, false, "WTACone");
 
     makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
@@ -929,7 +1101,7 @@ void callMakeEventDisplays(){
         3, false, "WTACone");
 
     makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
-        3, false, "jFEXSRJ");
+        3, false, "jFEXSRJ");*/
     
     gSystem->Exit(0);
 }

@@ -7,11 +7,16 @@ set -euo pipefail
 #nIOs=(64 128 256 512)
 
 #signals=(true false)
-rMergeCuts=(0.001)
-rSquaredCuts=(1.0)
+#rMergeCuts=(0.001 1.5 2.0 2.5) 
+rMergeCuts=(2.25) 
+#rMergeCuts=(2) 
+#rMergeCuts=(1.25 1.75)
+rSquaredCuts=(1.21)
 nIOs=(128)
 nSeeds=(2)
 signals=(true false)
+puSuppression=(true)
+vbfBools=(true false)
 
 condor=false
 
@@ -71,11 +76,15 @@ for rMerge in "${rMergeCuts[@]}"; do
         cp -f "$lut_output_path" "$dest_dir/deltaR2LUT.h"
         cp -f "$lutR_output_path" "$dest_dir/deltaRLUT.h"
         cp -f "$lutR_5b_output_path" "$dest_dir/deltaRLUT_8b.h"
-
-        # Run ROOT for each (signal, jz)
+ 
+        # Run ROOT for each (signal, PU suppression, VBF)
         for signal in "${signals[@]}"; do
-          echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds"
-          root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor})"
+          for puSupBool in "${puSuppression[@]}"; do
+            for vbfBool in "${vbfBools[@]}"; do
+              echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool vbf=$vbfBool"
+              root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, ${vbfBool})"
+            done
+          done
         done
       done
     done

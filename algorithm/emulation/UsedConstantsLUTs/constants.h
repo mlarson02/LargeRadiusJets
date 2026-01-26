@@ -1,12 +1,12 @@
 // Constants used by JetTagger Emulation
 
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
-constexpr unsigned int nSeedsInput_ = 2;
+constexpr unsigned int nSeedsInput_ = 6;
 constexpr unsigned int nSeedsOutput_ = 2;
 constexpr unsigned int maxObjectsConsidered_ = 128;
 constexpr double et_granularity_ = 0.125;
-constexpr double r2Cut_ = 1.0000;
-constexpr double rMergeCut_ = 0.0010;
+constexpr double r2Cut_ = 1.2100;
+constexpr double rMergeCut_ = 2.2500;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
@@ -26,11 +26,11 @@ constexpr double eta_granularity_ = 0.0390625;
 constexpr double phi_granularity_ = 0.1;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 1024;
-constexpr unsigned int max_R2lut_size_ = 803;
-constexpr unsigned int max_Rlut_size_ = 1;
+constexpr unsigned int max_R2lut_size_ = 964;
+constexpr unsigned int max_Rlut_size_ = 1828;
 constexpr double deltaR_max_ = 10.48187;
 constexpr unsigned int nSeeds_ = 2;
-constexpr unsigned int max_R_8b_lut_size_ = 803;
+constexpr unsigned int max_R_8b_lut_size_ = 898;
 constexpr double phi_range_ = phi_max_ - phi_min_;
 
 constexpr unsigned int lut_size_ = (1u << (eta_bit_length_ + phi_bit_length_));
@@ -48,7 +48,7 @@ constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
 constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
 constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
 constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
-constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;
+constexpr unsigned int nSeedsDeltaR_ = 2;//nSeedsInput_ - nSeedsOutput_;
 static const bool lut_[max_R2lut_size_] =
 #include "deltaR2LUT.h"
 ;

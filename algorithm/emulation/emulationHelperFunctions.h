@@ -143,11 +143,18 @@ unsigned int calculate_lut_max_size(double rCut,
 }
 
 // Returns input NTuple file name given parameters
-std::string makeInputFileName(bool signalBool,
+std::string makeInputFileName(bool signalBool, bool vbfBool,
                               std::string inputRootFilePath = "/home/larsonma/LargeRadiusJets/data/inputNTuples/") {
     std::ostringstream ss;
+    
     if (signalBool) {
-        ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        if(vbfBool){
+            ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        }
+        else{
+            ss << inputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        }
+        
     } else {
         ss << inputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
     }
@@ -160,19 +167,34 @@ std::string makeOutputFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
+                               bool vbfBool,
                                std::string inputObjectType,
                                std::string seedObjectType,
-                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_FixedHSTP_EtWeighted/") {
+                               bool useSKObjects,
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/") {
+    std::string usePUSuppress;
+    if(useSKObjects){
+        usePUSuppress = "SK";
+    }
+    else{
+        usePUSuppress = "NoSK";
+    }
     std::ostringstream ss;
     if (signalBool) {
-        ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        if(vbfBool){
+            ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        }
+        else{
+            ss << outputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
+        }
     } else {
-        ss <<outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
+        ss << outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
+    
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_OR" << ".root";
+       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_" << usePUSuppress << ".root";
 
     return ss.str();
 }
@@ -182,19 +204,34 @@ std::string makeOutputTextFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
+                               bool vbfBool,
                                std::string inputObjectType,
                                std::string seedObjectType,
+                               bool useSKObjects,
                                std::string outputTextFilePath = "/home/larsonma/LargeRadiusJets/data/MemPrintsEmulation/") {
+    std::string usePUSuppress;
+    if(useSKObjects){
+        usePUSuppress = "SK";
+    }
+    else{
+        usePUSuppress = "NoSK";
+    }                            
     std::ostringstream ss;
     if (signalBool) {
-        ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        if(vbfBool){
+            ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        }
+        else{
+            ss << outputTextFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
+            
+        }
     } else {
-        ss <<outputTextFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
+        ss << outputTextFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << ".dat";
+       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_" << usePUSuppress << ".dat";
 
     return ss.str();
 }

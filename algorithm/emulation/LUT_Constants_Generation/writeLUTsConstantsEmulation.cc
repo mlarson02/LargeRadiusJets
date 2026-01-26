@@ -13,11 +13,11 @@ int main() {
     const unsigned int phiBitLength = 6;
     const unsigned int etaBitLength = 8;
 
-    std::vector<double > rMergeCuts = {0.001, 1.5, 2.0, 2.5, 3.5};
-    std::vector<double > rSquaredCuts = {1.0};
-    std::vector<unsigned int > nIOs = {64, 128, 256, 512};
+    std::vector<double > rMergeCuts = {0.001, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.5};
+    std::vector<double > rSquaredCuts = {1.0, 1.21, 1.44};
+    std::vector<unsigned int > nIOs = {32, 64, 128, 256, 512};
     std::vector<unsigned int > nSeeds = {2};
-    std::vector<unsigned int > nSeedsInput = {2};
+    std::vector<unsigned int > nSeedsInput = {6};
 
     for(double rMergeCut : rMergeCuts){ // Loop through algorithm configurations affecting constants.h
         for(double rSquaredCut : rSquaredCuts){ // And generate different constants files
