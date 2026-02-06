@@ -8,16 +8,18 @@ set -euo pipefail
 
 #signals=(true false)
 #rMergeCuts=(0.001 1.5 2.0 2.5) 
-rMergeCuts=(2.25) 
-#rMergeCuts=(2) 
+#rMergeCuts=(0.001 2) 
+rMergeCuts=(0.001 2) 
 #rMergeCuts=(1.25 1.75)
 rSquaredCuts=(1.21)
 nIOs=(128)
 nSeeds=(2)
 signals=(true false)
 puSuppression=(true)
-vbfBools=(true false)
-
+#vbfBools=(true false)
+#signalStrings=("Zprime_ttbar")
+signalStrings=("VBF_hh_bbbb" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
+#signalStrings=("VBF_hh_bbbb" "ggF_hh_bbbb")
 condor=false
 
 # ---- paths ----
@@ -80,9 +82,16 @@ for rMerge in "${rMergeCuts[@]}"; do
         # Run ROOT for each (signal, PU suppression, VBF)
         for signal in "${signals[@]}"; do
           for puSupBool in "${puSuppression[@]}"; do
-            for vbfBool in "${vbfBools[@]}"; do
-              echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool vbf=$vbfBool"
-              root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, ${vbfBool})"
+
+            if [[ "$signal" == true ]]; then
+              sigList=("${signalStrings[@]}")
+            else
+              sigList=("VBF_hh_bbbb")   # run once; just use VBF_hh_bbbb, but it shouldn't matter which signalString is fed into algorithm FIXME allow for a null or empty string to be passed in for backgrounds? 
+            fi
+
+            for signalString in "${sigList[@]}"; do
+              echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool signalString=$signalString"
+              root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, \"${signalString}\")"
             done
           done
         done

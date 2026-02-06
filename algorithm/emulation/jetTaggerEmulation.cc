@@ -371,11 +371,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 //std::cout << "UNDIGITIZED Et: " << jFexSRJEtValues->at(iSeed) << " eta: " << jFexSRJEtaValues->at(iSeed) << " and phi: " << jFexSRJPhiValues->at(iSeed) << "\n";
             //}
         }
-        if(iEvt == 103){
-            std::cout << "------------------------- iEvt = 103 ----------------------" << "\n"; 
-            std::cout << "leading et, eta, phi before: " << undigitize_et(seedValues[0][0]) << " , " << undigitize_eta(seedValues[0][1]) << " , " << undigitize_phi(seedValues[0][2]) << "\n";
-            std::cout << "subleading et, eta, phi before: " << undigitize_et(seedValues[1][0]) << " , " << undigitize_eta(seedValues[1][1]) << " , " << undigitize_phi(seedValues[1][2]) << "\n";
-        }
+
         //std::cout << "subleading et, eta, phi before: " << undigitize_et(seedValues[1][0]) << " , " << undigitize_eta(seedValues[1][1]) << " , " << undigitize_phi(seedValues[1][2]) << "\n";
         // Perform overlap removal (OR) ensuring that leading, subleading seeds don't overlap within deltaR < 2.0 /// FIXME /// do this with a LUT
         double deltaRLeadingSubleading = sqrt(calcDeltaR2(undigitize_eta(seedValues[0][1]), undigitize_phi(seedValues[0][2]), undigitize_eta(seedValues[1][1]), undigitize_phi(seedValues[1][2])));
@@ -490,11 +486,15 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         // FIXME make this entire process more dynamic to account for nSeedsOutput_ != 2 (progressively do this for highest Et seeds rather than for 1st 2 seeds immediately)
         // NEW PRE-PROCESSING OF SEEDS - SELECT IN BETWEEN LEADING, SUBLEADING JFEX SRJ, CLOSEST OF 3rd - 6th highest ENERGY JFEX SRJS as NEW SEEDS
         unsigned int deltaRValuesSeed[nSeedsOutput_][nSeedsDeltaR_] = {0}; 
-        unsigned int deltaRValuesGreaterThan5Counter[nSeedsOutput_] = {0};
-
-        bool indicesOfDeltaRValuesGreaterThanrMergeCut[nSeedsOutput_][nSeedsDeltaR_] = {false};
+        unsigned int deltaRValuesLessThanrMergeCutCounter[nSeedsOutput_] = {0};
+        int indices[nSeedsOutput_] = {-1};
+        bool indicesOfDeltaRValuesLessThanrMergeCut[nSeedsOutput_][nSeedsDeltaR_] = {false};
         for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){ // loop through and calculate deltaR between leading, subleading & 3rd - 6th highest Et JFEX SRJ
             for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++){
+                // Don't consider certain preSeeds for seed position recalculation if below some mininmum E_T threshold
+                //if(seedValues[iPreSeed + nSeedsOutput_][0] <=  min_et_seed_pos_recalc_/et_granularity_) continue;
+                //std::cout << "original seed: " << iSeed << " eta: " << seedValues[iSeed][1] << " , phi: " << seedValues[iSeed][2] << "\n";
+                //std::cout << "pre seed seed: " << iPreSeed << " eta: " << seedValues[iPreSeed + nSeedsOutput_][1] << " , phi: " << seedValues[iPreSeed + nSeedsOutput_][2] << "\n";
                 deltaRValuesSeed[iSeed][iPreSeed] = (1 << deltaRBits_) - 1; // Set to maximum value in case closer seed not found --> don't consider 0 values in sorting
                 int deltaEta = seedValues[iSeed][1] - seedValues[iPreSeed + nSeedsOutput_][1];
                 int deltaPhi = seedValues[iSeed][2] - seedValues[iPreSeed + nSeedsOutput_][2];
@@ -504,64 +504,73 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
                 unsigned int corrDeltaPhi = uDeltaPhi; // wrapped around positive deltaPhi
                 unsigned int lutR_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Compute lut index
+                //std::cout << "seed pos recalc udeltaeta: " << uDeltaEta << " , corrdeltaphi: " << corrDeltaPhi << "\n";
                 //std::cout << "lutR_index: " << lutR_index << "\n";
                 if (!(lutR_index >= max_Rlut_size_)){
                     deltaRValuesSeed[iSeed][iPreSeed] = lutR_[lutR_index];
                     //std::cout << "lutR_[lutR_index]: " <<  lutR_[lutR_index] << "\n";
+                    //std::cout << "lutR_[lutR_index]: " << lutR_[lutR_index] << " , rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n"; 
                     if (lutR_[lutR_index] <= rMergeConsiderCutDigitized_){
                         //std::cout << "lutR_[lutR_index] in cut: " << lutR_[lutR_index] << "\n";
-                        deltaRValuesGreaterThan5Counter[iSeed]++;
-                        indicesOfDeltaRValuesGreaterThanrMergeCut[iSeed][iPreSeed] = true;
+                        //std::cout << "iseed for shifting: " << iSeed << "iPreSeed for shifting: " << iPreSeed << "\n";
+                        deltaRValuesLessThanrMergeCutCounter[iSeed]++;
+                        indicesOfDeltaRValuesLessThanrMergeCut[iSeed][iPreSeed] = true;
+                        indices[iSeed] = iPreSeed;
                     }
                 }
             }
         }
 
-        unsigned int indices[nSeedsOutput_] = {0};
+        
+        //std::cout << "deltaRValuesLessThanrMergeCutCounter[0]: " << deltaRValuesLessThanrMergeCutCounter[0] << ", deltaRValuesLessThanrMergeCutCounter[1]: " << deltaRValuesLessThanrMergeCutCounter[1] << "\n";
         // Account for the case when multiple seeds are within deltaR customalizable value - use highest Et seed to compute halfway point
         // For seed 0
-        //std::cout << "deltaRValuesGreaterThan5Counter[0] : " << deltaRValuesGreaterThan5Counter[0] << "\n";
-        //std::cout << "deltaRValuesGreaterThan5Counter[1] : " << deltaRValuesGreaterThan5Counter[1] << "\n";
-        if (deltaRValuesGreaterThan5Counter[0] > 1) {
+        //std::cout << "deltaRValuesLessThanrMergeCutCounter[0] : " << deltaRValuesLessThanrMergeCutCounter[0] << "\n";
+        //std::cout << "deltaRValuesLessThanrMergeCutCounter[1] : " << deltaRValuesLessThanrMergeCutCounter[1] << "\n";
+        if (deltaRValuesLessThanrMergeCutCounter[0] > 1) {
             unsigned int maxEt = 0;
             for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++) {
-                if (indicesOfDeltaRValuesGreaterThanrMergeCut[0][iPreSeed]) {
+                if (indicesOfDeltaRValuesLessThanrMergeCut[0][iPreSeed]) {
                     unsigned int et = seedValues[iPreSeed + nSeedsOutput_][0];
                     if (et > maxEt) {
                         maxEt = et;
                         indices[0] = iPreSeed;
+                        //std::cout << "final ipreseed for jet 0: " << indices[0] << "\n";
                     }
                 }
             }
-        }
-        else{
-            indices[0] = index_of_min(deltaRValuesSeed[0]);
-        }
+        } // Note: for case where only one potential pre-seed is found, index should already be set.
 
         // For seed 1
-        if (deltaRValuesGreaterThan5Counter[1] > 1) {
+        if (deltaRValuesLessThanrMergeCutCounter[1] > 1) {
+            //std::cout << "seed 1 why is this triggered" << "\n";
             unsigned int maxEt = 0;
             for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++) {
-                if (indicesOfDeltaRValuesGreaterThanrMergeCut[1][iPreSeed]) {
+                if (indicesOfDeltaRValuesLessThanrMergeCut[1][iPreSeed]) {
                     unsigned int et = seedValues[iPreSeed + nSeedsOutput_][0];
                     if (et > maxEt) {
                         maxEt = et;
                         indices[1] = iPreSeed;
+                        //std::cout << "final ipreseed for jet 1: " << indices[1] << "\n";
                     }
                 }
             }
         }
-        else{
-            indices[1] = index_of_min(deltaRValuesSeed[1]);
-        }
 
-        // FIXME replace with a templated version of this s.t. you don't need to rewrite code for different number sorted
+        // FIXME replace with a templated version of this s.t. you don't need to rewrite code for different number sorted (of index_of_min)
         
-
+        // Account for the case when both original seeds would be shifted toward the same pre seeds, this would cause unnecessary overlap - this should be better thought out, but for now just prevent lower E_T seed from being shifted at all
+        bool skipSecondSeed = false;
+        if(indices[0] == indices[1] && indices[0] != -1){
+            skipSecondSeed = true;
+        }
+        //std::cout << "indices[0]: " << indices[0] << " , indices[1]:  " << indices[1] << "\n";
         // next update leading, subleading seed positions (and energy?) to be in between closest other seed 
         for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){
+            if(skipSecondSeed == true && iSeed == 1) continue; 
+            if(indices[iSeed] == -1) continue;
             if (deltaRValuesSeed[iSeed][indices[iSeed]] > rMergeConsiderCutDigitized_) continue; // If no other proto-seeds found within rMergeCut
-
+            //std::cout << "iSeed midpoint calc: " << iSeed << "\n";
             /*auto wrapSym = [&](ap_int<phi_bit_length_ + 2> x) -> ap_int<phi_bit_length_ + 2> {
                 if (x >  PI_D)   x -= TWO_PI_D;
                 if (x < -PI_D)  x += TWO_PI_D;
@@ -579,16 +588,18 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             //if (etSum == 0) etSum = 1; // avoid divide-by-zero
 
             // Convert eta to signed integers centered at 0
+            //std::cout << "seed eta1: " << seedValues[iSeed][1]  << " , seed eta2: " << seedValues[indices[iSeed] + nSeedsOutput_][1] << "\n";
             int eta1 = seedValues[iSeed][1] - (1 << (eta_bit_length_ - 1));
+            //std::cout << "indices[iSeed] + nSeedsOutput_: " << indices[iSeed] + nSeedsOutput_ << "\n";
             int eta2 = seedValues[indices[iSeed] + nSeedsOutput_][1] - (1 << (eta_bit_length_ - 1));
 
             // Convert phi to signed integers centered at 0
-
+            //std::cout << "eta1: " << eta1 << " , eta2: " << eta2 << "\n";
             // Signed, extended-width versions to avoid overflow on sums/diffs
 
             int phi1s = seedValues[iSeed][2] - (1 << (phi_bit_length_ - 1));
             int phi2s = seedValues[indices[iSeed] + nSeedsOutput_][2] - (1 << (phi_bit_length_ - 1));
-
+            //std::cout << "phi1s: " << phi1s << " , phi2s: " << phi2s << "\n";
             // --- Shortest-arc midpoint (unweighted) ---
             int dphi = phi2s - phi1s;
 
@@ -656,17 +667,22 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             unsigned int jet_psi_R = 0;
             unsigned int highestEtMergedIOEta[2];
             unsigned int highestEtMergedIOPhi[2];
+            //std::cout << "----------------------------" << "\n";
+            //std::cout << "iSeed: " << iSeed << " , eta: " << seedValues[iSeed][1] << " , phi: " << seedValues[iSeed][2] << "\n";
 
             //std::cout << "outputjetet: " << outputJetEt << "\n";
 
             for (unsigned int iInput = 0; iInput < objectsProcessed; ++iInput){ // loop through input objects to consider merging
-
+                if(inputObjectValues[iInput][0]  == 0) break;
                 // Calculate signed differences (deltaEta and deltaPhi)
                 //std::cout << "-----------------------------" << "\n";
                 //std::cout << "iSeed: " << iSeed << "\n";
                 //std::cout << "seed eta: " << seedValues[iSeed][1] << " and phi: " << seedValues[iSeed][2] << "\n";
                 int deltaEta = seedValues[iSeed][1] - inputObjectValues[iInput][1];
                 int deltaPhi = seedValues[iSeed][2] - inputObjectValues[iInput][2];
+                //std::cout << "iInput: " << iInput << "\n";
+
+                //std::cout << "input object et, eta, phi: " << inputObjectValues[iInput][0] << " , " << inputObjectValues[iInput][1] << " , " << inputObjectValues[iInput][2] << "\n";
                 
                 // Use unsigned type for absolute values, and ensure both operands are of the same type
                 unsigned int uDeltaEta = std::abs(deltaEta);
@@ -676,10 +692,14 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 unsigned int corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
 
                 unsigned int lut_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
-
+                //std::cout << "udeltaeta: " << uDeltaEta << " , corrDeltaPhi: " << corrDeltaPhi << "\n";
+                //std::cout << "lut_index: " << lut_index << "\n";
+                //std::cout << "lut_[lut_index]: " << lut_[lut_index] << "\n";
                 if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False)
+                    //std::cout << "outputJetEt: " << outputJetEt << "\n";
                     if(outputJetEt + inputObjectValues[iInput][0] >= int(et_max_/et_granularity_ - 1)) outputJetEt = int(et_max_/et_granularity_ - 1);
                     else outputJetEt += inputObjectValues[iInput][0]; // add input object Et to seed Et for resultant output jet Et
+                    //std::cout << "inputObjectValues[iInput][0]: " << inputObjectValues[iInput][0] << " , outputJetEt after sum: " << outputJetEt << "\n";
                     jetTaggerLRJMergedIndicesValues->push_back(iInput);
                     if(iSeed == 0) jet1MergedIndices.push_back(iInput);
                     if(iSeed == 1) jet2MergedIndices.push_back(iInput);
@@ -689,51 +709,15 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                     }
                     // Compute psi_R using 8b 0,1 deltaR LUT
                     unsigned int lut_index_mergedIO = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi;
-                    if(iEvt == 3674){
-                        std::cout << "iEvt 3674 -------------------------" << "\n";
-                        std::cout << "lut_index_mergedIO: " << lut_index_mergedIO << "\n";
-                        std::cout << "deltaR: " << lutR_8b_[lut_index_mergedIO] << "\n";
-                        std::cout << "input object et: " << inputObjectValues[iInput][0] << "\n";
-                        std::cout << "psi_R contribution: " << inputObjectValues[iInput][0] * lutR_8b_[lut_index_mergedIO] << "\n";
-                    }
                     
                     jet_psi_R += inputObjectValues[iInput][0] * lutR_8b_[lut_index_mergedIO];
                     numMergedIO++; 
-                    if(iEvt == 3674){
-                        std::cout << "psi_R_temp : " << jet_psi_R << "\n";
-                        std::cout << "nummergedIO temp: " << numMergedIO << "\n";
-                    }
+
                 }
-            }
-            if(iEvt == 3674){
-                std::cout << "jetpsi_R before: " << jet_psi_R << "\n";
             }
             
             if(outputJetEt > 0) jet_psi_R = jet_psi_R / outputJetEt;
             else jet_psi_R = 0;
-            if(iEvt == 3674){
-                std::cout << "jetpsi_R after: " << jet_psi_R << "\n";
-                std::cout << "nummergedIO final: " << numMergedIO << "\n";
-            }
-
-            
-            
-
-            // Compute delta R between the two highest Et topoclusters merged to a large R jet FIXME need to account for case when 0 or 1 input objects are merged! if statement should be fine for now?
-            /*unsigned int jet_diam = 0;
-            if(numMergedIO > 1){
-                int deltaEta_mergedIO = highestEtMergedIOEta[0] - highestEtMergedIOEta[1];
-                int deltaPhi_mergedIO = highestEtMergedIOPhi[0] - highestEtMergedIOPhi[1];
-
-                // Use unsigned type for absolute values, and ensure both operands are of the same type
-                unsigned int uDeltaEta_mergedIO = std::abs(deltaEta_mergedIO);
-                unsigned int uDeltaPhi_mergedIO = std::abs(deltaPhi_mergedIO);
-
-                if (uDeltaPhi_mergedIO >= pi_digitized_in_phi_) uDeltaPhi_mergedIO = 2 * pi_digitized_in_phi_ - uDeltaPhi_mergedIO;
-                unsigned int corrDeltaPhi_mergedIO = uDeltaPhi_mergedIO; // using corr delta phi saves 1 bit, unsure if necessary?
-                unsigned int lut_index_mergedIO = uDeltaEta_mergedIO * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi_mergedIO;
-                if(lut_index_mergedIO < max_R_5b_lut_size_) jet_diam = lutR_5b_[lut_index_mergedIO];
-            }*/
 
             // Values you already computed:
             
@@ -745,10 +729,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             uint64_t eta_value  = static_cast<uint32_t>(seedValues[iSeed][1]) & maskN(eta_bit_length_);
             uint64_t phi_value  = static_cast<uint32_t>(seedValues[iSeed][2]) & maskN(phi_bit_length_);
 
-            //std::cout << "jet_diam: " << jet_diam << " and output jet Et: " << outputJetEt << "\n";
-        //std::cout << "output jet eta, phi: " << seedValues[iSeed][1] << " , " << seedValues[iSeed][2] << "\n";
-
             // Set output values (unchanged semantic layout)
+            //std::cout << "et_value : " << et_value << "\n";
             outputJetValues[iSeed][0] = numMergedIO_value; // constituents
             outputJetValues[iSeed][1] = psi_R_value; // substructure
             outputJetValues[iSeed][2] = et_value;   // Et
@@ -761,7 +743,6 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             std::bitset<et_bit_length_  > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
-
             
             numMergedIO_bitset_array[iSeed] = numMergedIO_bitset;
             psi_R_bitset_array[iSeed] = psi_R_bitset;
@@ -804,6 +785,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             for(unsigned int j = 0; j < jet2MergedIndices.size(); j++){
                 jetTaggerSubleadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
             }
+            //std::cout << "et_bitset_array[0]: " << et_bitset_array[0] << "\n";
+            //std::cout << "undigitize_et(et_bitset_array[0]): " << undigitize_et(et_bitset_array[0]) << "\n";
             jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
             jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
             jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
@@ -847,7 +830,6 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
 } // Event loop function
 
-
 // Function for processing a different algorithm configuration
 // Use(compiling, running with ROOT): .L jetTaggerEmulation.cc, jetTaggerEmulation(0.001, 128, 2, 1.0, true, 3, false)
 void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for other jFEX SRJs (from leading, subleading jets)
@@ -859,14 +841,15 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
                       bool signalBool,  // whether processing a signal or background process // FIXME add additional signal types for later
                       bool condorBool, // whether running using condor batch job submission (requires change in filepaths)
                       bool useSKObjects, // Whether to use PU-suppressed (with SoftKiller) objects 
-                      bool vbfBool, // Whether signal (assumed hh->4b) is produced via VBF or ggF
+                      std::string signalString, // Which signal sample being used (functionality for: VBF_hh_bbbb, ggF_hh_bbbb, ZvvHbb, ttbar_had, Zprime_ttbar)
                       std::string inputObjectType = "gepCellsTowers", // Possibilities: "gepCellsTowers", "gepWTAConeCellsTowersJets", "gepTopoTowers", "gepBasicClusters"
                       std::string seedObjectType = "gepWTAConeCellsTowersJets" // Possibilities: "gepWTAConeCellsTowersJets" or "jFEXSRJ"  // FIXME allow this to be changed in executable
                       ){ 
+    if(signalBool) std::cout << "Processing signal of: " << signalString  << "\n";
     // Construct input and output ntuple, LUT paths based on configuration type
-    auto infile = makeInputFileName(signalBool, vbfBool); // FIXME update this when running with condor.
-    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, vbfBool, inputObjectType, seedObjectType, useSKObjects);
-    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, vbfBool, inputObjectType, seedObjectType, useSKObjects);
+    auto infile = makeInputFileName(signalBool, signalString); // FIXME update this when running with condor.
+    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, signalString, inputObjectType, seedObjectType, useSKObjects);
+    auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, signalString, inputObjectType, seedObjectType, useSKObjects);
     std::cout << "infile: " << infile << "\n";
     std::cout << "outntuplefile: " << outntuplefile << "\n"; 
     std::cout << "outtextfile: " << outtextfile << "\n";       

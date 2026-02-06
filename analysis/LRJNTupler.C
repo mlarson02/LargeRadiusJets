@@ -16,6 +16,8 @@
 #include "TH2F.h"
 #include "analysisHelperFunctions.h"
 
+
+// Ntupler functions
 // Used for digitized data writing
 struct OutputFiles {
     std::string topo422;
@@ -33,9 +35,6 @@ struct OutputFiles {
     std::string jFex;
 };
 
-// Settings
-const bool afBool = true;
-const bool vbfBool = true;
 const unsigned int nJZSlices = 10;
 
 // Constants required for reweighting
@@ -43,7 +42,7 @@ const unsigned int nJZSlices = 10;
 // In barns^-1 - 7.5*10^34 cm^-2 s^-1 * 1 s (HL-LHC 200 PU inst. lumi * 1 second) - use 1 second to make rates plots easy
 const double reweightLuminosity = 7.5e10;
 
-// Filter efficiencies from AMI [in b]
+// Filter efficiencies from AMI
 const double filterEffienciesByJZSlice[nJZSlices] = {0.9716436,    // JZ0
                                                      0.03777559,   // JZ1
                                                      0.01136654,   // JZ2
@@ -80,13 +79,16 @@ const double sumOfEventWeightsByJZSlice[nJZSlices] = {10000.0,                //
                                                       3.274964361399163e-09}; // JZ9 
 
 // Helper to construct memprint / test vector filenames
-inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSlice) {
+inline OutputFiles makeMemPrintFilenames(std::string signalString, bool signalBool, int jzSlice) {
     static const std::string base = "/data/larsonma/LargeRadiusJets/MemPrints/";
 
     std::string tag;
     if (signalBool) {
-        tag = vbfBool ? "mc21_14TeV_hh_bbbb_vbf_novhh"
-                      : "mc21_14TeV_HHbbbb_HLLHC";
+        if(signalString == "VBF_hh_bbbb") tag = "mc21_14TeV_hh_bbbb_vbf_novhh"; 
+        else if (signalString == "ggF_hh_bbbb") tag = "mc21_14TeV_HHbbbb_HLLHC";
+        else if (signalString == "ZvvHbb") tag = "mc21_14TeV_ZvvH125_bb";
+        else if (signalString == "ttbar_had") tag = "mc21_14TeV_ttbar_hdamp258p75_allhad";
+        else if (signalString == "Zprime_ttbar") tag = "mc21_14TeV_flatpT_Zprime_tthad";
     } else {
         // generic: works for all slices 0..9 etc
         tag = "mc21_14TeV_jj_JZ" + std::to_string(jzSlice);
@@ -110,13 +112,15 @@ inline OutputFiles makeMemPrintFilenames(bool signalBool, bool vbfBool, int jzSl
 }
 
 // Helper to get input DAOD + GEP ntuple file names
-std::string makeFileDir(bool vbfBool, bool signalBool, int jzSlice) {
+std::string makeFileDir(std::string signalString, bool signalBool, int jzSlice) {
     static const std::string kRoot = "/data/larsonma/LargeRadiusJets/datasets";
 
     if (signalBool) {
-        return vbfBool
-            ? kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_VBF" 
-            : kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_ggF";
+        if(signalString == "VBF_hh_bbbb") return kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_VBF_SM"; 
+        else if (signalString == "ggF_hh_bbbb") return kRoot + "/DAOD_TrigGepPerf/Signal_HHbbbb_ggF";
+        else if (signalString == "ZvvHbb") return kRoot + "/DAOD_TrigGepPerf/Signal_ZvvHbb";
+        else if (signalString == "ttbar_had") return kRoot + "/DAOD_TrigGepPerf/Signal_ttbar_fullhad";
+        else if (signalString == "Zprime_ttbar") return kRoot + "/DAOD_TrigGepPerf/Signal_Zprime_ttbar_flatpT";
     }
 
     // background path
@@ -127,29 +131,23 @@ std::string makeFileDir(bool vbfBool, bool signalBool, int jzSlice) {
 }
 
 // Helper function to get output ntuple file name
-TString makeOutputFileName(bool vbfBool, bool signalBool, int jzSlice) {
+TString makeOutputFileName(std::string signalString, bool signalBool, int jzSlice) {
     static const TString outDir = "outputRootFiles/";
-
-    if (vbfBool) {
-        if (signalBool) {
-            return outDir + "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-            
-        } else {
-            if (jzSlice < 0 || jzSlice > 9)
-                throw std::out_of_range("jzSlice must be between 0 and 9");
-            return outDir + "mc21_14TeV_jj_JZ" + TString(std::to_string(jzSlice))
-                + "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        }
-    } else {
-        if (signalBool) {
-            return outDir + "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        } else {
-            if (jzSlice < 0 || jzSlice > 9)
-                throw std::out_of_range("jzSlice must be between 0 and 9");
-            return outDir + "mc21_14TeV_jj_JZ" + TString(std::to_string(jzSlice))
-                + "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        }
+    if(signalBool){
+        if(signalString == "VBF_hh_bbbb") return outDir + "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ggF_hh_bbbb") return outDir + "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ZvvHbb") return outDir + "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ttbar_had") return outDir + "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "Zprime_ttbar") return outDir + "mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else return "";
     }
+    else {
+        if (jzSlice < 0 || jzSlice > 9)
+            throw std::out_of_range("jzSlice must be between 0 and 9");
+        return outDir + "mc21_14TeV_jj_JZ" + TString(std::to_string(jzSlice))
+            + "_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+    }
+ 
 }
 
 
@@ -206,15 +204,15 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 
 
 // Main function
-void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
+void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3) {
     //ServiceHandle<StoreGateSvc> inputMetaStore("StoreGateSvc/InputMetaDataStore","");
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
-    std::string fileDir =  makeFileDir(vbfBool, signalBool, jzSlice);
+    std::string fileDir =  makeFileDir(signalString, signalBool, jzSlice);
     std::cout << "fileDir: " << fileDir << "\n";
     //xAOD::Init().ignore();
 
     // pick filenames
-    OutputFiles out = makeMemPrintFilenames(signalBool, vbfBool, jzSlice);
+    OutputFiles out = makeMemPrintFilenames(signalString, signalBool, jzSlice);
 
     // open streams
     std::ofstream f_topotower(out.caloTopoTowers);
@@ -236,7 +234,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         // handle error or return
     }
 
-    TString outputFileName = makeOutputFileName(vbfBool, signalBool, jzSlice);
+    TString outputFileName = makeOutputFileName(signalString, signalBool, jzSlice);
     
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
@@ -246,6 +244,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     TTree* eventInfoTree = new TTree("eventInfoTree", "Tree storing event information (e.g., mcEventWeight) required for rate computation");
     TTree* truthbTree = new TTree("truthbTree", "Tree storing event-wise information about truth particles");
     TTree* truthHiggsTree = new TTree("truthHiggsTree", "Tree storing event-wise information about truth particles");
+    TTree* truthTopTree = new TTree("truthTopTree", "Tree storing event-wise information about truth particles");
     //TTree* truthVBFQuark = new TTree("truthVBFQuark", "Tree storing event-wise information about truth particles");
     TTree* caloTopoTowerTree = new TTree("caloTopoTowerTree", "Tree storing event-wise Et, Eta, Phi");
     TTree* gepBasicClustersTree = new TTree("gepBasicClustersTree", "Tree storing event-wise Et, Eta, Phi");
@@ -437,6 +436,18 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
     truthHiggsTree->Branch("py", &truthHiggspyValues);
     truthHiggsTree->Branch("pz", &truthHiggspzValues);
     truthHiggsTree->Branch("Energy", &truthHiggsEnergyValues);
+
+    // truthTopTree
+    truthTopTree->Branch("indexOfHiggs", &indexOfHiggsValues);
+    truthTopTree->Branch("invMass", &truthHiggsInvMassValues);
+    truthTopTree->Branch("Et", &truthHiggsEtValues);
+    truthTopTree->Branch("Eta", &truthHiggsEtaValues);
+    truthTopTree->Branch("Phi", &truthHiggsPhiValues);
+    truthTopTree->Branch("pT", &truthHiggspTValues);
+    truthTopTree->Branch("px", &truthHiggspxValues);
+    truthTopTree->Branch("py", &truthHiggspyValues);
+    truthTopTree->Branch("pz", &truthHiggspzValues);
+    truthTopTree->Branch("Energy", &truthHiggsEnergyValues);
 
     // truthVBFQuark FIXME don't have for DAOD samples - unless can find corresponding aod events for which full truth record is stored
     /*
@@ -704,6 +715,7 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         if (!entry.is_regular_file()) continue;
         const std::string fn = entry.path().filename().string();
         if (has_prefix(fn, "DAOD_JETM42") && has_suffix(fn, ".root")) {
+            std::cout << "found DAOD file: " << entry.path().string() << "\n";
             fileNames.push_back(entry.path().string());
         }
     }
@@ -713,23 +725,24 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
         if (!entry.is_regular_file()) continue;
         const std::string fn = entry.path().filename().string();
         if (has_prefix(fn, "GEP") && has_suffix(fn, ".root")) {
+            std::cout << "found TrigGepPerf file name: " << entry.path().string() << "\n";
             gepFileNames.push_back(entry.path().string());
         }
     }
 
     if (fileNames.empty()) {
-        cout << "No ROOT files found in directory." << endl;
+        std::cout << "No ROOT files found in directory." << endl;
         return;
     }
 
-    cout << "Found " << fileNames.size() << " files." << endl;
+    std::cout << "Found " << fileNames.size() << " files." << endl;
 
     // Main processing loop
     int fileIt = 0;
     for (const auto& fileName : fileNames) {
         fileIt++; 
         //if (fileIt > 9) break; 
-        cout << "Processing file: " << fileName << endl;
+        std::cout << "Processing file: " << fileName << endl;
         std::cout << "Processing GEP file: " << gepFileNames[fileIt - 1] << "\n";
 
         TFile* f = TFile::Open(fileName.c_str());
@@ -959,6 +972,18 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
             const xAOD::TruthParticleContainer* TruthBosonsWithDecayParticles = nullptr;
             if (!event.retrieve(TruthBosonsWithDecayParticles, "TruthBosonsWithDecayParticles").isSuccess()) {
                 cerr << "Cannot access TruthBosonsWithDecayParticles" << endl;
+                continue;
+            }
+
+            const xAOD::TruthParticleContainer* TruthTop = nullptr;
+            if (!event.retrieve(TruthTop, "TruthTop").isSuccess()) {
+                cerr << "Cannot access TruthTop" << endl;
+                continue;
+            }
+            
+            const xAOD::TruthParticleContainer* TruthHFWithDecayParticles = nullptr;
+            if (!event.retrieve(TruthHFWithDecayParticles, "TruthHFWithDecayParticles").isSuccess()) {
+                cerr << "Cannot access TruthHFWithDecayParticles" << endl;
                 continue;
             }
 
@@ -1208,12 +1233,39 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
             // Compute weight for histograms 
             double eventWeight = mcEventWeight * crossSectionsByJZSlice[jzSlice] * filterEffienciesByJZSlice[jzSlice] * reweightLuminosity / (sumOfEventWeightsByJZSlice[jzSlice]);
             eventWeights.push_back(eventWeight);
-
-
+            
+            std::cout << "----------------- processing event --------------------------" << "\n";
+            std::cout << "iEvt: " << iEvt << "\n";
+            for(const auto& el : *TruthTop){
+                std::cout << "----------------- looping within TruthTop ------------------- " << "\n";
+                std::cout << "particle pdg id : " << el->pdgId() << " , and status: " << el->status() << "\n";
+                std::cout << "particle pT: " << el->pt() / 1000.0 << "\n";
+                std::cout << "particle number of children: " << el->nChildren() << "\n";
+                for (unsigned int i = 0; i < el->nChildren(); ++i) {
+                    std::cout << " particle child iterator i: " << i << "\n";
+                    std::cout << "pdg of particle child: " << el->child(i)->pdgId() << "\n";
+                    if(abs(el->child(i)->pdgId()) == 6) std::cout << "b pT: " << el->child(i)->pt() << "\n";
+                    if(abs(el->child(i)->pdgId()) == 24) std::cout << "W pT: " << el->child(i)->pt() << "\n";
+                    
+                }
+                if(el->pdgId() == 6) std::cout << "top quark within TruthHFWithDecayParticles " << "\n";
+                
+            }
+            /*for(const auto& el : *TruthHFWithDecayParticles){
+                std::cout << "----------------- looping within TruthHFWithDecayParticles ------------------- " << "\n";
+                std::cout << "particle pdg id : " << el->pdgId() << " , and status: " << el->status() << "\n";
+                std::cout << "particle pt: " << el->pt() / 1000.0 << "\n";
+                std::cout << "particle number of children: " << el->nChildren() << "\n";
+                for (unsigned int i = 0; i < el->nChildren(); ++i) {
+                    std::cout << " particle child iterator i: " << i << "\n";
+                    std::cout << "pdg of particle child: " << el->child(i)->pdgId() << "\n";
+                }
+                if(el->pdgId() == 6) std::cout << "top quark within TruthHFWithDecayParticles " << "\n";
+                
+            }*/
 
             // Initialize per-event counters
             unsigned int higgs_counter = -1;
-            bool higgsPtCutPassed[2] = {false, false}; 
             // --- Loop over TruthParticles (for Higgs and B's) ---
             std::vector<std::vector<float > > allb_list;
             for (const auto& el : *TruthBosonsWithDecayParticles) {
@@ -1241,7 +1293,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     indexOfHiggsValues.push_back(higgs_counter);
 
                     if (higgs_counter == 0) { // fill b's for both higgs, and store index of which higgs they correspond to.  
-                        if (pt > 0) higgsPtCutPassed[0] = true;
                         std::vector<const xAOD::TruthParticle*> b1_list;
                         find_non_higgs_daughters(el, b1_list);
 
@@ -1280,7 +1331,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     }
 
                     if (higgs_counter == 1) {
-                        if (pt > 0) higgsPtCutPassed[1] = true;
                         std::vector<const xAOD::TruthParticle*> b2_list;
                         find_non_higgs_daughters(el, b2_list);
 
@@ -1319,8 +1369,6 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                     } // if 2nd higgs in event
                 } // if higgs truth particle of interest
             } // loop through truth bosons with decay particles
-            bool higgsPtCutsPassed = higgsPtCutPassed[0] || higgsPtCutPassed[1];
-            if (higgsPtCutsPassed) higgsPassEventCounter++;
 
             unsigned int gepbasicclusters_it = 0;
             for (unsigned int i = 0; i < gepBasicClustersEt->size(); ++i) {
@@ -1352,17 +1400,15 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (eta_bin << phi_bit_length_) |
                                     (phi_bin);
                                     
-                
-                if (higgsPtCutsPassed || !signalBool){
-                    if (gepbasicclusters_it == 0) {
-                        f_gepbasicclusters << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    // 4. Write to output file
-                    f_gepbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusters_it
-                                << " " << binary_word
-                                << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    gepbasicclusters_it++;
+                if (gepbasicclusters_it == 0) {
+                    f_gepbasicclusters << "Event : " << std::dec << iEvt << "\n";
                 }
+                // 4. Write to output file
+                f_gepbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusters_it
+                            << " " << binary_word
+                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                gepbasicclusters_it++;
+
             }
 
             // SK basic clusters
@@ -1396,17 +1442,14 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (eta_bin << phi_bit_length_) |
                                     (phi_bin);
                                     
-                
-                if (higgsPtCutsPassed || !signalBool){
-                    if (gepbasicclusterssk_it == 0) {
-                        f_gepbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    // 4. Write to output file
-                    f_gepbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusterssk_it
-                                << " " << binary_word
-                                << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    gepbasicclusterssk_it++;
+                if (gepbasicclusterssk_it == 0) {
+                    f_gepbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
                 }
+                // 4. Write to output file
+                f_gepbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepbasicclusterssk_it
+                            << " " << binary_word
+                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                gepbasicclusterssk_it++;
             }
 
             // ---------- gepCellsTowers ----------
@@ -1458,14 +1501,12 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                             (phi_bin_sort_purposes <<  12) |
                                             (et_bin_sort_purposes);
 
-                        if (higgsPtCutsPassed || !signalBool){
-                            if (gepcellstowers_it == 0) {
-                                f_gepcellstowers_sort << "Event : " << std::dec << iEvt << "\n";
-                            }
-                            f_gepcellstowers_sort << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                        if (gepcellstowers_it == 0) {
+                            f_gepcellstowers_sort << "Event : " << std::dec << iEvt << "\n";
                         }
+                        f_gepcellstowers_sort << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
                     } // Fixing scope since using the same variable names here
                     
 
@@ -1481,15 +1522,14 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepcellstowers_it == 0) {
-                            f_gepcellstowers << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_gepcellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
-                                        << " "  << binary_word
-                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepcellstowers_it;
+                    if (gepcellstowers_it == 0) {
+                        f_gepcellstowers << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_gepcellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowers_it
+                                    << " "  << binary_word
+                                    << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepcellstowers_it;
+
                 }
             }
 
@@ -1535,15 +1575,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepcellstowerssk_it == 0) {
-                            f_gepcellstowerssk << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_gepcellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowerssk_it
-                                        << " "  << binary_word
-                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepcellstowerssk_it;
+                    if (gepcellstowerssk_it == 0) {
+                        f_gepcellstowerssk << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_gepcellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepcellstowerssk_it
+                                    << " "  << binary_word
+                                    << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepcellstowerssk_it;
                 }
             }
 
@@ -1578,17 +1616,14 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (eta_bin << phi_bit_length_) |
                                     (phi_bin);
                                     
-                
-                /*if (higgsPtCutsPassed || !signalBool){
-                    if (topotower_it == 0) {
-                        f_topotower << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    // 4. Write to output file
-                    f_topotower << "0x" << std::hex << std::setw(2) << std::setfill('0') << topotower_it
-                                << " " << binary_word
-                                << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    topotower_it++;
-                }*/
+                if (topotower_it == 0) {
+                    f_topotower << "Event : " << std::dec << iEvt << "\n";
+                }
+                // 4. Write to output file
+                f_topotower << "0x" << std::hex << std::setw(2) << std::setfill('0') << topotower_it
+                            << " " << binary_word
+                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                topotower_it++;
             }
 
             unsigned int topocluster422_it = 0;
@@ -1625,16 +1660,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 //std::cout << "binary: " << binary_word << "\n";
 
                 // 4. Write to output file
-                
-                /*if(higgsPtCutsPassed || !signalBool){
-                    if (topocluster422_it == 0) {
-                        f_topo << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    f_topo << "0x" << std::hex << std::setw(2) << std::setfill('0') << topocluster422_it
-                            << " " << binary_word
-                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    topocluster422_it++; 
-                }*/
+                /*if (topocluster422_it == 0) {
+                    f_topo << "Event : " << std::dec << iEvt << "\n";
+                }
+                f_topo << "0x" << std::hex << std::setw(2) << std::setfill('0') << topocluster422_it
+                        << " " << binary_word
+                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                topocluster422_it++; */
             }
 
             // GEP cone jets from GEPCellsTowers
@@ -1688,15 +1720,14 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepwtaconecellstowers_it == 0) {
-                            f_wtaconejetscellstowers << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_wtaconejetscellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowers_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepwtaconecellstowers_it;
+                    if (gepwtaconecellstowers_it == 0) {
+                        f_wtaconejetscellstowers << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_wtaconejetscellstowers << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowers_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepwtaconecellstowers_it;
+
                 }
             }
 
@@ -1751,15 +1782,15 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepwtaconecellstowerssk_it == 0) {
-                            f_wtaconejetscellstowerssk << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_wtaconejetscellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowerssk_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepwtaconecellstowerssk_it;
+
+                    if (gepwtaconecellstowerssk_it == 0) {
+                        f_wtaconejetscellstowerssk << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_wtaconejetscellstowerssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconecellstowerssk_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepwtaconecellstowerssk_it;
+
                 }
             }
 
@@ -1814,15 +1845,15 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepwtaconebasicclusters_it == 0) {
-                            f_wtaconejetsbasicclusters << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_wtaconejetsbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusters_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepwtaconebasicclusters_it;
+
+                    if (gepwtaconebasicclusters_it == 0) {
+                        f_wtaconejetsbasicclusters << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_wtaconejetsbasicclusters << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusters_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepwtaconebasicclusters_it;
+
                 }
             }
 
@@ -1877,15 +1908,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                         (eta_bin <<  phi_bit_length_) |
                                         (phi_bin);
 
-                    if (higgsPtCutsPassed || !signalBool){
-                        if (gepwtaconebasicclusterssk_it == 0) {
-                            f_wtaconejetsbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
-                        }
-                        f_wtaconejetsbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusterssk_it
-                                            << " "  << binary_word
-                                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                        ++gepwtaconebasicclusterssk_it;
+                    if (gepwtaconebasicclusterssk_it == 0) {
+                        f_wtaconejetsbasicclusterssk << "Event : " << std::dec << iEvt << "\n";
                     }
+                    f_wtaconejetsbasicclusterssk << "0x" << std::hex << std::setw(2) << std::setfill('0') << gepwtaconebasicclusterssk_it
+                                        << " "  << binary_word
+                                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                    ++gepwtaconebasicclusterssk_it;
                 }
             }
 
@@ -1939,16 +1968,14 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (phi_bin);
 
                 // 4. Write to output file
-                
-                if(higgsPtCutsPassed || !signalBool){
-                    if (jfex_it == 0) {
-                        f_jfex << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    f_jfex << "0x" << std::hex << std::setw(2) << std::setfill('0') << jfex_it
-                            << " " << binary_word
-                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    jfex_it++;
+                if (jfex_it == 0) {
+                    f_jfex << "Event : " << std::dec << iEvt << "\n";
                 }
+                f_jfex << "0x" << std::hex << std::setw(2) << std::setfill('0') << jfex_it
+                        << " " << binary_word
+                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                jfex_it++;
+
             }
 
             // Leading jet
@@ -2055,16 +2082,13 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                                     (phi_bin);
 
                 // 4. Write to output file
-                
-                if(higgsPtCutsPassed || !signalBool){
-                    if (gfex_it == 0) {
-                        f_gfex << "Event : " << std::dec << iEvt << "\n";
-                    }
-                    f_gfex << "0x" << std::hex << std::setw(2) << std::setfill('0') << gfex_it
-                            << " " << binary_word
-                            << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
-                    gfex_it++;
-                }   
+                if (gfex_it == 0) {
+                    f_gfex << "Event : " << std::dec << iEvt << "\n";
+                }
+                f_gfex << "0x" << std::hex << std::setw(2) << std::setfill('0') << gfex_it
+                        << " " << binary_word
+                        << " 0x" << std::setw(8) << std::setfill('0') << packed_word << "\n";
+                gfex_it++;
             }
 
             // Leading jet
@@ -2295,55 +2319,53 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
                 truthAntiKt4WZSRJSubleadingPhiValues.push_back(subleading->phi());
                 truthAntiKt4WZSRJSubleadingMassValues.push_back(subleading->m() / 1000.0);
             }
-            if(higgsPtCutsPassed || !signalBool){
-                sampleJZSlice = jzSlice;
-                eventInfoTree->Fill();
-                truthbTree->Fill();
-                truthHiggsTree->Fill();
-                // truthVBFQuark->Fill();  // commented out as in your declaration
-                caloTopoTowerTree->Fill();
-                gepBasicClustersTree->Fill();
-                gepCellsTowersTree->Fill();
-                gepBasicClustersSKTree->Fill();
-                gepCellsTowersSKTree->Fill();
-                gepWTAConeCellsTowersJetsTree->Fill();
-                gepWTAConeBasicClustersJetsTree->Fill();
-                gepLeadingWTAConeCellsTowersJetsTree->Fill();
-                gepLeadingWTAConeBasicClustersJetsTree->Fill();
-                gepSubleadingWTAConeCellsTowersJetsTree->Fill();
-                gepSubleadingWTAConeBasicClustersJetsTree->Fill();
-                gepWTAConeCellsTowersSKJetsTree->Fill();
-                gepWTAConeBasicClustersSKJetsTree->Fill();
-                gepLeadingWTAConeCellsTowersSKJetsTree->Fill();
-                gepLeadingWTAConeBasicClustersSKJetsTree->Fill();
-                gepSubleadingWTAConeCellsTowersSKJetsTree->Fill();
-                gepSubleadingWTAConeBasicClustersSKJetsTree->Fill();
-                topo422Tree->Fill();
-                gFexSRJTree->Fill();
-                gFexLeadingSRJTree->Fill();
-                gFexSubleadingSRJTree->Fill();
-                gFexLRJTree->Fill();
-                gFexLeadingLRJTree->Fill();
-                gFexSubleadingLRJTree->Fill();
-                inTimeAntiKt4TruthJetsTree->Fill();
-                leadingInTimeAntiKt4TruthJetsTree->Fill();
-                subleadingInTimeAntiKt4TruthJetsTree->Fill();
-                jFexSRJTree->Fill();
-                jFexLeadingSRJTree->Fill();
-                jFexSubleadingSRJTree->Fill();
-                jFexLRJTree->Fill();
-                jFexLeadingLRJTree->Fill();
-                jFexSubleadingLRJTree->Fill();
-                hltAntiKt4EMTopoJetsTree->Fill();
-                leadingHltAntiKt4EMTopoJetsTree->Fill();
-                subleadingHltAntiKt4EMTopoJetsTree->Fill();
-                recoAntiKt10UFOCSSKJets->Fill();
-                leadingRecoAntiKt10UFOCSSKJets->Fill();
-                subleadingRecoAntiKt10UFOCSSKJets->Fill();
-                truthAntiKt4TruthDressedWZJets->Fill();
-                leadingTruthAntiKt4TruthDressedWZJets->Fill();
-                subleadingTruthAntiKt4TruthDressedWZJets->Fill();
-            }
+            sampleJZSlice = jzSlice;
+            eventInfoTree->Fill();
+            truthbTree->Fill();
+            truthHiggsTree->Fill();
+            // truthVBFQuark->Fill();  // commented out as in your declaration
+            caloTopoTowerTree->Fill();
+            gepBasicClustersTree->Fill();
+            gepCellsTowersTree->Fill();
+            gepBasicClustersSKTree->Fill();
+            gepCellsTowersSKTree->Fill();
+            gepWTAConeCellsTowersJetsTree->Fill();
+            gepWTAConeBasicClustersJetsTree->Fill();
+            gepLeadingWTAConeCellsTowersJetsTree->Fill();
+            gepLeadingWTAConeBasicClustersJetsTree->Fill();
+            gepSubleadingWTAConeCellsTowersJetsTree->Fill();
+            gepSubleadingWTAConeBasicClustersJetsTree->Fill();
+            gepWTAConeCellsTowersSKJetsTree->Fill();
+            gepWTAConeBasicClustersSKJetsTree->Fill();
+            gepLeadingWTAConeCellsTowersSKJetsTree->Fill();
+            gepLeadingWTAConeBasicClustersSKJetsTree->Fill();
+            gepSubleadingWTAConeCellsTowersSKJetsTree->Fill();
+            gepSubleadingWTAConeBasicClustersSKJetsTree->Fill();
+            topo422Tree->Fill();
+            gFexSRJTree->Fill();
+            gFexLeadingSRJTree->Fill();
+            gFexSubleadingSRJTree->Fill();
+            gFexLRJTree->Fill();
+            gFexLeadingLRJTree->Fill();
+            gFexSubleadingLRJTree->Fill();
+            inTimeAntiKt4TruthJetsTree->Fill();
+            leadingInTimeAntiKt4TruthJetsTree->Fill();
+            subleadingInTimeAntiKt4TruthJetsTree->Fill();
+            jFexSRJTree->Fill();
+            jFexLeadingSRJTree->Fill();
+            jFexSubleadingSRJTree->Fill();
+            jFexLRJTree->Fill();
+            jFexLeadingLRJTree->Fill();
+            jFexSubleadingLRJTree->Fill();
+            hltAntiKt4EMTopoJetsTree->Fill();
+            leadingHltAntiKt4EMTopoJetsTree->Fill();
+            subleadingHltAntiKt4EMTopoJetsTree->Fill();
+            recoAntiKt10UFOCSSKJets->Fill();
+            leadingRecoAntiKt10UFOCSSKJets->Fill();
+            subleadingRecoAntiKt10UFOCSSKJets->Fill();
+            truthAntiKt4TruthDressedWZJets->Fill();
+            leadingTruthAntiKt4TruthDressedWZJets->Fill();
+            subleadingTruthAntiKt4TruthDressedWZJets->Fill();
         } // loop through events
         std::cout << "for jz: " << jzSlice << " these many events passed: " << passedEventsCounter << " out of: " << event.getEntries() << "\n";
         std::cout << " these many events skipped due to empty truth container: " << skippedEventsEmptyTruth << " these many events skipped due to pt hard < pt pileup: " << skippedEventsHSTP << "\n";
@@ -2406,15 +2428,17 @@ void nTupler(bool signalBool, bool vbfBool = true, unsigned int jzSlice = 3) {
 } // ntupler function
 
 // processes all jzSlices + signal
-void callNTupler(){
-    //gSystem->RedirectOutput("NTupler.log", "w");
+void LRJNTupler(){
+    //gSystem->Load("libxAODRootAccess");
+    //xAOD::Init().ignore();
+    gSystem->RedirectOutput("NTupler.log", "w");
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<std::string > jzOutputFilenames;
     for(auto jzSlice : jzSlices){
         //nTupler(false, true, jzSlice); // call for each background jzSlice
-        TString out = makeOutputFileName(false, false, jzSlice);
+        TString out = makeOutputFileName("", false, jzSlice);
         jzOutputFilenames.push_back(out.Data());
     }
 
@@ -2427,8 +2451,11 @@ void callNTupler(){
     //    Error("callNTupler", "hadd failed with code %d", rc);
     //}
 
-    //nTupler(true, true); // call for signal (hh->4b VBF)
-    nTupler(true, false); // call for signal (hh->4b ggF)
+    //nTupler(true, "VBF_hh_bbbb"); // call for signal (hh->4b VBF)
+    //nTupler(true, "ggF_hh_bbbb"); // call for signal (hh->4b ggF)
+    //nTupler(true, "ZvvHbb"); // call for signal Z -> nu nu H -> bb
+    nTupler(true, "ttbar_had"); // call for sigal ttbar fully hadronic decays
+    //nTupler(true, "Zprime_ttbar"); // call for signal Zprime -> ttbar (hadronic), flat in pT
     for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing into a combined JZ slice ntuple for now
         std::cout << jzOutputFileName << "\n";
     }

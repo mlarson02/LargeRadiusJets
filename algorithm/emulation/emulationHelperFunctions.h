@@ -143,18 +143,16 @@ unsigned int calculate_lut_max_size(double rCut,
 }
 
 // Returns input NTuple file name given parameters
-std::string makeInputFileName(bool signalBool, bool vbfBool,
+std::string makeInputFileName(bool signalBool, std::string signalString,
                               std::string inputRootFilePath = "/home/larsonma/LargeRadiusJets/data/inputNTuples/") {
     std::ostringstream ss;
     
     if (signalBool) {
-        if(vbfBool){
-            ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        }
-        else{
-            ss << inputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
-        }
-        
+        if(signalString == "VBF_hh_bbbb") ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ggF_hh_bbbb") ss << inputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ZvvHbb") ss << inputRootFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "ttbar_had") ss << inputRootFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if (signalString == "Zprime_ttbar") ss << inputRootFilePath << "mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";       
     } else {
         ss << inputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
     }
@@ -167,11 +165,11 @@ std::string makeOutputFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
-                               bool vbfBool,
+                               std::string signalString,
                                std::string inputObjectType,
                                std::string seedObjectType,
                                bool useSKObjects,
-                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/") {
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/") {
     std::string usePUSuppress;
     if(useSKObjects){
         usePUSuppress = "SK";
@@ -181,12 +179,11 @@ std::string makeOutputFileName(double rMergeCut,
     }
     std::ostringstream ss;
     if (signalBool) {
-        if(vbfBool){
-            ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
-        }
-        else{
-            ss << outputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
-        }
+        if(signalString == "VBF_hh_bbbb") ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        else if (signalString == "ggF_hh_bbbb") ss << outputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
+        else if (signalString == "ZvvHbb") ss << outputRootFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_";
+        else if (signalString == "ttbar_had") ss << outputRootFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_";
+        else if (signalString == "Zprime_ttbar") ss << outputRootFilePath << "mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_";   
     } else {
         ss << outputRootFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
@@ -204,7 +201,7 @@ std::string makeOutputTextFileName(double rMergeCut,
                                unsigned int nSeeds,
                                double RSquaredCut,
                                bool signalBool,
-                               bool vbfBool,
+                               std::string signalString,
                                std::string inputObjectType,
                                std::string seedObjectType,
                                bool useSKObjects,
@@ -218,13 +215,11 @@ std::string makeOutputTextFileName(double rMergeCut,
     }                            
     std::ostringstream ss;
     if (signalBool) {
-        if(vbfBool){
-            ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
-        }
-        else{
-            ss << outputTextFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
-            
-        }
+        if(signalString == "VBF_hh_bbbb") ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        else if (signalString == "ggF_hh_bbbb") ss << outputTextFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
+        else if (signalString == "ZvvHbb") ss << outputTextFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_";
+        else if (signalString == "ttbar_had") ss << outputTextFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_";
+        else if (signalString == "Zprime_ttbar") ss << outputTextFilePath << "mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_"; 
     } else {
         ss << outputTextFilePath << "mc21_14TeV_jj_JZ_e8557_s4422_r16130_";
     }
@@ -292,6 +287,7 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int nSeedsOutput_ = " << nSeedsOutput << ";\n";
     out << "constexpr unsigned int maxObjectsConsidered_ = " << maxObjectsConsidered << ";\n";
     out << "constexpr double et_granularity_ = 0.125;\n";
+    out << "constexpr double min_et_seed_pos_recalc_ = 10.0;\n";
     out << "constexpr double r2Cut_ = " << r2Cut << ";\n";
     out << "constexpr double rMergeCut_ = " << rMergeCut << ";\n";
     out << "constexpr unsigned int et_bit_length_ = 13;\n";
