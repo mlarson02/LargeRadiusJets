@@ -1,12 +1,12 @@
-#include "process_event.h"
+#include "jet_tag.h"
 #define WRITE_LUT 0
 
 // Main function
-void process_event(input inputObjectValues[maxObjectsConsidered_], output (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
+void jet_tag(input inputObjectValues[maxObjectsConsidered_], output (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
     #pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
     #pragma HLS ARRAY_PARTITION variable=lutR_8b_ cyclic factor=4 dim=1
-    #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    //#pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
     // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
     // AXI4-Master interfaces for input arrays
     //#pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nSeedsInput_
@@ -17,13 +17,16 @@ void process_event(input inputObjectValues[maxObjectsConsidered_], output (&outp
     //#pragma HLS INTERFACE s_axilite port=return bundle=CTRL
     
     for (unsigned int i = 0; i < nSeedsOutput_; ++i)
+        #pragma HLS unroll
         outputJetValues[i] = 0;
     
     for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ // Loop through seeds (which access up to Nth element of input object values now)
         #pragma HLS unroll
+        ap_uint<eta_bit_length_ > seedEta = inputObjectValues[iSeed].range(eta_high_, eta_low_);
+        ap_uint<phi_bit_length_ > seedPhi = inputObjectValues[iSeed].range(phi_high_, phi_low_);
         ap_uint<et_bit_length_ > outputJetEt = inputObjectValues[iSeed].range(et_high_, et_low_);
-        ap_uint<psi_R_bit_length_ + et_bit_length_ > psi_R_temp = 0; 
-        ap_uint<num_constituents_bit_length_ > numMergedIO = 0; 
+        //ap_uint<psi_R_bit_length_ + et_bit_length_ > psi_R_temp = 0; 
+        //ap_uint<num_constituents_bit_length_ > numMergedIO = 0; 
 
         for (unsigned int iInput = nSeedsOutput_; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             #pragma HLS unroll
@@ -54,26 +57,26 @@ void process_event(input inputObjectValues[maxObjectsConsidered_], output (&outp
                 //#pragma HLS bind_op variable=psi_R_temp op=add impl=dsp latency=-1
                 //std::cout << "lutR_8b_[lut_index]: " << lutR_8b_[lut_index] << "\n";
                 //std::cout << "inputObjectValues et: " << inputObjectValues[iInput].range(et_high_, et_low_) << "\n";
-                psi_R_temp += inputObjectValues[iInput].range(et_high_, et_low_) * lutR_8b_[lut_index];
+                //psi_R_temp += inputObjectValues[iInput].range(et_high_, et_low_) * lutR_8b_[lut_index];
                 //std::cout << "psi_R_temp: " << psi_R_temp << "\n";
                //#pragma HLS bind_op variable=numMergedIO op=add impl=dsp latency=-1
-                numMergedIO++; 
+                //numMergedIO++; 
             }
         }
 
         // Normalize by 1/Jet Et
-        ap_uint<psi_R_bit_length_ > psi_R_final = psi_R_temp / outputJetEt;
+        //ap_uint<psi_R_bit_length_ > psi_R_final = psi_R_temp / outputJetEt;
         //std::cout << "outputJetEt: " << outputJetEt << "\n";
         //std::cout << "psi_R_final: " << psi_R_final << "\n";
         //if (outputJetEt != 0){
            // psi_R_final  
         //}
 
-        outputJetValues[iSeed].range(padded_zeroes_high_, padded_zeroes_low_) = 0; 
-        outputJetValues[iSeed].range(num_constituents_high_, num_constituents_low_) = numMergedIO;
-        outputJetValues[iSeed].range(psi_R_high_, psi_R_low_) = psi_R_final; 
+        outputJetValues[iSeed].range(padded_zeroes_high_, psi_R_low_) = 0; 
+        //outputJetValues[iSeed].range(num_constituents_high_, num_constituents_low_) = numMergedIO;
+        //outputJetValues[iSeed].range(psi_R_high_, psi_R_low_) = psi_R_final; 
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
-        outputJetValues[iSeed].range(eta_high_, eta_low_) = inputObjectValues[iSeed].range(eta_high_, eta_low_);
-        outputJetValues[iSeed].range(phi_high_, phi_low_) = inputObjectValues[iSeed].range(phi_high_, phi_low_);
+        outputJetValues[iSeed].range(eta_high_, eta_low_) = seedEta;
+        outputJetValues[iSeed].range(phi_high_, phi_low_) = seedPhi;
     }
 }

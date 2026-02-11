@@ -1,27 +1,27 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#ifndef CONSTANTS_ADV_H
+#define CONSTANTS_ADV_H
 // Constants used by SW & FW implementation
 
-#define UNROLLFACTOR 1
+#define UNROLLFACTOR 32
 #define PIPELINEII 3
 
 #define sortSeeds_ false
 #define iterative_ false
-constexpr unsigned int nTotalSeeds_ = 200;
-constexpr unsigned int nSeedsInput_ = 6;
+constexpr unsigned int nTotalSeeds_ = 10;
+constexpr unsigned int nSeedsInput_ = 10;
+constexpr unsigned int nSeedsDeltaR_ = 6;
 constexpr unsigned int nSeedsOutput_ = 2;
-constexpr unsigned int maxObjectsConsidered_ = 10;
-constexpr unsigned int inputEnergyCut_ = 1;
-#define useInputEnergyCut_ false
+constexpr unsigned int maxObjectsConsidered_ = 256;
 constexpr double et_granularity_ = 0.125;
+constexpr unsigned int subjet_et_threshold_ = 201;
 constexpr double r2Cut_ = 1.21;
-constexpr double rCut_ = 1.0;
-constexpr double rMergeCut_ = 0.001;
+constexpr double rCut_ = 1.1;
+constexpr double rMergeCut_ = 2.0;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 8;
 constexpr unsigned int phi_bit_length_ = 6;
-constexpr unsigned int psi_R_bit_length_ = 8;
-constexpr unsigned int num_constituents_bit_length_ = 9;
+constexpr unsigned int num_subjets_LRJ1_length_ = 2;
+constexpr unsigned int num_subjets_LRJ2_length_ = 2;
 constexpr unsigned int deltaRBits_ = 8;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
@@ -34,20 +34,20 @@ constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 1024;
 #define useMax_ false
 constexpr unsigned int max_R2lut_size_ = 898;
-constexpr unsigned int max_Rlut_size_ = 1;
+constexpr unsigned int max_Rlut_size_ = 1634;
 constexpr double deltaR_max_ = 10.48187;
 constexpr unsigned int deltaR_bits_ = 8;
-constexpr unsigned int max_R_8b_lut_size_ = 803;
+constexpr unsigned int max_R_8b_lut_size_ = 898;
 constexpr double phi_range_ = 6.4;
 
 
 
 const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
 #if !WRITE_LUT
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - num_subjets_LRJ1_length_ - num_subjets_LRJ2_length_;
 constexpr unsigned int padded_zeroes_length_32b_ = 32 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
 constexpr unsigned int total_bits_input_ = padded_zeroes_length_32b_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
-constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_subjets_LRJ2_length_ + num_subjets_LRJ1_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 typedef ap_uint<total_bits_input_> input; // need 32b input, 64b output!
 typedef ap_uint<total_bits_output_> output;
 
@@ -60,17 +60,14 @@ constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
 constexpr unsigned int et_low_   = eta_high_ + 1;
 constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
 
-constexpr unsigned int psi_R_low_  = et_high_ + 1;
-constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;
+constexpr unsigned int num_subjets_LRJ1_low_  = et_high_ + 1;
+constexpr unsigned int num_subjets_LRJ1_high_ = num_subjets_LRJ1_low_ + num_subjets_LRJ1_length_ - 1;
 
-constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
-constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
+constexpr unsigned int num_subjets_LRJ2_low_  = num_subjets_LRJ1_high_ + 1;
+constexpr unsigned int num_subjets_LRJ2_high_ = num_subjets_LRJ2_low_ + num_subjets_LRJ2_length_ - 1;
 
-constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
+constexpr unsigned int padded_zeroes_low_  = num_subjets_LRJ2_high_ + 1;
 constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
-
-
-constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
 static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2LUT.h"
@@ -80,7 +77,7 @@ static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] =
 #include "../data/LUTs/deltaRLUT.h"
 ;
 
-static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] = 
+static const ap_uint<num_subjets_LRJ1_length_ > lutR_8b_[max_R_8b_lut_size_] = 
 #include "../data/LUTs/deltaRLUT_8b.h"
 ;
 
@@ -89,7 +86,7 @@ constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 256
 constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.041
 constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
 
-constexpr unsigned int diam_levels_ = (1 << psi_R_bit_length_); // 32
+constexpr unsigned int diam_levels_ = (1 << num_subjets_LRJ1_length_); // 32
 constexpr float diam_step_ = r2Cut_ / (diam_levels_ - 1); // ~0.041
         
-#endif // CONSTANTS_H
+#endif // CONSTANTS_ADV_H

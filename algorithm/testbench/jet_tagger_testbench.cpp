@@ -1,4 +1,4 @@
-#include "/home/larsonma/LargeRadiusJets/algorithm/process_event.h"
+#include "/home/larsonma/LargeRadiusJets/algorithm/jet_tag.h"
 #include "/home/larsonma/LargeRadiusJets/algorithm/fileRead.h"
 //#include "/home/larsonma/LargeRadiusJets/algorithm/helperFunctions.h"
 #include <string>
@@ -26,8 +26,8 @@ int main() {
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
 
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        std::cout << " ---------------------------------- " << "\n";
-        std::cout << "processing event: " << std::dec << iEvt << "\n";
+        //std::cout << " ---------------------------------- " << "\n";
+        //std::cout << "processing event: " << std::dec << iEvt << "\n";
 
         extract_values_from_file<maxObjectsConsidered_ >(inputObjectFile, inputObjectValues, iEvt);
 
@@ -40,7 +40,7 @@ int main() {
         }
         output outputJetValues[nSeedsOutput_];
 
-        process_event(inputObjectValues, outputJetValues); // top function 
+        jet_tag(inputObjectValues, outputJetValues); // top function 
         for (unsigned int iOutput = 0; iOutput < nSeedsOutput_; iOutput++){
             unsigned long long num_constituents_value = outputJetValues[iOutput].range(num_constituents_high_, num_constituents_low_).to_uint64();
             unsigned long long psi_R_value = outputJetValues[iOutput].range(psi_R_high_, psi_R_low_).to_uint64();

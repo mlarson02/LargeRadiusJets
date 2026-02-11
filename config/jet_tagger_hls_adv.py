@@ -39,23 +39,20 @@ cfg.set_value(section='hls', key='flow_target', value='vivado')
 #cfg.set_value(key='package.output.syn', value='false')
 
 # Set top-level function
-cfg.set_value(section='hls', key='syn.top', value='jet_tag')
+cfg.set_value(section='hls', key='syn.top', value='jet_tag_adv')
 
 # Add design files
 cfg.set_values(section='hls', key='syn.file', values=[
-    
-    #'/home/larsonma/LargeRadiusJets/algorithm/jet_tagger_top.h',
-    #'/home/larsonma/LargeRadiusJets/algorithm/jet_tagger_top.cc',
-    '/home/larsonma/LargeRadiusJets/algorithm/jet_tag.h',
-    '/home/larsonma/LargeRadiusJets/algorithm/jet_tag.cc',
-    '/home/larsonma/LargeRadiusJets/algorithm/helperFunctions.h',
+    '/home/larsonma/LargeRadiusJets/algorithm/jet_tag_adv.h',
+    '/home/larsonma/LargeRadiusJets/algorithm/jet_tag_adv.cc',
+    '/home/larsonma/LargeRadiusJets/algorithm/helperFunctions_adv.h',
     '/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.h',
-    '/home/larsonma/LargeRadiusJets/algorithm/constants.h'
+    '/home/larsonma/LargeRadiusJets/algorithm/constants_adv.h'
 ])
 
 # Add testbench and data files
 cfg.set_values(section='hls', key='tb.file', values=[
-    '/home/larsonma/LargeRadiusJets/algorithm/testbench/jet_tagger_testbench.cpp',
+    '/home/larsonma/LargeRadiusJets/algorithm/testbench/jet_tagger_testbench_adv.cpp',
     '/home/larsonma/LargeRadiusJets/algorithm/fileRead.h',
     '/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_hh_bbbb_vbf_novhh_gfex_smallrj.dat',
     '/home/larsonma/LargeRadiusJets/data/MemPrints/gFex/mc21_14TeV_jj_JZ3_gfex_smallrj.dat',
@@ -65,10 +62,10 @@ cfg.set_values(section='hls', key='tb.file', values=[
 
 # Manually strip unwanted settings and add cosim waveform config
 cfg_path = f'./w/{comp_name}/hls_config.cfg'
-"""
+
 with open(cfg_path, 'r') as f:
     lines = f.readlines()
-
+"""
 # Filter out specific unwanted keys
 filtered_lines = [
     line for line in lines
@@ -79,6 +76,7 @@ filtered_lines = [
 ]
 
 # Check if [cosim] section already exists
+
 cosim_exists = any(line.strip().lower() == '[cosim]' for line in filtered_lines)
 
 # If no [cosim] present, append it and the settings

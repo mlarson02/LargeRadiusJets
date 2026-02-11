@@ -1,4 +1,4 @@
-#include "/home/larsonma/LargeRadiusJets/algorithm/process_event.h"
+#include "/home/larsonma/LargeRadiusJets/algorithm/jet_tag_adv.h"
 #include "/home/larsonma/LargeRadiusJets/algorithm/fileRead.h"
 //#include "/home/larsonma/LargeRadiusJets/algorithm/helperFunctions.h"
 #include <string>
@@ -77,7 +77,7 @@ int main() {
             //        << std::hex << w
             //        << std::dec << std::setfill(' ') << "\n";
         }
-        input outputJetValues[nSeedsOutput_];
+        output outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
         //    outputJetValues[i] = 0;
         //}
