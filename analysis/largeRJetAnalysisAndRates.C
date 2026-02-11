@@ -270,6 +270,14 @@ std::vector<TH1F*> sig_eff_100,  sig_eff_250,  sig_eff_400;
 
 std::vector<TH1F* > sig_h_leading_LRJ_Et_vec; // These will later be filled with clones of the original histograms
 std::vector<TH1F* > sig_h_subleading_LRJ_Et_vec;
+std::vector<TH1F* > sig_h_leading_offline_LRJ_Et_vec; 
+std::vector<TH1F* > sig_h_subleading_offline_LRJ_Et_vec;
+std::vector<TH1F* > back_h_leading_offline_LRJ_Et_vec; 
+std::vector<TH1F* > back_h_subleading_offline_LRJ_Et_vec;
+std::vector<TH1F* > sig_h_leading_offline_LRJ_Mass_vec; 
+std::vector<TH1F* > sig_h_subleading_offline_LRJ_Mass_vec;
+std::vector<TH1F* > back_h_leading_offline_LRJ_Mass_vec; 
+std::vector<TH1F* > back_h_subleading_offline_LRJ_Mass_vec;
 std::vector<TH1F* > back_h_leading_LRJ_Et_vec;
 std::vector<TH1F* > back_h_subleading_LRJ_Et_vec;
 std::vector<TH1F* > sig_h_leading_LRJ_psi_R_vec;
@@ -1646,7 +1654,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     // (above loop adds 425, 450, …, 800; total continuous sequence)
 
     
-    // 450 → 800 GeV in 50 GeV steps
+    // 450 → 1200 GeV in 50 GeV steps
     for (int i = 1; i <= 13; ++i)
         rateVsEffBins.push_back(400.0 + i * 50.0);  // 450, 500, ..., 800
 
@@ -1671,6 +1679,18 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     prof_AvgDR_vs_HpT->SetLineColor(kBlack);
     prof_AvgDR_vs_HpT->SetMarkerColor(kBlack);
 
+    TH1F* sig_h_leading_offlineLRJ_Et_byfile = new TH1F("sig_h_leading_offlineLRJ_Et_byfile", "Leading LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV];Fraction of Events / 50 GeV", 19, 50, 1000); // moved outside scope of file loop for use afterwards
+    TH1F* sig_h_subleading_offlineLRJ_Et_byfile = new TH1F("sig_h_subleading_offlineLRJ_Et_byfile", "Subleading LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV];Fraction of Events / 50 GeV", 19, 50, 1000); // now will only fill for first file as is same for each
+
+    TH1F* sig_h_leading_offlineLRJ_Mass_byfile = new TH1F("sig_h_leading_offlineLRJ_Mass_byfile", "Leading LRJ Et Distribution;Leading Offline LRJ Mass [GeV];Fraction of Events / 10 GeV", 30, 0, 300); // moved outside scope of file loop for use afterwards
+    TH1F* sig_h_subleading_offlineLRJ_Mass_byfile = new TH1F("sig_h_subleading_offlineLRJ_Mass_byfile", "Subleading LRJ Et Distribution;Leading Offline LRJ Mass [GeV];Fraction of Events / 10 GeV", 30, 0, 300); // now will only fill for first file as is same for each
+    
+    TH1F* back_h_leading_offlineLRJ_Et_byfile = new TH1F("back_h_leading_offlineLRJ_Et_byfile", "Leading LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV];Fraction of Events / 50 GeV", 19, 50, 1000); // moved outside scope of file loop for use afterwards
+    TH1F* back_h_subleading_offlineLRJ_Et_byfile = new TH1F("back_h_subleading_offlineLRJ_Et_byfile", "Subleading LRJ Et Distribution;Leading Offline LRJ E_{T} [GeV];Fraction of Events / 50 GeV", 19, 50, 1000); // now will only fill for first file as is same for each
+
+    TH1F* back_h_leading_offlineLRJ_Mass_byfile = new TH1F("back_h_leading_offlineLRJ_Et_byfile", "Leading LRJ Et Distribution;Leading Offline LRJ Mass [GeV];Fraction of Events / 10 GeV", 30, 0, 300); // moved outside scope of file loop for use afterwards
+    TH1F* back_h_subleading_offlineLRJ_Mass_byfile = new TH1F("back_h_subleading_offlineLRJ_Et_byfile", "Subleading LRJ Et Distribution;Leading Offline LRJ Mass [GeV];Fraction of Events / 10 GeV", 30, 0, 300); // now will only fill for first file as is same for each
+
     TH2F *leadingHiggsVsSubleadingHiggspT = new TH2F("leadingHiggsVsSubleadingHiggspT", "Sum of Topo422 E_{T} in Each Bin; Leading Higgs p_{T} [GeV]; Subleading Higgs p_{T}", 
                         60, 0, 1000,  
                         60, 0, 1000);  
@@ -1688,10 +1708,9 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                         20, 0, 800,  
                         32, 0, 1.0);
 
-
     TH2F *sigOfflineLeadingLRJMassvsEt = new TH2F("sigOfflineLeadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Leading LRJ Mass [GeV]", 
-                        60, 0, 1200,   
-                        25, 0, 250);  
+                        60, 0, 3000,   
+                        50, 0, 500);  
 
     TH2F *sigOfflineSubleadingLRJMassvsEt = new TH2F("sigOfflineSubleadingLRJMassvsEt", "Sum of Topo422 E_{T} in Each Bin; Offline Leading LRJ E_{T} [GeV];Offline Subleading LRJ Mass [GeV]", 
                         60, 0, 1200,   
@@ -3538,7 +3557,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         std::cerr << "Error: Could not open file " << backgroundRootFileNames[fileIt] << std::endl;
         return;
     }
-
+    
     for(unsigned int iEvt = 0; iEvt < num_processed_events_signal; iEvt ++ ){
         jetTaggerLRJsSignal->GetEntry(iEvt);
         jetTaggerLeadingLRJsSignal->GetEntry(iEvt);
@@ -3574,6 +3593,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         }
     }
 
+    
     for(unsigned int iEvt = 0; iEvt < num_processed_events_background; iEvt ++ ){ 
         jetTaggerLRJsBack->GetEntry(iEvt);
         jetTaggerLeadingLRJsBack->GetEntry(iEvt);
@@ -4167,7 +4187,15 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     gPad->RedrawAxis();
     cAllROC->SaveAs(rateVsEffFileDir + "all_algos_leading_subleading_rate_vs_eff_overlay.pdf");
 
+    // initialize with size and zero-fill
+    std::vector<unsigned int> nSubjetsLeadingLRJSignal(
+        num_processed_events_signal, 0);
 
+    std::vector<unsigned int> nSubjetsSubleadingLRJSignal(
+        num_processed_events_signal, 0);
+
+    std::vector<unsigned int> nOfflineSubjetsLeadingLRJSignal(
+        num_processed_events_signal, 0);
     for (unsigned int i = 0; i < num_processed_events_signal; i++) {
         //std::cout << "signal event: " << i << "\n";
 
@@ -4304,7 +4332,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 inputObjectEtEtaPhi[2] = gepBasicClustersPhiValuesSignal->at(idxSigJet1);
                 sig_h_JetTagger_Leading_MergedIO_Et->Fill(gepBasicClustersEtValuesSignal->at(idxSigJet1));
             }
-            else if (inputObjectType == "gepCellsTowers"){
+            else if (inputObjectType == "Towers"){
                 inputObjectEtEtaPhi[0] = gepCellsTowersEtValuesSignal->at(idxSigJet1);
                 inputObjectEtEtaPhi[1] = gepCellsTowersEtaValuesSignal->at(idxSigJet1);
                 inputObjectEtEtaPhi[2] = gepCellsTowersPhiValuesSignal->at(idxSigJet1);
@@ -4374,7 +4402,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 inputObjectEtEtaPhi[2] = gepBasicClustersPhiValuesSignal->at(idxSigJet1);
                 sig_h_JetTagger_Subleading_MergedIO_Et->Fill(gepBasicClustersEtValuesSignal->at(idxSigJet1));
             }
-            else if (inputObjectType == "gepCellsTowers"){
+            else if (inputObjectType == "Towers"){
                 inputObjectEtEtaPhi[0] = gepCellsTowersEtValuesSignal->at(idxSigJet1);
                 inputObjectEtEtaPhi[1] = gepCellsTowersEtaValuesSignal->at(idxSigJet1);
                 inputObjectEtEtaPhi[2] = gepCellsTowersPhiValuesSignal->at(idxSigJet1);
@@ -4428,16 +4456,21 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
 
         sig_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Fill(tau_1_SubleadingJetTaggerjFEXSubjet, tau_2_SubleadingJetTaggerjFEXSubjet);
         sig_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Fill(tau_1_SubleadingJetTaggerConeCellsTowersSubjet, tau_2_SubleadingJetTaggerConeCellsTowersSubjet);
-
-        sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Fill(tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet, tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet);
-        sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Fill(tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet, tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet);
-
-        sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet);
-        sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet);
-
-        sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
-
-        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+        if(tau_1_LeadingJetTaggerjFEXSubjet > 0 && tau_1_SubleadingJetTaggerjFEXSubjet > 0){
+            sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Fill(tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet, tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet);
+            sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Fill(tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet, tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet);
+            sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+            sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+            sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+        } 
+        if(tau_1_LeadingJetTaggerjFEXSubjet > 0) sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet);
+        if(tau_1_LeadingJetTaggerConeCellsTowersSubjet > 0) sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet);
+        
+        if(tau_1_LeadingJetTaggerConeCellsTowersSubjet > 0 && tau_1_SubleadingJetTaggerConeCellsTowersSubjet > 0){
+            sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+            sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+        }
+        
         //std::cout << "(tau_1_LeadingJetTaggerConeCellsTowersSubjet/tau_2_LeadingJetTaggerConeCellsTowersSubjet) * (tau_1_SubleadingJetTaggerConeCellsTowersSubjet/tau_2_SubleadingJetTaggerConeCellsTowersSubjet): " << (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet) << "\n";
 
         if(tau_1_LeadingJetTaggerConeCellsTowersSubjet == 0 || tau_1_SubleadingJetTaggerConeCellsTowersSubjet == 0){
@@ -4445,16 +4478,15 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         }
         else{
             sig_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+            sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
+            sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
         }
         
-        sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+        
 
-        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
-        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet));
+        
 
-        sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(sig_LRJ_Et[i][0], sig_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
-        sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesSignal->at(0) * jetTaggerSubleadingLRJPsi_RValuesSignal->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet));
-
+        
         // Fill 0 or 1
         if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
             sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, nSubjetConeCellsTowersJetTaggerSubleading);
@@ -4508,8 +4540,9 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         if(nSubjetConeCellsTowersJetTaggerLeading >= 3 && nSubjetConeCellsTowersJetTaggerSubleading >= 3){
             sig_h_leading_LRJ_Et_Category7->Fill(jetTaggerSubleadingLRJEtValuesSignal->at(0));
         }
+        nSubjetsLeadingLRJSignal[i] += nSubjetConeCellsTowersJetTaggerLeading;
+        nSubjetsSubleadingLRJSignal[i] += nSubjetConeCellsTowersJetTaggerSubleading;
 
-        
         if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
             sig_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesSignal->at(0));
         }
@@ -4805,7 +4838,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 //}
                 psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0) * jetRadius * jetRadius) * gepBasicClustersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet1), gepBasicClustersPhiValuesSignal->at(idxSigJet1));
             }
-            else if(inputObjectType == "gepCellsTowers"){
+            else if(inputObjectType == "Towers"){
                 if (indexCounterLeadingJet < variableIOCutOff_2){
                     psi_R_SigJet1_VariableIOs_2 += gepCellsTowersEtValuesSignal->at(idxSigJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet1), gepCellsTowersPhiValuesSignal->at(idxSigJet1)));
                     psi_R2_SigJet1_VariableIOs_2 += gepCellsTowersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet1), gepCellsTowersPhiValuesSignal->at(idxSigJet1));
@@ -4835,7 +4868,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 //}
                 psi_R2_SigJet1 += (1.0/jetTaggerLeadingLRJEtValuesSignal->at(0)  * jetRadius * jetRadius) * gepCellsTowersEtValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet1), gepCellsTowersPhiValuesSignal->at(idxSigJet1));
             }
-            else if(inputObjectType == "gepWTAConeCellsTowersJets"){
+            else if(inputObjectType == "ConeJets"){
                 if (indexCounterLeadingJet < variableIOCutOff_2){
                     psi_R_SigJet1_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesSignal->at(idxSigJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(idxSigJet1), gepWTAConeCellsTowersJetsPhiValuesSignal->at(idxSigJet1)));
                     psi_R2_SigJet1_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesSignal->at(idxSigJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesSignal->at(0), jetTaggerLeadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(idxSigJet1), gepWTAConeCellsTowersJetsPhiValuesSignal->at(idxSigJet1));
@@ -4897,7 +4930,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 } 
                 psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0) * jetRadius * jetRadius) * gepBasicClustersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepBasicClustersEtaValuesSignal->at(idxSigJet2), gepBasicClustersPhiValuesSignal->at(idxSigJet2));
             }
-            else if(inputObjectType == "gepCellsTowers"){
+            else if(inputObjectType == "Towers"){
                 if (indexCounterSubleadingJet < variableIOCutOff_2){
                     psi_R_SigJet2_VariableIOs_2 += gepCellsTowersEtValuesSignal->at(idxSigJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet2), gepCellsTowersPhiValuesSignal->at(idxSigJet2)));
                     psi_R2_SigJet2_VariableIOs_2 += gepCellsTowersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet2), gepCellsTowersPhiValuesSignal->at(idxSigJet2));
@@ -4920,7 +4953,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 } 
                 psi_R2_SigJet2 += (1.0/jetTaggerSubleadingLRJEtValuesSignal->at(0) * jetRadius * jetRadius) * gepCellsTowersEtValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepCellsTowersEtaValuesSignal->at(idxSigJet2), gepCellsTowersPhiValuesSignal->at(idxSigJet2));
             }
-            else if(inputObjectType == "gepWTAConeCellsTowersJets"){
+            else if(inputObjectType == "ConeJets"){
                 if (indexCounterSubleadingJet < variableIOCutOff_2){
                     psi_R_SigJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesSignal->at(idxSigJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(idxSigJet2), gepWTAConeCellsTowersJetsPhiValuesSignal->at(idxSigJet2)));
                     psi_R2_SigJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesSignal->at(idxSigJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesSignal->at(0), jetTaggerSubleadingLRJPhiValuesSignal->at(0), gepWTAConeCellsTowersJetsEtaValuesSignal->at(idxSigJet2), gepWTAConeCellsTowersJetsPhiValuesSignal->at(idxSigJet2));
@@ -5137,9 +5170,12 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
             sigOfflineSubleadingLRJMassvsEt->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0), recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
             sigOfflineSubleadingLRJMassvsLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0), recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
             sigOfflineSubleadingLRJMass->Fill(recoAntiKt10LRJSubleadingMassValuesSignal->at(0));
+            sig_h_subleading_offlineLRJ_Et_byfile->Fill(recoAntiKt10LRJSubleadingEtValuesSignal->at(0));
         }
 
         sig_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+        sig_h_leading_offlineLRJ_Et_byfile->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+        sig_h_leading_offlineLRJ_Mass_byfile->Fill(recoAntiKt10LRJLeadingMassValuesSignal->at(0));
 
         // ------------------- SIGNAL -------------------
         // Subjet plots 
@@ -5212,7 +5248,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         const unsigned int signalSubjetCounterSubleading =
             selectNonOverlappingSubjets(etSig, etaSig, phiSig, lrjEtaSigSubleading, lrjPhiSigSubleading,
                                         sig_h_SubleadingOfflineLRJ_SubjetEt);
-
+        nOfflineSubjetsLeadingLRJSignal[i] = signalSubjetCounterLeading;
         sig_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(signalSubjetCounterLeading);
         sig_h_SubleadingOfflineLRJ_SubjetMultiplicity->Fill(signalSubjetCounterSubleading);
         sigOfflineLeadingLRJEtvsSubjetMult->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0), signalSubjetCounterLeading);
@@ -6058,7 +6094,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                         sigTopo422Highest128SeedPositionsEv4->Fill(gepBasicClustersEtaValuesSignal->at(iTopo), gepBasicClustersPhiValuesSignal->at(iTopo), gepBasicClustersEtValuesSignal->at(iTopo));
                     } 
                 }
-                else if(inputObjectType == "gepCellsTowers"){
+                else if(inputObjectType == "Towers"){
                     if(i == evDisplay0Sig_){
                         sigTopo422Highest128SeedPositionsEv0->Fill(gepCellsTowersEtaValuesSignal->at(iTopo), gepCellsTowersPhiValuesSignal->at(iTopo), gepCellsTowersEtValuesSignal->at(iTopo));
                     } 
@@ -6095,6 +6131,14 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         sig_h_Mjj->Fill(sigMjj);
     } // loop through signal events
 
+    std::vector<unsigned int> nSubjetsLeadingLRJBack(
+        num_processed_events_background, 0);
+
+    std::vector<unsigned int> nSubjetsSubleadingLRJBack(
+        num_processed_events_background, 0);
+
+    std::vector<unsigned int> nOfflineSubjetsLeadingLRJBack(
+        num_processed_events_background, 0);
     for (unsigned int i = 0; i < num_processed_events_background; i++) {
         //std::cout << "i:  "<< i << "\n";
         jetTaggerLRJsBack->GetEntry(i);
@@ -6239,7 +6283,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 inputObjectEtEtaPhi[2] = gepBasicClustersPhiValuesBack->at(idxSigJet1);
                 back_h_JetTagger_Leading_MergedIO_Et->Fill(gepBasicClustersEtValuesBack->at(idxSigJet1), backgroundEventWeight);
             }
-            else if (inputObjectType == "gepCellsTowers"){
+            else if (inputObjectType == "Towers"){
                 inputObjectEtEtaPhi[0] = gepCellsTowersEtValuesBack->at(idxSigJet1);
                 inputObjectEtEtaPhi[1] = gepCellsTowersEtaValuesBack->at(idxSigJet1);
                 inputObjectEtEtaPhi[2] = gepCellsTowersPhiValuesBack->at(idxSigJet1);
@@ -6307,7 +6351,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 inputObjectEtEtaPhi[2] = gepBasicClustersPhiValuesBack->at(idxSigJet1);
                 back_h_JetTagger_Subleading_MergedIO_Et->Fill(gepBasicClustersEtValuesBack->at(idxSigJet1), backgroundEventWeight);
             }
-            if (inputObjectType == "gepCellsTowers"){
+            if (inputObjectType == "Towers"){
                 inputObjectEtEtaPhi[0] = gepCellsTowersEtValuesBack->at(idxSigJet1);
                 inputObjectEtEtaPhi[1] = gepCellsTowersEtaValuesBack->at(idxSigJet1);
                 inputObjectEtEtaPhi[2] = gepCellsTowersPhiValuesBack->at(idxSigJet1);
@@ -6370,12 +6414,19 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         back_h_SubleadingJetTaggerLRJ_jFEX_SubjetMultiplicity->Fill(nSubjetjFEXJetTaggerSubleading, backgroundEventWeight);
         back_h_SubleadingJetTaggerLRJ_ConeCellsTowers_SubjetMultiplicity->Fill(nSubjetConeCellsTowersJetTaggerSubleading, backgroundEventWeight);
 
-        back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet, backgroundEventWeight);
+        
         back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet, backgroundEventWeight);
 
         back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
-        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
-
+        
+        if(tau_1_LeadingJetTaggerjFEXSubjet > 0) back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0),tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet, backgroundEventWeight);
+        if(tau_1_SubleadingJetTaggerjFEXSubjet > 0 && tau_1_LeadingJetTaggerjFEXSubjet > 0){
+            back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product->Fill((tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+            back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+            backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+            backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+        }
+        
         //std::cout << "tau21 lead * tau21 sublead: " << (tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet) << "\n";
         //std::cout << "for weight: " << backgroundEventWeight << "\n";
         if(tau_1_LeadingJetTaggerConeCellsTowersSubjet == 0 || tau_1_SubleadingJetTaggerConeCellsTowersSubjet == 0){ // NOTE this is necessary, the nan values are not nominally filled
@@ -6383,15 +6434,14 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         }
         else{
             back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet / tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet / tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+             backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+            backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
         }
         
-        back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet)*(tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
+        
 
-        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
-        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerjFEXSubjet/tau_1_LeadingJetTaggerjFEXSubjet) * (tau_2_SubleadingJetTaggerjFEXSubjet/tau_1_SubleadingJetTaggerjFEXSubjet), backgroundEventWeight);
-
-        backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Fill(std::max(back_LRJ_Et[i][0], back_LRJ_Et[i][1]), jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
-        backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Fill(jetTaggerLeadingLRJPsi_RValuesBack->at(0) * jetTaggerSubleadingLRJPsi_RValuesBack->at(0), (tau_2_LeadingJetTaggerConeCellsTowersSubjet/tau_1_LeadingJetTaggerConeCellsTowersSubjet) * (tau_2_SubleadingJetTaggerConeCellsTowersSubjet/tau_1_SubleadingJetTaggerConeCellsTowersSubjet), backgroundEventWeight);
+        
+       
         // Fill 0 or 1
         if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
             backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Fill(nSubjetConeCellsTowersJetTaggerLeading, nSubjetConeCellsTowersJetTaggerSubleading, backgroundEventWeight);
@@ -6446,6 +6496,9 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
             back_h_leading_LRJ_Et_Category7->Fill(jetTaggerSubleadingLRJEtValuesBack->at(0), backgroundEventWeight);
         }
 
+
+        nSubjetsLeadingLRJBack[i] += nSubjetConeCellsTowersJetTaggerLeading;
+        nSubjetsSubleadingLRJBack[i] += nSubjetConeCellsTowersJetTaggerSubleading;
         if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
             back_h_leading_LRJ_Et_NoConeSubjets_Lead_or_1ConeJetLead->Fill(jetTaggerLeadingLRJEtValuesBack->at(0), backgroundEventWeight);
         }
@@ -6717,7 +6770,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 } 
                 psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0) * jetRadius * jetRadius) * gepBasicClustersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet1), gepBasicClustersPhiValuesBack->at(idxBackJet1));
             }
-            else if(inputObjectType == "gepCellsTowers"){
+            else if(inputObjectType == "Towers"){
                 if(indexCounterLeadingJet < variableIOCutOff_2){
                     psi_R_BackJet1_VariableIOs_2 += gepCellsTowersEtValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet1), gepCellsTowersPhiValuesBack->at(idxBackJet1)));
                     psi_R2_BackJet1_VariableIOs_2 += gepCellsTowersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet1), gepCellsTowersPhiValuesBack->at(idxBackJet1));
@@ -6748,7 +6801,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 psi_R2_BackJet1 += (1.0/jetTaggerLeadingLRJEtValuesBack->at(0) * jetRadius * jetRadius) * gepCellsTowersEtValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerLeadingLRJEtaValuesBack->at(0), jetTaggerLeadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet1), gepCellsTowersPhiValuesBack->at(idxBackJet1));
                 //std::cout << "psi_R2_BackJet1: " << psi_R2_BackJet1 << "\n";
             }
-            else if(inputObjectType == "gepWTAConeCellsTowersJets"){
+            else if(inputObjectType == "ConeJets"){
                 if(indexCounterSubleadingJet < variableIOCutOff_2){
                     psi_R_BackJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesBack->at(idxBackJet1) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(idxBackJet1), gepWTAConeCellsTowersJetsPhiValuesBack->at(idxBackJet1)));
                     psi_R2_BackJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesBack->at(idxBackJet1) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(idxBackJet1), gepWTAConeCellsTowersJetsPhiValuesBack->at(idxBackJet1));
@@ -6810,7 +6863,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 } 
                 psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0) * jetRadius * jetRadius) * gepBasicClustersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepBasicClustersEtaValuesBack->at(idxBackJet2), gepBasicClustersPhiValuesBack->at(idxBackJet2));
             }
-            else if(inputObjectType == "gepCellsTowers"){
+            else if(inputObjectType == "Towers"){
                 if(indexCounterSubleadingJet < variableIOCutOff_2){
                     psi_R_BackJet2_VariableIOs_2 += gepCellsTowersEtValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet2), gepCellsTowersPhiValuesBack->at(idxBackJet2)));
                     psi_R2_BackJet2_VariableIOs_2 += gepCellsTowersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet2), gepCellsTowersPhiValuesBack->at(idxBackJet2));
@@ -6833,7 +6886,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 } 
                 psi_R2_BackJet2 += (1.0/jetTaggerSubleadingLRJEtValuesBack->at(0) * jetRadius * jetRadius) * gepCellsTowersEtValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepCellsTowersEtaValuesBack->at(idxBackJet2), gepCellsTowersPhiValuesBack->at(idxBackJet2));
             }
-            else if(inputObjectType == "gepWTAConeCellsTowersJets"){
+            else if(inputObjectType == "ConeJets"){
                 if(indexCounterSubleadingJet < variableIOCutOff_2){
                     psi_R_BackJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesBack->at(idxBackJet2) * sqrt(calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(idxBackJet2), gepWTAConeCellsTowersJetsPhiValuesBack->at(idxBackJet2)));
                     psi_R2_BackJet2_VariableIOs_2 += gepWTAConeCellsTowersJetspTValuesBack->at(idxBackJet2) * calcDeltaR2(jetTaggerSubleadingLRJEtaValuesBack->at(0), jetTaggerSubleadingLRJPhiValuesBack->at(0), gepWTAConeCellsTowersJetsEtaValuesBack->at(idxBackJet2), gepWTAConeCellsTowersJetsPhiValuesBack->at(idxBackJet2));
@@ -6965,10 +7018,13 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
             backOfflineSubleadingLRJMassvsEt->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
             backOfflineSubleadingLRJMassvsLeadingLRJMass->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
             backOfflineSubleadingLRJMass->Fill(recoAntiKt10LRJSubleadingMassValuesBack->at(0), backgroundEventWeight);
+            back_h_subleading_offlineLRJ_Et_byfile->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
         }
         
         back_h_leading_offlineLRJ_Et->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
-        
+        back_h_leading_offlineLRJ_Et_byfile->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundEventWeight);
+        back_h_leading_offlineLRJ_Mass_byfile->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+
         if(recoAntiKt10LRJSubleadingEtValuesBack->size() > 0) back_h_subleading_offlineLRJ_Et->Fill(recoAntiKt10LRJSubleadingEtValuesBack->at(0), backgroundEventWeight);
         //std::cout << "test 4" << "\n";
         // ------------------- BACKGROUND -------------------
@@ -7042,6 +7098,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
             selectNonOverlappingSubjets(etBkg, etaBkg, phiBkg, lrjEtaBkgSubleading, lrjPhiBkgSubleading,
                                         back_h_SubleadingOfflineLRJ_SubjetEt);
         //std::cout << "test 5" << "\n";
+        nOfflineSubjetsLeadingLRJBack[i] = backgroundSubjetCounterLeading;        
         back_h_LeadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounterLeading, backgroundEventWeight);
         back_h_SubleadingOfflineLRJ_SubjetMultiplicity->Fill(backgroundSubjetCounterSubleading, backgroundEventWeight);
         backOfflineLeadingLRJEtvsSubjetMult->Fill(recoAntiKt10LRJLeadingEtValuesBack->at(0), backgroundSubjetCounterLeading, backgroundEventWeight);
@@ -7519,6 +7576,12 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     // Fill these with clones s.t. they can be later overlaid
     sig_h_leading_LRJ_Et_vec.push_back(static_cast<TH1F*>(sig_h_leading_LRJ_Et_normalbinning->Clone())); // These will later be filled with clones of the original histograms
     sig_h_subleading_LRJ_Et_vec.push_back(static_cast<TH1F*>(sig_h_subleading_LRJ_Et_normalbinning->Clone()));
+    sig_h_leading_offline_LRJ_Et_vec.push_back(static_cast<TH1F*>(sig_h_leading_offlineLRJ_Et_byfile->Clone()));
+    sig_h_leading_offline_LRJ_Mass_vec.push_back(static_cast<TH1F*>(sig_h_leading_offlineLRJ_Mass_byfile->Clone()));
+    sig_h_subleading_offline_LRJ_Et_vec.push_back(static_cast<TH1F*>(sig_h_subleading_offlineLRJ_Et_byfile->Clone()));
+    back_h_leading_offline_LRJ_Et_vec.push_back(static_cast<TH1F*>(back_h_leading_offlineLRJ_Et_byfile->Clone()));
+    back_h_leading_offline_LRJ_Mass_vec.push_back(static_cast<TH1F*>(back_h_leading_offlineLRJ_Mass_byfile->Clone()));
+    back_h_subleading_offline_LRJ_Et_vec.push_back(static_cast<TH1F*>(back_h_subleading_offlineLRJ_Et_byfile->Clone()));
     back_h_leading_LRJ_Et_vec.push_back(static_cast<TH1F*>(back_h_leading_LRJ_Et_normalbinning->Clone()));
     back_h_subleading_LRJ_Et_vec.push_back(static_cast<TH1F*>(back_h_subleading_LRJ_Et_normalbinning->Clone()));
     sig_h_leading_LRJ_psi_R_vec.push_back(static_cast<TH1F*>(sig_h_leading_LRJ_psi_R->Clone()));
@@ -8023,7 +8086,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 << "  Global eff = " << global5.bestEff << "\n"
                 << "  Total rate = " << global5.bestRate << " Hz\n"
                 << "  Selections:\n"
-                << "    (0) 0/1 subjets, leading Et   : Et > " << global5.bestEtCut_0_lead << " GeV\n"
+                << "    (0) 1 subjets lead/sublead, leading Et   : Et > " << global5.bestEtCut_0_lead << " GeV\n"
                 << "    (1) 0/1 subjets, subleading Et: Et > " << global5.bestEtCut_0_sub  << " GeV\n"
                 << "    (2) >=2 lead subjets          : Et > " << global5.bestEtCut_lead2
                 << " GeV, #tau_{21} < " << global5.bestMassCut_lead2 << " GeV\n"
@@ -8496,7 +8559,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         " Global eff = " << global5.bestEff << "\n" << 
         " Total rate = " << global5.bestRate << " Hz\n" 
         << " Selections (E_T only):\n" << " (0) cat0: E_{T} > " << global5.bestEtCut[0] << " GeV\n" 
-        << " (1) cat1: E_{T} > " << global5.bestEtCut[1] << " GeV\n" 
+        << " (1) 1 subjet lead&subl: E_{T} > " << global5.bestEtCut[1] << " GeV\n" 
         << " (2) cat2: E_{T} > " << global5.bestEtCut[2] << " GeV\n" 
         << " (3) cat3: E_{T} > " << global5.bestEtCut[3] << " GeV\n" 
         << " (4) cat4: E_{T} > " << global5.bestEtCut[4] << " GeV\n" 
@@ -8507,6 +8570,393 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
                 ", eff_tot = " << global5.bestEff_tot[c] <<
                 ", rate = " << global5.bestRate_cat[c] << " Hz\n"; 
         }
+
+
+        TH1F* sig_h_offlineLRJ_Et_num10kHz_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_num10kHz_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_denom10kHz_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+
+        TH1F* sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz_1OfflineSubjet_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_denom10kHz_1OfflineSubjet_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+
+        TH1F* sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+        TH1F* sig_h_offlineLRJ_Et_denom10kHz_GrEq2OfflineSubjet_SubjetBased = new TH1F("sig_h_offlineLRJ_Et_denom10kHz_GrEq2OfflineSubjet_SubjetBased", "LRJ Et Distribution;Offline Leading LRJ E_{T} [GeV];Emulated Trigger Efficiency (Signal)", 95, 50, 1000);
+        // use the thresholds to compute efficiency turn-on curves & before & after leading offline LRJ E_T distributions
+        for(unsigned int iEvt = 0; iEvt < num_processed_events_signal; iEvt ++ ){
+            unsigned int nSubjetConeCellsTowersJetTaggerLeading = nSubjetsLeadingLRJSignal[iEvt];
+            unsigned int nSubjetConeCellsTowersJetTaggerSubleading = nSubjetsSubleadingLRJSignal[iEvt];
+            unsigned int nOfflineLeadingLRJSubjets = nOfflineSubjetsLeadingLRJSignal[iEvt];
+            jetTaggerLeadingLRJsSignal->GetEntry(iEvt);
+            jetTaggerSubleadingLRJsSignal->GetEntry(iEvt);
+            leadingRecoAntiKt10UFOCSSKJetsSignal->GetEntry(iEvt);
+            subleadingRecoAntiKt10UFOCSSKJetsSignal->GetEntry(iEvt);
+            if(recoAntiKt10LRJLeadingEtValuesSignal->size() == 0) continue;
+
+            if(nOfflineLeadingLRJSubjets >= 2) sig_h_offlineLRJ_Et_denom10kHz_GrEq2OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+            else sig_h_offlineLRJ_Et_denom10kHz_1OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0)){
+                // do nothing for computing efficiency, reject these events
+            } 
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+                if(jetTaggerLeadingLRJEtValuesSignal->at(0) >= global5.bestEtCut[0]){
+                    sig_h_offlineLRJ_Et_num10kHz_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    if(nOfflineLeadingLRJSubjets >= 2) sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    else sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                }
+                
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                if(jetTaggerLeadingLRJEtValuesSignal->at(0) >= global5.bestEtCut[2]){
+                    sig_h_offlineLRJ_Et_num10kHz_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    if(nOfflineLeadingLRJSubjets >= 2) sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    else sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                }
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                if(jetTaggerSubleadingLRJEtValuesSignal->at(0) >= global5.bestEtCut[3]){
+                    sig_h_offlineLRJ_Et_num10kHz_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    if(nOfflineLeadingLRJSubjets >= 2) sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    else sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                }
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                if(jetTaggerSubleadingLRJEtValuesSignal->at(0) >= global5.bestEtCut[4]){
+                    sig_h_offlineLRJ_Et_num10kHz_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    if(nOfflineLeadingLRJSubjets >= 2) sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                    else sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0));
+                }
+            }
+            sig_h_offlineLRJ_Et_denom10kHz_SubjetBased->Fill(recoAntiKt10LRJLeadingEtValuesSignal->at(0)); // fill denom each event
+
+        }
+        TCanvas c;
+        TH1F* sig_eff_offlineLRJ10kHz_SubjetBased = (TH1F*)sig_h_offlineLRJ_Et_num10kHz_SubjetBased->Clone();
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetName("eff_LRJ10kHz_SubjetBased");
+        sig_eff_offlineLRJ10kHz_SubjetBased->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offlineLRJ10kHz_SubjetBased->Divide(sig_h_offlineLRJ_Et_num10kHz_SubjetBased, sig_h_offlineLRJ_Et_denom10kHz_SubjetBased, 1.0, 1.0, "B");
+        
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offlineLRJ10kHz_SubjetBased->Draw();
+
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offlineLRJ10kHz_SubjetBased.pdf");
+
+        TH1F* sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet = (TH1F*)sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased->Clone();
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetName("eff_LRJ10kHz_SubjetBased_1OfflineSubjet");
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->Divide(sig_h_offlineLRJ_Et_num10kHz_1OfflineSubjet_SubjetBased, sig_h_offlineLRJ_Et_denom10kHz_1OfflineSubjet_SubjetBased, 1.0, 1.0, "B");
+        
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->Draw();
+
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet.pdf");
+
+        TH1F* sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet = (TH1F*)sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased->Clone();
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetName("eff_LRJ10kHz_SubjetBased_GrEq2OfflineSubjet");
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->GetYaxis()->SetTitle("Emulated Trigger Efficiency (Signal)");
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->Divide(sig_h_offlineLRJ_Et_num10kHz_GrEq2OfflineSubjet_SubjetBased, sig_h_offlineLRJ_Et_denom10kHz_GrEq2OfflineSubjet_SubjetBased, 1.0, 1.0, "B");
+        
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetAxisRange(0, 1.1, "Y");
+
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->Draw();
+
+        c.SaveAs(modifiedOutputFileDir + "sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet.pdf");
+
+        // --- Styling ---
+        // --- Style background histogram (shaded) ---
+        sig_h_leading_offlineLRJ_Et->SetFillColorAlpha(kGray+1, 0.35); // gray with 35% opacity
+        sig_h_leading_offlineLRJ_Et->SetLineColor(kGray+2);            // slightly darker outline
+        sig_h_leading_offlineLRJ_Et->SetLineWidth(1);
+
+        // Normalize or rescale if needed to roughly fit in visible range
+        sig_h_leading_offlineLRJ_Et->Scale(1.0 / sig_h_leading_offlineLRJ_Et->Integral());
+
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetLineColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetMarkerColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetMarkerStyle(20);
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetMarkerSize(1.0);
+
+        //sig_eff_offline_jFEX_LRJ10kHz->SetLineColor(kGreen+2);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerColor(kGreen+2);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerStyle(22);
+        //sig_eff_offline_jFEX_LRJ10kHz->SetMarkerSize(1.0);
+
+        // Axis range / cosmetics
+        sig_eff_offlineLRJ10kHz_SubjetBased->SetAxisRange(0.0, 1.1, "Y");
+        //sig_eff_offline_jFEX_LRJ10kHz->SetAxisRange(0.0, 1.1, "Y");
+        sig_eff_offlineLRJ10kHz_SubjetBased->GetXaxis()->SetTitleOffset(1.1);
+        sig_eff_offlineLRJ10kHz_SubjetBased->GetYaxis()->SetTitleOffset(1.2);
+
+        // --- Draw overlay ---
+        TCanvas c_effLRJ10kHz("c_effLRJ10kHz","LRJ Efficiencies @ 10 kHz bkg",900,700);
+
+        
+        sig_eff_offlineLRJ10kHz_SubjetBased->Draw("P");          // first: JetTagger (offline)
+        sig_h_leading_offlineLRJ_Et->Draw("HIST SAME");
+        //sig_eff_offline_jFEX_LRJ10kHz->Draw("P SAME");
+
+        // --- Legend with proper labels and note about 10 kHz ---
+        TLegend *leg_10kHz_effs = new TLegend(0.35, 0.2, 0.73, 0.4);
+        leg_10kHz_effs->SetBorderSize(0);
+        leg_10kHz_effs->SetFillStyle(0);
+        leg_10kHz_effs->SetTextSize(0.03);
+        leg_10kHz_effs->SetHeader("Cuts tuned to 10 kHz background","C"); // clearly states the rate
+        leg_10kHz_effs->AddEntry(sig_eff_offlineLRJ10kHz_SubjetBased,
+            Form("JetTagger Subjet-varied E_{T} Thresholds"), "lp");
+
+        //leg_10kHz_effs->AddEntry(sig_eff_offline_jFEX_LRJ10kHz, 
+        //    Form("jFEX ( > %.1f GeV)", jFEX_10kHz_Threshold_Leading), "lp");
+        leg_10kHz_effs->Draw();
+
+        // --- Save overlay ---
+        c_effLRJ10kHz.SaveAs(rateVsEffFileDir + "sig_eff_offline_LRJ10kHz_overlay_subjetbased.pdf");
+
+
+
+        // For mass window applied
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetLineColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetMarkerColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetMarkerStyle(20); // filled in circle
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetMarkerSize(1.0);
+
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetLineColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetMarkerColor(kBlack);
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetMarkerStyle(24); // open circle
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->SetMarkerSize(1.0);
+
+        // Axis range / cosmetics
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->SetAxisRange(0.0, 1.1, "Y");
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->GetXaxis()->SetTitleOffset(1.1);
+
+        // --- Draw overlay ---
+        TCanvas c_effLRJ10kHz_Subjet("c_effLRJ10kHz_Subjet","LRJ Efficiencies @ 10 kHz bkg",900,700);
+
+        
+        sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet->Draw("P");          // first: JetTagger (offline)
+        sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet->Draw("P SAME"); 
+        sig_h_leading_offlineLRJ_Et->Draw("HIST SAME");
+
+        // --- Legend with proper labels and note about 10 kHz ---
+        TLegend *leg_10kHz_effs_Subjets = new TLegend(0.32, 0.28, 0.7, 0.48);
+        leg_10kHz_effs_Subjets->SetBorderSize(0);
+        leg_10kHz_effs_Subjets->SetFillStyle(0);
+        leg_10kHz_effs_Subjets->SetTextSize(0.025);
+        leg_10kHz_effs_Subjets->SetHeader("Cuts tuned to 10 kHz background","C"); // clearly states the rate
+
+        leg_10kHz_effs_Subjets->AddEntry(sig_eff_offlineLRJ10kHz_SubjetBased_1OfflineSubjet,
+            Form("JetTagger Subjet-varied E_{T} Thresholds [1 Lead. Offline LRJ Subjet]"), "lp");
+
+        leg_10kHz_effs_Subjets->AddEntry(sig_eff_offlineLRJ10kHz_SubjetBased_GrEq2OfflineSubjet,
+            Form("JetTagger Subjet-varied E_{T} Thresholds [>= 2 Lead. Offline LRJ Subjets]"), "lp");
+
+        leg_10kHz_effs_Subjets->Draw();
+
+        // --- Save overlay ---
+        c_effLRJ10kHz_Subjet.SaveAs(rateVsEffFileDir + "sig_eff_offline_LRJ10kHz_overlay_Subjets_subjetbased.pdf");
+
+
+        TH1F* back_h_leading_offlineLRJ_Mass_beforeselection = new TH1F("back_h_leading_offlineLRJ_Mass_beforeselection", "Leading LRJ Et Distribution;Leading Offline LRJ Mass (Before Selection) [GeV];Fraction of Events / 10 GeV", 40, 0, 400); // moved outside scope of file loop for use afterwards
+        TH1F* back_h_leading_offlineLRJ_Mass_afterselection = new TH1F("back_h_leading_offlineLRJ_Mass_afterselection", "Subleading LRJ Et Distribution;Leading Offline LRJ Mass (After Selection) [GeV];Fraction of Events / 10 GeV", 40, 0, 400); // now will only fill for first file as is same for each
+
+        for(unsigned int iEvt = 0; iEvt < num_processed_events_background; iEvt ++ ){
+            unsigned int nSubjetConeCellsTowersJetTaggerLeading = nSubjetsLeadingLRJBack[iEvt];
+            unsigned int nSubjetConeCellsTowersJetTaggerSubleading = nSubjetsSubleadingLRJBack[iEvt];
+            jetTaggerLeadingLRJsBack->GetEntry(iEvt);
+            jetTaggerSubleadingLRJsBack->GetEntry(iEvt);
+            leadingRecoAntiKt10UFOCSSKJetsBack->GetEntry(iEvt);
+            subleadingRecoAntiKt10UFOCSSKJetsBack->GetEntry(iEvt);
+            eventInfoTreeBack->GetEntry(iEvt);
+            double backgroundEventWeight = eventWeightsValuesBack->at(0);
+            if(recoAntiKt10LRJLeadingMassValuesBack->size() == 0) continue;
+            back_h_leading_offlineLRJ_Mass_beforeselection->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+
+           
+    
+
+            if((nSubjetConeCellsTowersJetTaggerLeading < 1 && nSubjetConeCellsTowersJetTaggerSubleading < 1) || (nSubjetConeCellsTowersJetTaggerLeading == 0 && nSubjetConeCellsTowersJetTaggerSubleading == 1) || (nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 0)){
+                // do nothing for computing efficiency, reject these events
+            } 
+
+            if(nSubjetConeCellsTowersJetTaggerLeading == 1 && nSubjetConeCellsTowersJetTaggerSubleading == 1){
+                if(jetTaggerLeadingLRJEtValuesBack->at(0) >= global5.bestEtCut[0]){
+                    back_h_leading_offlineLRJ_Mass_afterselection->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+                }
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading <= 1){
+                if(jetTaggerLeadingLRJEtValuesBack->at(0) >= global5.bestEtCut[2]){
+                    back_h_leading_offlineLRJ_Mass_afterselection->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+                }
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading <= 1 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                if(jetTaggerSubleadingLRJEtValuesBack->at(0) >= global5.bestEtCut[3]){
+                    back_h_leading_offlineLRJ_Mass_afterselection->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+                }
+            }
+
+            if(nSubjetConeCellsTowersJetTaggerLeading >= 2 && nSubjetConeCellsTowersJetTaggerSubleading >= 2){
+                if(jetTaggerSubleadingLRJEtValuesBack->at(0) >= global5.bestEtCut[4]){
+                    back_h_leading_offlineLRJ_Mass_afterselection->Fill(recoAntiKt10LRJLeadingMassValuesBack->at(0), backgroundEventWeight);
+                }
+            }
+
+        }
+        // Compute ratio of leading offline LRJ mass before and after selection by subjet-based scan
+
+        // ----------------------------
+        // Ensure proper sumw2 FIRST
+        // ----------------------------
+        back_h_leading_offlineLRJ_Mass_beforeselection->Sumw2();
+        back_h_leading_offlineLRJ_Mass_afterselection->Sumw2();
+
+        // ----------------------------
+        // Normalize to unit area (shape comparison)
+        // ----------------------------
+        if (back_h_leading_offlineLRJ_Mass_beforeselection->Integral() > 0)
+            back_h_leading_offlineLRJ_Mass_beforeselection->Scale(
+                1.0 / back_h_leading_offlineLRJ_Mass_beforeselection->Integral()
+            );
+
+        if (back_h_leading_offlineLRJ_Mass_afterselection->Integral() > 0)
+            back_h_leading_offlineLRJ_Mass_afterselection->Scale(
+                1.0 / back_h_leading_offlineLRJ_Mass_afterselection->Integral()
+            );
+
+        // ----------------------------
+        // Ratio: after / before
+        // ----------------------------
+        TH1F* h_ratio = (TH1F*)back_h_leading_offlineLRJ_Mass_afterselection->Clone("h_ratio_after_over_before");
+        h_ratio->SetTitle("");
+        h_ratio->Divide(back_h_leading_offlineLRJ_Mass_beforeselection);
+
+        // For log-y ratio plot: enforce strictly positive bins; blank bins with denom<=0 or ratio<=0
+        for (int b = 1; b <= h_ratio->GetNbinsX(); ++b) {
+            const double denom = back_h_leading_offlineLRJ_Mass_beforeselection->GetBinContent(b);
+            const double r     = h_ratio->GetBinContent(b);
+            if (denom <= 0.0 || r <= 0.0) {
+                h_ratio->SetBinContent(b, 0.0);
+                h_ratio->SetBinError(b, 0.0);
+            }
+        }
+
+        // ----------------------------
+        // Style
+        // ----------------------------
+        back_h_leading_offlineLRJ_Mass_beforeselection->SetLineColor(kBlack);
+        back_h_leading_offlineLRJ_Mass_beforeselection->SetLineWidth(2);
+
+        back_h_leading_offlineLRJ_Mass_afterselection->SetLineColor(kRed + 1);
+        back_h_leading_offlineLRJ_Mass_afterselection->SetLineWidth(2);
+
+        h_ratio->SetLineColor(kBlack);
+        h_ratio->SetLineWidth(2);
+        h_ratio->SetMarkerStyle(20);
+        h_ratio->SetMarkerSize(0.7);
+
+        // ----------------------------
+        // Canvas + pads
+        // ----------------------------
+        TCanvas* c_mass = new TCanvas("c_mass", "Offline LRJ mass: before/after + ratio", 900, 850);
+        c_mass->cd();
+
+        TPad* p_top = new TPad("p_top", "p_top", 0.0, 0.30, 1.0, 1.0);
+        TPad* p_bot = new TPad("p_bot", "p_bot", 0.0, 0.00, 1.0, 0.30);
+
+        p_top->SetBottomMargin(0.02);
+        p_bot->SetTopMargin(0.03);
+        p_bot->SetBottomMargin(0.35);
+
+        p_top->Draw();
+        p_bot->Draw();
+
+        // ----------------------------
+        // TOP pad: overlay + legend (LOG Y)
+        // ----------------------------
+        p_top->cd();
+        p_top->SetLogy(true);
+
+        // Choose a safe positive min for log y.
+        // If you have bins with 0, you still want the axis min > 0.
+        const double topMin = 1e-6;  // tweak if you want (depends on normalization/statistics)
+        double ymax = std::max(back_h_leading_offlineLRJ_Mass_beforeselection->GetMaximum(),
+                            back_h_leading_offlineLRJ_Mass_afterselection->GetMaximum());
+
+        back_h_leading_offlineLRJ_Mass_beforeselection->SetMinimum(topMin);
+        back_h_leading_offlineLRJ_Mass_beforeselection->SetMaximum(1.25 * ymax);
+
+        back_h_leading_offlineLRJ_Mass_beforeselection->GetXaxis()->SetLabelSize(0);
+        back_h_leading_offlineLRJ_Mass_beforeselection->GetXaxis()->SetTitleSize(0);
+
+        back_h_leading_offlineLRJ_Mass_beforeselection->Draw("HIST");
+        back_h_leading_offlineLRJ_Mass_afterselection->Draw("HIST SAME");
+
+        TLegend* leg_selections = new TLegend(0.60, 0.70, 0.88, 0.88);
+        leg_selections->SetBorderSize(0);
+        leg_selections->SetFillStyle(0);
+        leg_selections->AddEntry(back_h_leading_offlineLRJ_Mass_beforeselection, "Before selection", "l");
+        leg_selections->AddEntry(back_h_leading_offlineLRJ_Mass_afterselection,  "After selection",  "l");
+        leg_selections->Draw();
+
+        // ----------------------------
+        // BOTTOM pad: ratio (LOG Y + dynamic range)
+        // ----------------------------
+        p_bot->cd();
+        p_bot->SetLogy(true);
+
+        h_ratio->GetYaxis()->SetTitle("After / Before");
+        h_ratio->GetYaxis()->SetNdivisions(505);
+        h_ratio->GetYaxis()->SetTitleSize(0.10);
+        h_ratio->GetYaxis()->SetTitleOffset(0.50);
+        h_ratio->GetYaxis()->SetLabelSize(0.09);
+
+        h_ratio->GetXaxis()->SetTitle("Leading Offline LRJ Mass [GeV]");
+        h_ratio->GetXaxis()->SetTitleSize(0.12);
+        h_ratio->GetXaxis()->SetTitleOffset(1.10);
+        h_ratio->GetXaxis()->SetLabelSize(0.10);
+
+        // --- Compute dynamic min/max for ratio, ignoring zeros (needed for log y)
+        double rmin = 1e99, rmax = -1e99;
+        for (int b = 1; b <= h_ratio->GetNbinsX(); ++b) {
+            const double r = h_ratio->GetBinContent(b);
+            if (r > 0.0) { // only positive bins for log axis
+                rmin = std::min(rmin, r);
+                rmax = std::max(rmax, r);
+            }
+        }
+
+        // Fallback if everything is zero
+        if (rmax <= 0.0 || rmin >= 1e98) {
+            rmin = 0.5;
+            rmax = 2.0;
+        }
+
+        // Add padding (multiplicative makes sense on log scale)
+        const double padLow  = 0.8;   // show a bit below min
+        const double padHigh = 1.25;  // show a bit above max
+        h_ratio->SetMinimum(std::max(1e-6, rmin * padLow));
+        h_ratio->SetMaximum(rmax * padHigh);
+
+        h_ratio->Draw("E1");
+
+        // line at 1 (works fine on log axis too)
+        TLine* l1 = new TLine(h_ratio->GetXaxis()->GetXmin(), 1.0,
+                            h_ratio->GetXaxis()->GetXmax(), 1.0);
+        l1->SetLineStyle(2);
+        l1->SetLineWidth(2);
+        l1->SetLineColor(kGray + 2);
+        l1->Draw("SAME");
+
+        // save
+        c_mass->SaveAs(modifiedOutputFileDir + "back_leading_offlineLRJ_mass_before_after_ratio.pdf");
+
+
+
         // =======================
         // PAGE 1: PLOT ONLY
         // =======================
@@ -8560,7 +9010,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         add(Form("Best point (Rate #leq 10 kHz): #varepsilon_{tot} = %.3f, Rate = %.0f Hz",
         global5.bestEff, global5.bestRate));
 
-        add(Form("(0) lead Et (0/1 subj): E_{T,lead} > %.1f GeV \n"
+        add(Form("(0) lead Et (1 subj): E_{T,lead} > %.1f GeV \n"
                 "f_{sig}=%.3f, eff_{cat}=%.3f, eff_{tot}=%.3f, Rate=%.0f Hz",
                 global5.bestEtCut[0],
                 global5.fractionEventsPerCat[0],
@@ -10386,7 +10836,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     leg->Draw();
     c.SaveAs(modifiedOutputFileDir + "LRJ_Et.pdf");
     //gStyle->SetOptTitle(0); // disable title
-
+    std::cout << "test1" << "\n";
     sig_h_leading_LRJ_psi_R->Scale(1.0 / sig_h_leading_LRJ_psi_R->Integral());
     back_h_leading_LRJ_psi_R->Scale(1.0 / back_h_leading_LRJ_psi_R->Integral());
     sig_h_leading_LRJ_psi_R->SetLineColor(kRed);
@@ -10699,7 +11149,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     c.SaveAs(modifiedOutputFileDir + "JetTagger_Leading_MergedIO_Multiplicity.pdf");
 
 
-    
+    std::cout << "test2" << "\n";
     sig_h_JetTagger_CellTowerSK_Multiplicity->SetLineColor(kRed);
     back_h_JetTagger_CellTowerSK_Multiplicity->SetLineColor(kBlue);
     back_h_JetTagger_CellTowerSK_Multiplicity->Scale(1.0 / back_h_JetTagger_CellTowerSK_Multiplicity->Integral());
@@ -11127,7 +11577,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     sig_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1->Draw("HIST SAME");
     leg->Draw();
     cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1.pdf"); 
-
+    std::cout << "test3" << "\n";
     sig_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_2->SetLineColor(kRed);
     back_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_2->SetLineColor(kBlue);
     back_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_2->Scale(1.0 / back_h_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_2->Integral());
@@ -11154,7 +11604,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     sig_h_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2->Draw("HIST SAME");
     leg->Draw();
     cLogY2.SaveAs(modifiedOutputFileDir + "SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_2.pdf"); 
-
+    std::cout << "test3.1" << "\n";    
     TCanvas cLogZ_NSubjetiness;
     cLogZ_NSubjetiness.SetLogz();
     cLogZ_NSubjetiness.cd();
@@ -11187,7 +11637,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->Integral());
     backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_4.pdf");
-
+    std::cout << "test3.2" << "\n";    
     sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Draw("COLZ");
     sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_VariableIOs_5.pdf");
@@ -11214,11 +11664,11 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     back_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / back_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->Integral());
     back_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_SubleadingJetTaggerLRJ_jFEX_Subjet_Tau_1_vs_Tau_2.pdf");
-
+    std::cout << "test3.3" << "\n";    
     sig_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Draw("COLZ");
     sig_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / sig_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2.pdf");
-
+    std::cout << "test3.31" << "\n";   
     back_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Draw("COLZ");
     back_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / back_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Integral());
     back_LeadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->SetMinimum(1e-14);
@@ -11227,50 +11677,50 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     sig_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Draw("COLZ");
     sig_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / sig_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2.pdf");
-
+    std::cout << "test3.32" << "\n";   
     back_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Draw("COLZ");
     back_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Scale(1.0 / back_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->Integral());
     back_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_SubleadingJetTaggerLRJ_ConeCellsTowers_Subjet_Tau_1_vs_Tau_2.pdf");
-
+    std::cout << "test3.321" << "\n";   
     sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Draw("COLZ");
     sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Scale(1.0 / sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12.pdf");
-
+    std::cout << "test3.322" << "\n";   
     sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Draw("COLZ");
     sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Scale(1.0 / sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_SubleadingTau12.pdf");
-
+    std::cout << "test3.33" << "\n";   
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Draw("COLZ");
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Scale(1.0 / back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Integral());
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12.pdf");
-
+    std::cout << "test3.331" << "\n";   
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Draw("COLZ");
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Scale(1.0 / back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->Integral());
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_SubleadingTau12.pdf");
-
+    std::cout << "test3.34" << "\n";   
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Draw("COLZ");
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Scale(1.0 / back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Integral());
     back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt.pdf");
-
+    std::cout << "test3.4" << "\n";    
     back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Draw("COLZ");
     back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Scale(1.0 / back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Integral());
     back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_JetTaggerLRJ_ConeCellsTowers_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt.pdf");
-
+    std::cout << "test3.41" << "\n";    
     back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
     //back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
     //back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_h_JetTaggerLRJ_ConeCellsTowers_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
-
+    std::cout << "test3.42" << "\n";
     back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Draw("COLZ");
     //back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
     //back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->SetMinimum(1e-14);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "back_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
-
+    std::cout << "test3.43" << "\n";
     sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Draw("COLZ");
     sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Scale(1.0 / sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_JetTaggerLRJ_jFEX_Subjet_LeadingTau_12_vs_LeadingJetTaggerEt.pdf");
@@ -11283,38 +11733,38 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Scale(1.0 / sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sig_h_JetTaggerLRJ_jFEX_Subjet_Tau_21_Product_vsLeadingLRJEt.pdf");
 
-    
-    sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
+    std::cout << "test3.44" << "\n";    
+    /*sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
     sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct.pdf");
-
+    std::cout << "test3.441" << "\n";    
     sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
     sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct.pdf");
-
+    std::cout << "test3.442" << "\n";    
     backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
     backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21jFEXProduct.pdf");
-
+    std::cout << "test3.4421" << "\n";    
     backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Draw("COLZ");
     backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Scale(1.0 / backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJvsPsi_R_squaredvsTau21jFEXProduct.pdf");
-
+    std::cout << "test3.443" << "\n";    
     sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
     sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct.pdf");
-
+    std::cout << "test3.444" << "\n";   
     sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
     sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJvsPsi_R_squaredvsTau21ConeProduct.pdf");
-
+    std::cout << "test3.445" << "\n";   
     backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Draw("COLZ");
     backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squaredvsTau21ConeProduct.pdf");
 
     sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Draw("COLZ");
     //sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Integral());
-    cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets.pdf");
+    cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets.pdf");*/
 
     sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
@@ -11341,7 +11791,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead.pdf");
-    
+    std::cout << "test3.5" << "\n";    
     backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetXaxis()->SetRangeUser(0.0, 700.0);
     backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->GetYaxis()->SetRangeUser(0.0, 400.0);
     backJetTaggerSubleadingLRJEtvsMassApprox_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
@@ -11356,7 +11806,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     backJetTaggerLeadingLRJMassApproxvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
     //backJetTaggerLeadingLRJMassApproxvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Scale(1.0 / backJetTaggerLeadingLRJMassApproxvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJMassApproxvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead.pdf");
-
+    std::cout << "test3.51" << "\n";   
     sigJetTaggerLeadingLRJEtvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Draw("COLZ");
     //sigJetTaggerLeadingLRJEtvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Scale(1.0 / sigJetTaggerLeadingLRJEtvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsSubjetEtRatio_WithGrEq2ConeSubjet_Lead.pdf");
@@ -11416,11 +11866,11 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Draw("COLZ");
     //backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Scale(1.0 / backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingSubjetEtvsSubleadingSubjetEt_Sublead.pdf");
-
+    /*
     sigJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //sigJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead.pdf");
-
+    std::cout << "test3.52" << "\n";   
     backJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //backJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingMassApproxvsTau21_WithGrEq2ConeSubjet_Sublead.pdf");
@@ -11453,11 +11903,11 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
 
     
     
-
+    std::cout << "test3.6" << "\n";    
     backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerSubleadingLRJEtvsTau21_WithGrEq2ConeSubjet_Sublead.pdf");
-
+    */
     sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Draw("COLZ");
     //sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_WithGrEq2ConeSubjet_Sublead.pdf");
@@ -11470,25 +11920,36 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     //backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_NoConeSubjets.pdf");
 
+    // Also draw the actual fraction of events within each bin
 
     backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Draw("COLZ");
     //backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Scale(1.0 / backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Integral());
+    DrawBinValues(backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult, true);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult.pdf");
+    cLogZ_NSubjetiness.Clear(); // clears primitives on the canvas
 
     backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Draw("COLZ");
     //backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Scale(1.0 / backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Integral());
+    DrawBinValues(backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3, true);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3.pdf");
+    cLogZ_NSubjetiness.Clear(); // clears primitives on the canvas
+    std::cout << "test4" << "\n";
 
+    // Also draw the actual fraction of events within each bin
     sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Draw("COLZ");
     sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Scale(1.0 / sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult->Integral());
+    DrawBinValues(sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult, false);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult.pdf");
+    cLogZ_NSubjetiness.Clear(); // clears primitives on the canvas
 
     sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Draw("COLZ");
     sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Scale(1.0 / sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3->Integral());
+    DrawBinValues(sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3, false);
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_3.pdf");
+    cLogZ_NSubjetiness.Clear(); // clears primitives on the canvas
 
-
-    { // use separate scope to avoid conflicts with other areas of code - FIXME this should be turned into a function to avoid this issue. 
+    // FIXME this likelihood ratio doesn't seem to be computed correctly, unsure why - don't use for now! 
+    /*{ // use separate scope to avoid conflicts with other areas of code - FIXME this should be turned into a function to avoid this issue. 
         // ===========================================================
         // Compute Likelihood Ratio (Signal / Background) for subjet distributions
         // ===========================================================
@@ -11572,7 +12033,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         logLR_Leading->GetXaxis()->SetTitle("Cone Subjet Multiplcity [Lead. JetTagger LRJ]");
         logLR_Leading->GetYaxis()->SetTitle("Cone Subjet Multiplcity [Subl. JetTagger LRJ]");
         cLR.SaveAs(modifiedOutputFileDir + "JetTaggerLeadingLRJConeSubjetMultvsSubleadingLRJConeSubjetMult_Likelihood_3.pdf");
-    }
+    }*/
     
 
     sigJetTaggerLeadingLRJEtvsZ->Draw("COLZ");
@@ -11607,7 +12068,7 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Draw("COLZ");
     //backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Scale(1.0 / backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "backJetTaggerLeadingLRJEtvsPsi_R_squared_NojFEXSubjets.pdf");
-
+    std::cout << "test5" << "\n";
     sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Draw("COLZ");
     //sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Scale(1.0 / sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet->Integral());
     cLogZ_NSubjetiness.SaveAs(modifiedOutputFileDir + "sigJetTaggerLeadingLRJEtvsPsi_R_squared_With1ConeSubjet.pdf");
@@ -17599,6 +18060,15 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     TCanvas c2_Log = new TCanvas("c2_Log", "Overlays (log)", 800, 600);
     c2_Log.SetLogy();
 
+    TCanvas c1_Log_Offline = new TCanvas("c1_Log_Offline", "Overlays (log)", 800, 600);
+    c1_Log_Offline.SetLogy();
+
+    TCanvas c2_Log_Offline = new TCanvas("c2_Log_Offline", "Overlays (log)", 800, 600);
+    c2_Log_Offline.SetLogy();
+
+    TCanvas c3_Log_Offline = new TCanvas("c3_Log_Offline", "Overlays (log)", 800, 600);
+    //c3_Log_Offline.SetLogy();
+
     TCanvas c3_Log = new TCanvas("c3_Log", "Overlays (log)", 800, 600);
     c3_Log.SetLogy();
 
@@ -17639,7 +18109,12 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
     leg->SetFillStyle(0);
     leg->SetTextSize(0.025);
 
-    TLegend* legSigOnly = new TLegend(0.4, 0.15, 0.68, 0.38);
+    TLegend* leg_SampleInfoOnly = new TLegend(0.17, 0.17, 0.45, 0.5);
+    leg_SampleInfoOnly->SetBorderSize(0);
+    leg_SampleInfoOnly->SetFillStyle(0);
+    leg_SampleInfoOnly->SetTextSize(0.025);
+
+    TLegend* legSigOnly = new TLegend(0.3, 0.2, 0.58, 0.43);
     legSigOnly->SetBorderSize(0);
     legSigOnly->SetFillStyle(0);
     legSigOnly->SetTextSize(0.025);
@@ -17709,36 +18184,69 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         }
         sig_h_leading_LRJ_Et_vec[fileIt]->Draw("HIST SAME");
         
-
+        if (inputObjectType == "ConeJets") nInputObjectsAlgorithmConfiguration = 10;
         // --- Legend entries ---
         std::string legLabelSig;
         std::string mode = getProductionMode(signalRootFileNames[fileIt]);
         std::cout << "mode: " << mode << "\n";
         if(mode == "null") std::cerr << "error, unrecognized signal mode" << "\n";
+        std::string legLabelSig_SampleInfoOnly; // meant for comparing across signal types & rMergeCut values, rather than input object types
         std::string legLabelSigNoIOType_SubjetBasedCut; // meant for comparing across signal types & rMergeCut values, rather than input object types
         std::string legLabelSigNoIOType_EtCutOnly; // meant for comparing across signal types & rMergeCut values, rather than input object types
         if(mode == "VBF"){
+            legLabelSig_SampleInfoOnly = "hh#rightarrow4b [VBF, c_{vv} = 0]";
             if(std::stod(rMergeValue) == 0.001){
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF] with R_{search} Disabled"
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 0] with d_{search} Disabled"
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF] with R_{search} Disabled"
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 0] with d_{search} Disabled"
                 );
-                legLabelSig = Form("hh#rightarrow4b [VBF]: IO %s, N_{IO} = %u, rMerge Disabled",
+                legLabelSig = Form("hh#rightarrow4b [VBF, c_{vv} = 0]: IO: %s, N_{IO} = %u",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration);
+            
             }
             else{
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF] with R_{search} = %s",
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 0] with d_{search} = %s",
                     rMergeValue.c_str()
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF] with R_{search} = %s",
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 0] with d_{search} = %s",
                     rMergeValue.c_str()
                 );
-                legLabelSig = Form("hh#rightarrow4b [VBF]: IO %s, N_{IO} = %u, rMerge = %s",
+                legLabelSig = Form("hh#rightarrow4b [VBF, c_{vv} = 0]: IO: %s, N_{IO} = %u, rMerge = %s",
+                                    inputObjectType.c_str(),
+                                    nInputObjectsAlgorithmConfiguration,
+                                    rMergeValue.c_str());
+            }
+            
+        }
+        if(mode == "VBF_SM"){
+            legLabelSig_SampleInfoOnly = "hh#rightarrow4b [VBF, c_{vv} = 1]";
+            if(std::stod(rMergeValue) == 0.001){
+                legLabelSigNoIOType_SubjetBasedCut = Form(
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 1] with d_{search} Disabled"
+                );
+                legLabelSigNoIOType_EtCutOnly = Form(
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 1] with d_{search} Disabled"
+                );
+                legLabelSig = Form("hh#rightarrow4b [VBF, c_{vv} = 1]: IO: %s, N_{IO} = %u",
+                                    inputObjectType.c_str(),
+                                    nInputObjectsAlgorithmConfiguration);
+            
+            }
+            else{
+                legLabelSigNoIOType_SubjetBasedCut = Form(
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 1] with d_{search} = %s",
+                    rMergeValue.c_str()
+                );
+                legLabelSigNoIOType_EtCutOnly = Form(
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [VBF, c_{vv} = 1] with d_{search} = %s",
+                    rMergeValue.c_str()
+                );
+                legLabelSig = Form("hh#rightarrow4b [VBF, c_{vv} = 1]: IO: %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
@@ -17746,115 +18254,119 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
             
         }
         else if(mode == "ggF"){
+            legLabelSig_SampleInfoOnly = "hh#rightarrow4b [ggF]";
             if(std::stod(rMergeValue) == 0.001){
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} Cut, hh#rightarrow4b [ggF] with R_{search} Disabled"
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [ggF] with d_{search} Disabled"
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [ggF] with R_{search} Disabled"
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [ggF] with d_{search} Disabled"
                 );
-                legLabelSig = Form("hh#rightarrow4b [ggF]: IO %s, N_{IO} = %u, rMerge Disabled",
+                legLabelSig = Form("hh#rightarrow4b [ggF]: IO: %s, N_{IO} = %u",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration);
             }
             else{
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} Cut, hh#rightarrow4b [ggF] with R_{search} = %s",
+                    "Subjet-based E_{T} Cut, hh#rightarrow4b [ggF] with d_{search} = %s",
                     rMergeValue.c_str()
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [ggF] with R_{search} = %s",
+                    "Lead. LRJ E_{T} Cut, hh#rightarrow4b [ggF] with d_{search} = %s",
                     rMergeValue.c_str()
                 );
-                legLabelSig = Form("hh#rightarrow4b [ggF]: IO %s, N_{IO} = %u, rMerge = %s",
+                legLabelSig = Form("hh#rightarrow4b [ggF]: IO: %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
             }
         }
         else if(mode == "Zprime_tthad"){
+            legLabelSig_SampleInfoOnly = "Z' #rightarrow t#bar{t} [had]";
             if(std::stod(rMergeValue) == 0.001){
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} cut, Z' #rightarrow t#bar{t} [had], R_{search} disabled"
+                    "Subjet-based E_{T} cut, Z' #rightarrow t#bar{t} [had], d_{search} disabled"
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, Z' #rightarrow t#bar{t} [had], R_{search} disabled"
+                    "Lead. LRJ E_{T} Cut, Z' #rightarrow t#bar{t} [had], d_{search} disabled"
                 );
-                legLabelSig = Form("Z' #rightarrow t#bar{t} [had]: IO %s, N_{IO} = %u, rMerge Disabled",
+                legLabelSig = Form("Z' #rightarrow t#bar{t} [had]: IO: %s, N_{IO} = %u",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration);
             }
             else{
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} Cut, Z' #rightarrow t#bar{t} [had] with R_{search} = %s",
+                    "Subjet-based E_{T} Cut, Z' #rightarrow t#bar{t} [had] with d_{search} = %s",
                     rMergeValue.c_str()
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} Cut, Z' #rightarrow t#bar{t} [had]  with R_{search} = %s",
+                    "Lead. LRJ E_{T} Cut, Z' #rightarrow t#bar{t} [had]  with d_{search} = %s",
                     rMergeValue.c_str()
                 );
-                legLabelSig = Form("Z' #rightarrow t#bar{t} [had]: IO %s, N_{IO} = %u, rMerge = %s",
+                legLabelSig = Form("Z' #rightarrow t#bar{t} [had]: IO: %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
             }
         }
         else if(mode == "ZvvHbb"){
+            legLabelSig_SampleInfoOnly = "Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}";
             if (std::stod(rMergeValue) == 0.001) {
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, R_{search} disabled"
+                    "Subjet-based E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, d_{search} disabled"
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, R_{search} disabled"
+                    "Lead. LRJ E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, d_{search} disabled"
                 );
-                legLabelSig = Form("Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}: IO %s, N_{IO} = %u, rMerge Disabled",
+                legLabelSig = Form("Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}: IO: %s, N_{IO} = %u",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration);
             }
             else {
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, R_{search} = %s",
+                    "Subjet-based E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, d_{search} = %s",
                     rMergeValue.c_str()
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, R_{search} = %s",
+                    "Lead. LRJ E_{T} cut, Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}, d_{search} = %s",
                     rMergeValue.c_str()
                 );
-                legLabelSig = Form("Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}: IO %s, N_{IO} = %u, rMerge = %s",
+                legLabelSig = Form("Z #rightarrow #nu#bar{#nu}, H #rightarrow b#bar{b}: IO: %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
             }
         }
         else if(mode == "ttbar_had"){
+            legLabelSig_SampleInfoOnly = "t#bar{t} [had]";
             if (std::stod(rMergeValue) == 0.001) {
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} cut, t#bar{t} [had], R_{search} disabled"
+                    "Subjet-based E_{T} cut, t#bar{t} [had], d_{search} disabled"
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} cut, t#bar{t} [had], R_{search} disabled"
+                    "Lead. LRJ E_{T} cut, t#bar{t} [had], d_{search} disabled"
                 );
-                legLabelSig = Form("t#bar{t} [had]: IO %s, N_{IO} = %u, rMerge Disabled",
-                                    inputObjectType.c_str(),
+                legLabelSig = Form("t#bar{t} [had]: IO: %s, N_{IO} = %u",
+                                    inputObjectType.c_str(), 
                                     nInputObjectsAlgorithmConfiguration);
             }
             else {
                 legLabelSigNoIOType_SubjetBasedCut = Form(
-                    "Subjet-based E_{T} cut, t#bar{t} [had], R_{search} = %s",
+                    "Subjet-based E_{T} cut, t#bar{t} [had], d_{search} = %s",
                     rMergeValue.c_str()
                 );
                 legLabelSigNoIOType_EtCutOnly = Form(
-                    "Lead. LRJ E_{T} cut, t#bar{t} [had], R_{search} = %s",
+                    "Lead. LRJ E_{T} cut, t#bar{t} [had], d_{search} = %s",
                     rMergeValue.c_str()
                 );
-                legLabelSig = Form("t#bar{t} [had]: IO %s, N_{IO} = %u, rMerge = %s",
+                legLabelSig = Form("t#bar{t} [had]: IO: %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
             }
         }
 
-        std::string legLabelBkg = Form("Bkg. (dijet): IO %s,  N_{IO} = %u, rMerge = %s",
+        std::string legLabelBkg = Form("Bkg. (dijet): IO %s, N_{IO} = %u, rMerge = %s",
                                     inputObjectType.c_str(),
                                     nInputObjectsAlgorithmConfiguration,
                                     rMergeValue.c_str());
@@ -17865,6 +18377,87 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         if(fileIt == (backgroundRootFileNames.size() - 1)){
             leg->Draw();
             c1_Log.SaveAs(overlayOutputFileDir + "leading_JetTagger_LRJ_Et.pdf");
+        }
+        
+        // Leading Offline LRJ E_T Distributions
+        c1_Log_Offline.cd();
+
+        sig_h_leading_offline_LRJ_Et_vec[fileIt]->Scale(1.0 / sig_h_leading_offline_LRJ_Et_vec[fileIt]->Integral());
+        back_h_leading_offline_LRJ_Et_vec[fileIt]->Scale(1.0 / back_h_leading_offline_LRJ_Et_vec[fileIt]->Integral());
+
+
+        // --- Styling ---
+        sig_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineColor(color);
+        sig_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineStyle(1);   // solid
+        sig_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineWidth(2);
+
+        back_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineColor(color);
+        back_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineStyle(2);   // dashed
+        back_h_leading_offline_LRJ_Et_vec[fileIt]->SetLineWidth(2);
+
+        // --- Draw ---
+        if (fileIt == 0) {
+            back_h_leading_offline_LRJ_Et_vec[fileIt]->Draw("HIST"); // draw background first as spans full range of y-axis
+        }
+        sig_h_leading_offline_LRJ_Et_vec[fileIt]->Draw("HIST SAME");
+
+        leg_SampleInfoOnly->AddEntry(sig_h_leading_offline_LRJ_Et_vec[fileIt], legLabelSig_SampleInfoOnly.c_str(), "l");
+        if(fileIt == 0) leg_SampleInfoOnly->AddEntry(back_h_leading_offline_LRJ_Et_vec[fileIt], "Background (dijet)", "l");
+        if(fileIt == (backgroundRootFileNames.size() - 1)){
+            leg_SampleInfoOnly->Draw();
+            c1_Log_Offline.SaveAs(overlayOutputFileDir + "leading_offline_LRJ_Et.pdf");
+        }
+
+        c2_Log_Offline.cd();
+
+        sig_h_subleading_offline_LRJ_Et_vec[fileIt]->Scale(1.0 / sig_h_subleading_offline_LRJ_Et_vec[fileIt]->Integral());
+        back_h_subleading_offline_LRJ_Et_vec[fileIt]->Scale(1.0 / back_h_subleading_offline_LRJ_Et_vec[fileIt]->Integral());
+
+
+        // --- Styling ---
+        sig_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineColor(color);
+        sig_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineStyle(1);   // solid
+        sig_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineWidth(2);
+
+        back_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineColor(color);
+        back_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineStyle(2);   // dashed
+        back_h_subleading_offline_LRJ_Et_vec[fileIt]->SetLineWidth(2);
+
+        // --- Draw ---
+        if (fileIt == 0) {
+            back_h_subleading_offline_LRJ_Et_vec[fileIt]->Draw("HIST"); // draw background first as spans full range of y-axis
+        }
+        sig_h_subleading_offline_LRJ_Et_vec[fileIt]->Draw("HIST SAME");
+
+        if(fileIt == (backgroundRootFileNames.size() - 1)){
+            leg_SampleInfoOnly->Draw();
+            c1_Log_Offline.SaveAs(overlayOutputFileDir + "subleading_offline_LRJ_Et.pdf");
+        }
+
+        c3_Log_Offline.cd();
+
+        sig_h_leading_offline_LRJ_Mass_vec[fileIt]->Scale(1.0 / sig_h_leading_offline_LRJ_Mass_vec[fileIt]->Integral());
+        back_h_leading_offline_LRJ_Mass_vec[fileIt]->Scale(1.0 / back_h_leading_offline_LRJ_Mass_vec[fileIt]->Integral());
+
+
+        // --- Styling ---
+        sig_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineColor(color);
+        sig_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineStyle(1);   // solid
+        sig_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineWidth(2);
+
+        back_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineColor(color);
+        back_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineStyle(2);   // dashed
+        back_h_leading_offline_LRJ_Mass_vec[fileIt]->SetLineWidth(2);
+
+        // --- Draw ---
+        if (fileIt == 0) {
+            back_h_leading_offline_LRJ_Mass_vec[fileIt]->Draw("HIST"); // draw background first as spans full range of y-axis
+        }
+        sig_h_leading_offline_LRJ_Mass_vec[fileIt]->Draw("HIST SAME");
+
+        if(fileIt == (backgroundRootFileNames.size() - 1)){
+            leg_SampleInfoOnly->Draw();
+            c3_Log_Offline.SaveAs(overlayOutputFileDir + "leading_offline_LRJ_Mass.pdf");
         }
 
 
@@ -18259,6 +18852,11 @@ for (unsigned int fileIt = 0; fileIt < backgroundRootFileNames.size(); ++fileIt)
         lead_ET_Scan_RatesVsEff_vec[fileIt]->SetMarkerSize(0.8);
         if (fileIt == 0) {
             lead_ET_Scan_RatesVsEff_vec[fileIt]->Draw("AP"); 
+            // X axis: efficiency
+            lead_ET_Scan_RatesVsEff_vec[fileIt]->GetXaxis()->SetLimits(0.0, 1.0);
+
+            // Y axis: rate (log scale!)
+            lead_ET_Scan_RatesVsEff_vec[fileIt]->GetYaxis()->SetRangeUser(50.0, 5e4);
         } else {
             lead_ET_Scan_RatesVsEff_vec[fileIt]->Draw("P SAME"); 
         }
@@ -18649,12 +19247,39 @@ void largeRJetAnalysisAndRates(bool overlayThreeFiles = false){
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_MinEtSeedPosRecalc/mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_MinEtSeedPosRecalc/mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
 
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",*/
+                                                    
+                                                    // samples for global trigger meeting 02112026
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
 
+                                                    // samples for v2 algorithm for global trigger meeting 02112026
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_flatpT_Zprime_tthad_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    */
+
+                                                    // samples for global trigger meeting 02112026 for seed optimization comparison
+                                                    /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                    "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",*/
+                                                    
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
                                                     //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
@@ -18710,11 +19335,38 @@ void largeRJetAnalysisAndRates(bool overlayThreeFiles = false){
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_MinEtSeedPosRecalc/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_MinEtSeedPosRecalc/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root"
 
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
-                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",*/
+
+                                                        // samples for global trigger meeting 02112026
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+
+                                                        // samples for v2 algorithm for global trigger meeting 02112026
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepWTAConeCellsTowersJets_Seed_gepWTAConeCellsTowersJets_SK.root",*/
+
+                                                        // samples for global trigger meeting 02112026 for seed optimization comparison
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        /*"/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
+                                                        "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",*/
 
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_0.001_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root",
@@ -18730,12 +19382,12 @@ void largeRJetAnalysisAndRates(bool overlayThreeFiles = false){
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root",
                                                         //"/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root"
                                                         };
-    TString overlayOutputFileDir = "overlayMultipleFiles/largeRJetHistograms_AllSignals_FixedSeedPosRecalcBug_CompareSearchDistances_35GeVSubjets/";            
+    TString overlayOutputFileDir = "overlayMultipleFiles/largeRJetHistograms_AllSignals_FixedSeedPosRecalcBug_CompareSearchDistances_FixedOR_25GeVSubjets/";            
     gSystem->mkdir(overlayOutputFileDir);                                    
     gErrorIgnoreLevel = kError;
     std::cout << "number of signal files: " << signalRootFileNames.size() << " number of background files: " << backgroundRootFileNames.size() << "\n";
-    bool categorySubjetEtScan_8 = true;
-    double subjetEtThreshold = 35.0;
+    bool categorySubjetEtScan_8 = false;
+    double subjetEtThreshold = 25.0;
     analyze_files(signalRootFileNames, backgroundRootFileNames, overlayOutputFileDir, overlayThreeFiles, subjetEtThreshold, categorySubjetEtScan_8);
 
     std::cout << "[TIMER] total: "

@@ -59,9 +59,11 @@ std::string getProductionMode(const std::string& path) {
     std::string tag = getSampleTag(path);
     std::cout << "tag: " << tag << "\n";
 
-    if (tag.find("vbf") != std::string::npos ||
-        tag.find("VBF") != std::string::npos) {
+    if (tag.find("vbf_novhh_cvv0") != std::string::npos) {
         return "VBF";
+    }
+    else if(tag.find("vbf_novhh_cvv1") != std::string::npos){
+      return "VBF_SM";
     }
     else if (tag.find("flatpT_Zprime_tthad") != std::string::npos) {
         return "Zprime_tthad";
@@ -138,7 +140,10 @@ FileInfo ParseFileName(const std::string& path)
     {
         const size_t startInput = posIO + ioTag.size();
         const size_t lenInput   = posSeed - startInput;
-        info.inputObjectType    = path.substr(startInput, lenInput);
+        std::string inputObjType;
+        if(path.substr(startInput, lenInput) == "gepWTAConeCellsTowersJets") inputObjType = "ConeJets";
+        else if(path.substr(startInput, lenInput) == "gepCellsTowers") inputObjType = "Towers";
+        info.inputObjectType = inputObjType;
     }
 
     // ----------------------------
@@ -3179,6 +3184,32 @@ inline void redirect_output_to_file() {
     // Open the file in write mode
     freopen("output.txt", "w", stdout);  // This will redirect stdout to output.txt
 }
+
+#include <TLatex.h>
+#include <TH2.h>
+
+void DrawBinValues(TH2* h, bool sciNot, double textSize = 0.03) {
+    TLatex lat;
+    lat.SetTextAlign(22);   // center horizontally & vertically
+    lat.SetTextSize(textSize);
+    lat.SetTextFont(42);
+    lat.SetTextColor(kBlack);
+
+    for (int ix = 1; ix <= h->GetNbinsX(); ++ix) {
+        for (int iy = 1; iy <= h->GetNbinsY(); ++iy) {
+
+            double val = h->GetBinContent(ix, iy);
+            if (val == 0) continue;  // skip empty bins (optional)
+
+            double x = h->GetXaxis()->GetBinCenter(ix);
+            double y = h->GetYaxis()->GetBinCenter(iy);
+            if(sciNot) lat.DrawLatex(x, y, Form("%.1e", val));  // scientific notation
+            else lat.DrawLatex(x, y, Form("%.3f", val));  // scientific notation
+        
+        }
+    }
+}
+
 
 void SetPlotStyle();
 void mySmallText(Double_t x, Double_t y, Color_t color, char* text);

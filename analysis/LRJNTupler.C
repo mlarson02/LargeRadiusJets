@@ -309,6 +309,8 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
     std::vector<double> truthHiggsEtValues, truthHiggsEnergyValues, truthHiggspTValues, truthHiggspxValues, truthHiggspyValues, truthHiggspzValues, truthHiggsEtaValues, truthHiggsPhiValues, truthHiggsInvMassValues;
     //std::vector<double> truthVBFQuarkValues, truthVBFQuarkEnergyValues, truthVBFQuarkpTValues, truthVBFQuarkpxValues, truthVBFQuarkpyValues, truthVBFQuarkpzValues, truthVBFQuarkEtaValues, truthVBFQuarkPhiValues;
 
+    std::vector<unsigned int> topIndexValues, indexOfTopValues;
+    std::vector<double> truthTopEtValues, truthTopEnergyValues, truthToppTValues, truthHiggsEtaValues, truthHiggsPhiValues;
     // Tower / cluster vectors
     std::vector<double> caloTopoTowerEtValues, caloTopoTowerEtaValues, caloTopoTowerPhiValues;
     std::vector<double> gepBasicClustersEtValues, gepBasicClustersEtaValues, gepBasicClustersPhiValues;
@@ -438,16 +440,11 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
     truthHiggsTree->Branch("Energy", &truthHiggsEnergyValues);
 
     // truthTopTree
-    truthTopTree->Branch("indexOfHiggs", &indexOfHiggsValues);
-    truthTopTree->Branch("invMass", &truthHiggsInvMassValues);
-    truthTopTree->Branch("Et", &truthHiggsEtValues);
-    truthTopTree->Branch("Eta", &truthHiggsEtaValues);
-    truthTopTree->Branch("Phi", &truthHiggsPhiValues);
-    truthTopTree->Branch("pT", &truthHiggspTValues);
-    truthTopTree->Branch("px", &truthHiggspxValues);
-    truthTopTree->Branch("py", &truthHiggspyValues);
-    truthTopTree->Branch("pz", &truthHiggspzValues);
-    truthTopTree->Branch("Energy", &truthHiggsEnergyValues);
+    truthTopTree->Branch("indexOfHiggs", &indexOfTopValues);
+    truthTopTree->Branch("Et", &truthTopEtValues);
+    truthTopTree->Branch("Eta", &truthTopEtaValues);
+    truthTopTree->Branch("Phi", &truthTopPhiValues);
+    truthTopTree->Branch("pT", &truthToppTValues);
 
     // truthVBFQuark FIXME don't have for DAOD samples - unless can find corresponding aod events for which full truth record is stored
     /*
@@ -2451,10 +2448,10 @@ void LRJNTupler(){
     //    Error("callNTupler", "hadd failed with code %d", rc);
     //}
 
-    //nTupler(true, "VBF_hh_bbbb"); // call for signal (hh->4b VBF)
+    nTupler(true, "VBF_hh_bbbb"); // call for signal (hh->4b VBF)
     //nTupler(true, "ggF_hh_bbbb"); // call for signal (hh->4b ggF)
     //nTupler(true, "ZvvHbb"); // call for signal Z -> nu nu H -> bb
-    nTupler(true, "ttbar_had"); // call for sigal ttbar fully hadronic decays
+    //nTupler(true, "ttbar_had"); // call for sigal ttbar fully hadronic decays
     //nTupler(true, "Zprime_ttbar"); // call for signal Zprime -> ttbar (hadronic), flat in pT
     for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing into a combined JZ slice ntuple for now
         std::cout << jzOutputFileName << "\n";

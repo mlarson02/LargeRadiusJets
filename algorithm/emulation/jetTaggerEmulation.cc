@@ -224,7 +224,8 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     unsigned int overlapRemovalCounter = 0;
     unsigned int eventsToProcess = gepBasicClustersTree->GetEntries();
     for (unsigned int iEvt = 0; iEvt < eventsToProcess; iEvt++) {
-        if (iEvt % 100 == 0) std::cout << "iEvt: " << iEvt << "\n";
+        //std::cout << "-----------------------" << "\n";
+        //std::cout << "iEvt: " << iEvt << "\n";
         // Write event header to output text files
         f_output << "Event : " << std::dec << iEvt << "\n";
 
@@ -371,15 +372,22 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 //std::cout << "UNDIGITIZED Et: " << jFexSRJEtValues->at(iSeed) << " eta: " << jFexSRJEtaValues->at(iSeed) << " and phi: " << jFexSRJPhiValues->at(iSeed) << "\n";
             //}
         }
-
+        //std::cout << "leading et, eta, phi before: " << undigitize_et(seedValues[0][0]) << " , " << undigitize_eta(seedValues[0][1]) << " , " << undigitize_phi(seedValues[0][2]) << "\n";
         //std::cout << "subleading et, eta, phi before: " << undigitize_et(seedValues[1][0]) << " , " << undigitize_eta(seedValues[1][1]) << " , " << undigitize_phi(seedValues[1][2]) << "\n";
         // Perform overlap removal (OR) ensuring that leading, subleading seeds don't overlap within deltaR < 2.0 /// FIXME /// do this with a LUT
         double deltaRLeadingSubleading = sqrt(calcDeltaR2(undigitize_eta(seedValues[0][1]), undigitize_phi(seedValues[0][2]), undigitize_eta(seedValues[1][1]), undigitize_phi(seedValues[1][2])));
+        //std::cout << "deltaRLeadingSubleading: " << deltaRLeadingSubleading << "\n";
         if(deltaRLeadingSubleading <= 2.0 * sqrt(r2Cut_)){
             //std::cout << "triggering OR removal" << "\n";
             for(unsigned int iSeedOR = nSeedsOutput_; iSeedOR < nSeedsInput_; iSeedOR++){
+                //std::cout << "iSeedOR : " << iSeedOR << "\n";
+                if(seedValues[iSeedOR][0] == 0 && seedValues[iSeedOR][1] == 0 && seedValues[iSeedOR][2] == 0) continue;
                 double deltaRLeadingNthLeading = sqrt(calcDeltaR2(undigitize_eta(seedValues[0][1]), undigitize_phi(seedValues[0][2]), undigitize_eta(seedValues[iSeedOR][1]), undigitize_phi(seedValues[iSeedOR][2])));
+                //std::cout << "deltaRLeadingNthLeading : " << deltaRLeadingNthLeading << "\n";
                 if(deltaRLeadingNthLeading >=  2.0 * sqrt(r2Cut_)){
+                    //std::cout << "overlap triggered" << "\n";
+                    //std::cout << "swapping jet original seed with et, eta, phi: " << seedValues[1][0] << " , " << seedValues[1][1] << " , " << seedValues[1][2] << "\n";
+                    //std::cout << "with new seed jet with et, eta, phi: " << seedValues[iSeedOR][0] << " , " << seedValues[iSeedOR][1] << " , " << seedValues[iSeedOR][2] << "\n";
                     // Swap the entire (Et, eta, phi) triplet for original subleading, new subleading seed
                     std::swap(seedValues[1][0], seedValues[iSeedOR][0]); // Et
                     std::swap(seedValues[1][1], seedValues[iSeedOR][1]); // eta
@@ -842,7 +850,7 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
                       bool condorBool, // whether running using condor batch job submission (requires change in filepaths)
                       bool useSKObjects, // Whether to use PU-suppressed (with SoftKiller) objects 
                       std::string signalString, // Which signal sample being used (functionality for: VBF_hh_bbbb, ggF_hh_bbbb, ZvvHbb, ttbar_had, Zprime_ttbar)
-                      std::string inputObjectType = "gepCellsTowers", // Possibilities: "gepCellsTowers", "gepWTAConeCellsTowersJets", "gepTopoTowers", "gepBasicClusters"
+                      std::string inputObjectType = "gepWTAConeCellsTowersJets", // Possibilities: "gepCellsTowers", "gepWTAConeCellsTowersJets", "gepTopoTowers", "gepBasicClusters"
                       std::string seedObjectType = "gepWTAConeCellsTowersJets" // Possibilities: "gepWTAConeCellsTowersJets" or "jFEXSRJ"  // FIXME allow this to be changed in executable
                       ){ 
     if(signalBool) std::cout << "Processing signal of: " << signalString  << "\n";
@@ -861,7 +869,7 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
     } catch (std::filesystem::filesystem_error& e) {
         std::cerr << "Copy failed: " << e.what() << '\n';
     }            
-    gSystem->RedirectOutput("debuglog.log", "w");
+    //gSystem->RedirectOutput("debuglog.log", "w");
     eventLoop(infile, outntuplefile, outtextfile, inputObjectType, seedObjectType, useSKObjects);
     //gSystem->Exit(0);
 } 

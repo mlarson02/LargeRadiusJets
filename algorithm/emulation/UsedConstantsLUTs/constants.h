@@ -49,7 +49,7 @@ constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
 constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
 constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
 constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
-constexpr unsigned int nSeedsDeltaR_ = 2;//nSeedsInput_ - nSeedsOutput_;
+constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;
 static const bool lut_[max_R2lut_size_] =
 #include "deltaR2LUT.h"
 ;

@@ -18,7 +18,8 @@ signals=(true false)
 puSuppression=(true)
 #vbfBools=(true false)
 #signalStrings=("Zprime_ttbar")
-signalStrings=("VBF_hh_bbbb" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
+signalStrings=("VBF_hh_bbbb_cvv0" "VBF_hh_bbbb_cvv1" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
+#signalStrings=("ttbar_had")
 #signalStrings=("VBF_hh_bbbb" "ggF_hh_bbbb")
 condor=false
 

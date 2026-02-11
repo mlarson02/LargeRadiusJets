@@ -148,7 +148,8 @@ std::string makeInputFileName(bool signalBool, std::string signalString,
     std::ostringstream ss;
     
     if (signalBool) {
-        if(signalString == "VBF_hh_bbbb") ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        if(signalString == "VBF_hh_bbbb_cvv0") ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
+        else if(signalString == "VBF_hh_bbbb_cvv1") ss << inputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
         else if (signalString == "ggF_hh_bbbb") ss << inputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
         else if (signalString == "ZvvHbb") ss << inputRootFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
         else if (signalString == "ttbar_had") ss << inputRootFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
@@ -169,7 +170,7 @@ std::string makeOutputFileName(double rMergeCut,
                                std::string inputObjectType,
                                std::string seedObjectType,
                                bool useSKObjects,
-                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_PUSuppression_FixedSeedPosRecalcBug/") {
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/") {
     std::string usePUSuppress;
     if(useSKObjects){
         usePUSuppress = "SK";
@@ -179,7 +180,8 @@ std::string makeOutputFileName(double rMergeCut,
     }
     std::ostringstream ss;
     if (signalBool) {
-        if(signalString == "VBF_hh_bbbb") ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        if(signalString == "VBF_hh_bbbb_cvv0") ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_";
+        else if(signalString == "VBF_hh_bbbb_cvv1") ss << outputRootFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_";
         else if (signalString == "ggF_hh_bbbb") ss << outputRootFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
         else if (signalString == "ZvvHbb") ss << outputRootFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_";
         else if (signalString == "ttbar_had") ss << outputRootFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_";
@@ -215,7 +217,8 @@ std::string makeOutputTextFileName(double rMergeCut,
     }                            
     std::ostringstream ss;
     if (signalBool) {
-        if(signalString == "VBF_hh_bbbb") ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_";
+        if(signalString == "VBF_hh_bbbb_cvv0") ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_";
+        else if(signalString == "VBF_hh_bbbb_cvv1") ss << outputTextFilePath << "mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_";
         else if (signalString == "ggF_hh_bbbb") ss << outputTextFilePath << "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_";
         else if (signalString == "ZvvHbb") ss << outputTextFilePath << "mc21_14TeV_ZvvH125_bb_e8557_s4422_r16130_";
         else if (signalString == "ttbar_had") ss << outputTextFilePath << "mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_";
@@ -337,7 +340,7 @@ void write_constants_header(const std::string& header_path,
     out << "constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;\n";
     out << "constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;\n";
 
-    out << "constexpr unsigned int nSeedsDeltaR_ = 2;//nSeedsInput_ - nSeedsOutput_;\n"; // FIXME unhard code this to account for when using cone jets! 
+    out << "constexpr unsigned int nSeedsDeltaR_ = 4;//nSeedsInput_ - nSeedsOutput_;\n"; // FIXME unhard code this to account for when using cone jets! 
 
     out << "static const bool lut_[max_R2lut_size_] =\n";
     out << "#include \"deltaR2LUT.h\"\n";
