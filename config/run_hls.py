@@ -7,6 +7,13 @@ import ROOT
 import xml.etree.ElementTree as ET
 import subprocess
 
+def wrapSym(phi):
+    if(phi > math.pi):
+        phi -= 2 * math.pi
+    elif(phi < -math.pi):
+        phi += 2 * math.pi
+    return phi
+
 # Base/default constants
 base_constants = {
     "sortSeeds_": "true",
@@ -22,18 +29,17 @@ base_constants = {
     "rCut_": 1.0,
     "rMergeCut_": 5.0,
     "et_bit_length_": 13,
-    "eta_bit_length_": 8,
-    "phi_bit_length_": 6,
-    "psi_R_bit_length_": 8, 
-    "num_constituents_bit_length_": 9, 
-    "deltaRBits_": 8,
+    "eta_bit_length_": 10,
+    "eta_range_": 800, 
+    "phi_bit_length_": 9,
     "phi_min_": -3.2,
     "phi_max_": 3.2,
-    "pi_digitized_in_phi_": 31,
+    "pi_digitized_in_phi_": 251, # rounding 3.1415/0.0125
     "eta_min_": -5.0,
     "eta_max_": 5.0,
-    "eta_granularity_": 0.0390625,
-    "phi_granularity_": 0.1,
+    "eta_granularity_": 0.0125,
+    "phi_granularity_": 0.0125, # fixme these should be calculated from range and bit length not hard-coded!
+    "deltaR2_granularity_": 0.00015625,
     "et_min_": 0,
     "et_max_": 1024,
     "useMax_": "false",
@@ -43,36 +49,41 @@ base_constants = {
     "deltaR_bits_": 8
 }
 
-def calculate_lutR2_max_size(r2Cut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
+def calculate_lutR2_max_size(r2Cut, eta_range, phi_bit_length, eta_granularity, phi_granularity):
     last_one_index = 0
     idx = 0
     #print("r2cut used in calculating max lut size: ", r2Cut)
-    for etaIt in range(1 << eta_bit_length):
-        for phiIt in range(1 << (phi_bit_length - 1)):
+    for etaIt in range(eta_range): # now looping through for deltaEta, deltaPhi (before wrapped)
+        for phiIt in range(1 << (phi_bit_length)):
+            #print("etaIt:", etaIt)
+            #print("phiIt:", phiIt)
             etaSquared = (etaIt * eta_granularity) ** 2
-            phiSquared = (phiIt * phi_granularity) ** 2
+            phiSquared = (wrapSym(phiIt * phi_granularity)) ** 2
             #print("etaSquared:", etaSquared)
             #print("phiSquared:", phiSquared)
             
             deltaR2 = etaSquared + phiSquared
             #print("deltaR2:", deltaR2)
-
+            #print("deltaR2:", deltaR2)
+            #print("r2cut:", r2Cut)
             if deltaR2 < r2Cut:
                 last_one_index = idx
+                #print("last_one_index:", last_one_index)
             idx += 1
             #print("last_one_index:", last_one_index)
     lut_max_size = last_one_index + 1
     #print("lut_max_size:", lut_max_size)
+    #print("lut_max_size:", lut_max_size)
     return lut_max_size
 
-def calculate_lutR_max_size(rCut, eta_bit_length, phi_bit_length, eta_granularity, phi_granularity):
+def calculate_lutR_max_size(rCut, eta_range, phi_bit_length, eta_granularity, phi_granularity):
     last_one_index = 0
     idx = 0
     #print("r2cut used in calculating max lut size: ", r2Cut)
-    for etaIt in range(1 << eta_bit_length):
-        for phiIt in range(1 << (phi_bit_length - 1)):
+    for etaIt in range(eta_range):
+        for phiIt in range(1 << (phi_bit_length)):
             etaSquared = (etaIt * eta_granularity) ** 2
-            phiSquared = (phiIt * phi_granularity) ** 2
+            phiSquared = (wrapSym(phiIt * phi_granularity)) ** 2
             #print("etaSquared:", etaSquared)
             #print("phiSquared:", phiSquared)
             
@@ -157,9 +168,9 @@ static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u
 
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
+const unsigned int maxEvent_ = signalBool_ ? 100 : 100;
 const std::string fileName_ =
-    signalBool_        ? "mc21_14TeV_hh_bbbb_vbf_novhh" :
+    signalBool_        ? "mc21_14TeV_HHbbbb_HLLHC" :
     (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
     (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
     (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
@@ -322,12 +333,12 @@ def write_constants_h(constants: dict, output_file: str, unroll: int, ii: int):
         f.write('''
 
 
-const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
+const unsigned int lut_size_ = (eta_range_ * (1 << (phi_bit_length_)));
 #if !WRITE_LUT
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;
-constexpr unsigned int padded_zeroes_length_32b_ = 32 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
+constexpr unsigned int padded_zeroes_length_32b_ = 128 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
 constexpr unsigned int total_bits_input_ = padded_zeroes_length_32b_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
-constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 typedef ap_uint<total_bits_input_> input; // need 32b input, 64b output!
 typedef ap_uint<total_bits_output_> output;
 
@@ -340,27 +351,23 @@ constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
 constexpr unsigned int et_low_   = eta_high_ + 1;
 constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
 
-constexpr unsigned int psi_R_low_  = et_high_ + 1;
-constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;
-
-constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
-constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
-
-constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
+constexpr unsigned int padded_zeroes_low_  = et_high_ + 1;
 constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
 
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
+constexpr unsigned int digitized_delta_R_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
+
 static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2LUT.h"
 ;
 
-static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] = 
+static const ap_uint<deltaR_bits_ > lutR_[max_Rlut_size_] = 
 #include "../data/LUTs/deltaRLUT.h"
 ;
 
-static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] = 
+static const ap_uint<deltaR_bits_ > lutR_8b_[max_R_8b_lut_size_] = 
 #include "../data/LUTs/deltaRLUT_8b.h"
 ;
 
@@ -368,9 +375,6 @@ static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] =
 constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 256
 constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.041
 constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
-
-constexpr unsigned int diam_levels_ = (1 << psi_R_bit_length_); // 32
-constexpr float diam_step_ = r2Cut_ / (diam_levels_ - 1); // ~0.041
         ''')
 
         f.write("\n#endif // CONSTANTS_H\n")
@@ -437,12 +441,12 @@ if __name__ == "__main__":
                                         constants["phi_granularity_"] = phi_granularity
 
                                         eta_range = base_constants["eta_max_"] - base_constants["eta_min_"]
-                                        eta_granularity = eta_range / (1 << base_constants["eta_bit_length_"])
+                                        eta_granularity = eta_range / (base_constants["eta_range_"])
                                         constants["eta_granularity_"] = eta_granularity
 
                                         lut_max_size = calculate_lutR2_max_size(
                                             r2Cut=constants["r2Cut_"],
-                                            eta_bit_length=constants["eta_bit_length_"],
+                                            eta_range=base_constants["eta_range_"],
                                             phi_bit_length=constants["phi_bit_length_"],
                                             eta_granularity=eta_granularity,
                                             phi_granularity=phi_granularity
@@ -450,7 +454,7 @@ if __name__ == "__main__":
 
                                         lutR_max_size = calculate_lutR_max_size(
                                             rCut=constants["rMergeCut_"],
-                                            eta_bit_length=constants["eta_bit_length_"],
+                                            eta_range=base_constants["eta_range_"],
                                             phi_bit_length=constants["phi_bit_length_"],
                                             eta_granularity=eta_granularity,
                                             phi_granularity=phi_granularity
@@ -458,7 +462,7 @@ if __name__ == "__main__":
 
                                         lutR_8b_max_size = calculate_lutR_max_size(
                                             rCut=constants["rCut_"],
-                                            eta_bit_length=constants["eta_bit_length_"],
+                                            eta_range=base_constants["eta_range_"],
                                             phi_bit_length=constants["phi_bit_length_"],
                                             eta_granularity=eta_granularity,
                                             phi_granularity=phi_granularity
@@ -497,7 +501,7 @@ if __name__ == "__main__":
                                             f"maxObj{maxObjectsConsidered}_"
                                             f"{rMergeCut_str}"
                                             f"{signal_str}"
-                                            "_ConeJetsCellsTowers"
+                                            "_ConeJetsCellsTowers_DSPs_FIFO"
                                             #f"{energyCutBool_str}_"
                                             #f"ecutVal{energyCut_str}"
                                         )

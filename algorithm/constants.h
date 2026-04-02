@@ -18,36 +18,35 @@ constexpr double r2Cut_ = 1.21;
 constexpr double rCut_ = 1.0;
 constexpr double rMergeCut_ = 0.001;
 constexpr unsigned int et_bit_length_ = 13;
-constexpr unsigned int eta_bit_length_ = 8;
-constexpr unsigned int phi_bit_length_ = 6;
-constexpr unsigned int psi_R_bit_length_ = 8;
-constexpr unsigned int num_constituents_bit_length_ = 9;
-constexpr unsigned int deltaRBits_ = 8;
+constexpr unsigned int eta_bit_length_ = 10;
+constexpr unsigned int eta_range_ = 800;
+constexpr unsigned int phi_bit_length_ = 9;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
-constexpr unsigned int pi_digitized_in_phi_ = 31;
+constexpr unsigned int pi_digitized_in_phi_ = 251;
 constexpr double eta_min_ = -5.0;
 constexpr double eta_max_ = 5.0;
-constexpr double eta_granularity_ = 0.0390625;
-constexpr double phi_granularity_ = 0.1;
+constexpr double eta_granularity_ = 0.0125;
+constexpr double phi_granularity_ = 0.0125;
+constexpr double deltaR2_granularity_ = 0.00015625;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 1024;
 #define useMax_ false
-constexpr unsigned int max_R2lut_size_ = 898;
+constexpr unsigned int max_R2lut_size_ = 45056;
 constexpr unsigned int max_Rlut_size_ = 1;
 constexpr double deltaR_max_ = 10.48187;
 constexpr unsigned int deltaR_bits_ = 8;
-constexpr unsigned int max_R_8b_lut_size_ = 803;
+constexpr unsigned int max_R_8b_lut_size_ = 40960;
 constexpr double phi_range_ = 6.4;
 
 
 
-const unsigned int lut_size_ = (1 << (eta_bit_length_ + phi_bit_length_));
+const unsigned int lut_size_ = (eta_range_ * (1 << (phi_bit_length_)));
 #if !WRITE_LUT
-constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_ - psi_R_bit_length_ - num_constituents_bit_length_;
-constexpr unsigned int padded_zeroes_length_32b_ = 32 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
+constexpr unsigned int padded_zeroes_length_32b_ = 128 - et_bit_length_ - eta_bit_length_ - phi_bit_length_;
 constexpr unsigned int total_bits_input_ = padded_zeroes_length_32b_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
-constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + num_constituents_bit_length_ + psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
+constexpr unsigned int total_bits_output_ = padded_zeroes_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_;
 typedef ap_uint<total_bits_input_> input; // need 32b input, 64b output!
 typedef ap_uint<total_bits_output_> output;
 
@@ -60,27 +59,23 @@ constexpr unsigned int eta_high_ = eta_low_ + eta_bit_length_ - 1;
 constexpr unsigned int et_low_   = eta_high_ + 1;
 constexpr unsigned int et_high_  = et_low_ + et_bit_length_ - 1;
 
-constexpr unsigned int psi_R_low_  = et_high_ + 1;
-constexpr unsigned int psi_R_high_ = psi_R_low_ + psi_R_bit_length_ - 1;
-
-constexpr unsigned int num_constituents_low_  = psi_R_high_ + 1;
-constexpr unsigned int num_constituents_high_ = num_constituents_low_ + num_constituents_bit_length_ - 1;
-
-constexpr unsigned int padded_zeroes_low_  = num_constituents_high_ + 1;
+constexpr unsigned int padded_zeroes_low_  = et_high_ + 1;
 constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_length_ - 1;
 
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
+constexpr unsigned int digitized_delta_R_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
+
 static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2LUT.h"
 ;
 
-static const ap_uint<deltaRBits_ > lutR_[max_Rlut_size_] = 
+static const ap_uint<deltaR_bits_ > lutR_[max_Rlut_size_] = 
 #include "../data/LUTs/deltaRLUT.h"
 ;
 
-static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] = 
+static const ap_uint<deltaR_bits_ > lutR_8b_[max_R_8b_lut_size_] = 
 #include "../data/LUTs/deltaRLUT_8b.h"
 ;
 
@@ -88,8 +83,5 @@ static const ap_uint<psi_R_bit_length_ > lutR_8b_[max_R_8b_lut_size_] =
 constexpr unsigned int deltaR_levels_ = (1 << deltaR_bits_); // 256
 constexpr float deltaR_step_ = deltaR_max_ / (deltaR_levels_ - 1); // ~0.041
 constexpr unsigned int rMergeConsiderCutDigitized_ = (rMergeCut_) / deltaR_step_;
-
-constexpr unsigned int diam_levels_ = (1 << psi_R_bit_length_); // 32
-constexpr float diam_step_ = r2Cut_ / (diam_levels_ - 1); // ~0.041
         
 #endif // CONSTANTS_H

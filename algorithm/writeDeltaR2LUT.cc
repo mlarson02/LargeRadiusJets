@@ -1,11 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <cmath>
 #include <cstdint>
 #ifndef WRITE_LUT  // Check if the macro is defined
 #define WRITE_LUT 1
 #include "constants.h"
 
+double wrapSym_dbl(double deltaPhi){
+    double deltaPhiWrapped = deltaPhi; 
+    if(deltaPhi > M_PI) deltaPhiWrapped -= 2 * M_PI;
+    if(deltaPhi < -M_PI) deltaPhiWrapped += 2 * M_PI;
+    return deltaPhiWrapped;
+}
 
 int main() {
     const std::string lut_output_path = "../data/LUTs/deltaR2LUT.h";
@@ -35,20 +42,20 @@ int main() {
 
     //std::cout << "r2Cut_ for LUT: " << r2Cut_ << "\n";
 
-    for (unsigned int etaIt = 0; etaIt < (1 << eta_bit_length_); ++etaIt) {
-        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_ - 1)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
+    for (unsigned int etaIt = 0; etaIt < (1 << (eta_bit_length_)); ++etaIt) {
+        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
             if (idx >= max_R2lut_size_) break; // STOP when you reach max_lut_size_!
-                
+            
             //std::cout << "idx: " << idx << "\n";
             //std::cout << "etaIt: " << etaIt << " eta_granularity_: " << eta_granularity_ << "\n";
             //std::cout << "phiIt: " << phiIt << " phi_granularity_: " << phi_granularity_ << "\n";
-
+            
             float etaSquared = etaIt * eta_granularity_ * etaIt * eta_granularity_;
-            float phiSquared = phiIt * phi_granularity_ * phiIt * phi_granularity_;
+            float phiSquared = wrapSym_dbl(phiIt * phi_granularity_) *  wrapSym_dbl(phiIt * phi_granularity_);
             float deltaR2 = etaSquared + phiSquared;
             //std::cout << "etaSquared: " << etaSquared << " phiSquared: " << phiSquared << " bool: " << (deltaR2 < r2Cut_) << "\n";
             outfile << ((deltaR2 <= r2Cut_) ? 1 : 0);
-
+            //std::cout << "printed to file: " << (deltaR2 <= r2Cut_) << "\n";
             idx++;
             if (idx < max_R2lut_size_)
                 outfile << ", " << ((idx % 16 == 0) ? "\n    " : "");
@@ -63,19 +70,19 @@ int main() {
     outfileR << "{\n    ";
 
     //std::cout << "r2Cut_ for LUT: " << r2Cut_ << "\n";
-
-    for (unsigned int etaIt = 0; etaIt < (1 << eta_bit_length_); ++etaIt) {
-        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_ - 1)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
+    // Updated to map deltaEta, deltaPhi --> deltaR rather than |deltaEta| , |deltaPhiWrapped| to minimize computation done in HLS algorithm
+    for (unsigned int etaIt = 0; etaIt < (1 << (eta_bit_length_)); ++etaIt) {
+        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
             if (i >= max_Rlut_size_) break;
 
             float deltaEta = etaIt * eta_granularity_;
-            float deltaPhi = phiIt * phi_granularity_;
-            float deltaR2 = deltaEta * deltaEta + deltaPhi * deltaPhi;
+            float deltaPhiWrapped = wrapSym_dbl(phiIt * phi_granularity_);
+            float deltaR2 = deltaEta * deltaEta + deltaPhiWrapped * deltaPhiWrapped;
             float deltaR = std::sqrt(deltaR2);
 
             // Digitize deltaR to 8-bit value
             uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / deltaR_step_ + 0.5f);
-            if (digitizedDeltaR > 255) digitizedDeltaR = 255; // Clamp (optional safety)
+            if (digitizedDeltaR > ((1 << deltaR_bits_) - 1)) digitizedDeltaR = ((1 << deltaR_bits_) - 1);  // Clamp (optional safety)
 
             outfileR << static_cast<unsigned int>(digitizedDeltaR); // cast for readability
 
@@ -96,19 +103,19 @@ int main() {
 
     //std::cout << "r2Cut_ for LUT: " << r2Cut_ << "\n";
 
-    for (unsigned int etaIt = 0; etaIt < (1 << eta_bit_length_); ++etaIt) {
-        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_ - 1)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
+    for (unsigned int etaIt = 0; etaIt < (1 << (eta_bit_length_)); ++etaIt) {
+        for (unsigned int phiIt = 0; phiIt < (1 << (phi_bit_length_)); ++phiIt) { // phi bit length - 1 as max deltaPhi = pi, not 2pi
             if (iR >= max_R_8b_lut_size_) break;
             
 
             float deltaEta = etaIt * eta_granularity_;
-            float deltaPhi = phiIt * phi_granularity_;
-            float deltaR2 = deltaEta * deltaEta + deltaPhi * deltaPhi;
+            float deltaPhiWrapped = wrapSym_dbl(phiIt * phi_granularity_);
+            float deltaR2 = deltaEta * deltaEta + deltaPhiWrapped * deltaPhiWrapped;
             float deltaR = std::sqrt(deltaR2);
             //std::cout << "deltaR: " << deltaR << "\n";
             // Digitize deltaR to 8-bit value
-            uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / diam_step_ + 0.5f);
-            if (digitizedDeltaR > 255) digitizedDeltaR = 255; // Clamp (optional safety)
+            uint8_t digitizedDeltaR = static_cast<uint8_t>(deltaR / deltaR_step_ + 0.5f);
+            if (digitizedDeltaR > ((1 << deltaR_bits_) - 1)) digitizedDeltaR = ((1 << deltaR_bits_) - 1); // Clamp (optional safety)
             
             outfileR8b << static_cast<unsigned int>(digitizedDeltaR); // cast for readability
 

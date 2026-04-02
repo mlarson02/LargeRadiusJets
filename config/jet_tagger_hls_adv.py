@@ -32,9 +32,10 @@ cfg_path = f'./w/{comp_name}/hls_config.cfg'
 cfg = client.get_config_file(path=cfg_path)
 
 cfg.set_value(key='part', value='xcvp1802-lsvc4072-2MP-e-S') #xcvc1902-vsva2197-2MP-e-S
-cfg.set_value(section='hls', key='clock', value='4')  # 250 MHz
+cfg.set_value(section='hls', key='clock', value='4.16666666')  # 240 MHz
 cfg.set_value(section='hls', key='flow_target', value='vivado')
 
+cfg.set_value(section='hls',key='package.output.format', value='ip_catalog')
 #cfg.set_value(key='package.output.format', value='')
 #cfg.set_value(key='package.output.syn', value='false')
 

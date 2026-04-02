@@ -18,11 +18,11 @@
 
 
 
-static inline ap_uint<2> index_of_min(ap_uint<deltaRBits_> (&in)[nSeedsDeltaR_]) {
+static inline ap_uint<2> index_of_min(ap_uint<2 * (eta_bit_length_ + phi_bit_length_)> (&in)[nSeedsDeltaR_]) {
 //#pragma HLS pipeline II=1
 //#pragma HLS inline on
 
-    ap_uint<deltaRBits_> min_val = in[0];
+    ap_uint<deltaR_bits_> min_val = in[0];
     ap_uint<2> min_idx = 0;
 
     if (in[1] < min_val) {

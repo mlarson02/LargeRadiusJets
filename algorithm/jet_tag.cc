@@ -1,22 +1,31 @@
+#define USEFIFO 0
+#if !USEFIFO
 #include "jet_tag.h"
 #define WRITE_LUT 0
 
 // Main function
 void jet_tag(input inputObjectValues[maxObjectsConsidered_], output (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
-    #pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
-    #pragma HLS ARRAY_PARTITION variable=lutR_8b_ cyclic factor=4 dim=1
+    //#pragma HLS INTERFACE mode=ap_fifo port=inputObjectValues
+    //#pragma HLS INTERFACE mode=ap_fifo port=outputJetValues
+    //#pragma HLS ARRAY_PARTITION variable=lut_ complete //dim=1
+    #pragma HLS ARRAY_PARTITION variable=inputObjectValues complete //dim=1
+    #pragma HLS ARRAY_PARTITION variable=outputJetValues complete //dim=1
+    //#pragma HLS ARRAY_PARTITION variable=lutR_8b_ cyclic factor=4 dim=1
+    #pragma HLS bind_storage variable=inputObjectValues type=RAM_1P impl=lutram
+    #pragma HLS bind_storage variable=outputJetValues type=RAM_1P impl=lutram
+    //#pragma HLS bind_storage variable=lut_ type=RAM_1P impl=lutram // FIXME how to get these to use URAM rather than BRAM!? 
     //#pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
-    // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
+    // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (FOR STANDALONE HARDWARE IMPLEMENTATION TEST ONLY)
     // AXI4-Master interfaces for input arrays
-    //#pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nSeedsInput_
+    //#pragma HLS INTERFACE m_axi port=inputObjectValues        bundle=gmem0 offset=slave depth=maxObjectsConsidered_
     //#pragma HLS INTERFACE m_axi port=inputObjectValues bundle=gmem1 offset=slave depth=maxObjectsConsidered_
     // AXI4-Master interfaces for output arrays
     //#pragma HLS INTERFACE m_axi port=outputJetValues   bundle=gmem2 offset=slave depth=nSeedsOutput_
     // AXI4-Lite interface only for control signals (function arguments, etc.)
     //#pragma HLS INTERFACE s_axilite port=return bundle=CTRL
     
-    for (unsigned int i = 0; i < nSeedsOutput_; ++i)
+    for (unsigned int i = 0; i < nSeedsOutput_; ++i) // NOTE: no effect on total latency in clock cycles
         #pragma HLS unroll
         outputJetValues[i] = 0;
     
@@ -25,58 +34,177 @@ void jet_tag(input inputObjectValues[maxObjectsConsidered_], output (&outputJetV
         ap_uint<eta_bit_length_ > seedEta = inputObjectValues[iSeed].range(eta_high_, eta_low_);
         ap_uint<phi_bit_length_ > seedPhi = inputObjectValues[iSeed].range(phi_high_, phi_low_);
         ap_uint<et_bit_length_ > outputJetEt = inputObjectValues[iSeed].range(et_high_, et_low_);
-        //ap_uint<psi_R_bit_length_ + et_bit_length_ > psi_R_temp = 0; 
-        //ap_uint<num_constituents_bit_length_ > numMergedIO = 0; 
+        //#pragma HLS ARRAY_PARTITION variable=seedEta complete //dim=0
+        //#pragma HLS ARRAY_PARTITION variable=seedPhi complete //dim=0
+        //#pragma HLS ARRAY_PARTITION variable=outputJetEt complete //dim=0
+        //std::cout << "----------------------------- " << "\n";
+        //std::cout << "iSeed : "<< iSeed << "\n";
+        //std::cout << "seed eta: " << seedEta << "\n";
+        //std::cout << "seed phi: " << seedPhi << "\n";
 
         for (unsigned int iInput = nSeedsOutput_; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             #pragma HLS unroll
-           
-            // Calculate signed differences (deltaEta and deltaPhi)
-            ap_int<eta_bit_length_ + 1> deltaEta = inputObjectValues[iSeed].range(eta_high_, eta_low_) - inputObjectValues[iInput].range(eta_high_, eta_low_);
-            ap_int<phi_bit_length_ + 1> deltaPhi = inputObjectValues[iSeed].range(phi_high_, phi_low_) - inputObjectValues[iInput].range(phi_high_, phi_low_);
+            //std::cout << "iInput: " << iInput << "\n";
             
+            ap_uint<eta_bit_length_ > inputEta = inputObjectValues[iInput].range(eta_high_, eta_low_);
+            ap_uint<phi_bit_length_ > inputPhi = inputObjectValues[iInput].range(phi_high_, phi_low_);
+            ap_uint<et_bit_length_ > inputEt = inputObjectValues[iInput].range(et_high_, et_low_);
+            //std::cout << "inputEta : " << inputEta << "\n";
+            //std::cout << "inputPhi: " << inputPhi << "\n";
+            // Calculate signed differences (deltaEta and deltaPhi)
+            ap_int<eta_bit_length_> deltaEta = seedEta - inputEta;
+            ap_int<phi_bit_length_> deltaPhi = seedPhi - inputPhi;
+            
+            //std::cout << "deltaEta : " << deltaEta << "\n";
+            //std::cout << "deltaPhi: " << deltaPhi << "\n";
+            //#pragma HLS ARRAY_PARTITION variable=inputEta complete //dim=0
+            //#pragma HLS ARRAY_PARTITION variable=inputPhi complete //dim=0
+            //#pragma HLS ARRAY_PARTITION variable=inputEt complete //dim=0
+            //#pragma HLS ARRAY_PARTITION variable=deltaEta complete //dim=0
+            //#pragma HLS ARRAY_PARTITION variable=deltaPhi complete //dim=0
+
             // Use unsigned type for absolute values, and ensure both operands are of the same type
             ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
             ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
+            //#pragma HLS ARRAY_PARTITION variable=uDeltaEta complete //dim=0
+            //#pragma HLS ARRAY_PARTITION variable=uDeltaPhi complete //dim=0
 
+            
+            //#pragma HLS ARRAY_PARTITION variable=corrDeltaPhi complete //dim=0
             if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
             ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
-
-            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
-
-            if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
-                if(outputJetEt + inputObjectValues[iInput].range(et_high_, et_low_) >= ((1 << (et_bit_length_)) - 1)){
+            ap_uint<2 * (eta_bit_length_ + phi_bit_length_) > deltaR2 =  uDeltaEta * uDeltaEta + corrDeltaPhi * corrDeltaPhi;
+            #pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
+            //ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = deltaEta * (1 << (phi_bit_length_) ) + deltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+            //std::cout << "lut_index: " << lut_index << "\n";
+            //std::cout << "max_R2lut_size_ : " << max_R2lut_size_ << "\n";
+            //#pragma HLS ARRAY_PARTITION variable=lut_index complete //dim=0, FIXME map pairs of just deltaEta, deltaPhi --> 0, 1
+            //if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
+            if(deltaR2 < digitized_delta_R_){ // 7688 comes from 62^2 + 62^2 which using granularity of 0.0125 for eta and phi passes R^2 < 1.21 
+                //std::cout << "merge io " << "\n";
+                if(outputJetEt + inputEt >= ((1 << (et_bit_length_)) - 1)){
                     outputJetEt = ((1 << (et_bit_length_)) - 1); // if would exceed max Et, set equal to max Et and break out of input object loop
                 //    break; // br
                 } 
                 else{
-                    //#pragma HLS bind_op variable=outputJetEt op=add impl=dsp latency=-1
-                    outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
+                    outputJetEt += inputEt; // add input object Et to seed Et for resultant output jet Et
                 }
-                
-                //#pragma HLS bind_op variable=psi_R_temp op=add impl=dsp latency=-1
-                //std::cout << "lutR_8b_[lut_index]: " << lutR_8b_[lut_index] << "\n";
-                //std::cout << "inputObjectValues et: " << inputObjectValues[iInput].range(et_high_, et_low_) << "\n";
-                //psi_R_temp += inputObjectValues[iInput].range(et_high_, et_low_) * lutR_8b_[lut_index];
-                //std::cout << "psi_R_temp: " << psi_R_temp << "\n";
-               //#pragma HLS bind_op variable=numMergedIO op=add impl=dsp latency=-1
-                //numMergedIO++; 
             }
         }
 
-        // Normalize by 1/Jet Et
-        //ap_uint<psi_R_bit_length_ > psi_R_final = psi_R_temp / outputJetEt;
-        //std::cout << "outputJetEt: " << outputJetEt << "\n";
-        //std::cout << "psi_R_final: " << psi_R_final << "\n";
-        //if (outputJetEt != 0){
-           // psi_R_final  
-        //}
-
-        outputJetValues[iSeed].range(padded_zeroes_high_, psi_R_low_) = 0; 
-        //outputJetValues[iSeed].range(num_constituents_high_, num_constituents_low_) = numMergedIO;
-        //outputJetValues[iSeed].range(psi_R_high_, psi_R_low_) = psi_R_final; 
+        outputJetValues[iSeed].range(padded_zeroes_high_, padded_zeroes_low_) = 0; 
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
         outputJetValues[iSeed].range(eta_high_, eta_low_) = seedEta;
         outputJetValues[iSeed].range(phi_high_, phi_low_) = seedPhi;
     }
 }
+
+#endif
+
+// FIFO EQUIVALENT VERSION - needs to be validated
+#if USEFIFO
+#include "jet_tag.h"
+#include <hls_stream.h>
+
+typedef ap_uint<total_bits_input_>  input_t;
+typedef ap_uint<total_bits_output_> output_t;
+
+void jet_tag(hls::stream<input_t>  &in,
+             hls::stream<output_t> &out) {
+#pragma HLS INTERFACE mode=ap_fifo port=in
+#pragma HLS INTERFACE mode=ap_fifo port=out
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+    // Local event buffer so we can do random access exactly like the non-FIFO version
+    input_t inputObjectValues[maxObjectsConsidered_];
+#pragma HLS ARRAY_PARTITION variable=inputObjectValues complete
+#pragma HLS bind_storage variable=inputObjectValues type=RAM_1P impl=lutram
+
+    // Read one event worth of inputs
+    READ_IN:
+    for (unsigned int i = 0; i < maxObjectsConsidered_; ++i) {
+#pragma HLS PIPELINE II=1
+        inputObjectValues[i] = in.read();
+    }
+
+    output_t outputJetValues[nSeedsOutput_];
+#pragma HLS ARRAY_PARTITION variable=outputJetValues complete
+#pragma HLS bind_storage variable=outputJetValues type=RAM_1P impl=lutram
+
+    INIT_OUT:
+    for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
+#pragma HLS UNROLL
+        outputJetValues[i] = 0;
+    }
+
+    SEEDS:
+    for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed) {
+#pragma HLS UNROLL
+
+        ap_uint<eta_bit_length_> seedEta =
+            inputObjectValues[iSeed].range(eta_high_, eta_low_);
+        ap_uint<phi_bit_length_> seedPhi =
+            inputObjectValues[iSeed].range(phi_high_, phi_low_);
+        ap_uint<et_bit_length_> outputJetEt =
+            inputObjectValues[iSeed].range(et_high_, et_low_);
+
+        INPUTS:
+        for (unsigned int iInput = nSeedsOutput_; iInput < maxObjectsConsidered_; ++iInput) {
+#pragma HLS UNROLL
+
+            ap_uint<eta_bit_length_> inputEta =
+                inputObjectValues[iInput].range(eta_high_, eta_low_);
+            ap_uint<phi_bit_length_> inputPhi =
+                inputObjectValues[iInput].range(phi_high_, phi_low_);
+            ap_uint<et_bit_length_> inputEt =
+                inputObjectValues[iInput].range(et_high_, et_low_);
+
+            // Match non-FIFO version: signed differences
+            ap_int<eta_bit_length_> deltaEta = seedEta - inputEta;
+            ap_int<phi_bit_length_> deltaPhi = seedPhi - inputPhi;
+
+            // Absolute values
+            ap_uint<eta_bit_length_> uDeltaEta =
+                deltaEta[eta_bit_length_ - 1]
+                    ? static_cast<ap_uint<eta_bit_length_> >(-deltaEta)
+                    : static_cast<ap_uint<eta_bit_length_> >( deltaEta);
+
+            ap_uint<phi_bit_length_> uDeltaPhi =
+                deltaPhi[phi_bit_length_ - 1]
+                    ? static_cast<ap_uint<phi_bit_length_> >(-deltaPhi)
+                    : static_cast<ap_uint<phi_bit_length_> >( deltaPhi);
+
+            // Phi wrapping exactly as in non-FIFO version
+            if (uDeltaPhi >= pi_digitized_in_phi_) {
+                uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
+            }
+
+            ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi;
+
+            ap_uint<phi_bit_length_ + eta_bit_length_> deltaR2 =
+                uDeltaEta * uDeltaEta + corrDeltaPhi * corrDeltaPhi;
+#pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
+
+            // Same deltaR^2 cut as non-FIFO version
+            if (deltaR2 < digitized_delta_R_) {
+                if (outputJetEt + inputEt >= ((1 << et_bit_length_) - 1)) {
+                    outputJetEt = ((1 << et_bit_length_) - 1);
+                } else {
+                    outputJetEt += inputEt;
+                }
+            }
+        }
+
+        outputJetValues[iSeed].range(padded_zeroes_high_, padded_zeroes_low_) = 0;
+        outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
+        outputJetValues[iSeed].range(eta_high_, eta_low_) = seedEta;
+        outputJetValues[iSeed].range(phi_high_, phi_low_) = seedPhi;
+    }
+
+    WRITE_OUT:
+    for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
+#pragma HLS PIPELINE II=1
+        out.write(outputJetValues[i]);
+    }
+}
+#endif

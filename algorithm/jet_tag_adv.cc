@@ -4,9 +4,9 @@
 // Main function
 void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObjectsConsidered_], output (&outputJetValues)[nSeedsOutput_]){ // FIXME potentially use templated / overloaded func to deal with whether write out files while running synth or c-sim
     // Pragma for partitioning (allowing simultaneous access to) LUT array
-    #pragma HLS ARRAY_PARTITION variable=lut_ cyclic factor=4 dim=1
-    #pragma HLS ARRAY_PARTITION variable=lutR_8b_ cyclic factor=4 dim=1
-    #pragma HLS ARRAY_PARTITION variable=inputObjectValues cyclic factor=4 dim=1 
+    #pragma HLS ARRAY_PARTITION variable=seedValues complete
+    #pragma HLS ARRAY_PARTITION variable=inputObjectValues complete
+    #pragma HLS ARRAY_PARTITION variable=outputJetValues complete
     // PRAGMAS FOR WRITING DATA TO FPGA BRAMS (TESTING IMPLEMENTATION ONLY)
     // AXI4-Master interfaces for input arrays
     //#pragma HLS INTERFACE m_axi port=seedValues        bundle=gmem0 offset=slave depth=nSeedsInput_
@@ -17,15 +17,60 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
     //#pragma HLS INTERFACE s_axilite port=return bundle=CTRL
     
     for (unsigned int i = 0; i < nSeedsOutput_; ++i)
+        #pragma HLS unroll
         outputJetValues[i] = 0;
+
+    // Perform overlap removal (OR) ensuring that leading, subleading seeds don't overlap within deltaR < 2 * jet radius
+    ap_int<eta_bit_length_ > deltaEta_LeadSublSeeds = seedValues[0].range(eta_high_, eta_low_) - seedValues[1].range(eta_high_, eta_low_);
+    ap_int<phi_bit_length_ > deltaPhi_LeadSublSeeds = seedValues[0].range(phi_high_, phi_low_) - seedValues[1].range(phi_high_, phi_low_);
+    ap_uint<eta_bit_length_ > uDeltaEta_LeadSublSeeds = deltaEta_LeadSublSeeds[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta_LeadSublSeeds ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta_LeadSublSeeds );
+    ap_uint<phi_bit_length_ > uDeltaPhi_LeadSublSeeds = deltaPhi_LeadSublSeeds[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi_LeadSublSeeds ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi_LeadSublSeeds );
+    if (uDeltaPhi_LeadSublSeeds >= pi_digitized_in_phi_) uDeltaPhi_LeadSublSeeds = 2 * pi_digitized_in_phi_ - uDeltaPhi_LeadSublSeeds;
+    ap_uint<2 * (eta_bit_length_ + phi_bit_length_)  > deltaR2LeadingSubleading = uDeltaEta_LeadSublSeeds * uDeltaEta_LeadSublSeeds + uDeltaPhi_LeadSublSeeds * uDeltaPhi_LeadSublSeeds;
+    #pragma HLS bind_op variable=deltaR2LeadingSubleading op=mul impl=dsp
+    if(deltaR2LeadingSubleading <= 2 * 2 * digitized_delta_R2Cut_){ // (2 * R_Cut) ^ 2
+
+        for(unsigned int iSeedOR = nSeedsOutput_; iSeedOR < nSeedsInput_; iSeedOR++){
+            #pragma HLS unroll
+            if(seedValues[iSeedOR].range(et_high_, et_low_) == 0 && seedValues[iSeedOR].range(eta_high_, eta_low_) == 0 && seedValues[iSeedOR].range(phi_high_, phi_low_) == 0) continue; // don't consider if et, eta, phi all = 0 (no jet)
+            ap_int<eta_bit_length_ > deltaEtaNthLeading = seedValues[0].range(eta_high_, eta_low_) - seedValues[iSeedOR].range(eta_high_, eta_low_);
+            ap_int<phi_bit_length_ > deltaPhiNthLeading = seedValues[0].range(phi_high_, phi_low_) - seedValues[iSeedOR].range(phi_high_, phi_low_);
+            ap_uint<eta_bit_length_ > uDeltaEtaNthLeading = deltaEtaNthLeading[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEtaNthLeading ) : static_cast<ap_uint<eta_bit_length_>>( deltaEtaNthLeading );
+            ap_uint<phi_bit_length_ > uDeltaPhiNthLeading = deltaPhiNthLeading[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhiNthLeading ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhiNthLeading );
+            if (uDeltaPhiNthLeading >= pi_digitized_in_phi_) uDeltaPhiNthLeading = 2 * pi_digitized_in_phi_ - uDeltaPhiNthLeading;
+            ap_uint< 2 * (eta_bit_length_ + phi_bit_length_) > deltaR2LeadingSubleadingNthLeading = uDeltaEtaNthLeading * uDeltaEtaNthLeading + uDeltaPhiNthLeading * uDeltaPhiNthLeading;
+
+            if(deltaR2LeadingSubleadingNthLeading > 2 * 2 * digitized_delta_R2Cut_){
+                ap_uint<et_bit_length_ > swappedEt = seedValues[iSeedOR].range(et_high_, et_low_);
+                ap_uint<eta_bit_length_ > swappedEta = seedValues[iSeedOR].range(eta_high_, eta_low_);
+                ap_uint<phi_bit_length_ > swappedPhi = seedValues[iSeedOR].range(phi_high_, phi_low_);
+
+                ap_uint<et_bit_length_ > originalSubleadingEt = seedValues[1].range(et_high_, et_low_);
+                ap_uint<eta_bit_length_ > originalSubleadingEta = seedValues[1].range(eta_high_, eta_low_);
+                ap_uint<phi_bit_length_ > originalSubleadingPhi = seedValues[1].range(phi_high_, phi_low_);
+
+                // Swap the entire (Et, eta, phi) triplet for original subleading, new subleading seed
+                seedValues[1].range(et_high_, et_low_) = swappedEt; // Et
+                seedValues[1].range(eta_high_, eta_low_) = swappedEta; // eta
+                seedValues[1].range(phi_high_, phi_low_) = swappedPhi; // phi
+
+                seedValues[iSeedOR].range(et_high_, et_low_) = originalSubleadingEt; // Et
+                seedValues[iSeedOR].range(eta_high_, eta_low_) = originalSubleadingEta; // eta
+                seedValues[iSeedOR].range(phi_high_, phi_low_) = originalSubleadingPhi; // phi
+
+                break; // break out of loop as we've found something to swap, thus preventing overlapping large-R jets
+            } // If deltaR^2 between original leading, other proto-seed farther than 2 times jet radius 
+        } // Loop through potential additional seeds to find 
+    } // If deltaR^2 between original leading, subleading closer than 2 times jet radius
     
-    // FIXME make this entire process more dynamic to account for nSeedsOutput_ != 2 (progressively do this for highest Et seeds rather than for 1st 2 seeds immediately)
+    
+     // FIXME make this entire process more dynamic to account for nSeedsOutput_ != 2 (progressively do this for highest Et seeds rather than for 1st 2 seeds immediately)
     // NEW PRE-PROCESSING OF SEEDS - SELECT IN BETWEEN LEADING, SUBLEADING JFEX SRJ, CLOSEST OF 3rd - 6th highest ENERGY JFEX SRJS as NEW SEEDS
-    ap_uint<deltaRBits_> deltaRValuesSeed[nSeedsOutput_][nSeedsDeltaR_] = {0}; 
-    ap_uint<3> deltaRValuesGreaterThan5Counter[nSeedsOutput_] = {0};
-    //std::cout << "deltaRValuesGreaterThan5Counter 0th: " << deltaRValuesGreaterThan5Counter[0] << "\n";
-    //std::cout << "deltaRValuesGreaterThan5Counter 1st: " << deltaRValuesGreaterThan5Counter[1] << "\n";
-    bool indicesOfDeltaRValuesGreaterThanrMergeCut[nSeedsOutput_][nSeedsDeltaR_] = {false};
+    ap_uint<2 * (eta_bit_length_ + phi_bit_length_)  > deltaR2ValuesSeed[nSeedsOutput_][nSeedsDeltaR_] = {0}; 
+    ap_uint<3> protoSeedCounter[nSeedsOutput_] = {0};
+        
+    bool indicesofProtoSeeds[nSeedsOutput_][nSeedsDeltaR_] = {false};
+    #pragma HLS bind_storage variable=indicesofProtoSeeds type=RAM_1P impl=lutram
     //std::cout << "Seed 1 Eta, Phi: " << seedValues[0].range(eta_high_, eta_low_) << " , " << seedValues[0].range(phi_high_, phi_low_) << "\n";
     //std::cout << "Seed 2 Eta, Phi: " << seedValues[1].range(eta_high_, eta_low_) << " , " << seedValues[1].range(phi_high_, phi_low_) << "\n";
 
@@ -33,7 +78,7 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
         #pragma HLS unroll
         for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++){
             #pragma HLS unroll
-            deltaRValuesSeed[iSeed][iPreSeed] = (1 << deltaRBits_) - 1; // Set to maximum value in case closer seed not found --> don't consider 0 values in sorting
+            deltaR2ValuesSeed[iSeed][iPreSeed] = (1 << (2 * (eta_bit_length_ + phi_bit_length_) ) ) - 1; // Set to maximum value in case closer seed not found --> don't consider 0 values in sorting
             ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - seedValues[iPreSeed + nSeedsOutput_].range(eta_high_, eta_low_);
             ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - seedValues[iPreSeed + nSeedsOutput_].range(phi_high_, phi_low_);
             // Use unsigned type for absolute values, and ensure both operands are of the same type
@@ -41,16 +86,13 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
             ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
             if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
             ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
-            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lutR_index = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + corrDeltaPhi;
-            //std::cout << "lutR_index: " << lutR_index << "\n";
-            if (!(lutR_index >= max_Rlut_size_)){
-                deltaRValuesSeed[iSeed][iPreSeed] = lutR_[lutR_index];
-                //std::cout << "lutR_[lutR_index]: " <<  lutR_[lutR_index] << "\n";
-                if (lutR_[lutR_index] <= rMergeConsiderCutDigitized_){
-                    //std::cout << "lutR_[lutR_index] in cut: " << lutR_[lutR_index] << "\n";
-                    deltaRValuesGreaterThan5Counter[iSeed]++;
-                    indicesOfDeltaRValuesGreaterThanrMergeCut[iSeed][iPreSeed] = true;
-                }
+            ap_uint<2 * (eta_bit_length_ + phi_bit_length_)  > deltaR2 =  uDeltaEta * uDeltaEta + corrDeltaPhi * corrDeltaPhi;
+            #pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
+            
+            deltaR2ValuesSeed[iSeed][iPreSeed] = deltaR2;
+            if (deltaR2 <= digitized_d_search_squared_){
+                protoSeedCounter[iSeed]++;
+                indicesofProtoSeeds[iSeed][iPreSeed] = true;
             }
         }
     }
@@ -59,11 +101,11 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
     ap_uint<2> index_of_closest_seed2 = 0;
     // Account for the case when multiple seeds are within deltaR customalizable value - use highest Et seed to compute halfway point
     // For seed 0
-    if (deltaRValuesGreaterThan5Counter[0] > 1) {
+    if (protoSeedCounter[0] > 1) {
         ap_uint<et_bit_length_> maxEt = 0;
         for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++) {
             #pragma HLS unroll
-            if (indicesOfDeltaRValuesGreaterThanrMergeCut[0][iPreSeed]) {
+            if (indicesofProtoSeeds[0][iPreSeed]) {
                 ap_uint<et_bit_length_> et = seedValues[iPreSeed + nSeedsOutput_].range(et_high_, et_low_);
                 if (et > maxEt) {
                     maxEt = et;
@@ -73,15 +115,15 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
         }
     }
     else{
-        index_of_closest_seed1 = index_of_min(deltaRValuesSeed[0]);
+        index_of_closest_seed1 = index_of_min(deltaR2ValuesSeed[0]);
     }
 
     // For seed 1
-    if (deltaRValuesGreaterThan5Counter[1] > 1) {
+    if (protoSeedCounter[1] > 1) {
         ap_uint<et_bit_length_> maxEt = 0;
         for (unsigned int iPreSeed = 0; iPreSeed < nSeedsDeltaR_; iPreSeed++) {
             #pragma HLS unroll
-            if (indicesOfDeltaRValuesGreaterThanrMergeCut[1][iPreSeed]) {
+            if (indicesofProtoSeeds[1][iPreSeed]) {
                 ap_uint<et_bit_length_> et = seedValues[iPreSeed + nSeedsOutput_].range(et_high_, et_low_);
                 if (et > maxEt) {
                     maxEt = et;
@@ -91,23 +133,23 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
         }
     }
     else{
-        index_of_closest_seed2 = index_of_min(deltaRValuesSeed[1]);
+        index_of_closest_seed2 = index_of_min(deltaR2ValuesSeed[1]);
     }
 
-    // FIXME next do bitonic sorting of deltaRValuesSeed, get index back to original seedValues array corresponding to closest to each seed (figure out what to do if they are same)
+    // FIXME next do bitonic sorting of deltaR2ValuesSeed, get index back to original seedValues array corresponding to closest to each seed (figure out what to do if they are same)
     // FIXME replace with a templated version of this s.t. you don't need to rewrite code for different number sorted
     ap_uint<2> indices[2];
     indices[0] = index_of_closest_seed1;
     indices[1] = index_of_closest_seed2;
     // Printouts for debugging seed position recalculation
-    /*if(deltaRValuesSeed[0][index_of_closest_seed1] <= rMergeConsiderCutDigitized_){
-       std::cout << "index of closest seed 1: " << index_of_closest_seed1 << " and delta R of closest seed 1: " << deltaRValuesSeed[0][index_of_closest_seed1] * deltaR_step_ << " and energy of closest seed 1: " << seedValues[indices[0] + nSeedsOutput_].range(et_high_, et_low_) << "\n";
+    /*if(deltaR2ValuesSeed[0][index_of_closest_seed1] <= digitized_d_search_squared_){
+       std::cout << "index of closest seed 1: " << index_of_closest_seed1 << " and delta R of closest seed 1: " << deltaR2ValuesSeed[0][index_of_closest_seed1] * deltaR_step_ << " and energy of closest seed 1: " << seedValues[indices[0] + nSeedsOutput_].range(et_high_, et_low_) << "\n";
     }
     else{
        std::cout << "first seed unchanged" << "\n";
     }
-    if(deltaRValuesSeed[1][index_of_closest_seed1] <= rMergeConsiderCutDigitized_){
-       std::cout << "index of closest seed 2: " << index_of_closest_seed2 << " and delta R of closest seed 2: " << deltaRValuesSeed[1][index_of_closest_seed2] * deltaR_step_ << " and energy of closest seed 2: " << seedValues[indices[0] + nSeedsOutput_].range(et_high_, et_low_) << "\n";
+    if(deltaR2ValuesSeed[1][index_of_closest_seed1] <= digitized_d_search_squared_){
+       std::cout << "index of closest seed 2: " << index_of_closest_seed2 << " and delta R of closest seed 2: " << deltaR2ValuesSeed[1][index_of_closest_seed2] * deltaR_step_ << " and energy of closest seed 2: " << seedValues[indices[0] + nSeedsOutput_].range(et_high_, et_low_) << "\n";
     }
     else{
        std::cout << "second seed unchanged" << "\n";
@@ -117,7 +159,7 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
     // next update leading, subleading seed positions (and energy?) to be in between closest other seed 
     for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){
         #pragma HLS unroll
-        if (deltaRValuesSeed[iSeed][indices[iSeed]] > rMergeConsiderCutDigitized_) continue; // FIXME replace 64 (deltaR = 2.5 digitized)
+        if (deltaR2ValuesSeed[iSeed][indices[iSeed]] > digitized_d_search_squared_) continue;  // why is this here - this shouldn't be possible, FIXME test removign
         
         //std::cout << "-------------- calcing mid point -----------------" << "\n"; 
         //std::cout << "iSeed: " << iSeed << "\n";
@@ -203,11 +245,21 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
         seedValues[iSeed].range(phi_high_, phi_low_) = phi_mid_digitized;
     }
 
-    // must also account for when deltaRValuesSeed not set (no deltaR < 2.5 --> leave seed position as is)
-    unsigned int numSubjets[nSeedsOutput_] = {0};
+    // must also account for when deltaR2ValuesSeed not set (no deltaR < 2.5 --> leave seed position as is)
+    
     for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ 
         #pragma HLS unroll
         ap_uint<et_bit_length_ > outputJetEt = 0;
+        ap_uint<num_subjets_length_ > numSubjets = 0;
+
+        if(seedValues[iSeed].range(et_high_, et_low_) >= subjet_et_threshold_){
+            if(numSubjets < ((1 << num_subjets_length_) - 1)){ // Clamp number of subjets to maximum value
+                numSubjets++;
+            }
+            else{
+                numSubjets = ((1 << num_subjets_length_) - 1);
+            }
+        }
 
         for (unsigned int iInput = 0; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             #pragma HLS unroll
@@ -222,17 +274,19 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
 
             if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
             ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi; // using corr delta phi saves 1 bit, unsure if necessary?
+
+            ap_uint<2 * (eta_bit_length_ + phi_bit_length_)  > deltaR2 =  uDeltaEta * uDeltaEta + corrDeltaPhi * corrDeltaPhi;
+            #pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
             //std::cout << " corrDeltaPhi : " << corrDeltaPhi << "\n";
             //std::cout << "deltaR^2: " << uDeltaEta * uDeltaEta * eta_granularity_ * eta_granularity_ + corrDeltaPhi * corrDeltaPhi * phi_granularity_ * phi_granularity_ << "\n";
             //int phiLength = 1 << (phi_bit_length_);
             //std::cout << "phiLength: " << phiLength << " and uDeltaEta * philength: " << uDeltaEta * (1 << phi_bit_length_) << "\n";
-            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = (uDeltaEta << (phi_bit_length_ - 1)) | corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+            //ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = (uDeltaEta << (phi_bit_length_ - 1)) | corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
             //std::cout << "lut_index: " << std::dec << lut_index << "\n";
 
-            if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
-                if(outputJetEt + inputObjectValues[iInput][0] >= (1 << (et_bit_length_) - 1)){
-                    outputJetEt = (1 << (et_bit_length_) - 1); // if would exceed max Et, set equal to max Et and break out of input object loop
-                //    break; // br
+            if (deltaR2 <= digitized_delta_R2Cut_){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
+                if(outputJetEt + inputObjectValues[iInput][0] >= ((1 << et_bit_length_) - 1)){
+                    outputJetEt = ((1 << et_bit_length_) - 1); // if would exceed max Et, set equal to max Et 
                 } 
                 else{
                     outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
@@ -240,29 +294,38 @@ void jet_tag_adv(input seedValues[nSeedsInput_], input inputObjectValues[maxObje
 
             }
         }
-        for(unsigned int iSubjet = 0; iSubjet < nSeedsInput_; iSubjet++){
-            #pragma HLS unroll
+        for(unsigned int iSubjet = nSeedsOutput_; iSubjet < nSeedsInput_; iSubjet++){
+            #pragma HLS unroll 
 
-            if(seedValues[iSubjet].range(et_high_, et_low_) <= subjet_et_threshold_) continue;
-            // Calculate signed differences (deltaEta and deltaPhi)
-            ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - seedValues[iSubjet].range(eta_high_, eta_low_);
-            ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - seedValues[iSubjet].range(phi_high_, phi_low_);
-            
-            // Use unsigned type for absolute values, and ensure both operands are of the same type
-            ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
-            ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
+            if(seedValues[iSubjet].range(et_high_, et_low_) >= subjet_et_threshold_){
+                // Calculate signed differences (deltaEta and deltaPhi)
+                ap_int<eta_bit_length_ + 1> deltaEta = seedValues[iSeed].range(eta_high_, eta_low_) - seedValues[iSubjet].range(eta_high_, eta_low_);
+                ap_int<phi_bit_length_ + 1> deltaPhi = seedValues[iSeed].range(phi_high_, phi_low_) - seedValues[iSubjet].range(phi_high_, phi_low_);
+                
+                // Use unsigned type for absolute values, and ensure both operands are of the same type
+                ap_uint<eta_bit_length_> uDeltaEta = deltaEta[eta_bit_length_] ? static_cast<ap_uint<eta_bit_length_>>( -deltaEta ) : static_cast<ap_uint<eta_bit_length_>>( deltaEta );
+                ap_uint<phi_bit_length_> uDeltaPhi = deltaPhi[phi_bit_length_] ? static_cast<ap_uint<phi_bit_length_>>( -deltaPhi ) : static_cast<ap_uint<phi_bit_length_>>( deltaPhi );
 
-            if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
-            ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi; 
+                if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = 2 * pi_digitized_in_phi_ - uDeltaPhi;
+                ap_uint<phi_bit_length_ - 1> corrDeltaPhi = uDeltaPhi; 
 
-            ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = (uDeltaEta << (phi_bit_length_ - 1)) | corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
-            if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
-                numSubjets[iSeed]++;
+                ap_uint<2 * (eta_bit_length_ + phi_bit_length_)  > deltaR2 =  uDeltaEta * uDeltaEta + corrDeltaPhi * corrDeltaPhi;
+                #pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
+                //ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = (uDeltaEta << (phi_bit_length_ - 1)) | corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
+                //if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
+                if (deltaR2 <= digitized_delta_R2Cut_){
+                    if(numSubjets < ((1 << num_subjets_length_) - 1)){ // Clamp number of subjets to maximum value
+                        numSubjets++;
+                    }
+                    else{
+                        numSubjets = ((1 << num_subjets_length_) - 1);
+                    }
+                    
+                }
             }
         }
         outputJetValues[iSeed].range(padded_zeroes_high_, padded_zeroes_low_) = 0; 
-        outputJetValues[iSeed].range(num_subjets_LRJ2_high_, num_subjets_LRJ2_low_) = numSubjets[1];
-        outputJetValues[iSeed].range(num_subjets_LRJ1_high_, num_subjets_LRJ1_low_) = numSubjets[0]; 
+        outputJetValues[iSeed].range(num_subjets_high_, num_subjets_low_) = numSubjets;
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
         outputJetValues[iSeed].range(eta_high_, eta_low_) = seedValues[iSeed].range(eta_high_, eta_low_);
         outputJetValues[iSeed].range(phi_high_, phi_low_) = seedValues[iSeed].range(phi_high_, phi_low_);

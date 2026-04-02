@@ -10,13 +10,14 @@ int main() {
 
     input inputObjectValues[maxObjectsConsidered_];
 
-    const std::string inputObjectFile = memPrintsPath_ + "GEPConeJetsCellsTowers/" + fileName_ + "_gepconejetscellstowers.dat";
+    const std::string inputObjectFile = memPrintsPath_ + "GEPConeJetsCellsTowersSK/" + fileName_ + "_gepconejetscellstowerssk.dat";
     std::cout << "inputObjectFile: " << inputObjectFile << "\n";
     // Call the function under test
-    std::string outputJetsFile = memPrintsPath_ + "largeRJets_ConeJetsCellsTowersOnly/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJets_SK/" + fileName_ + "_largeR";
+    
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
-
+    std::cout << "output file : "<< outputJetsFile << "\n";
     std::ofstream outFile(outputJetsFile);
     if (!outFile) {
         std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
@@ -24,7 +25,8 @@ int main() {
     }
     std::cout << "rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n";
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
-
+        std::cout << "----------------------------------" << "\n";
+        std::cout << "iEvt: " << iEvt << "\n";
         outFile << "Event : " << std::dec << iEvt << std::endl;
         //std::cout << " ---------------------------------- " << "\n";
         //std::cout << "processing event: " << std::dec << iEvt << "\n";
@@ -42,8 +44,6 @@ int main() {
 
         jet_tag(inputObjectValues, outputJetValues); // top function 
         for (unsigned int iOutput = 0; iOutput < nSeedsOutput_; iOutput++){
-            unsigned long long num_constituents_value = outputJetValues[iOutput].range(num_constituents_high_, num_constituents_low_).to_uint64();
-            unsigned long long psi_R_value = outputJetValues[iOutput].range(psi_R_high_, psi_R_low_).to_uint64();
             unsigned long long et_value = outputJetValues[iOutput].range(et_high_, et_low_).to_uint64();  // Convert to unsigned long long
             unsigned long long eta_value = outputJetValues[iOutput].range(eta_high_, eta_low_).to_uint64();
             unsigned long long phi_value = outputJetValues[iOutput].range(phi_high_, phi_low_).to_uint64();
@@ -56,8 +56,6 @@ int main() {
             //std::cout << "et_value : " << et_value << "\n";
      
             // Convert to ap_uint
-            std::bitset<num_constituents_bit_length_ > mergedio_bitset(num_constituents_value); 
-            std::bitset<psi_R_bit_length_ > psi_R_bitset(psi_R_value); 
             std::bitset<et_bit_length_ > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
@@ -67,8 +65,6 @@ int main() {
             //ap_uint<eta_bit_length_> eta_apuint(eta_value);
             //ap_uint<phi_bit_length_> phi_apuint(phi_value);
             uint64_t combined_value =
-                ((num_constituents_value & maskN(num_constituents_bit_length_)) << (psi_R_bit_length_ + et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
-                ((psi_R_value & maskN(psi_R_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
                 ((et_value   & maskN(et_bit_length_  )) << (eta_bit_length_ + phi_bit_length_)) |
                 ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
                 ( phi_value  & maskN(phi_bit_length_ ));
@@ -85,7 +81,7 @@ int main() {
             //std::cout << "et_bitset.to_string() : " << et_bitset.to_string() << "\n";
             // Output in the required format
             outFile << "0x" << std::setw(2) << std::setfill('0') << std::hex << iOutput
-            << " " << mergedio_bitset.to_string() << "|" << psi_R_bitset.to_string() << "|" << et_bitset.to_string() << "|" << eta_bitset.to_string() << "|" << phi_bitset.to_string()
+            << " " << et_bitset.to_string() << "|" << eta_bitset.to_string() << "|" << phi_bitset.to_string()
             << " 0x" << hexValue << std::endl; 
 
             //totalOutputJetMergedIO[iOutput] += numio_value; 
