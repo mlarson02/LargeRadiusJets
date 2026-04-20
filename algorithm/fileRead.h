@@ -12,15 +12,15 @@
 #include <cmath>
 
 // Define constants used by testbench
-const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
+const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints_v3/";
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
-const std::string kFileSuffix = "nSeeds2_r2Cut1p21_maxObj128_rMerge2p0_sig_WTAConeJetsCellsTowers_Adv_UPDATES";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p21_maxObj8_rMerge2p0_sig_WTAConeJetsCellsTowers_Adv_ValidateEmulation";
 constexpr bool signalBool_ = true;
 constexpr unsigned int jzSlice_ = 3;
 
 const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
 const std::string fileName_ =
-    signalBool_        ? "mc21_14TeV_hh_bbbb_vbf_novhh" :
+    signalBool_        ? "mc21_14TeV_HHbbbb_HLLHC" :
     (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
     (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
     (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
@@ -28,7 +28,7 @@ const std::string fileName_ =
 
 
 
-void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
+void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nTotalSeeds_]) {
     //std::cout << "SORTING BY ET!" << std::endl;
     /*for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
         //std::cout << "i: " << i << std::endl;
@@ -42,7 +42,7 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput
             }
         }
     }*/
-    for (int j = 0; j < nSeedsInput_; ++j){
+    for (int j = 0; j < nTotalSeeds_; ++j){
         //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
         //std::cout << "after sort j: " << std::dec << j << std::endl;
         sortedSeedValues[j] = seedValues[j];
@@ -63,21 +63,26 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
         return;
     }
 
-    int iEvt = -1; 
+    input zero = 0;
+    std::fill(std::begin(values), std::end(values), zero);
+    int iEvt = -1;
     std::string line;
-    input valuesForEvent[arraySize]; 
-    int lastEvent = 0; 
+    input valuesForEvent[arraySize];
+    int lastEvent = 0;
     int objectIt = -1;
     int eventNumber = -1;
+    int prevEventNumber = -1;
     while (std::getline(inFile, line)) {
         if (line.find("Event") != std::string::npos) {
             std::stringstream ss0(line);
             std::string temp;
+            prevEventNumber = eventNumber;
             ss0 >> temp >> temp >> eventNumber;
-            if (iEvt >= 0 && iEvt == eventToProcess){
+            if (iEvt >= 0 && prevEventNumber == (int)eventToProcess){
                 for (unsigned int i = 0; i < arraySize; ++i) {
                     values[i] = valuesForEvent[i];
                 }
+                break;
             }
             iEvt++;
             input zero = 0;
@@ -127,7 +132,7 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             valuesForEvent[objectIt]  = fullInput;
         }
     }
-    if (eventToProcess == maxEvent_){
+    if (eventNumber == (int)eventToProcess){
         for (unsigned int i = 0; i < arraySize; ++i) {
             values[i] = valuesForEvent[i];
         }

@@ -13,7 +13,7 @@ int main() {
     std::cout << "eta_low_: " << eta_low_ << " eta_high_ " << eta_high_ << "\n";
     std::cout << "phi_low_: " << phi_low_ << " phi_high_ " << phi_high_ << "\n";*/
     input seedValues[nTotalSeeds_]; 
-    input sortedSeedValues[nSeedsInput_];
+    input sortedSeedValues[nTotalSeeds_];
     input inputObjectValues[maxObjectsConsidered_];
     //std::cout << "nseeds output test bench: " << nSeedsOutput_ << "\n";
     //input outputJetValues[nSeedsOutput_];
@@ -23,14 +23,15 @@ int main() {
     //const bool signalBool = true;
     //const std::string fileName = signalBool ? "mc21_14TeV_hh_bbbb_vbf_novhh" : "mc21_14TeV_jj_JZ3";
     //const std::string seedFile = memPrintsPath_ + "gFex/" + fileName_ + "_gfex_smallrj.dat";
-    const std::string seedFile = memPrintsPath_ + "jFex/" + fileName_ + "_jfex_smallrj.dat";
+    // FIXME add configurability for which seeds, input objects are used!
+    const std::string seedFile = memPrintsPath_ + "GEPConeJetsCellsTowersSK/" + fileName_ + "_gepconejetscellstowerssk.dat";
     //const std::string inputObjectFile = memPrintsPath_ + "CaloTopo_422/" + fileName_ + "_topo422.dat";
-    const std::string inputObjectFile = memPrintsPath_ + "GEPBasicClusters/" + fileName_ + "_gepbasicclusters.dat";
+    const std::string inputObjectFile = memPrintsPath_ + "GEPCellsTowersSK/" + fileName_ + "_gepcellstowerssk.dat";
     std::cout << "inputObjectFile: " << inputObjectFile << "\n";
     std::cout << " seed file: " << seedFile << "\n";
     // Call the function under test
     //std::cout << "signalbool : " << signalBool_ << "\n";
-    std::string outputJetsFile = memPrintsPath_ + "largeRJetsGEPBasicClusters_DebuggingEmultion/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJets_SK_ValidateEmulation/" + fileName_ + "_largeR";
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
     //std::cout << "outputJetsFile : " << outputJetsFile << "\n";
@@ -39,9 +40,11 @@ int main() {
         std::cerr << "Error: Could not open file " << outputJetsFile << std::endl;
         return 0;
     }
-    std::cout << "rMergeConsiderCutDigitized_: " << rMergeConsiderCutDigitized_ << "\n";
+    std::cout << "digitized_d_search_squared_: " << digitized_d_search_squared_ << "\n";
     for (unsigned int iEvt = 0; iEvt < maxEvent_; iEvt++){
+        //if(iEvt != 1382) continue;
         //if (iEvt > 5) break;
+        //std::cout << "--------------------------------" << "\n";
         //std::cout << "processing event: " << iEvt << "\n";
         /*for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
             std::cout << "outputJetValues[i] before: " << outputJetValues[i] << "\n";
@@ -49,8 +52,8 @@ int main() {
             std::cout << "outputJetValues[i] after: " << outputJetValues[i] << "\n";
         }*/
         outFile << "Event : " << std::dec << iEvt << std::endl;
-        std::cout << " ---------------------------------- " << "\n";
-        std::cout << "processing event: " << std::dec << iEvt << "\n";
+        //std::cout << " ---------------------------------- " << "\n";
+        //std::cout << "processing event: " << std::dec << iEvt << "\n";
         extract_values_from_file<nTotalSeeds_ >(seedFile, seedValues, iEvt);
         //for (unsigned int i = 0; i < nTotalSeeds_; i++){
         //    std::cout << "seedValues.et: " << seedValues[i].et << " seedValues.phi: " << seedValues[i].phi << " and seedValues.eta: " << seedValues[i].eta << "\n";
@@ -62,21 +65,22 @@ int main() {
         //std::cout << "after sort!!!" << "\n";
         //fflush(stdout);
         
-        for (unsigned i = 0; i < nSeedsInput_; ++i) {
+        /*for (unsigned i = 0; i < nTotalSeeds_; ++i) {
+            //std::cout << "i: " << i << "\n";
             uint32_t w = static_cast<uint32_t>(sortedSeedValues[i]);   // or (w & 0xFFFFFFFFu)
-            //std::cout << "seedValues: 0x"
-            //        << std::setw(8) << std::setfill('0') << std::uppercase
-            //        << std::hex << w
-            //        << std::dec << std::setfill(' ') << "\n";
+            std::cout << "seedValues: 0x"
+                    << std::setw(8) << std::setfill('0') << std::uppercase
+                    << std::hex << w
+                    << std::dec << std::setfill(' ') << "\n";
         }
 
         for (unsigned j = 0; j < maxObjectsConsidered_; ++j) {
             uint32_t w = static_cast<uint32_t>(inputObjectValues[j]);
-            //std::cout << "input object value: 0x"
-            //        << std::setw(8) << std::setfill('0') << std::uppercase
-            //        << std::hex << w
-            //        << std::dec << std::setfill(' ') << "\n";
-        }
+            std::cout << "input object value: 0x"
+                    << std::setw(8) << std::setfill('0') << std::uppercase
+                    << std::hex << w
+                    << std::dec << std::setfill(' ') << "\n";
+        }*/
         output outputJetValues[nSeedsOutput_];
         //for (unsigned int i = 0; i < nSeedsOutput_; ++i) {
         //    outputJetValues[i] = 0;
@@ -84,9 +88,9 @@ int main() {
         //std::cout << "TB outputJetValues base: " << static_cast<void*>(outputJetValues) << "\n";
         //std::cout << "TB outputJetValues[0]:   " << static_cast<void*>(&outputJetValues[0]) << "\n";
         //std::cout << "TB outputJetValues[1]:   " << static_cast<void*>(&outputJetValues[1]) << "\n";
-        process_event(sortedSeedValues, inputObjectValues, outputJetValues); // top function 
+        jet_tag_adv(sortedSeedValues, inputObjectValues, outputJetValues); // top function 
         for (unsigned int iOutput = 0; iOutput < nSeedsOutput_; iOutput++){
-            unsigned long long diam_value = outputJetValues[iOutput].range(diam_high_, diam_low_).to_uint64();
+            unsigned long long numsubjets_value = outputJetValues[iOutput].range(num_subjets_high_, num_subjets_low_).to_uint64();
             unsigned long long et_value = outputJetValues[iOutput].range(et_high_, et_low_).to_uint64();  // Convert to unsigned long long
             unsigned long long eta_value = outputJetValues[iOutput].range(eta_high_, eta_low_).to_uint64();
             unsigned long long phi_value = outputJetValues[iOutput].range(phi_high_, phi_low_).to_uint64();
@@ -99,29 +103,29 @@ int main() {
             //std::cout << "et_value : " << et_value << "\n";
      
             // Convert to ap_uint
-            std::bitset<diam_bit_length_> io_bitset(diam_value); 
+            std::bitset<num_subjets_length_> io_bitset(numsubjets_value); 
             std::bitset<et_bit_length_ > et_bitset(et_value);
             std::bitset<eta_bit_length_ > eta_bitset(eta_value);
             std::bitset<phi_bit_length_ > phi_bitset(phi_value);
-            //ap_uint<diam_bit_length_> diam_apuint(diam_value);
+
             //ap_uint<et_bit_length_> et_apuint(et_value);
             //std::cout << "et_apuint : " << et_apuint << "\n";
             //ap_uint<eta_bit_length_> eta_apuint(eta_value);
             //ap_uint<phi_bit_length_> phi_apuint(phi_value);
             uint32_t combined_value =
-                ((diam_value & maskN(diam_bit_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
+                ((numsubjets_value & maskN(num_subjets_length_)) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_)) |
                 ((et_value   & maskN(et_bit_length_  )) << (eta_bit_length_ + phi_bit_length_)) |
                 ((eta_value  & maskN(eta_bit_length_ )) <<  phi_bit_length_) |
                 ( phi_value  & maskN(phi_bit_length_ ));
-            //ap_uint<total_bits_> combined_value = (ap_uint<total_bits_>(diam_apuint) << (et_bit_length_ + eta_bit_length_ + phi_bit_length_ ) | ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(et_apuint) << (eta_bit_length_ + phi_bit_length_)) | (ap_uint<et_bit_length_ + eta_bit_length_ + phi_bit_length_ >(eta_apuint) << phi_bit_length_) | phi_apuint;
-            std::cout << "total_bits_: " << std::dec << total_bits_ << "\n";
-            std::cout << "combined_value : " << std::hex << combined_value << "\n";
+
+            //std::cout << "total_bits_output_: " << std::dec << total_bits_output_ << "\n";
+            //std::cout << "combined_value : " << std::hex << combined_value << "\n";
             // Convert to hexadecimal (for the last field)
             std::stringstream hex_stream;
-            hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_ / 4) << combined_value;
+            hex_stream << std::hex << std::nouppercase << std::setfill('0') << std::setw(total_bits_output_ / 4) << combined_value;
             std::string hexValue = hex_stream.str();
 
-            std::cout << "hex_stream: " << std::hex << std::setfill('0') << std::setw(total_bits_ / 4) << hex_stream.str() << "\n";
+            //std::cout << "hex_stream: " << std::hex << std::setfill('0') << std::setw(total_bits_output_ / 4) << hex_stream.str() << "\n";
 
             //std::cout << "et_bitset.to_string() : " << et_bitset.to_string() << "\n";
             // Output in the required format

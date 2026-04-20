@@ -14,7 +14,7 @@ base_constants = {
     "nSeedsOutput_": 2,
     "maxObjectsConsidered_": 128,
     "et_granularity_": 0.125,
-    "subjet_et_threshold_": 201, # == 25 GeV 
+    "subjet_et_threshold_": 200, # == 25 GeV 
     "r2Cut_": 1.21,
     "rCut_": 1.1,
     "rMergeCut_": 2.0,
@@ -60,7 +60,7 @@ def write_file_read_header(file_path, file_suffix, signal_bool, jzSlice):
 #include <cmath>
 
 // Define constants used by testbench
-const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
+const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints_v3/";
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
 """
 
@@ -72,10 +72,12 @@ static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u
     jzSlice_line = f'constexpr unsigned int jzSlice_ = {jzSlice};\n'
 
     # Now continue with the rest of the file content
+    #mc21_14TeV_hh_bbbb_vbf_novhh
+    #mc21_14TeV_flatpT_Zprime_tthad
     remaining_content = """
 const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
 const std::string fileName_ =
-    signalBool_        ? "mc21_14TeV_hh_bbbb_vbf_novhh" :
+    signalBool_        ? "mc21_14TeV_HHbbbb_HLLHC" :
     (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
     (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
     (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
@@ -83,7 +85,7 @@ const std::string fileName_ =
 
 
 
-void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput_]) {
+void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nTotalSeeds_]) {
     //std::cout << "SORTING BY ET!" << std::endl;
     /*for (int i = 0; i < nTotalSeeds_ - 1; ++i) {
         //std::cout << "i: " << i << std::endl;
@@ -97,7 +99,7 @@ void sortByEt(input seedValues[nTotalSeeds_], input sortedSeedValues[nSeedsInput
             }
         }
     }*/
-    for (int j = 0; j < nSeedsInput_; ++j){
+    for (int j = 0; j < nTotalSeeds_; ++j){
         //std::cout << "seedValues[j]: " << std::hex << seedValues[j] << std::endl;
         //std::cout << "after sort j: " << std::dec << j << std::endl;
         sortedSeedValues[j] = seedValues[j];
@@ -118,21 +120,26 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
         return;
     }
 
-    int iEvt = -1; 
+    input zero = 0;
+    std::fill(std::begin(values), std::end(values), zero);
+    int iEvt = -1;
     std::string line;
-    input valuesForEvent[arraySize]; 
-    int lastEvent = 0; 
+    input valuesForEvent[arraySize];
+    int lastEvent = 0;
     int objectIt = -1;
     int eventNumber = -1;
+    int prevEventNumber = -1;
     while (std::getline(inFile, line)) {
         if (line.find("Event") != std::string::npos) {
             std::stringstream ss0(line);
             std::string temp;
+            prevEventNumber = eventNumber;
             ss0 >> temp >> temp >> eventNumber;
-            if (iEvt >= 0 && iEvt == eventToProcess){
+            if (iEvt >= 0 && prevEventNumber == (int)eventToProcess){
                 for (unsigned int i = 0; i < arraySize; ++i) {
                     values[i] = valuesForEvent[i];
                 }
+                break;
             }
             iEvt++;
             input zero = 0;
@@ -182,7 +189,7 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             valuesForEvent[objectIt]  = fullInput;
         }
     }
-    if (eventToProcess == maxEvent_){
+    if (eventNumber == (int)eventToProcess){
         for (unsigned int i = 0; i < arraySize; ++i) {
             values[i] = valuesForEvent[i];
         }
@@ -261,11 +268,14 @@ constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
+constexpr unsigned int deltaR2_shift_ = 6;  // right-shift applied to raw deltaR2 before comparison
+constexpr unsigned int deltaR2_bits_  = 10; // bit width of the shifted (truncated) deltaR2 result
 constexpr double deltaR2_granularity_ = eta_granularity_ * eta_granularity_; // FIXME THIS SHOULD BE EQUIVALENT TO SQUARING PHI_GRANULARITY_ - maybe add an exception if they are not the same
+constexpr double deltaR2_granularity_scaled_ = deltaR2_granularity_ * (1 << deltaR2_shift_); // effective granularity after right-shift by deltaR2_shift_
 
-constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
+constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_scaled_ + 0.5); //+ 0.5 for correct rounding
 
-constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_))/deltaR2_granularity_);
+constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_)/(deltaR2_granularity_scaled_)) + 0.5);
 
         ''')
 
@@ -282,7 +292,7 @@ if __name__ == "__main__":
     r2Cut_options = [1.21]
     #r2Cut_options = [1.44]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    maxObjectsConsidered_options = [10, 128]
+    maxObjectsConsidered_options = [8]
     #maxObjectsConsidered_options = [128]
     rMergeCut_options = [2.0]
     #rMergeCut_options = [3.5]
@@ -350,7 +360,7 @@ if __name__ == "__main__":
                                 f"maxObj{maxObjectsConsidered}_"
                                 f"rMerge{rMergeCut_str}_"
                                 f"{signal_str}"
-                                "_WTAConeJetsCellsTowers_Adv_UPDATES"
+                                "_WTAConeJetsCellsTowers_Adv_ValidateEmulation"
                             )
                             print(f"Launching HLS with project name: {file_suffix}")
 

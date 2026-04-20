@@ -13,7 +13,7 @@ int main() {
     const std::string inputObjectFile = memPrintsPath_ + "GEPConeJetsCellsTowersSK/" + fileName_ + "_gepconejetscellstowerssk.dat";
     std::cout << "inputObjectFile: " << inputObjectFile << "\n";
     // Call the function under test
-    std::string outputJetsFile = memPrintsPath_ + "largeRJets_SK/" + fileName_ + "_largeR";
+    std::string outputJetsFile = memPrintsPath_ + "largeRJets_SK_ValidateEmulation/" + fileName_ + "_largeR";
     
     outputJetsFile += kFileSuffix; 
     outputJetsFile += ".dat";
@@ -35,10 +35,10 @@ int main() {
 
         for (unsigned j = 0; j < maxObjectsConsidered_; ++j) {
             uint32_t w = static_cast<uint32_t>(inputObjectValues[j]);
-            //std::cout << "input object value: 0x"
-            //        << std::setw(8) << std::setfill('0') << std::uppercase
-            //        << std::hex << w
-            //        << std::dec << std::setfill(' ') << "\n";
+            std::cout << "input object value: 0x"
+                    << std::setw(8) << std::setfill('0') << std::uppercase
+                    << std::hex << w
+                    << std::dec << std::setfill(' ') << "\n";
         }
         output outputJetValues[nSeedsOutput_];
 

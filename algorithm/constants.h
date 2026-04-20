@@ -15,17 +15,17 @@ constexpr unsigned int inputEnergyCut_ = 1;
 #define useInputEnergyCut_ false
 constexpr double et_granularity_ = 0.125;
 constexpr double r2Cut_ = 1.21;
-constexpr double rCut_ = 1.0;
+constexpr double rCut_ = 1.1;
 constexpr double rMergeCut_ = 0.001;
 constexpr unsigned int et_bit_length_ = 13;
 constexpr unsigned int eta_bit_length_ = 10;
-constexpr unsigned int eta_range_ = 800;
+constexpr unsigned int eta_range_ = 784;
 constexpr unsigned int phi_bit_length_ = 9;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
 constexpr unsigned int pi_digitized_in_phi_ = 251;
-constexpr double eta_min_ = -5.0;
-constexpr double eta_max_ = 5.0;
+constexpr double eta_min_ = -4.9;
+constexpr double eta_max_ = 4.9;
 constexpr double eta_granularity_ = 0.0125;
 constexpr double phi_granularity_ = 0.0125;
 constexpr double deltaR2_granularity_ = 0.00015625;
@@ -36,7 +36,7 @@ constexpr unsigned int max_R2lut_size_ = 45056;
 constexpr unsigned int max_Rlut_size_ = 1;
 constexpr double deltaR_max_ = 10.48187;
 constexpr unsigned int deltaR_bits_ = 8;
-constexpr unsigned int max_R_8b_lut_size_ = 40960;
+constexpr unsigned int max_R_8b_lut_size_ = 45056;
 constexpr double phi_range_ = 6.4;
 
 
@@ -65,7 +65,7 @@ constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
-constexpr unsigned int digitized_delta_R_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
+constexpr unsigned int digitized_delta_R2_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
 
 static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2LUT.h"

@@ -34,27 +34,34 @@ void jet_tag(input inputObjectValues[maxObjectsConsidered_], output (&outputJetV
         ap_uint<eta_bit_length_ > seedEta = inputObjectValues[iSeed].range(eta_high_, eta_low_);
         ap_uint<phi_bit_length_ > seedPhi = inputObjectValues[iSeed].range(phi_high_, phi_low_);
         ap_uint<et_bit_length_ > outputJetEt = inputObjectValues[iSeed].range(et_high_, et_low_);
+        std::cout << "inputObjectValues[iSeed]: " << inputObjectValues[iSeed] << "\n";
+        std::cout << "et_high_: " << et_high_ << " , et_low_: " << et_low_ << "\n";
+        std::cout << "outputJetet: " << outputJetEt << "\n";
         //#pragma HLS ARRAY_PARTITION variable=seedEta complete //dim=0
         //#pragma HLS ARRAY_PARTITION variable=seedPhi complete //dim=0
         //#pragma HLS ARRAY_PARTITION variable=outputJetEt complete //dim=0
-        //std::cout << "----------------------------- " << "\n";
-        //std::cout << "iSeed : "<< iSeed << "\n";
-        //std::cout << "seed eta: " << seedEta << "\n";
-        //std::cout << "seed phi: " << seedPhi << "\n";
+        std::cout << "----------------------------- " << "\n";
+        std::cout << "iSeed : "<< iSeed << "\n";
+        std::cout << "seed eta: " << seedEta << "\n";
+        std::cout << "seed phi: " << seedPhi << "\n";
+        std::cout << "seed et: " << inputObjectValues[iSeed].range(et_high_, et_low_) << "\n";
 
         for (unsigned int iInput = nSeedsOutput_; iInput < maxObjectsConsidered_; ++iInput){ // loop through input objects to consider merging
             #pragma HLS unroll
-            //std::cout << "iInput: " << iInput << "\n";
+            std::cout << "iInput: " << iInput << "\n";
             
             ap_uint<eta_bit_length_ > inputEta = inputObjectValues[iInput].range(eta_high_, eta_low_);
             ap_uint<phi_bit_length_ > inputPhi = inputObjectValues[iInput].range(phi_high_, phi_low_);
             ap_uint<et_bit_length_ > inputEt = inputObjectValues[iInput].range(et_high_, et_low_);
-            //std::cout << "inputEta : " << inputEta << "\n";
-            //std::cout << "inputPhi: " << inputPhi << "\n";
+            std::cout << "inputEta : " << inputEta << "\n";
+            std::cout << "inputPhi: " << inputPhi << "\n";
+            std::cout << "inputEt: "  << inputEt << "\n";
             // Calculate signed differences (deltaEta and deltaPhi)
-            ap_int<eta_bit_length_> deltaEta = seedEta - inputEta;
-            ap_int<phi_bit_length_> deltaPhi = seedPhi - inputPhi;
-            
+            // +1 bit to hold full signed range (ap_uint<N> - ap_uint<N> needs N+1 signed bits)
+            // and to make the sign-bit access [eta_bit_length_] valid on ap_int<eta_bit_length_+1>
+            ap_int<eta_bit_length_ + 1> deltaEta = seedEta - inputEta;
+            ap_int<phi_bit_length_ + 1> deltaPhi = seedPhi - inputPhi;
+
             //std::cout << "deltaEta : " << deltaEta << "\n";
             //std::cout << "deltaPhi: " << deltaPhi << "\n";
             //#pragma HLS ARRAY_PARTITION variable=inputEta complete //dim=0
@@ -80,18 +87,22 @@ void jet_tag(input inputObjectValues[maxObjectsConsidered_], output (&outputJetV
             //std::cout << "max_R2lut_size_ : " << max_R2lut_size_ << "\n";
             //#pragma HLS ARRAY_PARTITION variable=lut_index complete //dim=0, FIXME map pairs of just deltaEta, deltaPhi --> 0, 1
             //if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
-            if(deltaR2 < digitized_delta_R_){ // 7688 comes from 62^2 + 62^2 which using granularity of 0.0125 for eta and phi passes R^2 < 1.21 
-                //std::cout << "merge io " << "\n";
+            std::cout << "deltaR2 : " << deltaR2 << " , digitized_delta_R2_: " << digitized_delta_R2_ << "\n";
+            if(deltaR2 <= digitized_delta_R2_){ // 7688 comes from 62^2 + 62^2 which using granularity of 0.0125 for eta and phi passes R^2 < 1.21 
+                
+                std::cout << "merge io " << "\n";
                 if(outputJetEt + inputEt >= ((1 << (et_bit_length_)) - 1)){
+                    std::cout << "clamping to max Et" << "\n";
                     outputJetEt = ((1 << (et_bit_length_)) - 1); // if would exceed max Et, set equal to max Et and break out of input object loop
                 //    break; // br
                 } 
                 else{
+                    std::cout << "output jet et incremented by: " << inputEt << "\n";
                     outputJetEt += inputEt; // add input object Et to seed Et for resultant output jet Et
                 }
             }
         }
-
+        std::cout << "final outputJetEt: " << outputJetEt << "\n";
         outputJetValues[iSeed].range(padded_zeroes_high_, padded_zeroes_low_) = 0; 
         outputJetValues[iSeed].range(et_high_, et_low_) = outputJetEt;
         outputJetValues[iSeed].range(eta_high_, eta_low_) = seedEta;
@@ -186,7 +197,7 @@ void jet_tag(hls::stream<input_t>  &in,
 #pragma HLS bind_op variable=deltaR2 op=mul impl=dsp
 
             // Same deltaR^2 cut as non-FIFO version
-            if (deltaR2 < digitized_delta_R_) {
+            if (deltaR2 < digitized_delta_R2_) {
                 if (outputJetEt + inputEt >= ((1 << et_bit_length_) - 1)) {
                     outputJetEt = ((1 << et_bit_length_) - 1);
                 } else {

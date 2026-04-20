@@ -30,13 +30,13 @@ base_constants = {
     "rMergeCut_": 5.0,
     "et_bit_length_": 13,
     "eta_bit_length_": 10,
-    "eta_range_": 800, 
+    "eta_range_": 784, 
     "phi_bit_length_": 9,
     "phi_min_": -3.2,
     "phi_max_": 3.2,
     "pi_digitized_in_phi_": 251, # rounding 3.1415/0.0125
-    "eta_min_": -5.0,
-    "eta_max_": 5.0,
+    "eta_min_": -4.9,
+    "eta_max_": 4.9,
     "eta_granularity_": 0.0125,
     "phi_granularity_": 0.0125, # fixme these should be calculated from range and bit length not hard-coded!
     "deltaR2_granularity_": 0.00015625,
@@ -154,7 +154,7 @@ def write_file_read_header(file_path, file_suffix, signal_bool, jzSlice):
 #include <cmath>
 
 // Define constants used by testbench
-const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints/";
+const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints_v2/";
 const std::string lutPath_ = "/home/larsonma/LargeRadiusJets/data/LUTs/deltaR2Cut.dat";
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
 """
@@ -165,12 +165,13 @@ static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u
     signal_bool_line = f'constexpr bool signalBool_ = {"true" if signal_bool else "false"};\n'
 
     jzSlice_line = f'constexpr unsigned int jzSlice_ = {jzSlice};\n'
-
+    #mc21_14TeV_HHbbbb_HLLHC
+    #mc21_14TeV_flatpT_Zprime_tthad
     # Now continue with the rest of the file content
     remaining_content = """
-const unsigned int maxEvent_ = signalBool_ ? 100 : 100;
+const unsigned int maxEvent_ = signalBool_ ? 10000 : 10000;
 const std::string fileName_ =
-    signalBool_        ? "mc21_14TeV_HHbbbb_HLLHC" :
+    signalBool_        ? "mc21_14TeV_flatpT_Zprime_tthad" :
     (jzSlice_ == 2)    ? "mc21_14TeV_jj_JZ2" :
     (jzSlice_ == 3)    ? "mc21_14TeV_jj_JZ3" :
     (jzSlice_ == 4)    ? "mc21_14TeV_jj_JZ4" :
@@ -213,21 +214,26 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
         return;
     }
 
-    int iEvt = -1; 
+    input zero = 0;
+    std::fill(std::begin(values), std::end(values), zero);
+    int iEvt = -1;
     std::string line;
-    input valuesForEvent[arraySize]; 
-    int lastEvent = 0; 
+    input valuesForEvent[arraySize];
+    int lastEvent = 0;
     int objectIt = -1;
     int eventNumber = -1;
+    int prevEventNumber = -1;
     while (std::getline(inFile, line)) {
         if (line.find("Event") != std::string::npos) {
             std::stringstream ss0(line);
             std::string temp;
+            prevEventNumber = eventNumber;
             ss0 >> temp >> temp >> eventNumber;
-            if (iEvt >= 0 && iEvt == eventToProcess){
+            if (iEvt >= 0 && prevEventNumber == (int)eventToProcess){
                 for (unsigned int i = 0; i < arraySize; ++i) {
                     values[i] = valuesForEvent[i];
                 }
+                break;
             }
             iEvt++;
             input zero = 0;
@@ -277,7 +283,7 @@ inline void extract_values_from_file(const std::string& fileName, input (&values
             valuesForEvent[objectIt]  = fullInput;
         }
     }
-    if (eventToProcess == maxEvent_){
+    if (eventNumber == (int)eventToProcess){
         for (unsigned int i = 0; i < arraySize; ++i) {
             values[i] = valuesForEvent[i];
         }
@@ -357,7 +363,7 @@ constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
-constexpr unsigned int digitized_delta_R_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_);
+constexpr unsigned int digitized_delta_R2_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_ + 0.5);
 
 static const bool lut_[max_R2lut_size_] =
 #include "../data/LUTs/deltaR2LUT.h"
@@ -424,6 +430,7 @@ if __name__ == "__main__":
                                         constants = base_constants.copy()
                                         constants["nSeedsOutput_"] = nSeeds
                                         constants["r2Cut_"] = r2Cut
+                                        constants["rCut_"] = math.sqrt(r2Cut)
                                         constants["rMergeCut_"] = rMergeCut
                                         constants["maxObjectsConsidered_"] = maxObjectsConsidered
                                         constants["sortSeeds_"] = sortSeeds
@@ -501,7 +508,7 @@ if __name__ == "__main__":
                                             f"maxObj{maxObjectsConsidered}_"
                                             f"{rMergeCut_str}"
                                             f"{signal_str}"
-                                            "_ConeJetsCellsTowers_DSPs_FIFO"
+                                            "_WTAConeJetsCellsTowers_ValidateEmulation"
                                             #f"{energyCutBool_str}_"
                                             #f"ecutVal{energyCut_str}"
                                         )
