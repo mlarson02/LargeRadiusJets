@@ -79,9 +79,12 @@ const double sumOfEventWeightsByJZSlice[nJZSlices] = {10000.0,                //
                                                       3.274964361399163e-09}; // JZ9 
 
 // Helper to construct memprint / test vector filenames
-inline OutputFiles makeMemPrintFilenames(std::string signalString, bool signalBool, int jzSlice) {
-    static const std::string base = "/data/larsonma/LargeRadiusJets/MemPrints/";
-
+inline OutputFiles makeMemPrintFilenames(std::string signalString, bool signalBool, int jzSlice, unsigned int algoVersion) {
+    std::string base = "/data/larsonma/LargeRadiusJets/MemPrints";
+    if(algoVersion == 2) base = "/data/larsonma/LargeRadiusJets/MemPrints_v2/";
+    else if(algoVersion == 3) base = "/data/larsonma/LargeRadiusJets/MemPrints_v3/";
+     
+    std::cout << "BASE BEING USED FOR MEMPRINTS: " << base << "\n";
     std::string tag;
     if (signalBool) {
         if(signalString == "VBF_hh_bbbb") tag = "mc21_14TeV_hh_bbbb_vbf_novhh"; 
@@ -131,8 +134,11 @@ std::string makeFileDir(std::string signalString, bool signalBool, int jzSlice) 
 }
 
 // Helper function to get output ntuple file name
-TString makeOutputFileName(std::string signalString, bool signalBool, int jzSlice) {
-    static const TString outDir = "outputRootFiles/";
+TString makeOutputFileName(std::string signalString, bool signalBool, int jzSlice, unsigned int algoVersion) {
+    TString outDir;
+    if(algoVersion == 2) outDir = "outputRootFiles/v2/";
+    else if(algoVersion == 3) outDir = "outputRootFiles/v3/";
+   
     if(signalBool){
         if(signalString == "VBF_hh_bbbb") return outDir + "mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_DAOD_NTUPLE_GEP.root";
         else if (signalString == "ggF_hh_bbbb") return outDir + "mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_DAOD_NTUPLE_GEP.root";
@@ -150,8 +156,10 @@ TString makeOutputFileName(std::string signalString, bool signalBool, int jzSlic
  
 }
 
-
-unsigned int digitize(double value, int bit_length, double min_val, double max_val) {
+unsigned int digitize(double value, int bit_length, double min_val, double max_val, unsigned int altRange = 0) {
+    unsigned int range = (altRange == 0) ? (1u << bit_length) : altRange;
+    double scale = double(range) / (max_val - min_val);
+    //std::cout << "max_val - scale; " << max_val - (1/scale) << "\n";
     // Check if value is in range
     if (value < min_val) {
         value = min_val;
@@ -159,14 +167,10 @@ unsigned int digitize(double value, int bit_length, double min_val, double max_v
         //  << " is out of range (" << min_val
         //  << ", " << max_val << ")\n";
     }
-    if (value > max_val){
-        value = max_val;
-        //std::cout << "Warning: Value " << value
-        //  << " is out of range (" << min_val
-        //  << ", " << max_val << ")\n";
+    if (value >= max_val){
+        return range - 1;
     }
 
-    double scale = (std::pow(2, bit_length) - 1) / (max_val - min_val);
     return static_cast<unsigned int>(std::round((value - min_val) * scale));
 }
 
@@ -204,7 +208,7 @@ void find_non_higgs_daughters(const xAOD::TruthParticle* particle,
 
 
 // Main function
-void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3) {
+void nTupler(bool signalBool, std::string signalString, unsigned int etaAltRange, unsigned int algoVersion, unsigned int jzSlice = 3) {
     //ServiceHandle<StoreGateSvc> inputMetaStore("StoreGateSvc/InputMetaDataStore","");
     // Setup file paths based on whether processing signal or background, and vbf production or ggF production
     std::string fileDir =  makeFileDir(signalString, signalBool, jzSlice);
@@ -212,7 +216,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
     //xAOD::Init().ignore();
 
     // pick filenames
-    OutputFiles out = makeMemPrintFilenames(signalString, signalBool, jzSlice);
+    OutputFiles out = makeMemPrintFilenames(signalString, signalBool, jzSlice, algoVersion);
 
     // open streams
     std::ofstream f_topotower(out.caloTopoTowers);
@@ -234,7 +238,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
         // handle error or return
     }
 
-    TString outputFileName = makeOutputFileName(signalString, signalBool, jzSlice);
+    TString outputFileName = makeOutputFileName(signalString, signalBool, jzSlice, algoVersion);
     
     // Create ROOT output file
     TFile* outputFile = new TFile(outputFileName, "RECREATE");
@@ -310,7 +314,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
     //std::vector<double> truthVBFQuarkValues, truthVBFQuarkEnergyValues, truthVBFQuarkpTValues, truthVBFQuarkpxValues, truthVBFQuarkpyValues, truthVBFQuarkpzValues, truthVBFQuarkEtaValues, truthVBFQuarkPhiValues;
 
     std::vector<unsigned int> topIndexValues, indexOfTopValues;
-    std::vector<double> truthTopEtValues, truthTopEnergyValues, truthToppTValues, truthHiggsEtaValues, truthHiggsPhiValues;
+    std::vector<double> truthTopEtValues, truthTopEnergyValues, truthToppTValues, truthTopEtaValues, truthTopPhiValues;
     // Tower / cluster vectors
     std::vector<double> caloTopoTowerEtValues, caloTopoTowerEtaValues, caloTopoTowerPhiValues;
     std::vector<double> gepBasicClustersEtValues, gepBasicClustersEtaValues, gepBasicClustersPhiValues;
@@ -956,7 +960,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
             
             
 
-            if ((iEvt % 1000) == 0) std::cout << "iEvt: " << iEvt << "\n";
+            std::cout << "iEvt: " << iEvt << "\n";
             
 
             // -- retrieve collections from DAOD ---
@@ -1231,21 +1235,21 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
             double eventWeight = mcEventWeight * crossSectionsByJZSlice[jzSlice] * filterEffienciesByJZSlice[jzSlice] * reweightLuminosity / (sumOfEventWeightsByJZSlice[jzSlice]);
             eventWeights.push_back(eventWeight);
             
-            std::cout << "----------------- processing event --------------------------" << "\n";
-            std::cout << "iEvt: " << iEvt << "\n";
+            //std::cout << "----------------- processing event --------------------------" << "\n";
+            //std::cout << "iEvt: " << iEvt << "\n";
             for(const auto& el : *TruthTop){
-                std::cout << "----------------- looping within TruthTop ------------------- " << "\n";
-                std::cout << "particle pdg id : " << el->pdgId() << " , and status: " << el->status() << "\n";
-                std::cout << "particle pT: " << el->pt() / 1000.0 << "\n";
-                std::cout << "particle number of children: " << el->nChildren() << "\n";
+                //std::cout << "----------------- looping within TruthTop ------------------- " << "\n";
+                //std::cout << "particle pdg id : " << el->pdgId() << " , and status: " << el->status() << "\n";
+                //std::cout << "particle pT: " << el->pt() / 1000.0 << "\n";
+                //std::cout << "particle number of children: " << el->nChildren() << "\n";
                 for (unsigned int i = 0; i < el->nChildren(); ++i) {
-                    std::cout << " particle child iterator i: " << i << "\n";
-                    std::cout << "pdg of particle child: " << el->child(i)->pdgId() << "\n";
-                    if(abs(el->child(i)->pdgId()) == 6) std::cout << "b pT: " << el->child(i)->pt() << "\n";
-                    if(abs(el->child(i)->pdgId()) == 24) std::cout << "W pT: " << el->child(i)->pt() << "\n";
+                    //std::cout << " particle child iterator i: " << i << "\n";
+                    //std::cout << "pdg of particle child: " << el->child(i)->pdgId() << "\n";
+                    //if(abs(el->child(i)->pdgId()) == 6) std::cout << "b pT: " << el->child(i)->pt() << "\n";
+                    //if(abs(el->child(i)->pdgId()) == 24) std::cout << "W pT: " << el->child(i)->pt() << "\n";
                     
                 }
-                if(el->pdgId() == 6) std::cout << "top quark within TruthHFWithDecayParticles " << "\n";
+                //if(el->pdgId() == 6) std::cout << "top quark within TruthHFWithDecayParticles " << "\n";
                 
             }
             /*for(const auto& el : *TruthHFWithDecayParticles){
@@ -1381,7 +1385,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                 // Digitize each variable
                 int phi_bin = digitize(gepBasicClusterPhi, phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(gepBasicClusterEta, eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(gepBasicClusterEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(gepBasicClusterEt, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                                         
@@ -1423,7 +1427,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                 // Digitize each variable
                 int phi_bin = digitize(gepBasicClusterSKPhi, phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(gepBasicClusterSKEta, eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(gepBasicClusterSKEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(gepBasicClusterSKEt, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                                         
@@ -1474,13 +1478,13 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                     // Digitize
                     int phi_bin = digitize(gepCellsTowersPhiValue, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(gepCellsTowersEtaValue, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(gepCellsTowersEtaValue, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                     int et_bin  = digitize(gepCellsTowersEtValue,  et_bit_length_,
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
 
                     int et_bin_sort_purposes = digitize(gepCellsTowersEtValue, 12, static_cast<double>(et_min_), static_cast<double>(et_max_));
                     int phi_bin_sort_purposes = digitize(gepCellsTowersPhiValue, 6, phi_min_, phi_max_);
-                    int eta_bin_sort_purposes = digitize(gepCellsTowersEtValue, 7, static_cast<double>(et_min_), static_cast<double>(et_max_));
+                    int eta_bin_sort_purposes = digitize(gepCellsTowersEtValue, 7, static_cast<double>(et_min_), static_cast<double>(et_max_), etaAltRange);
                     int error_bin_sort_purposes = digitize(0, 7, 0, 1 << 7);
 
                     // Build binary string
@@ -1555,7 +1559,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                     // Digitize
                     int phi_bin = digitize(gepCellsTowersSKPhiValue, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(gepCellsTowersSKEtaValue, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(gepCellsTowersSKEtaValue, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                     int et_bin  = digitize(gepCellsTowersSKEtValue,  et_bit_length_,
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
                     
@@ -1597,7 +1601,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                 // Digitize each variable
                 int phi_bin = digitize(cluster->phi(), phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(cluster->eta(), eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(cluster->eta(), eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                                         
@@ -1636,7 +1640,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
                 if (et < 0) continue; // FIXME for now don't store negative Et to digitized memories
                 // Digitize each variable
                 int phi_bin = digitize(cluster->phi(), phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(cluster->eta(), eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(cluster->eta(), eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
 
@@ -1703,10 +1707,12 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
                     if (WTAConeCellsTowersJetspT < 0) continue;
 
                     int phi_bin = digitize(WTAConeCellsTowersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(WTAConeCellsTowersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(WTAConeCellsTowersJetsEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                     int pt_bin  = digitize(WTAConeCellsTowersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
-
+                    //std::cout << "WTA pT [GeV]: " << WTAConeCellsTowersJetspT << "\n";
+                    //std::cout << "WTA pT bin: " << pt_bin << "\n";
+                    //std::cout << "et bit length: " << et_bit_length_ << " , et min: " << et_min_ << " , et max: " << et_max_ << "\n"; 
                     std::stringstream binary_ss;
                     binary_ss << std::bitset<et_bit_length_>(pt_bin)  << "|"
                             << std::bitset<eta_bit_length_>(eta_bin) << "|"
@@ -1729,6 +1735,8 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
             }
 
             // GEP cone jets from GEPCellsTowers with SoftKiller PU Suppression applied
+            //std::cout << "gepWTAConeCellsTowersSKJetsPt->size(): " << gepWTAConeCellsTowersSKJetsPt->size() << "\n";
+            if(gepWTAConeCellsTowersSKJetsPt->size() == 0) std::cout << "NO WTA CONE JETS FOR THIS EVENT!" << "\n";
             {
                 std::vector<unsigned int> indices(gepWTAConeCellsTowersSKJetsPt->size());
                 std::iota(indices.begin(), indices.end(), 0);
@@ -1765,7 +1773,10 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
                     if (WTAConeCellsTowersSKJetspT < 0) continue; // don't want to skip over  == 0 Et cone jets 
 
                     int phi_bin = digitize(WTAConeCellsTowersSKJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(WTAConeCellsTowersSKJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(WTAConeCellsTowersSKJetsEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
+                    //std::cout << "WTAConeCellsTowersSKJetsEta: " << WTAConeCellsTowersSKJetsEta << " , eta_bit_length_: " << eta_bit_length_ << "\n";
+                    //std::cout << "eta min: " << eta_min_ << " , eta_max_: " << eta_max_ << " , etaAltRange: " << etaAltRange << "\n";
+                    //std::cout << "eta_bin: " << eta_bin << "\n";
                     int pt_bin  = digitize(WTAConeCellsTowersSKJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
 
@@ -1828,7 +1839,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
                     if (coneWTAGEPBasicClustersJetspT < 0) continue;
 
                     int phi_bin = digitize(coneWTAGEPBasicClustersJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(coneWTAGEPBasicClustersJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(coneWTAGEPBasicClustersJetsEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                     int pt_bin  = digitize(coneWTAGEPBasicClustersJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
 
@@ -1891,7 +1902,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
                     if (coneWTAGEPBasicClustersSKJetspT < 0) continue;
 
                     int phi_bin = digitize(coneWTAGEPBasicClustersSKJetsPhi, phi_bit_length_, phi_min_, phi_max_);
-                    int eta_bin = digitize(coneWTAGEPBasicClustersSKJetsEta, eta_bit_length_, eta_min_, eta_max_);
+                    int eta_bin = digitize(coneWTAGEPBasicClustersSKJetsEta, eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                     int pt_bin  = digitize(coneWTAGEPBasicClustersSKJetspT,  et_bit_length_, // digitize the pT the same as E_T would be digitized
                                         static_cast<double>(et_min_), static_cast<double>(et_max_));
 
@@ -1948,7 +1959,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                 // Digitize each variable
                 int phi_bin = digitize(jet->phi(), phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(jet->eta(), eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(jet->eta(), eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                                         
@@ -2062,7 +2073,7 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
 
                 // Digitize each variable
                 int phi_bin = digitize(jet->phi(), phi_bit_length_, phi_min_, phi_max_);
-                int eta_bin = digitize(jet->eta(), eta_bit_length_, eta_min_, eta_max_);
+                int eta_bin = digitize(jet->eta(), eta_bit_length_, eta_min_, eta_max_, etaAltRange);
                 int et_bin  = digitize(et, et_bit_length_,
                               static_cast<double>(et_min_), static_cast<double>(et_max_));
                                         
@@ -2421,23 +2432,52 @@ void nTupler(bool signalBool, std::string signalString, unsigned int jzSlice = 3
     subleadingTruthAntiKt4TruthDressedWZJets->Write("", TObject::kOverwrite);
     outputFile->Close();
     std::cout << "Processing complete." << endl;
-    std::cout << "higgsPassEventCounter: " << higgsPassEventCounter << "\n";
+    //std::cout << "higgsPassEventCounter: " << higgsPassEventCounter << "\n";
 } // ntupler function
 
 // processes all jzSlices + signal
 void LRJNTupler(){
     //gSystem->Load("libxAODRootAccess");
     //xAOD::Init().ignore();
+    
+
     gSystem->RedirectOutput("NTupler.log", "w");
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<unsigned int > jzSlices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<unsigned int > algoVersions = {3}; // FIXME algo version needs to control eta, phi bit widths too! otherwise can't loop through them and do this all in one run
     //std::vector<unsigned int > jzSlices = {3};
     std::vector<std::string > jzOutputFilenames;
-    for(auto jzSlice : jzSlices){
-        //nTupler(false, true, jzSlice); // call for each background jzSlice
-        TString out = makeOutputFileName("", false, jzSlice);
-        jzOutputFilenames.push_back(out.Data());
+
+    for(auto algoVersion : algoVersions){
+        unsigned int etaAltRange = 0;
+        if(algoVersion == 2){
+            etaAltRange = 784;
+        }
+        if(algoVersion == 3){
+            etaAltRange = 98;
+        }
+        //nTupler(true, "VBF_hh_bbbb", etaAltRange, algoVersion); // call for signal (hh->4b VBF)
+        nTupler(true, "ggF_hh_bbbb", etaAltRange, algoVersion); // call for signal (hh->4b ggF)
+        //nTupler(true, "ZvvHbb", etaAltRange, algoVersion); // call for signal Z -> nu nu H -> bb
+        //nTupler(true, "ttbar_had", etaAltRange, algoVersion); // call for sigal ttbar fully hadronic decays
+        //nTupler(true, "Zprime_ttbar", etaAltRange, algoVersion); // call for signal Zprime -> ttbar (hadronic), flat in pT
     }
+
+    /*for(auto jzSlice : jzSlices){
+        for(auto algoVersion : algoVersions){
+            unsigned int etaAltRange = 0;
+            if(algoVersion == 2){
+                etaAltRange = 784; // = 9.8 / 0.0125
+            }
+            if(algoVersion == 3){
+                etaAltRange = 98; // = 9.8 / 0.1
+            }
+            nTupler(false, "", etaAltRange, algoVersion, jzSlice); // call for each background jzSlice
+            TString out = makeOutputFileName("", false, jzSlice, algoVersion);
+            jzOutputFilenames.push_back(out.Data());
+        }
+        
+    }*/
 
     // FIXME allow hadd to work automatically 
     //std::ostringstream cmd;
@@ -2447,12 +2487,7 @@ void LRJNTupler(){
     //if (rc != 0) {
     //    Error("callNTupler", "hadd failed with code %d", rc);
     //}
-
-    nTupler(true, "VBF_hh_bbbb"); // call for signal (hh->4b VBF)
-    //nTupler(true, "ggF_hh_bbbb"); // call for signal (hh->4b ggF)
-    //nTupler(true, "ZvvHbb"); // call for signal Z -> nu nu H -> bb
-    //nTupler(true, "ttbar_had"); // call for sigal ttbar fully hadronic decays
-    //nTupler(true, "Zprime_ttbar"); // call for signal Zprime -> ttbar (hadronic), flat in pT
+    
     for(auto jzOutputFileName : jzOutputFilenames){ // for manual hadd'ing into a combined JZ slice ntuple for now
         std::cout << jzOutputFileName << "\n";
     }

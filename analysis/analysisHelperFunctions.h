@@ -44,6 +44,7 @@ struct FileInfo {
     std::string rMergeValue;
 
     double jetRadiusSquared = 0.0;  // NEW FIELD
+    bool useSoftKiller = false;
 };
 
 std::string getSampleTag(const std::string& path) {
@@ -92,7 +93,7 @@ FileInfo ParseFileName(const std::string& path)
     const std::string r2Tag     = "_R2_";   // NEW TAG
 
     const std::string ext1      = ".root";
-    const std::string ext2      = "_OR.root";
+    const std::string ext2      = "_v3.root";
 
     // ----------------------------
     // Find tags
@@ -135,19 +136,22 @@ FileInfo ParseFileName(const std::string& path)
     }
 
     // ----------------------------
-    // Extract inputObjectType
+    // Extract inputObjectType from IO tag
     // ----------------------------
     {
         const size_t startInput = posIO + ioTag.size();
         const size_t lenInput   = posSeed - startInput;
-        std::string inputObjType;
-        if(path.substr(startInput, lenInput) == "gepWTAConeCellsTowersJets") inputObjType = "ConeJets";
-        else if(path.substr(startInput, lenInput) == "gepCellsTowers") inputObjType = "Towers";
-        info.inputObjectType = inputObjType;
+        std::string rawIO = path.substr(startInput, lenInput);
+        if(rawIO == "gepWTAConeCellsTowersJets" || rawIO == "gepWTAConeCellsTowersSKJets") {
+            info.inputObjectType = "ConeJets";
+        } else if(rawIO == "gepCellsTowers" || rawIO == "gepCellsTowersSK") {
+            info.inputObjectType = "Towers";
+        }
     }
 
     // ----------------------------
-    // Extract seedObjectType
+    // Extract seedObjectType and useSoftKiller
+    // (_SK in seed name = SoftKiller on; _NoSK = off)
     // ----------------------------
     {
         size_t startSeed = posSeed + seedTag.size();
@@ -167,6 +171,10 @@ FileInfo ParseFileName(const std::string& path)
             endSeed = path.size();  // fallback
 
         info.seedObjectType = path.substr(startSeed, endSeed - startSeed);
+
+        const bool hasNoSK = info.seedObjectType.find("_NoSK") != std::string::npos;
+        const bool hasSK   = info.seedObjectType.find("_SK")   != std::string::npos;
+        info.useSoftKiller = hasSK && !hasNoSK;
     }
 
     return info;
@@ -2835,6 +2843,656 @@ GlobalRateEffOut5_EtOnly MakeCombinedRateVsEff_AllFive_EtOnly(
 
 
 // ----------------------------------------------------------------------
+// Et-only version: 5 mutually-exclusive subjet-based categories OR'd with
+// a 4th-leading-cone-jet Et selection (cat 5).
+//
+// Signal efficiency:
+//   eff_OR = eff_5cat + (1 – eff_5cat) × eff_4cone
+// where eff_5cat = Σ_c(eff_cat[c]×frac[c]) for the 5 exclusive cats,
+// and eff_4cone is the total signal efficiency of the 4th cone jet cut
+// (sigCat5 histogram covers ALL signal events).
+//
+// Background rate is additive (OR trigger overlap negligible):
+//   rate_OR = rate_5cat + rate_4cone
+// ----------------------------------------------------------------------
+
+struct GlobalPoint1D_6 {
+  double eff = 0.0;
+  double rate = 0.0;
+  double rateErr = 0.0;
+  // cats 0–4: mutually-exclusive subjet-based; cat 5: 4th leading cone jet
+  double eff_cat[6]  = {0,0,0,0,0,0};
+  double eff_tot[6]  = {0,0,0,0,0,0};
+  double rate_cat[6] = {0,0,0,0,0,0};
+  double etCut[6]    = {0,0,0,0,0,0};
+};
+
+struct GlobalRateEffOut6_EtOnly {
+  TGraphErrors* gRate_vsEff_combined = nullptr;
+  double fractionEventsPerCat[6] = {0,0,0,0,0,0};
+  double bestEff  = 0.0;
+  double bestRate = 0.0;
+  double bestOverlapRate = 0.0;  // overlap rate subtracted (0 if additive approx used)
+  double bestEtCut[6]    = {0,0,0,0,0,0};
+  double bestEff_cat[6]  = {0,0,0,0,0,0};
+  double bestEff_tot[6]  = {0,0,0,0,0,0};
+  double bestRate_cat[6] = {0,0,0,0,0,0};
+};
+
+static void UpdateGlobalFrontier1D_6(std::vector<GlobalPoint1D_6>& frontier,
+                                     const GlobalPoint1D_6& cand)
+{
+  for (const auto& p : frontier) {
+    if (Dominates(p.eff, p.rate, cand.eff, cand.rate)) return;
+  }
+  frontier.erase(
+    std::remove_if(frontier.begin(), frontier.end(),
+                   [&](const GlobalPoint1D_6& p){
+                     return Dominates(cand.eff, cand.rate, p.eff, p.rate);
+                   }),
+    frontier.end()
+  );
+  frontier.push_back(cand);
+  std::sort(frontier.begin(), frontier.end(),
+            [](const GlobalPoint1D_6& a, const GlobalPoint1D_6& b){
+              if (a.rate != b.rate) return a.rate < b.rate;
+              return a.eff > b.eff;
+            });
+}
+
+GlobalRateEffOut6_EtOnly MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly(
+    const RateEffOut& outCat0,
+    const RateEffOut& outCat1,
+    const RateEffOut& outCat2,
+    const RateEffOut& outCat3,
+    const RateEffOut& outCat4,
+    const RateEffOut& outCat5,   // 4th leading cone jet
+    TH1* sigCat0,
+    TH1* sigCat1,
+    TH1* sigCat2,
+    TH1* sigCat3,
+    TH1* sigCat4,
+    TH1* sigCat5,                // sig_h_4th_leading_WtaCone_Et (all events)
+    double maxRateHzDraw,
+    double maxRateHzPrint)
+{
+  const double minRateHz = 10.0;
+
+  if (!sigCat0 || !sigCat1 || !sigCat2 || !sigCat3 || !sigCat4 || !sigCat5) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly: null signal hist");
+  }
+  const RateEffOut* outs[6] = {&outCat0,&outCat1,&outCat2,&outCat3,&outCat4,&outCat5};
+  for (int c = 0; c < 6; ++c) {
+    if (!outs[c]->hEff_vsThr || !outs[c]->hRate_vsThr) {
+      throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly: null RateEffOut hists");
+    }
+  }
+
+  // --- (0) Signal fractions ---
+  // Cats 0–4 partition all signal events; cat 5 covers all events (filled at 0 when < 4 cone jets).
+  TH1* sigH[6] = {sigCat0,sigCat1,sigCat2,sigCat3,sigCat4,sigCat5};
+  double nSig[6] = {0,0,0,0,0,0};
+  for (int c = 0; c < 6; ++c) {
+    const int nb = sigH[c]->GetNbinsX();
+    nSig[c] = sigH[c]->Integral(1, nb);
+  }
+  double totalSig = 0.0;
+  for (int c = 0; c < 5; ++c) totalSig += nSig[c];
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] nSig per cat: "
+            << nSig[0] << ", " << nSig[1] << ", " << nSig[2] << ", "
+            << nSig[3] << ", " << nSig[4] << " | 4thCone: " << nSig[5] << "\n";
+  std::cout << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] totalSig (cats 0-4): "
+            << totalSig << "\n";
+
+  if (totalSig <= 0.0) {
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly: totalSig <= 0");
+  }
+
+  double frac[6] = {0,0,0,0,0,0};
+  for (int c = 0; c < 5; ++c) frac[c] = nSig[c] / totalSig;
+  frac[5] = nSig[5] / totalSig;  // ~1; stored for reporting
+
+  // --- (1) Build per-category 1D frontiers ---
+  auto front_raw0 = BuildFrontier1D(outCat0, maxRateHzDraw);
+  auto front_raw1 = BuildFrontier1D(outCat1, maxRateHzDraw);
+  auto front_raw2 = BuildFrontier1D(outCat2, maxRateHzDraw);
+  auto front_raw3 = BuildFrontier1D(outCat3, maxRateHzDraw);
+  auto front_raw4 = BuildFrontier1D(outCat4, maxRateHzDraw);
+  auto front_raw5 = BuildFrontier1D(outCat5, maxRateHzDraw);
+
+  auto front0 = FilterFrontierByRate(front_raw0, minRateHz, maxRateHzDraw);
+  auto front1 = FilterFrontierByRate(front_raw1, minRateHz, maxRateHzDraw);
+  auto front2 = FilterFrontierByRate(front_raw2, minRateHz, maxRateHzDraw);
+  auto front3 = FilterFrontierByRate(front_raw3, minRateHz, maxRateHzDraw);
+  auto front4 = FilterFrontierByRate(front_raw4, minRateHz, maxRateHzDraw);
+  auto front5 = FilterFrontierByRate(front_raw5, minRateHz, maxRateHzDraw);
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] raw frontier sizes: "
+            << "c0=" << front_raw0.size() << ", c1=" << front_raw1.size()
+            << ", c2=" << front_raw2.size() << ", c3=" << front_raw3.size()
+            << ", c4=" << front_raw4.size() << ", c5=" << front_raw5.size() << "\n";
+  std::cout << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] filtered ("
+            << minRateHz << "–" << maxRateHzDraw << " Hz) frontier sizes: "
+            << "c0=" << front0.size() << ", c1=" << front1.size()
+            << ", c2=" << front2.size() << ", c3=" << front3.size()
+            << ", c4=" << front4.size() << ", c5=" << front5.size() << "\n";
+
+  // Disable cat1 in numerator (match AllFive_EtOnly behavior)
+  const bool disableCat1 = true;
+  if (disableCat1) {
+    std::cerr << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] INFO: disabling category 1 "
+              << "(eff/rate set to 0), keeping its signal fraction in denominator.\n";
+    front1.clear();
+    front1.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+  }
+
+  auto ensure_nonempty = [&](std::vector<Cat1DPoint>& f, int c){
+    if (f.empty()) {
+      std::cerr << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] WARNING: cat " << c
+                << " frontier empty, using dummy point.\n";
+      f.push_back(Cat1DPoint{0.0,0.0,0.0,0.0});
+    }
+  };
+  ensure_nonempty(front0,0); ensure_nonempty(front1,1); ensure_nonempty(front2,2);
+  ensure_nonempty(front3,3); ensure_nonempty(front4,4); ensure_nonempty(front5,5);
+
+  // --- (2) Enumerate combinations ------------------------------------------
+  std::vector<GlobalPoint1D_6> globalFrontier;
+
+  for (const auto& p0 : front0) {
+    const double rate0 = p0.rate_cat, eff0 = p0.eff_cat, err0 = p0.err_cat, cut0 = p0.thrEt;
+
+    for (const auto& p1 : front1) {
+      const double rate01 = rate0 + p1.rate_cat;
+      if (rate01 > maxRateHzDraw) break;
+      const double err01 = std::sqrt(err0*err0 + p1.err_cat*p1.err_cat);
+
+      for (const auto& p2 : front2) {
+        const double rate012 = rate01 + p2.rate_cat;
+        if (rate012 > maxRateHzDraw) break;
+        const double err012 = std::sqrt(err01*err01 + p2.err_cat*p2.err_cat);
+
+        for (const auto& p3 : front3) {
+          const double rate0123 = rate012 + p3.rate_cat;
+          if (rate0123 > maxRateHzDraw) break;
+          const double err0123 = std::sqrt(err012*err012 + p3.err_cat*p3.err_cat);
+
+          for (const auto& p4 : front4) {
+            const double rate01234 = rate0123 + p4.rate_cat;
+            if (rate01234 > maxRateHzDraw) break;
+            const double err01234 = std::sqrt(err0123*err0123 + p4.err_cat*p4.err_cat);
+
+            // 5-category combined efficiency (mutually exclusive cats)
+            const double eff_cat5[5]  = {eff0, p1.eff_cat, p2.eff_cat, p3.eff_cat, p4.eff_cat};
+            const double rate_cat5[5] = {rate0, p1.rate_cat, p2.rate_cat, p3.rate_cat, p4.rate_cat};
+            const double cut5[5]      = {cut0, p1.thrEt, p2.thrEt, p3.thrEt, p4.thrEt};
+
+            double eff_tot5[5] = {0,0,0,0,0};
+            double effTot5 = 0.0;
+            for (int c = 0; c < 5; ++c) {
+              eff_tot5[c] = eff_cat5[c] * frac[c];
+              effTot5 += eff_tot5[c];
+            }
+
+            // --- 6th dimension: 4th leading cone jet OR ---
+            for (const auto& p5 : front5) {
+              const double rate4cone = p5.rate_cat;
+              const double rateOR = rate01234 + rate4cone;
+              if (rateOR > maxRateHzDraw) break;
+              const double errOR = std::sqrt(err01234*err01234 + p5.err_cat*p5.err_cat);
+
+              // eff_4cone: fraction of ALL signal passing 4th cone cut (p5.eff_cat is
+              // already relative to the full sample since sigCat5 covers all events).
+              const double eff4cone  = p5.eff_cat;
+              const double effOR     = effTot5 + (1.0 - effTot5) * eff4cone;
+              const double eff_extra = (1.0 - effTot5) * eff4cone;  // added by OR
+
+              GlobalPoint1D_6 gp;
+              gp.eff     = effOR;
+              gp.rate    = rateOR;
+              gp.rateErr = errOR;
+              for (int c = 0; c < 5; ++c) {
+                gp.eff_cat[c]  = eff_cat5[c];
+                gp.eff_tot[c]  = eff_tot5[c];
+                gp.rate_cat[c] = rate_cat5[c];
+                gp.etCut[c]    = cut5[c];
+              }
+              gp.eff_cat[5]  = eff4cone;   // 4th cone jet efficiency (total signal)
+              gp.eff_tot[5]  = eff_extra;  // additional efficiency from OR
+              gp.rate_cat[5] = rate4cone;
+              gp.etCut[5]    = p5.thrEt;
+
+              UpdateGlobalFrontier1D_6(globalFrontier, gp);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "[MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly] global frontier size: "
+            << globalFrontier.size() << "\n";
+
+  // --- (3) Make graph + pick best point ------------------------------------
+  auto* gCombined = new TGraphErrors(globalFrontier.size());
+  gCombined->SetName("gRate_vsEff_all5plus4thCone_EtOnly_frontier");
+  gCombined->SetTitle("Combined Trigger Rate vs Signal Efficiency (5-cat OR 4th Cone Jet, E_{T}-only);"
+                      "Signal Efficiency;"
+                      "Total Estimated Background Rate [Hz]");
+
+  GlobalRateEffOut6_EtOnly out6;
+  out6.gRate_vsEff_combined = gCombined;
+  for (int c = 0; c < 6; ++c) out6.fractionEventsPerCat[c] = frac[c];
+  out6.bestEff  = 0.0;
+  out6.bestRate = 0.0;
+
+  for (size_t i = 0; i < globalFrontier.size(); ++i) {
+    const auto& gp = globalFrontier[i];
+    gCombined->SetPoint(i, gp.eff, gp.rate);
+    gCombined->SetPointError(i, 0.0, gp.rateErr);
+
+    if (gp.rate > maxRateHzPrint) continue;
+
+    if (gp.eff > out6.bestEff) {
+      out6.bestEff  = gp.eff;
+      out6.bestRate = gp.rate;
+      for (int c = 0; c < 6; ++c) {
+        out6.bestEtCut[c]    = gp.etCut[c];
+        out6.bestEff_cat[c]  = gp.eff_cat[c];
+        out6.bestEff_tot[c]  = gp.eff_tot[c];
+        out6.bestRate_cat[c] = gp.rate_cat[c];
+      }
+    }
+  }
+
+  return out6;
+}
+
+
+// ----------------------------------------------------------------------
+// Overlap-subtracted OR rate: helpers and new function variant.
+//
+// For a given operating point (Et thresholds for cats 0–4 and the 4th cone
+// jet), the true OR rate is:
+//   rate_OR = rate_5cat + rate_4cone - rate_AND
+// where rate_AND is the rate of events that pass BOTH the 5-cat selection
+// AND the 4th-cone-jet cut.
+//
+// Each per-category overlap TH2F (filled with background event weights, so
+// its integral is directly in Hz) has:
+//   x-axis: category LRJ Et  (same 104 bins, 0–1040 GeV as the 1D hists)
+//   y-axis: 4th leading cone jet Et  (160 bins, 0–800 GeV)
+//
+// MakeSurvivalTH2F converts a raw TH2F into a 2D suffix-sum histogram where
+// bin (ix, iy) = integral of the raw histogram over [ix..nX] x [iy..nY].
+// This makes the per-combination overlap lookup O(1).
+// ----------------------------------------------------------------------
+
+static TH2F* MakeSurvivalTH2F(const TH2F* h2)
+{
+  if (!h2) return nullptr;
+  const int nx = h2->GetNbinsX();
+  const int ny = h2->GetNbinsY();
+  auto* s = (TH2F*)h2->Clone((std::string(h2->GetName()) + "_survival").c_str());
+  s->Reset();
+  // Compute 2D suffix sum (inclusion-exclusion), sweeping from top-right to bottom-left
+  for (int ix = nx; ix >= 1; --ix) {
+    for (int iy = ny; iy >= 1; --iy) {
+      double val = h2->GetBinContent(ix, iy);
+      if (ix < nx) val += s->GetBinContent(ix + 1, iy);
+      if (iy < ny) val += s->GetBinContent(ix, iy + 1);
+      if (ix < nx && iy < ny) val -= s->GetBinContent(ix + 1, iy + 1);
+      s->SetBinContent(ix, iy, val);
+    }
+  }
+  return s;
+}
+
+// O(1) lookup: rate of events with catEt >= etCatCut AND 4th cone Et >= et4thCut
+static inline double LookupSurvivalRate(const TH2F* s, double etCatCut, double et4thCut)
+{
+  if (!s) return 0.0;
+  int ix = s->GetXaxis()->FindBin(etCatCut);
+  int iy = s->GetYaxis()->FindBin(et4thCut);
+  // Clamp to valid bin range (overflow → no events pass)
+  if (ix > s->GetNbinsX() || iy > s->GetNbinsY()) return 0.0;
+  ix = std::max(ix, 1);
+  iy = std::max(iy, 1);
+  return s->GetBinContent(ix, iy);
+}
+
+// ----------------------------------------------------------------------
+// MakeORRateVsEff_2Way
+// Computes the Pareto-frontier ROC for (selection A OR selection B) with
+// proper overlap subtraction:
+//   rateOR = rateA + rateB - rate(A AND B)
+//   effOR  = effA  + effB  - eff(A AND B)
+//
+// sigH2 / backH2: 2D histograms with x = Et_A, y = Et_B.
+//   backH2 must be rate-weighted (integral in Hz).
+//   sigH2 must be unweighted event counts.
+// totalSig: total signal count — must match the normalisation used in
+//   outA.hEff_vsThr (i.e. sig_h_leading_LRJ_Et->Integral(1, nb)).
+// ----------------------------------------------------------------------
+
+struct ORRateEffOut2Way {
+    TGraph* gRate_vsEff = nullptr;
+    double  bestEff     = 0.0;
+    double  bestRate    = 0.0;
+    double  bestThrA    = 0.0;  // threshold for selection A (leading LRJ Et)
+    double  bestThrB    = 0.0;  // threshold for selection B (4th cone jet Et)
+};
+
+static ORRateEffOut2Way MakeORRateVsEff_2Way(
+    const RateEffOut& outA,
+    const RateEffOut& outB,
+    TH2F* sigH2,
+    TH2F* backH2,
+    double totalSig,
+    double maxRateHz    = 5.0e4,
+    double minRateHz    = 10.0,
+    double targetRateHz = 1.0e4)
+{
+    ORRateEffOut2Way res;
+    if (!sigH2 || !backH2 || totalSig <= 0.0) {
+        std::cerr << "[MakeORRateVsEff_2Way] null input or totalSig <= 0.\n";
+        res.gRate_vsEff = new TGraphErrors();
+        return res;
+    }
+
+    TH2F* sigSurv2  = MakeSurvivalTH2F(sigH2);
+    TH2F* backSurv2 = MakeSurvivalTH2F(backH2);
+
+    const TH1* hRateA = outA.hRate_vsThr;
+    const TH1* hEffA  = outA.hEff_vsThr;
+    const TH1* hRateB = outB.hRate_vsThr;
+    const TH1* hEffB  = outB.hEff_vsThr;
+    const int nA = hRateA->GetNbinsX();
+    const int nB = hRateB->GetNbinsX();
+
+    struct ORPoint { double eff; double rate; double thrA; double thrB; };
+    std::vector<ORPoint> pts;
+    pts.reserve(nA * nB);
+
+    for (int ia = 1; ia <= nA; ++ia) {
+        const double thrA  = hRateA->GetXaxis()->GetBinLowEdge(ia);
+        const double rateA = hRateA->GetBinContent(ia);
+        const double effA  = hEffA ->GetBinContent(ia);
+
+        for (int ib = 1; ib <= nB; ++ib) {
+            const double thrB  = hRateB->GetXaxis()->GetBinLowEdge(ib);
+            const double rateB = hRateB->GetBinContent(ib);
+            const double effB  = hEffB ->GetBinContent(ib);
+
+            const double rateAND = LookupSurvivalRate(backSurv2, thrA, thrB);
+            const double sigAND  = LookupSurvivalRate(sigSurv2,  thrA, thrB);
+
+            const double rateOR = std::max(0.0, rateA + rateB - rateAND);
+            const double effOR  = std::min(1.0, effA  + effB  - sigAND / totalSig);
+
+            if (rateOR >= minRateHz && rateOR <= maxRateHz)
+                pts.push_back({effOR, rateOR, thrA, thrB});
+        }
+    }
+
+    // Pareto frontier: sort by eff descending, keep only points with strictly lower rate
+    std::sort(pts.begin(), pts.end(),
+              [](const ORPoint& a, const ORPoint& b) { return a.eff > b.eff; });
+
+    std::vector<ORPoint> frontier;
+    double minRateSoFar = std::numeric_limits<double>::infinity();
+    for (auto& p : pts) {
+        if (p.rate < minRateSoFar) {
+            frontier.push_back(p);
+            minRateSoFar = p.rate;
+        }
+    }
+
+    auto* g = new TGraphErrors((int)frontier.size());
+    g->SetName("gRate_vsEff_leadingLRJ_OR_4thCone");
+    g->GetXaxis()->SetTitle("Signal Efficiency");
+    g->GetYaxis()->SetTitle("Estimated Background Rate [Hz]");
+    for (int i = 0; i < (int)frontier.size(); ++i)
+        g->SetPoint(i, frontier[i].eff, frontier[i].rate);
+
+    res.gRate_vsEff = g;
+
+    // Best point at or below targetRateHz
+    for (auto& p : frontier) {
+        if (p.rate <= targetRateHz && p.eff > res.bestEff) {
+            res.bestEff  = p.eff;
+            res.bestRate = p.rate;
+            res.bestThrA = p.thrA;
+            res.bestThrB = p.thrB;
+        }
+    }
+
+    std::cout << "[MakeORRateVsEff_2Way] frontier size: " << frontier.size() << "\n"
+              << "  best point (rate <= " << targetRateHz << " Hz):"
+              << " eff=" << res.bestEff
+              << ", rate=" << res.bestRate << " Hz"
+              << ", thrA=" << res.bestThrA << " GeV"
+              << ", thrB=" << res.bestThrB << " GeV\n";
+
+    return res;
+}
+
+// ----------------------------------------------------------------------
+// Same as MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly but with
+// OR-rate overlap subtraction:
+//   rateOR = rate_5cat + rate_4cone - rate_AND
+// Pass nullptr for any category's h2_overlap to skip that category's
+// overlap contribution (e.g. cat1 is disabled so pass nullptr).
+// Pre-compute survival TH2Fs outside (via MakeSurvivalTH2F) for efficiency.
+// ----------------------------------------------------------------------
+
+GlobalRateEffOut6_EtOnly MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly_WithOverlapSubtraction(
+    const RateEffOut& outCat0,
+    const RateEffOut& outCat1,
+    const RateEffOut& outCat2,
+    const RateEffOut& outCat3,
+    const RateEffOut& outCat4,
+    const RateEffOut& outCat5,        // 4th leading cone jet
+    TH1* sigCat0,
+    TH1* sigCat1,
+    TH1* sigCat2,
+    TH1* sigCat3,
+    TH1* sigCat4,
+    TH1* sigCat5,                     // sig_h_4th_leading_WtaCone_Et (all events)
+    const TH2F* h2_surv_cat0,        // background survival TH2F for cat0 (nullptr = no overlap)
+    const TH2F* h2_surv_cat1,        // background survival TH2F for cat1 (nullptr, cat1 disabled)
+    const TH2F* h2_surv_cat2,
+    const TH2F* h2_surv_cat3,
+    const TH2F* h2_surv_cat4,
+    const TH2F* sig_surv_cat0,       // signal survival TH2F for cat0 (nullptr = no correction)
+    const TH2F* sig_surv_cat1,       // signal survival TH2F for cat1 (nullptr, cat1 disabled)
+    const TH2F* sig_surv_cat2,
+    const TH2F* sig_surv_cat3,
+    const TH2F* sig_surv_cat4,
+    double maxRateHzDraw,
+    double maxRateHzPrint)
+{
+  const double minRateHz = 10.0;
+
+  if (!sigCat0 || !sigCat1 || !sigCat2 || !sigCat3 || !sigCat4 || !sigCat5)
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly_WithOverlapSubtraction: null signal hist");
+  const RateEffOut* outs[6] = {&outCat0,&outCat1,&outCat2,&outCat3,&outCat4,&outCat5};
+  for (int c = 0; c < 6; ++c)
+    if (!outs[c]->hEff_vsThr || !outs[c]->hRate_vsThr)
+      throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly_WithOverlapSubtraction: null RateEffOut hists");
+
+  // --- Signal fractions (same logic as base function) ---
+  TH1* sigH[6] = {sigCat0,sigCat1,sigCat2,sigCat3,sigCat4,sigCat5};
+  double nSig[6] = {0,0,0,0,0,0};
+  for (int c = 0; c < 6; ++c) nSig[c] = sigH[c]->Integral(1, sigH[c]->GetNbinsX());
+  double totalSig = 0.0;
+  for (int c = 0; c < 5; ++c) totalSig += nSig[c];
+
+  std::cout << "[AllFive_Plus4thCone_WithOverlapSubtraction] nSig per cat: "
+            << nSig[0]<<", "<<nSig[1]<<", "<<nSig[2]<<", "<<nSig[3]<<", "<<nSig[4]
+            <<" | 4thCone: "<<nSig[5]<<"\n";
+  std::cout << "[AllFive_Plus4thCone_WithOverlapSubtraction] totalSig: "<<totalSig<<"\n";
+
+  if (totalSig <= 0.0)
+    throw std::runtime_error("MakeCombinedRateVsEff_AllFive_Plus4thCone_EtOnly_WithOverlapSubtraction: totalSig <= 0");
+
+  double frac[6] = {};
+  for (int c = 0; c < 5; ++c) frac[c] = nSig[c] / totalSig;
+  frac[5] = nSig[5] / totalSig;
+
+  // --- Per-category 1D frontiers ---
+  auto front0 = FilterFrontierByRate(BuildFrontier1D(outCat0, maxRateHzDraw), minRateHz, maxRateHzDraw);
+  auto front1 = FilterFrontierByRate(BuildFrontier1D(outCat1, maxRateHzDraw), minRateHz, maxRateHzDraw);
+  auto front2 = FilterFrontierByRate(BuildFrontier1D(outCat2, maxRateHzDraw), minRateHz, maxRateHzDraw);
+  auto front3 = FilterFrontierByRate(BuildFrontier1D(outCat3, maxRateHzDraw), minRateHz, maxRateHzDraw);
+  auto front4 = FilterFrontierByRate(BuildFrontier1D(outCat4, maxRateHzDraw), minRateHz, maxRateHzDraw);
+  auto front5 = FilterFrontierByRate(BuildFrontier1D(outCat5, maxRateHzDraw), minRateHz, maxRateHzDraw);
+
+  // Disable cat1 in numerator (match base function behavior)
+  front1.clear();
+  front1.push_back(Cat1DPoint{0.0, 0.0, 0.0, 0.0});
+
+  auto ensure_nonempty = [&](std::vector<Cat1DPoint>& f, int c) {
+    if (f.empty()) {
+      std::cerr << "[AllFive_Plus4thCone_WithOverlapSubtraction] WARNING: cat "<<c<<" frontier empty.\n";
+      f.push_back(Cat1DPoint{0.0,0.0,0.0,0.0});
+    }
+  };
+  ensure_nonempty(front0,0); ensure_nonempty(front1,1); ensure_nonempty(front2,2);
+  ensure_nonempty(front3,3); ensure_nonempty(front4,4); ensure_nonempty(front5,5);
+
+  // --- Enumerate combinations with overlap-subtracted OR rate ---
+  std::vector<GlobalPoint1D_6> globalFrontier;
+
+  for (const auto& p0 : front0) {
+    const double rate0=p0.rate_cat, eff0=p0.eff_cat, err0=p0.err_cat, cut0=p0.thrEt;
+    for (const auto& p1 : front1) {
+      const double rate01=rate0+p1.rate_cat;
+      if (rate01 > maxRateHzDraw) break;
+      const double err01=std::sqrt(err0*err0+p1.err_cat*p1.err_cat);
+      for (const auto& p2 : front2) {
+        const double rate012=rate01+p2.rate_cat;
+        if (rate012 > maxRateHzDraw) break;
+        const double err012=std::sqrt(err01*err01+p2.err_cat*p2.err_cat);
+        for (const auto& p3 : front3) {
+          const double rate0123=rate012+p3.rate_cat;
+          if (rate0123 > maxRateHzDraw) break;
+          const double err0123=std::sqrt(err012*err012+p3.err_cat*p3.err_cat);
+          for (const auto& p4 : front4) {
+            const double rate01234=rate0123+p4.rate_cat;
+            if (rate01234 > maxRateHzDraw) break;
+            const double err01234=std::sqrt(err0123*err0123+p4.err_cat*p4.err_cat);
+
+            const double eff_cat5[5]  = {eff0, p1.eff_cat, p2.eff_cat, p3.eff_cat, p4.eff_cat};
+            const double rate_cat5[5] = {rate0, p1.rate_cat, p2.rate_cat, p3.rate_cat, p4.rate_cat};
+            const double cut5[5]      = {cut0, p1.thrEt, p2.thrEt, p3.thrEt, p4.thrEt};
+
+            double eff_tot5[5] = {};
+            double effTot5 = 0.0;
+            for (int c = 0; c < 5; ++c) { eff_tot5[c]=eff_cat5[c]*frac[c]; effTot5+=eff_tot5[c]; }
+
+            for (const auto& p5 : front5) {
+              const double rate4cone=p5.rate_cat;
+              const double errOR=std::sqrt(err01234*err01234+p5.err_cat*p5.err_cat);
+
+              // Overlap rate: sum over active categories of events passing BOTH
+              // their category Et cut AND the 4th cone jet Et cut.
+              const double rateOverlap =
+                LookupSurvivalRate(h2_surv_cat0, cut5[0], p5.thrEt) +
+                // cat1 disabled: LookupSurvivalRate(h2_surv_cat1, cut5[1], p5.thrEt)
+                LookupSurvivalRate(h2_surv_cat2, cut5[2], p5.thrEt) +
+                LookupSurvivalRate(h2_surv_cat3, cut5[3], p5.thrEt) +
+                LookupSurvivalRate(h2_surv_cat4, cut5[4], p5.thrEt);
+
+              // Corrected OR rate (clamp to zero in case of small negative fluctuations)
+              const double rateOR = std::max(0.0, rate01234 + rate4cone - rateOverlap);
+              if (rateOR > maxRateHzDraw) continue;
+
+              const double eff4cone = p5.eff_cat;
+
+              // Signal efficiency overlap: fraction of events passing BOTH a 5-cat cut
+              // AND the 4th cone cut — must be subtracted to avoid double-counting.
+              const double sigOverlap =
+                LookupSurvivalRate(sig_surv_cat0, cut5[0], p5.thrEt) / totalSig +
+                // cat1 disabled: LookupSurvivalRate(sig_surv_cat1, cut5[1], p5.thrEt) / totalSig
+                LookupSurvivalRate(sig_surv_cat2, cut5[2], p5.thrEt) / totalSig +
+                LookupSurvivalRate(sig_surv_cat3, cut5[3], p5.thrEt) / totalSig +
+                LookupSurvivalRate(sig_surv_cat4, cut5[4], p5.thrEt) / totalSig;
+
+              const double effOR     = std::min(1.0, std::max(0.0, effTot5 + eff4cone - sigOverlap));
+              const double eff_extra = std::max(0.0, eff4cone - sigOverlap);
+
+              GlobalPoint1D_6 gp;
+              gp.eff     = effOR;
+              gp.rate    = rateOR;
+              gp.rateErr = errOR;
+              for (int c = 0; c < 5; ++c) {
+                gp.eff_cat[c]  = eff_cat5[c];
+                gp.eff_tot[c]  = eff_tot5[c];
+                gp.rate_cat[c] = rate_cat5[c];
+                gp.etCut[c]    = cut5[c];
+              }
+              gp.eff_cat[5]  = eff4cone;
+              gp.eff_tot[5]  = eff_extra;
+              gp.rate_cat[5] = rate4cone;
+              gp.etCut[5]    = p5.thrEt;
+
+              UpdateGlobalFrontier1D_6(globalFrontier, gp);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "[AllFive_Plus4thCone_WithOverlapSubtraction] global frontier size: "
+            << globalFrontier.size() << "\n";
+
+  // --- Build graph + pick best point ---
+  auto* gCombined = new TGraphErrors(globalFrontier.size());
+  gCombined->SetName("gRate_vsEff_all5plus4thCone_EtOnly_overlapSub_frontier");
+  gCombined->SetTitle("Combined Trigger Rate vs Signal Efficiency "
+                      "(5-cat OR 4th Cone Jet, E_{T}-only, overlap-subtracted);"
+                      "Signal Efficiency;"
+                      "Total Estimated Background Rate [Hz]");
+
+  GlobalRateEffOut6_EtOnly out6;
+  out6.gRate_vsEff_combined = gCombined;
+  for (int c = 0; c < 6; ++c) out6.fractionEventsPerCat[c] = frac[c];
+  out6.bestEff  = 0.0;
+  out6.bestRate = 0.0;
+  out6.bestOverlapRate = 0.0;
+
+  for (size_t i = 0; i < globalFrontier.size(); ++i) {
+    const auto& gp = globalFrontier[i];
+    gCombined->SetPoint(i, gp.eff, gp.rate);
+    gCombined->SetPointError(i, 0.0, gp.rateErr);
+
+    if (gp.rate > maxRateHzPrint) continue;
+    if (gp.eff > out6.bestEff) {
+      out6.bestEff  = gp.eff;
+      out6.bestRate = gp.rate;
+      // Back-compute the overlap at the best point
+      out6.bestOverlapRate =
+        LookupSurvivalRate(h2_surv_cat0, gp.etCut[0], gp.etCut[5]) +
+        LookupSurvivalRate(h2_surv_cat2, gp.etCut[2], gp.etCut[5]) +
+        LookupSurvivalRate(h2_surv_cat3, gp.etCut[3], gp.etCut[5]) +
+        LookupSurvivalRate(h2_surv_cat4, gp.etCut[4], gp.etCut[5]);
+      for (int c = 0; c < 6; ++c) {
+        out6.bestEtCut[c]    = gp.etCut[c];
+        out6.bestEff_cat[c]  = gp.eff_cat[c];
+        out6.bestEff_tot[c]  = gp.eff_tot[c];
+        out6.bestRate_cat[c] = gp.rate_cat[c];
+      }
+    }
+  }
+
+  return out6;
+}
+
+
+// ----------------------------------------------------------------------
 // Et-only version: 8 categories, each category has ONLY an Et threshold.
 // - Disables category 0 in the numerator (eff/rate contributions set to 0)
 //   BUT keeps its signal events in the efficiency denominator via frac[0].
@@ -3103,40 +3761,29 @@ const double mH_ = 125.0;
 
 constexpr double et_granularity_ = 0.125;
 constexpr unsigned int et_bit_length_ = 13;
-constexpr unsigned int eta_bit_length_ = 8;
+//constexpr unsigned int eta_bit_length_ = 10;
+constexpr unsigned int eta_bit_length_ = 7;
+//constexpr unsigned int eta_range_ = 784;
+constexpr unsigned int eta_range_ = 98;
+//constexpr unsigned int phi_bit_length_ = 9;
 constexpr unsigned int phi_bit_length_ = 6;
-constexpr unsigned int psi_R_bit_length_ = 10; 
-constexpr unsigned int padded_zeroes_length_ = 64 - eta_bit_length_ - et_bit_length_ - phi_bit_length_ - psi_R_bit_length_;
+constexpr unsigned int padded_zeroes_length_ = 64 - eta_bit_length_ - et_bit_length_ - phi_bit_length_;
 constexpr double phi_min_ = -3.2;
 constexpr double phi_max_ = 3.2;
-constexpr double eta_min_ = -5.0;
-constexpr double eta_max_ = 5.0;
-constexpr double eta_granularity_ = 0.0390625;
+constexpr double eta_min_ = -4.9;
+constexpr double eta_max_ = 4.9;
+constexpr double eta_granularity_ = 0.1;
+//constexpr double eta_granularity_ = 0.0125;
 constexpr double phi_granularity_ = 0.1;
+//constexpr double phi_granularity_ = 0.0125;
 constexpr unsigned int et_min_ = 0;
 constexpr unsigned int et_max_ = 1024;
 const bool useMax_ = false;
 const unsigned nSeeds_ = 2;
 
-inline double undigitize_phi(const std::bitset<phi_bit_length_>& phi_bits) {
-    return phi_min_ + phi_bits.to_ulong() * (6.4 / 256.0);
-}
-
-inline double undigitize_eta(const std::bitset<eta_bit_length_>& eta_bits) {
-    return eta_min_ + eta_bits.to_ulong() * (10.0 / 2048.0);
-}
-
-inline double undigitize_et(const std::bitset<et_bit_length_>& et_bits) {
-    return et_bits.to_ulong() * et_granularity_;
-}
-
-inline double undigitize_nmio(const std::bitset<psi_R_bit_length_>& nmio_bits) {
-    return nmio_bits.to_ulong() * 0.0048828125; // 5 / 2^psi_R_bit_length_
-}
-
 // Function to scale and digitize a value, returning the result as a binary string
-template <int bit_length>
-inline std::bitset<bit_length > digitize(double value, double min_val, double max_val) {
+/*template <int bit_length>
+inline std::bitset<bit_length > digitize(double value, double min_val, double max_val, unsigned int altRange = 0) {
     // Ensure the value is within range
     if (value < min_val || value > max_val) {
         std::cerr << "Value is out of range" << "\n";
@@ -3144,7 +3791,8 @@ inline std::bitset<bit_length > digitize(double value, double min_val, double ma
     //std::cout << "value : " << value << "\n";
 
     // Calculate scale factor
-    double scale = (std::pow(2, bit_length)) / (max_val - min_val);
+    unsigned int range = (altRange == 0) ? (1u << bit_length) : altRange;
+    double scale = double(range) / (max_val - min_val);
 
     //std::cout << "scale: " << scale << "\n";
     
@@ -3157,7 +3805,7 @@ inline std::bitset<bit_length > digitize(double value, double min_val, double ma
     std::bitset<bit_length > bin(digitized_value);
     //std::pair<std::bitset<bit_length >, unsigned int> string_dig_pair(bin, digitized_value);
     return bin; // Extract only the relevant bits
-}
+}*/
 
 double calcDeltaR2(double eta1, double phi1, double eta2, double phi2) {
     //std::cout << "eta1: " << eta1 << " eta2: " << eta2 << " phi1: " << phi1 << " phi2: " << phi2 << "\n";

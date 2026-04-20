@@ -1,11 +1,12 @@
 #include "analysisHelperFunctions.h"
 
-void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool signalBool, std::string signalString, std::string subjetType, bool skBool){
+void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool signalBool, std::string signalString, std::string subjetType, bool skBool){
     SetPlotStyle();
 
     auto fileInfo = ParseFileName(inputFile);
     std::string inputObjectType = fileInfo.inputObjectType;
     std::string seedObjectType = fileInfo.seedObjectType;
+    std::cout << "seedObjectType: " << seedObjectType << "\n";
     std::string rMergeValue = fileInfo.rMergeValue;
     double jetRadius = sqrt(ParseFileName(inputFile).jetRadiusSquared);
 
@@ -456,6 +457,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         gepWTAConeCellsTowersJetsTree->GetEntry(iEvt);
         gepWTAConeCellsTowersSKJetsTree->GetEntry(iEvt);
         jFexSRJTree->GetEntry(iEvt);
+        gFexSRJTree->GetEntry(iEvt);
         gFexLRJTree->GetEntry(iEvt);
         recoAntiKt10UFOCSSKJets->GetEntry(iEvt);
         truthAntiKt4TruthDressedWZJets->GetEntry(iEvt);
@@ -481,8 +483,9 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
         //std::cout << "seedObjectType: " << seedObjectType << "\n";
         
         double subjetEtThreshold;
-        if(subjetType == "WTACone") subjetEtThreshold = 15.0;
+        if(subjetType == "WTACone") subjetEtThreshold = 25.0;
         else if(subjetType == "jFEXSRJ") subjetEtThreshold = 50.0;
+        else if(subjetType == "gFEXSRJ") subjetEtThreshold = 35.0;
         const double truthJetEtThreshold = 15.0;
         const double pileupJetEtThreshold = 15.0;
 
@@ -514,14 +517,26 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             additionalSeedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(4), jFexSRJPhiValues->at(4)));
             additionalSeedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(5), jFexSRJPhiValues->at(5)));
         }
+
+        if(seedObjectType == "gFEXSRJ"){
+            seedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(0), gFexSRJPhiValues->at(0)));
+            seedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(1), gFexSRJPhiValues->at(1)));
+            additionalSeedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(2), gFexSRJPhiValues->at(2)));
+            additionalSeedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(3), gFexSRJPhiValues->at(3)));
+            additionalSeedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(4), gFexSRJPhiValues->at(4)));
+            additionalSeedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(5), gFexSRJPhiValues->at(5)));
+        }
         
         else if(seedObjectType == "gepWTAConeCellsTowersJets_NoSK" || seedObjectType == "gepWTAConeCellsTowersJets_SK"){
             if(skBool){
+                std::cout << "gepWTAConeCellsTowersSKJetsEtaValues->size(): " << gepWTAConeCellsTowersSKJetsEtaValues->size() << "\n";
                 for(unsigned int iWTACone = 0; iWTACone < gepWTAConeCellsTowersSKJetsEtaValues->size(); iWTACone++){
+                    std::cout << "iWTACone: " << iWTACone << "\n";
                     if(iWTACone <= 1){
                         seedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
                     }
                     else if(iWTACone <= 5){
+                        std::cout << "why is this not triggering" << "\n";
                         additionalSeedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
                     }
                     else break;
@@ -602,6 +617,24 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
             }
         }
 
+        else if(subjetType == "gFEXSRJ"){
+            for(unsigned int igFEX = 0; igFEX < gFexSRJEtValues->size(); igFEX++){
+                if(gFexSRJEtValues->at(igFEX) > subjetEtThreshold){
+                    double deltaRPossibleSubjetsSeedLeading = sqrt(calcDeltaR2(gFexSRJEtaValues->at(igFEX), gFexSRJPhiValues->at(igFEX), jetTaggerLeadingLRJEtaValues->at(0), jetTaggerLeadingLRJPhiValues->at(0)));
+                    double deltaRPossibleSubjetsSeedSubleading = sqrt(calcDeltaR2(gFexSRJEtaValues->at(igFEX), gFexSRJPhiValues->at(igFEX), jetTaggerSubleadingLRJEtaValues->at(0), jetTaggerSubleadingLRJPhiValues->at(0)));
+                    if(deltaRPossibleSubjetsSeedLeading < jetRadius){
+                        NSubjets[0]++;
+                        subjetIndices[0].push_back(igFEX);
+                    }
+                    if(deltaRPossibleSubjetsSeedSubleading < jetRadius){
+                        NSubjets[1]++;
+                        subjetIndices[1].push_back(igFEX);
+                    }
+                    possibleSubjets.push_back(std::make_pair(gFexSRJEtaValues->at(igFEX), gFexSRJPhiValues->at(igFEX)));
+                }
+            }
+        }
+
         if(NSubjets[0] >= 2){
             if(subjetType == "WTACone"){
                 if(skBool){
@@ -626,6 +659,12 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
                 lrjEtRatioSubjets[0] = jFexSRJEtValues->at(subjetIndices[0][0])/jFexSRJEtValues->at(subjetIndices[0][1]);
                 lrjMassApprox[0] = deltaRSubjets * (jFexSRJEtValues->at(subjetIndices[0][0]) + jFexSRJEtValues->at(subjetIndices[0][1]));
             }
+            else if(subjetType == "gFEXSRJ"){
+                double deltaRSubjets = sqrt(calcDeltaR2(gFexSRJEtaValues->at(subjetIndices[0][0]), gFexSRJPhiValues->at(subjetIndices[0][0]), gFexSRJEtaValues->at(subjetIndices[0][1]), gFexSRJPhiValues->at(subjetIndices[0][1])));
+                lrjDeltaRSubjets[0] = deltaRSubjets;
+                lrjEtRatioSubjets[0] = gFexSRJEtValues->at(subjetIndices[0][0])/gFexSRJEtValues->at(subjetIndices[0][1]);
+                lrjMassApprox[0] = deltaRSubjets * (gFexSRJEtValues->at(subjetIndices[0][0]) + gFexSRJEtValues->at(subjetIndices[0][1]));
+            }
         }
         if(NSubjets[1] >= 2){
             if(subjetType == "WTACone"){
@@ -647,6 +686,12 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
                 lrjDeltaRSubjets[1] = deltaRSubjets;
                 lrjEtRatioSubjets[1] = jFexSRJEtValues->at(subjetIndices[1][0])/jFexSRJEtValues->at(subjetIndices[1][1]);
                 lrjMassApprox[1] = deltaRSubjets * (jFexSRJEtValues->at(subjetIndices[1][0]) + jFexSRJEtValues->at(subjetIndices[1][1]));
+            }
+            else if(subjetType == "gFEXSRJ"){
+                double deltaRSubjets = sqrt(calcDeltaR2(gFexSRJEtaValues->at(subjetIndices[1][0]), gFexSRJPhiValues->at(subjetIndices[1][0]), gFexSRJEtaValues->at(subjetIndices[1][1]), gFexSRJPhiValues->at(subjetIndices[1][1])));
+                lrjDeltaRSubjets[1] = deltaRSubjets;
+                lrjEtRatioSubjets[1] = gFexSRJEtValues->at(subjetIndices[1][0])/gFexSRJEtValues->at(subjetIndices[1][1]);
+                lrjMassApprox[1] = deltaRSubjets * (gFexSRJEtValues->at(subjetIndices[1][0]) + gFexSRJEtValues->at(subjetIndices[1][1]));
             }
         }
 
@@ -1037,7 +1082,7 @@ void makeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, bool 
 }
 
 
-void callMakeEventDisplays(){
+void makeEventDisplays(){
     gErrorIgnoreLevel = kWarning;
     std::string inputFile = "";
     //std::string inputFile = "";
@@ -1063,32 +1108,41 @@ void callMakeEventDisplays(){
         -1, true, "VBF_hh_4b", "WTACone", false);*/
     
     // VBF hh->4b (cvv = 0) PU Suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        -1, true, "VBF_hh_4b_cvv0", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv0_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "VBF_hh_4b_cvv0", "WTACone", true);
 
     // VBF hh->4b (cvv = 1, SM) PU Suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        -1, true, "VBF_hh_4b_cvv1", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_hh_bbbb_vbf_novhh_cvv1_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "VBF_hh_4b_cvv1", "WTACone", true);
 
     // ggF hh->4b (Cone subjets)
     //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
     //    -1, true, false, "ggF_hh_4b", false);
     
     // ggF hh->4b PU Suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "ggF_hh_4b", "WTACone", true);
+
+    callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_v3.root", 
         -1, true, "ggF_hh_4b", "WTACone", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //   -1, true, "ggF_hh_4b", "jFEXSRJ", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "ggF_hh_4b", "gFEXSRJ", true);
 
     // ttbar fully hadronic decays (Cone subjets)
     //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
     //    -1, true, false, "ttbar_had", false);
     
     // ttbar fully hadronic decays PU Suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        -1, true, "ttbar_had", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "ttbar_had", "WTACone", true);
 
     // ttbar fully hadronic decays PU Suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        -1, true, "Zprime_ttbar", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_ttbar_hdamp258p75_allhad_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    -1, true, "Zprime_ttbar", "WTACone", true);
     
     //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_hh_bbbb_vbf_novhh_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 
     //    -1, true, "jFEXSRJ");
@@ -1098,16 +1152,16 @@ void callMakeEventDisplays(){
     //    2, false, "jj_2", "WTACone", false);
 
     // JZ2 background PU suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        2, false, "jj_2", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    2, false, "jj_2", "WTACone", true);
 
     // JZ3 background (Cone subjets)
     //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
     //    3, false, "jj_3", "WTACone", false);
 
     // JZ3 background PU suppressed (Cone subjets)
-    makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
-        3, false, "jj_3", "WTACone", true);
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //    3, false, "jj_3", "WTACone", true);
 
     // Call for background (jz2, jz3)
     /*makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_32_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_OR.root", 

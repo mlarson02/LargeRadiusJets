@@ -9,7 +9,9 @@ set -euo pipefail
 #signals=(true false)
 #rMergeCuts=(0.001 1.5 2.0 2.5) 
 #rMergeCuts=(0.001 2) 
-rMergeCuts=(0.001 2) 
+algoVersions=(3)
+rMergeCuts=(2.0) 
+#rMergeCuts=(0.001) 
 #rMergeCuts=(1.25 1.75)
 rSquaredCuts=(1.21)
 nIOs=(128)
@@ -20,8 +22,13 @@ puSuppression=(true)
 #signalStrings=("Zprime_ttbar")
 signalStrings=("VBF_hh_bbbb_cvv0" "VBF_hh_bbbb_cvv1" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
 #signalStrings=("ttbar_had")
-#signalStrings=("VBF_hh_bbbb" "ggF_hh_bbbb")
+#signalStrings=("ggF_hh_bbbb")
+
+inputObjects=("gepWTAConeCellsTowersJets" "gepCellsTowers")
+seedObjects=("gepWTAConeCellsTowersJets")
 condor=false
+
+#FIXME add input / seed object types to be looped through too(independent of constants & LUTs)
 
 # ---- paths ----
 inputLUTFilePath="/home/larsonma/LargeRadiusJets/algorithm/emulation/LUT_Constants_Generation/LUTs/"
@@ -42,57 +49,60 @@ make_input_LUT_file_name() {
 
 # helper function to generate correct constants file names for each algorithm configuration
 make_input_constants_file_name() {
-  local rMerge="$1" nIOs="$2" nSeeds="$3" r2="$4"
-  local base="${5:-/home/larsonma/LargeRadiusJets/algorithm/emulation/LUT_Constants_Generation/constants/}"
+  local rMerge="$1" nIOs="$2" nSeeds="$3" r2="$4" vers="$5"
+  local base="${6:-/home/larsonma/LargeRadiusJets/algorithm/emulation/LUT_Constants_Generation/constants/}"
   # Match C++ setprecision behavior (no fixed): 4 sig figs for rMerge, 3 for R2
   local rMergeFmt r2Fmt
   rMergeFmt=$(printf "%.4g" "$rMerge")
   r2Fmt=$(printf "%.3g" "$r2")
-  printf "%sconstants_rMerge_%s_R2_%s_IOs_%s_Seeds_%s.h" \
-         "$base" "$rMergeFmt" "$r2Fmt" "$nIOs" "$nSeeds"
+  printf "%sconstants_rMerge_%s_R2_%s_IOs_%s_Seeds_%s_v%s.h" \
+         "$base" "$rMergeFmt" "$r2Fmt" "$nIOs" "$nSeeds" "$vers"
 }
-
 
 # ---- main loops ----
 for rMerge in "${rMergeCuts[@]}"; do
   for r2 in "${rSquaredCuts[@]}"; do
     for ios in "${nIOs[@]}"; do
       for seeds in "${nSeeds[@]}"; do
+        for algoVersion in "${algoVersions[@]}"; do
+          if [[ "$algoVersion" -eq 2 && "$rMerge" != "0.001" ]]; then
+            continue
+          fi
+          # Build filenames
+          constants_file=$(make_input_constants_file_name "$rMerge" "$ios" "$seeds" "$r2" "$algoVersion" "$constants_base")
 
-        # Build filenames
-        constants_file=$(make_input_constants_file_name "$rMerge" "$ios" "$seeds" "$r2" "$constants_base")
+          lut_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR2Cut" "$inputLUTFilePath")
+          lutR_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR" "$inputLUTFilePath")
+          lutR_5b_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR_8b" "$inputLUTFilePath")
 
-        lut_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR2Cut" "$inputLUTFilePath")
-        lutR_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR" "$inputLUTFilePath")
-        lutR_5b_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR_8b" "$inputLUTFilePath")
+          echo "Config: rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds"
+          echo "  constants: $constants_file"
+          echo "  LUTs:"
+          echo "    $lut_output_path"
+          echo "    $lutR_output_path"
+          echo "    $lutR_5b_output_path"
 
-        echo "Config: rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds"
-        echo "  constants: $constants_file"
-        echo "  LUTs:"
-        echo "    $lut_output_path"
-        echo "    $lutR_output_path"
-        echo "    $lutR_5b_output_path"
+          echo "copying files"
+          cp -f "$constants_file" "$dest_dir/constants.h"
 
-        echo "copying files"
-        cp -f "$constants_file" "$dest_dir/constants.h"
+          cp -f "$lut_output_path" "$dest_dir/deltaR2LUT.h"
+          cp -f "$lutR_output_path" "$dest_dir/deltaRLUT.h"
+          cp -f "$lutR_5b_output_path" "$dest_dir/deltaRLUT_8b.h"
+  
+          # Run ROOT for each (signal, PU suppression, VBF)
+          for signal in "${signals[@]}"; do
+            for puSupBool in "${puSuppression[@]}"; do
 
-        cp -f "$lut_output_path" "$dest_dir/deltaR2LUT.h"
-        cp -f "$lutR_output_path" "$dest_dir/deltaRLUT.h"
-        cp -f "$lutR_5b_output_path" "$dest_dir/deltaRLUT_8b.h"
- 
-        # Run ROOT for each (signal, PU suppression, VBF)
-        for signal in "${signals[@]}"; do
-          for puSupBool in "${puSuppression[@]}"; do
+              if [[ "$signal" == true ]]; then
+                sigList=("${signalStrings[@]}")
+              else
+                sigList=("VBF_hh_bbbb")   # run once; just use VBF_hh_bbbb, but it shouldn't matter which signalString is fed into algorithm FIXME allow for a null or empty string to be passed in for backgrounds? 
+              fi
 
-            if [[ "$signal" == true ]]; then
-              sigList=("${signalStrings[@]}")
-            else
-              sigList=("VBF_hh_bbbb")   # run once; just use VBF_hh_bbbb, but it shouldn't matter which signalString is fed into algorithm FIXME allow for a null or empty string to be passed in for backgrounds? 
-            fi
-
-            for signalString in "${sigList[@]}"; do
-              echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool signalString=$signalString"
-              root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, \"${signalString}\")"
+              for signalString in "${sigList[@]}"; do
+                echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool signalString=$signalString"
+                root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, \"${signalString}\")"
+                done
             done
           done
         done
