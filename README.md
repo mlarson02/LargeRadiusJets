@@ -218,7 +218,7 @@ root -b -l -q 'largeRJetAnalysisAndRates.C'
 
 ## Workflow Diagram
 
-`<img width="1696" height="1032" alt="image" src="https://github.com/user-attachments/assets/2b0883cc-da22-47b7-8549-0e6e8dd32cd1" />`{=html}
+<img width="1685" height="1028" alt="image" src="https://github.com/user-attachments/assets/a371f77c-457a-4178-8ed9-f9daa164a609" />
 
 ------------------------------------------------------------------------
 
