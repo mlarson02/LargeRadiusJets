@@ -14,7 +14,7 @@
 // Define constants used by testbench
 const std::string memPrintsPath_ = "/home/larsonma/LargeRadiusJets/data/MemPrints_v3/";
 static inline uint32_t maskN(unsigned n) { return (n >= 32) ? 0xFFFFFFFFu : ((1u << n) - 1u); }
-const std::string kFileSuffix = "nSeeds2_r2Cut1p21_maxObj8_rMerge2p0_sig_WTAConeJetsCellsTowers_Adv_ValidateEmulation";
+const std::string kFileSuffix = "nSeeds2_r2Cut1p21_maxObj128_rMerge2p0_sig_WTAConeJetsCellsTowers_Adv_ValidateEmulation";
 constexpr bool signalBool_ = true;
 constexpr unsigned int jzSlice_ = 3;
 

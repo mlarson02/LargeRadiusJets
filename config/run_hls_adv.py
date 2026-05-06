@@ -268,14 +268,12 @@ constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
-constexpr unsigned int deltaR2_shift_ = 6;  // right-shift applied to raw deltaR2 before comparison
-constexpr unsigned int deltaR2_bits_  = 10; // bit width of the shifted (truncated) deltaR2 result
+constexpr unsigned int deltaR2_bits_  = 10; // bit width of the saturated deltaR2 result (values > 1023 clamp to 1023)
 constexpr double deltaR2_granularity_ = eta_granularity_ * eta_granularity_; // FIXME THIS SHOULD BE EQUIVALENT TO SQUARING PHI_GRANULARITY_ - maybe add an exception if they are not the same
-constexpr double deltaR2_granularity_scaled_ = deltaR2_granularity_ * (1 << deltaR2_shift_); // effective granularity after right-shift by deltaR2_shift_
 
-constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_scaled_ + 0.5); //+ 0.5 for correct rounding
+constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_ + 0.5); //+ 0.5 for correct rounding
 
-constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_)/(deltaR2_granularity_scaled_)) + 0.5);
+constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_)/(deltaR2_granularity_)) + 0.5);
 
         ''')
 
@@ -292,7 +290,7 @@ if __name__ == "__main__":
     r2Cut_options = [1.21]
     #r2Cut_options = [1.44]
     #maxObjectsConsidered_options = [128, 256, 512, 1024]
-    maxObjectsConsidered_options = [8]
+    maxObjectsConsidered_options = [128]
     #maxObjectsConsidered_options = [128]
     rMergeCut_options = [2.0]
     #rMergeCut_options = [3.5]
@@ -376,7 +374,7 @@ if __name__ == "__main__":
                             print(f" Wrote {constsFilename}")
                             #run_lut_generator_via_root("/home/larsonma/LargeRadiusJets/algorithm/writeDeltaR2LUT_adv.cc")
 
-                            subprocess.run(["vitis", "-s", "jet_tagger_hls_adv.py", file_suffix, "1"], check=True)
+                            subprocess.run(["vitis", "-s", "jet_tagger_hls_adv.py", file_suffix, "0"], check=True)
                             xml_report_path = os.path.join('w', file_suffix, file_suffix, 'syn', 'report', 'jet_tagger_top_csynth.xml')
                             print("xml_report_path,", xml_report_path)
                             #resources, latency = extract_hls_report(xml_report_path)

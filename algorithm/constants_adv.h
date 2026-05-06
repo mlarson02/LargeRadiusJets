@@ -2,13 +2,13 @@
 #define CONSTANTS_ADV_H
 // Constants used by SW & FW implementation
 
-#define UNROLLFACTOR 1
+#define UNROLLFACTOR 16
 #define PIPELINEII 3
 
 constexpr unsigned int nTotalSeeds_ = 10;
 constexpr unsigned int nSeedsInput_ = 6;
 constexpr unsigned int nSeedsOutput_ = 2;
-constexpr unsigned int maxObjectsConsidered_ = 8;
+constexpr unsigned int maxObjectsConsidered_ = 128;
 constexpr double et_granularity_ = 0.125;
 constexpr unsigned int subjet_et_threshold_ = 200;
 constexpr double r2Cut_ = 1.21;
@@ -56,14 +56,12 @@ constexpr unsigned int padded_zeroes_high_ = padded_zeroes_low_ + padded_zeroes_
 
 constexpr unsigned int nSeedsDeltaR_ = nSeedsInput_ - nSeedsOutput_;
 
-constexpr unsigned int deltaR2_shift_ = 6;  // right-shift applied to raw deltaR2 before comparison
-constexpr unsigned int deltaR2_bits_  = 10; // bit width of the shifted (truncated) deltaR2 result
+constexpr unsigned int deltaR2_bits_  = 10; // bit width of the saturated deltaR2 result (values > 1023 clamp to 1023)
 constexpr double deltaR2_granularity_ = eta_granularity_ * eta_granularity_; // FIXME THIS SHOULD BE EQUIVALENT TO SQUARING PHI_GRANULARITY_ - maybe add an exception if they are not the same
-constexpr double deltaR2_granularity_scaled_ = deltaR2_granularity_ * (1 << deltaR2_shift_); // effective granularity after right-shift by deltaR2_shift_
 
-constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_scaled_ + 0.5); //+ 0.5 for correct rounding
+constexpr unsigned int digitized_delta_R2Cut_ = static_cast<unsigned int>(r2Cut_/deltaR2_granularity_ + 0.5); //+ 0.5 for correct rounding
 
-constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_)/(deltaR2_granularity_scaled_)) + 0.5);
+constexpr unsigned int digitized_d_search_squared_ = static_cast<unsigned int>(((rMergeCut_) * (rMergeCut_)/(deltaR2_granularity_)) + 0.5);
 
         
 #endif // CONSTANTS_ADV_H

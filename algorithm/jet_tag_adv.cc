@@ -15,7 +15,11 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
     //#pragma HLS INTERFACE m_axi port=outputJetValues   bundle=gmem2 offset=slave depth=nSeedsOutput_
     // AXI4-Lite interface only for control signals (function arguments, etc.)
     //#pragma HLS INTERFACE s_axilite port=return bundle=CTRL
-    
+    /*std::cout << "--------------------" << "\n";
+    std::cout << "constants: "<< "\n";
+    std::cout << "deltaR2_granularity_: " << deltaR2_granularity_ << "\n";
+    std::cout << "digitized_delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
+    std::cout << "r2 cut: " << r2Cut_ << "\n";*/
     for (unsigned int i = 0; i < nSeedsOutput_; ++i)
         #pragma HLS unroll
         outputJetValues[i] = 0;
@@ -38,13 +42,19 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
     ap_uint<2*(phi_bit_length_-1)> phiSq_LS = ap_uint<phi_bit_length_-1>(uDeltaPhi_LeadSublSeeds) * ap_uint<phi_bit_length_-1>(uDeltaPhi_LeadSublSeeds);
     #pragma HLS bind_op variable=phiSq_LS op=mul impl=dsp
     ap_uint<2*eta_bit_length_+1> rawSum_LS = ap_uint<2*eta_bit_length_+1>(etaSq_LS) + phiSq_LS;
-    ap_uint<deltaR2_bits_> deltaR2LeadingSubleading = (rawSum_LS >> deltaR2_shift_) > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
+    ap_uint<deltaR2_bits_> deltaR2LeadingSubleading = rawSum_LS > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
                                                       ? ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
-                                                      : ap_uint<deltaR2_bits_>(rawSum_LS >> deltaR2_shift_);
+                                                      : ap_uint<deltaR2_bits_>(rawSum_LS);
+
+    //std::cout << "seed 1 OR eta: " << seedValues[0].range(eta_high_, eta_low_) << " , phi: " << seedValues[0].range(phi_high_, phi_low_) << "\n";
+    //std::cout << "seed 2 OR eta: " << seedValues[1].range(eta_high_, eta_low_) << " , phi: " << seedValues[1].range(phi_high_, phi_low_) << "\n";
+    //std::cout << "deltaR2leadingsubleading: " << deltaR2LeadingSubleading << "\n";
+    //std::cout << "deltaR^2 cut: " << 2 * 2 * digitized_delta_R2Cut_ << "\n";
     if(deltaR2LeadingSubleading <= 2 * 2 * digitized_delta_R2Cut_){ // (2 * R_Cut) ^ 2
 
-        for(unsigned int iSeedOR = nSeedsOutput_; iSeedOR < nSeedsInput_; iSeedOR++){
+        for(unsigned int iSeedOR = nSeedsOutput_; iSeedOR < nTotalSeeds_; iSeedOR++){
             #pragma HLS unroll
+            //std::cout << "iSeed OR : "<< iSeedOR << "\n";
             if(seedValues[iSeedOR].range(et_high_, et_low_) == 0 && seedValues[iSeedOR].range(eta_high_, eta_low_) == 0 && seedValues[iSeedOR].range(phi_high_, phi_low_) == 0) continue; // don't consider if et, eta, phi all = 0 (no jet)
             ap_int<eta_bit_length_ + 1> deltaEtaNthLeading = seedValues[0].range(eta_high_, eta_low_) - seedValues[iSeedOR].range(eta_high_, eta_low_);
             ap_int<phi_bit_length_ + 1> deltaPhiNthLeading = seedValues[0].range(phi_high_, phi_low_) - seedValues[iSeedOR].range(phi_high_, phi_low_);
@@ -56,11 +66,12 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
             ap_uint<2*(phi_bit_length_-1)> phiSq_NL = ap_uint<phi_bit_length_-1>(uDeltaPhiNthLeading) * ap_uint<phi_bit_length_-1>(uDeltaPhiNthLeading);
             #pragma HLS bind_op variable=phiSq_NL op=mul impl=dsp
             ap_uint<2*eta_bit_length_+1> rawSum_NL = ap_uint<2*eta_bit_length_+1>(etaSq_NL) + phiSq_NL;
-            ap_uint<deltaR2_bits_> deltaR2LeadingSubleadingNthLeading = (rawSum_NL >> deltaR2_shift_) > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
+            ap_uint<deltaR2_bits_> deltaR2LeadingSubleadingNthLeading = rawSum_NL > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
                                                                          ? ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
-                                                                         : ap_uint<deltaR2_bits_>(rawSum_NL >> deltaR2_shift_);
-
+                                                                         : ap_uint<deltaR2_bits_>(rawSum_NL);
+            //std::cout << "deltaR2 Nth leading: " << deltaR2LeadingSubleadingNthLeading << "\n";
             if(deltaR2LeadingSubleadingNthLeading > 2 * 2 * digitized_delta_R2Cut_){
+                //std::cout << "triggering OR for iSeed OR : "<< iSeedOR << "\n";
                 ap_uint<et_bit_length_ > swappedEt = seedValues[iSeedOR].range(et_high_, et_low_);
                 ap_uint<eta_bit_length_ > swappedEta = seedValues[iSeedOR].range(eta_high_, eta_low_);
                 ap_uint<phi_bit_length_ > swappedPhi = seedValues[iSeedOR].range(phi_high_, phi_low_);
@@ -116,9 +127,9 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
             ap_uint<2*(phi_bit_length_-1)> phiSq   = corrDeltaPhi * corrDeltaPhi;
             #pragma HLS bind_op variable=phiSq   op=mul impl=dsp
             ap_uint<2*eta_bit_length_+1>   rawSum  = ap_uint<2*eta_bit_length_+1>(etaSq) + phiSq;
-            ap_uint<deltaR2_bits_>         deltaR2 = (rawSum >> deltaR2_shift_) > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
+            ap_uint<deltaR2_bits_>         deltaR2 = rawSum > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
                                                       ? ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
-                                                      : ap_uint<deltaR2_bits_>(rawSum >> deltaR2_shift_);
+                                                      : ap_uint<deltaR2_bits_>(rawSum);
             //std::cout << "deltaR2: " << deltaR2 << " , digitized_d_search_squared_: " << digitized_d_search_squared_ << "\n";
             if (deltaR2 <= digitized_d_search_squared_){
                 protoSeedCounter[iSeed]++;
@@ -321,9 +332,9 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
                 ap_uint<2*(phi_bit_length_-1)> phiSq_IO = corrDeltaPhi * corrDeltaPhi;
                 #pragma HLS bind_op variable=phiSq_IO op=mul impl=dsp
                 ap_uint<2*eta_bit_length_+1>   rawSum_IO = ap_uint<2*eta_bit_length_+1>(etaSq_IO) + phiSq_IO;
-                ap_uint<deltaR2_bits_>         deltaR2   = (rawSum_IO >> deltaR2_shift_) > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
+                ap_uint<deltaR2_bits_>         deltaR2   = rawSum_IO > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
                                                             ? ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
-                                                            : ap_uint<deltaR2_bits_>(rawSum_IO >> deltaR2_shift_);
+                                                            : ap_uint<deltaR2_bits_>(rawSum_IO);
                 //std::cout << " corrDeltaPhi : " << corrDeltaPhi << "\n";
                 //std::cout << "deltaR^2: " << uDeltaEta * uDeltaEta * eta_granularity_ * eta_granularity_ + corrDeltaPhi * corrDeltaPhi * phi_granularity_ * phi_granularity_ << "\n";
                 //int phiLength = 1 << (phi_bit_length_);
@@ -338,6 +349,7 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
                     else{
                         outputJetEt += inputObjectValues[iInput].range(et_high_, et_low_); // add input object Et to seed Et for resultant output jet Et
                     }
+                    //std::cout << "outputJetEt after sum: " << outputJetEt << "\n";
 
                 }
             }
@@ -364,9 +376,9 @@ void jet_tag_adv(input seedValues[nTotalSeeds_], input inputObjectValues[maxObje
                     ap_uint<2*(phi_bit_length_-1)> phiSq_SJ = corrDeltaPhi * corrDeltaPhi;
                     #pragma HLS bind_op variable=phiSq_SJ op=mul impl=dsp
                     ap_uint<2*eta_bit_length_+1>   rawSum_SJ = ap_uint<2*eta_bit_length_+1>(etaSq_SJ) + phiSq_SJ;
-                    ap_uint<deltaR2_bits_>         deltaR2   = (rawSum_SJ >> deltaR2_shift_) > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
+                    ap_uint<deltaR2_bits_>         deltaR2   = rawSum_SJ > ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
                                                                 ? ap_uint<deltaR2_bits_>((1<<deltaR2_bits_)-1)
-                                                                : ap_uint<deltaR2_bits_>(rawSum_SJ >> deltaR2_shift_);
+                                                                : ap_uint<deltaR2_bits_>(rawSum_SJ);
                     //ap_uint<eta_bit_length_ + phi_bit_length_ + 2 > lut_index = (uDeltaEta << (phi_bit_length_ - 1)) | corrDeltaPhi; // Calculate LUT index corresponding to whether input object passes R^2 cut
                     //if (!(lut_index >= max_R2lut_size_) && lut_[lut_index]){ // only consider if lut index is smaller than max size (past max size, all values are False) // FIXME will throw an error for deltaR!=1.0
                     //std::cout << "deltaR2: " << deltaR2 << " , delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
