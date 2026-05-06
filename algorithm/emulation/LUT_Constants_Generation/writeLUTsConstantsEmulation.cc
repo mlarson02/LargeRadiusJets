@@ -28,7 +28,7 @@ int main() {
     std::vector<unsigned int > algoVersions = {2, 3};
     std::vector<double > rSquaredCuts = {1.0, 1.21, 1.44};
     //std::vector<double > rSquaredCuts = {1.21};
-    std::vector<unsigned int > nIOs = {8, 128};
+    std::vector<unsigned int > nIOs = {8, 128, 256};
     std::vector<unsigned int > nSeeds = {2};
     std::vector<unsigned int > nSeedsInput = {10};
     std::vector<unsigned int > nProtoSeeds = {6};
@@ -61,7 +61,7 @@ int main() {
             substruct3BitLength = 8;
             substruct4BitLength = 8;
             totalBits = 64;
-            rMergeCuts = {0.001, 1.25, 1.5, 1.75, 2.0};
+            rMergeCuts = {0.001, 1.25, 1.5, 1.75, 1.875, 2.0};
             //rMergeCuts = { 2.0};
         }
 

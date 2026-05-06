@@ -43,7 +43,8 @@ struct FileInfo {
     std::string seedObjectType;
     std::string rMergeValue;
 
-    double jetRadiusSquared = 0.0;  // NEW FIELD
+    double jetRadiusSquared = 0.0;
+    double subjetEtThreshold = 25.0;
     bool useSoftKiller = false;
 };
 
@@ -87,21 +88,23 @@ FileInfo ParseFileName(const std::string& path)
 {
     FileInfo info;
 
-    const std::string rMergeTag = "_rMerge_";
-    const std::string ioTag     = "_IO_";
-    const std::string seedTag   = "_Seed_";
-    const std::string r2Tag     = "_R2_";   // NEW TAG
+    const std::string rMergeTag   = "_rMerge_";
+    const std::string ioTag       = "_IO_";
+    const std::string seedTag     = "_Seed_";
+    const std::string r2Tag       = "_R2_";
+    const std::string subjetEtTag = "_subjetEt";
 
-    const std::string ext1      = ".root";
-    const std::string ext2      = "_v3.root";
+    const std::string ext1        = ".root";
+    const std::string ext2        = "_v3.root";
 
     // ----------------------------
     // Find tags
     // ----------------------------
-    const size_t posRMerge = path.find(rMergeTag);
-    const size_t posIO     = path.find(ioTag);
-    const size_t posSeed   = path.find(seedTag);
-    const size_t posR2     = path.find(r2Tag);
+    const size_t posRMerge   = path.find(rMergeTag);
+    const size_t posIO       = path.find(ioTag);
+    const size_t posSeed     = path.find(seedTag);
+    const size_t posR2       = path.find(r2Tag);
+    const size_t posSubjetEt = path.find(subjetEtTag);
 
     if (posIO == std::string::npos || posSeed == std::string::npos || posSeed <= posIO) {
         std::cerr << "⚠️ ParseFileName: could not find expected IO/Seed tags in: " << path << "\n";
@@ -142,7 +145,7 @@ FileInfo ParseFileName(const std::string& path)
         const size_t startInput = posIO + ioTag.size();
         const size_t lenInput   = posSeed - startInput;
         std::string rawIO = path.substr(startInput, lenInput);
-        if(rawIO == "gepWTAConeCellsTowersJets" || rawIO == "gepWTAConeCellsTowersSKJets") {
+        if(rawIO == "gepWTAConeCellsTowersJets" || rawIO == "gepWTAConeCellsTowersSKJets" || rawIO == "gepWTAConeCellsTowersSKJets_SK" ) {
             info.inputObjectType = "ConeJets";
         } else if(rawIO == "gepCellsTowers" || rawIO == "gepCellsTowersSK") {
             info.inputObjectType = "Towers";
@@ -156,25 +159,53 @@ FileInfo ParseFileName(const std::string& path)
     {
         size_t startSeed = posSeed + seedTag.size();
 
-        // Find both possible extensions
-        size_t end1 = path.find(ext1, startSeed);
-        size_t end2 = path.find(ext2, startSeed);
-
         size_t endSeed = std::string::npos;
-        if (end1 != std::string::npos && end2 != std::string::npos)
-            endSeed = std::min(end1, end2);
-        else if (end1 != std::string::npos)
-            endSeed = end1;
-        else if (end2 != std::string::npos)
-            endSeed = end2;
-        else
-            endSeed = path.size();  // fallback
+        // Prefer _subjetEt as end boundary (cleaner delimiter); fall back to .root
+        if (posSubjetEt != std::string::npos && posSubjetEt > startSeed) {
+            endSeed = posSubjetEt;
+        } else {
+            size_t end1 = path.find(ext1, startSeed);
+            size_t end2 = path.find(ext2, startSeed);
+            if (end1 != std::string::npos && end2 != std::string::npos)
+                endSeed = std::min(end1, end2);
+            else if (end1 != std::string::npos)
+                endSeed = end1;
+            else if (end2 != std::string::npos)
+                endSeed = end2;
+            else
+                endSeed = path.size();
+        }
 
-        info.seedObjectType = path.substr(startSeed, endSeed - startSeed);
+        std::string rawSeed = path.substr(startSeed, endSeed - startSeed);
 
-        const bool hasNoSK = info.seedObjectType.find("_NoSK") != std::string::npos;
-        const bool hasSK   = info.seedObjectType.find("_SK")   != std::string::npos;
+        const bool hasNoSK = rawSeed.find("_NoSK") != std::string::npos;
+        const bool hasSK   = rawSeed.find("_SK")   != std::string::npos;
         info.useSoftKiller = hasSK && !hasNoSK;
+
+        if (rawSeed.find("gepWTAConeCellsTowersJets") != std::string::npos)
+            info.seedObjectType = "ConeJet";
+        else if (rawSeed.find("gFEXSRJ") != std::string::npos)
+            info.seedObjectType = "gFEX";
+        else if (rawSeed.find("jFEXSRJ") != std::string::npos)
+            info.seedObjectType = "jFEX";
+        else
+            info.seedObjectType = rawSeed;
+    }
+
+    // ----------------------------
+    // Extract subjetEtThreshold from _subjetEt<N>GeV
+    // ----------------------------
+    if (posSubjetEt != std::string::npos) {
+        size_t startEt = posSubjetEt + subjetEtTag.size();
+        size_t endEt   = path.find("GeV", startEt);
+        if (endEt != std::string::npos) {
+            std::string etStr = path.substr(startEt, endEt - startEt);
+            try {
+                info.subjetEtThreshold = std::stod(etStr);
+            } catch (...) {
+                std::cerr << "⚠️ Failed to parse subjetEt value '" << etStr << "' as double\n";
+            }
+        }
     }
 
     return info;

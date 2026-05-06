@@ -46,32 +46,19 @@ double wrapSym_dbl(double deltaPhi){
     else if(deltaPhi < -M_PI) deltaPhiWrapped += 2 * M_PI;
     return deltaPhiWrapped;
 }
-/*
-// Function to scale and digitize a value, returning the result as a binary string
-template <int bit_length>
-inline std::bitset<bit_length > digitize(double value, double min_val, double max_val, std::string type) {
-    // Ensure the value is within range
-    if(value < min_val) value = min_val;
-    if(value > max_val) value = max_val;
-    if (value < min_val || value > max_val) {
-        std::cout << "value that is out of range; " << value << "\n";
-        std::cout << "for min val : " << min_val << " and max val: " << max_val << "\n";
-        std::cout << "for type: " << type << "\n";
-        std::cout << "Value is out of range for bitlength: " << bit_length << "\n";
-    }
 
-    // Calculate scale factor
-    double scale = (std::pow(2, bit_length)) / (max_val - min_val);
-    std::cout << "scale: " << scale << "\n";
-    
-    // Calculate the digitized value and round it
-    int digitized_value = static_cast<int>(std::round((value - min_val) * scale));
-    
-    // Return the digitized value as a binary string (with leading zeros to fit the bit length)
-    std::bitset<bit_length > bin(digitized_value);
+// Compute digitized deltaR^2 between two (eta, phi) coordinates, with phi wrap
+inline unsigned int digitizedDeltaR2(unsigned int eta1, unsigned int phi1, unsigned int eta2, unsigned int phi2) {
+    unsigned int uDeltaEta = static_cast<unsigned int>(std::abs(int(eta1) - int(eta2)));
+    unsigned int uDeltaPhi = static_cast<unsigned int>(std::abs(int(phi1) - int(phi2)));
+    if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
+    return uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi;
+}
 
-    return bin; // Extract only the relevant bits
-}*/
+// Compute LUT index from wrapped absolute (deltaEta, deltaPhi) components
+inline unsigned int calcLutIndex(unsigned int uDeltaEta, unsigned int uDeltaPhi) {
+    return uDeltaEta * (1u << (phi_bit_length_ - 1)) + uDeltaPhi;
+}
 
 unsigned int digitize(double value, int bit_length, double min_val, double max_val, unsigned int altRange = 0) {
     unsigned int range = (altRange == 0) ? (1u << bit_length) : altRange;
@@ -113,15 +100,6 @@ unsigned int index_of_min(unsigned int (&in)[nPreSeeds_]) { // FIXME can't use a
         min_val = in[1];
         min_idx = 1;
     }
-    /*if (in[2] < min_val) {
-        min_val = in[2];
-        min_idx = 2; // FIXME this should be set dynamically based on how big nPreSeeds_ is...
-    }*/
-    /*if (in[3] < min_val) {
-        min_val = in[3];
-        min_idx = 3;
-    }*/
-
     return min_idx;
 }
 
@@ -199,7 +177,12 @@ std::string makeOutputFileName(double rMergeCut,
                                std::string seedObjectType,
                                bool useSKObjects,
                                unsigned int algoVersion,
-                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/") {
+                               double subjetEtThreshold = 25.0,
+                               bool enableEtWeightedMidpoint = false,
+                               bool minEtSeedPosOptimization = true,
+                               double minEtSeedPosOptimizationCut = 20.0,
+                               std::string outputRootFilePath = "/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization_MassTestNumIOs/") {
+    gSystem->mkdir(outputRootFilePath.c_str()); 
     std::string usePUSuppress;
     if(useSKObjects){
         usePUSuppress = "SK";
@@ -222,7 +205,12 @@ std::string makeOutputFileName(double rMergeCut,
     ss << "rMerge_" << std::setprecision(3) << rMergeCut << "_"
        << "IOs_" << NIOs << "_"
        << "Seeds_" << nSeeds << "_"
-       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_" << usePUSuppress << "_v" << algoVersion << ".root";
+       << "R2_" << std::setprecision(3) << RSquaredCut << "_IO_" << inputObjectType << "_Seed_" << seedObjectType << "_" << usePUSuppress
+       << "_subjetEt" << static_cast<int>(subjetEtThreshold) << "GeV"
+       << "_ewm" << static_cast<int>(enableEtWeightedMidpoint)
+       << "_mep" << static_cast<int>(minEtSeedPosOptimization)
+       << "_mec" << static_cast<int>(minEtSeedPosOptimizationCut) << "GeV"
+       << "_v" << algoVersion << ".root";
 
     return ss.str();
 }

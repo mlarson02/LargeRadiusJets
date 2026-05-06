@@ -10,25 +10,32 @@ set -euo pipefail
 #rMergeCuts=(0.001 1.5 2.0 2.5) 
 #rMergeCuts=(0.001 2) 
 algoVersions=(3)
+#rMergeCuts=(1.75 1.875 2.0) 
 rMergeCuts=(2.0) 
-#rMergeCuts=(0.001) 
 #rMergeCuts=(1.25 1.75)
 rSquaredCuts=(1.21)
 nIOs=(128)
 nSeeds=(2)
-signals=(true false)
+signals=(true)
 puSuppression=(true)
 #vbfBools=(true false)
 #signalStrings=("Zprime_ttbar")
-signalStrings=("VBF_hh_bbbb_cvv0" "VBF_hh_bbbb_cvv1" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
+#signalStrings=("VBF_hh_bbbb_cvv0" "VBF_hh_bbbb_cvv1" "ggF_hh_bbbb" "ZvvHbb" "ttbar_had" "Zprime_ttbar")
+signalStrings=("ggF_hh_bbbb")
 #signalStrings=("ttbar_had")
 #signalStrings=("ggF_hh_bbbb")
 
-inputObjects=("gepWTAConeCellsTowersJets" "gepCellsTowers")
+#inputObjects=("gepWTAConeCellsTowersJets" "gepCellsTowers")
+#seedObjects=("gepWTAConeCellsTowersJets" "jFEXSRJ" "gFEXSRJ")
+inputObjects=("gepCellsTowers")
+#seedObjects=("gepWTAConeCellsTowersJets")
 seedObjects=("gepWTAConeCellsTowersJets")
 condor=false
 
-#FIXME add input / seed object types to be looped through too(independent of constants & LUTs)
+# ---- new algorithm behaviour parameters ----
+enableEtWeightedMidpoints=(false)
+minEtSeedPosOptimizations=(false)
+minEtSeedPosOptimizationCuts=(25.0)
 
 # ---- paths ----
 inputLUTFilePath="/home/larsonma/LargeRadiusJets/algorithm/emulation/LUT_Constants_Generation/LUTs/"
@@ -71,40 +78,57 @@ for rMerge in "${rMergeCuts[@]}"; do
           # Build filenames
           constants_file=$(make_input_constants_file_name "$rMerge" "$ios" "$seeds" "$r2" "$algoVersion" "$constants_base")
 
-          lut_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR2Cut" "$inputLUTFilePath")
-          lutR_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR" "$inputLUTFilePath")
-          lutR_5b_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR_8b" "$inputLUTFilePath")
+          #lut_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR2Cut" "$inputLUTFilePath")
+          #lutR_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR" "$inputLUTFilePath")
+          lutR_8b_output_path=$(make_input_LUT_file_name "$rMerge" "$r2" "deltaR_8b" "$inputLUTFilePath")
 
           echo "Config: rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds"
           echo "  constants: $constants_file"
           echo "  LUTs:"
-          echo "    $lut_output_path"
-          echo "    $lutR_output_path"
-          echo "    $lutR_5b_output_path"
+          #echo "    $lut_output_path"
+          #echo "    $lutR_output_path"
+          echo "    $lutR_8b_output_path"
 
           echo "copying files"
           cp -f "$constants_file" "$dest_dir/constants.h"
 
-          cp -f "$lut_output_path" "$dest_dir/deltaR2LUT.h"
-          cp -f "$lutR_output_path" "$dest_dir/deltaRLUT.h"
-          cp -f "$lutR_5b_output_path" "$dest_dir/deltaRLUT_8b.h"
+          #cp -f "$lut_output_path" "$dest_dir/deltaR2LUT.h"
+          #cp -f "$lutR_output_path" "$dest_dir/deltaRLUT.h"
+          cp -f "$lutR_8b_output_path" "$dest_dir/deltaRLUT_8b.h"
   
-          # Run ROOT for each (signal, PU suppression, VBF)
-          for signal in "${signals[@]}"; do
-            for puSupBool in "${puSuppression[@]}"; do
+          # Run ROOT for each (signal, PU suppression, VBF, inputObject, seedObject)
+          for inputObj in "${inputObjects[@]}"; do
+            for seedObj in "${seedObjects[@]}"; do
+              # Subjet Et threshold depends on seed object type
+              case "$seedObj" in
+                gFEXSRJ)                    subjetEtThreshold=35 ;;
+                jFEXSRJ)                    subjetEtThreshold=50 ;;
+                gepWTAConeCellsTowersJets)  subjetEtThreshold=25 ;;
+                *)                          subjetEtThreshold=25 ;;
+              esac
+              for etWtMid in "${enableEtWeightedMidpoints[@]}"; do
+              for minEtOpt in "${minEtSeedPosOptimizations[@]}"; do
+              for minEtCut in "${minEtSeedPosOptimizationCuts[@]}"; do
+              for signal in "${signals[@]}"; do
+                for puSupBool in "${puSuppression[@]}"; do
 
-              if [[ "$signal" == true ]]; then
-                sigList=("${signalStrings[@]}")
-              else
-                sigList=("VBF_hh_bbbb")   # run once; just use VBF_hh_bbbb, but it shouldn't matter which signalString is fed into algorithm FIXME allow for a null or empty string to be passed in for backgrounds? 
-              fi
+                  if [[ "$signal" == true ]]; then
+                    sigList=("${signalStrings[@]}")
+                  else
+                    sigList=("VBF_hh_bbbb")   # run once; just use VBF_hh_bbbb, but it shouldn't matter which signalString is fed into algorithm FIXME allow for a null or empty string to be passed in for backgrounds?
+                  fi
 
-              for signalString in "${sigList[@]}"; do
-                echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool signalString=$signalString"
-                root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, \"${signalString}\")"
+                  for signalString in "${sigList[@]}"; do
+                    echo "Running ROOT: signal=$signal rMerge=$rMerge r2=$r2 nIOs=$ios nSeeds=$seeds puSup=$puSupBool signalString=$signalString inputObject=$inputObj seedObject=$seedObj subjetEtThreshold=$subjetEtThreshold etWtMid=$etWtMid minEtOpt=$minEtOpt minEtCut=$minEtCut"
+                    root -l -b -q "${src_cc}+(${rMerge}, ${ios}, ${seeds}, ${r2}, ${signal}, ${condor}, ${puSupBool}, \"${signalString}\", \"${inputObj}\", \"${seedObj}\", ${subjetEtThreshold}, ${etWtMid}, ${minEtOpt}, ${minEtCut})"
+                  done
                 done
-            done
-          done
+              done          # signal
+              done          # minEtCut
+              done          # minEtOpt
+              done          # etWtMid
+            done            # seedObj
+          done              # inputObj
         done
       done
     done

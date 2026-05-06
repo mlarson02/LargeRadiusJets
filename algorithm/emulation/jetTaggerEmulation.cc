@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <array>
 #include "TH1F.h"
@@ -144,6 +143,14 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     std::vector<double>* jetTaggerSubleadingLRJEtaValues = nullptr;
     std::vector<double>* jetTaggerSubleadingLRJPhiValues = nullptr;
 
+    // Subjet Et, Eta, Phi (undigitized) for leading and subleading LRJs
+    std::vector<double>* jetTaggerLeadingLRJSubjetEtValues = nullptr;
+    std::vector<double>* jetTaggerLeadingLRJSubjetEtaValues = nullptr;
+    std::vector<double>* jetTaggerLeadingLRJSubjetPhiValues = nullptr;
+    std::vector<double>* jetTaggerSubleadingLRJSubjetEtValues = nullptr;
+    std::vector<double>* jetTaggerSubleadingLRJSubjetEtaValues = nullptr;
+    std::vector<double>* jetTaggerSubleadingLRJSubjetPhiValues = nullptr;
+
     //std::cout << "test 2 " << "\n";
 
     // Open input ROOT file
@@ -199,6 +206,9 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     jetTaggerLeadingLRJs->Branch("Et", &jetTaggerLeadingLRJEtValues);
     jetTaggerLeadingLRJs->Branch("Eta", &jetTaggerLeadingLRJEtaValues);
     jetTaggerLeadingLRJs->Branch("Phi", &jetTaggerLeadingLRJPhiValues);
+    jetTaggerLeadingLRJs->Branch("SubjetEt",  &jetTaggerLeadingLRJSubjetEtValues);
+    jetTaggerLeadingLRJs->Branch("SubjetEta", &jetTaggerLeadingLRJSubjetEtaValues);
+    jetTaggerLeadingLRJs->Branch("SubjetPhi", &jetTaggerLeadingLRJSubjetPhiValues);
 
     TTree* jetTaggerSubleadingLRJs = new TTree("jetTaggerSubleadingLRJsTree", "Tree storing event-wise Substructure variable, Et, Eta, Phi");
     jetTaggerSubleadingLRJs->Branch("Psi_R", &jetTaggerSubleadingLRJPsi_RValues);
@@ -211,6 +221,9 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
     jetTaggerSubleadingLRJs->Branch("Et", &jetTaggerSubleadingLRJEtValues);
     jetTaggerSubleadingLRJs->Branch("Eta", &jetTaggerSubleadingLRJEtaValues);
     jetTaggerSubleadingLRJs->Branch("Phi", &jetTaggerSubleadingLRJPhiValues);
+    jetTaggerSubleadingLRJs->Branch("SubjetEt",  &jetTaggerSubleadingLRJSubjetEtValues);
+    jetTaggerSubleadingLRJs->Branch("SubjetEta", &jetTaggerSubleadingLRJSubjetEtaValues);
+    jetTaggerSubleadingLRJs->Branch("SubjetPhi", &jetTaggerSubleadingLRJSubjetPhiValues);
 
     // === caloTopoTowerTree ===
     caloTopoTowerTree->SetBranchAddress("Et", &caloTopoTowerEtValues);
@@ -329,6 +342,13 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         jetTaggerSubleadingLRJEtValues->clear();
         jetTaggerSubleadingLRJEtaValues->clear();
         jetTaggerSubleadingLRJPhiValues->clear();
+
+        jetTaggerLeadingLRJSubjetEtValues->clear();
+        jetTaggerLeadingLRJSubjetEtaValues->clear();
+        jetTaggerLeadingLRJSubjetPhiValues->clear();
+        jetTaggerSubleadingLRJSubjetEtValues->clear();
+        jetTaggerSubleadingLRJSubjetEtaValues->clear();
+        jetTaggerSubleadingLRJSubjetPhiValues->clear();
 
         if(seedObjectType == "jFEXSRJ"){
             jFexSRJTree->GetEntry(iEvt); // get seed data
@@ -456,30 +476,20 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         if(algoVersion_ != 2){ 
             // FIXME add a boolean to enable/disable overlap removal
             // Perform overlap removal (OR) ensuring that leading, subleading seeds don't overlap within deltaR < 2.0 
-            int deltaEta = seedValues[0].eta - seedValues[1].eta;
-            int deltaPhi = seedValues[0].phi - seedValues[1].phi;
-            //std::cout << "seed 1 OR eta: " << undigitize_eta(seedValues[0].eta) << " , phi: " << undigitize_phi(seedValues[0].phi) << "\n";
-            //std::cout << "seed 2 OR eta: " << undigitize_eta(seedValues[1].eta) << " , phi: " << undigitize_phi(seedValues[1].phi) << "\n";
-            unsigned int uDeltaEta = std::abs(deltaEta);
-            unsigned int uDeltaPhi = std::abs(deltaPhi);
-            if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-            unsigned int deltaR2LeadingSubleading = uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi;
+            //std::cout << "seed 1 OR eta: " << seedValues[0].eta << " , phi: " << seedValues[0].phi << "\n";
+            //std::cout << "seed 2 OR eta: " << seedValues[1].eta << " , phi: " << seedValues[1].phi << "\n";
+            unsigned int deltaR2LeadingSubleading = digitizedDeltaR2(seedValues[0].eta, seedValues[0].phi, seedValues[1].eta, seedValues[1].phi);
             //std::cout << "deltaR2leadingsubleading: " << deltaR2LeadingSubleading << "\n";
             //std::cout << "deltaR^2 cut: " << 2 * 2 * digitized_delta_R2Cut_ << "\n";
             if(deltaR2LeadingSubleading <= 2 * 2 * digitized_delta_R2Cut_){
-                //std::cout << "OR potentially triggered" << "\n";
+                //std::cout << "OR triggered" << "\n";
                 for(unsigned int iSeedOR = nSeedsOutput_; iSeedOR < nSeedsInput_; iSeedOR++){
-
+                    //std::cout << "iSeedOR: " << iSeedOR << "\n";
                     if(seedValues[iSeedOR].et == 0 && seedValues[iSeedOR].eta == 0 && seedValues[iSeedOR].phi == 0) continue; // don't consider if et, eta, phi all = 0 (no jet)
-                    int deltaEtaNthLeading = seedValues[0].eta - seedValues[iSeedOR].eta;
-                    int deltaPhiNthLeading = seedValues[0].phi - seedValues[iSeedOR].phi;
-                    unsigned int uDeltaEtaNthLeading = std::abs(deltaEtaNthLeading);
-                    unsigned int uDeltaPhiNthLeading = std::abs(deltaPhiNthLeading);
-                    if (uDeltaPhiNthLeading >= pi_digitized_in_phi_) uDeltaPhiNthLeading = (2 * pi_digitized_in_phi_) - uDeltaPhiNthLeading;
-                    unsigned int deltaR2LeadingSubleadingNthLeading = uDeltaEtaNthLeading * uDeltaEtaNthLeading + uDeltaPhiNthLeading * uDeltaPhiNthLeading;
-
+                    unsigned int deltaR2LeadingSubleadingNthLeading = digitizedDeltaR2(seedValues[0].eta, seedValues[0].phi, seedValues[iSeedOR].eta, seedValues[iSeedOR].phi);
+                    //std::cout << " deltaR2LeadingSubleadingNthLeading: " << deltaR2LeadingSubleadingNthLeading << "\n";
                     if(deltaR2LeadingSubleadingNthLeading > 2 * 2 * digitized_delta_R2Cut_){
-
+                        //std::cout << "triggering for iSeedOR : "<< iSeedOR << "\n";
                         // Swap the entire (Et, eta, phi) triplet for original subleading, new subleading seed
                         std::swap(seedValues[1].et, seedValues[iSeedOR].et); // Et
                         std::swap(seedValues[1].eta, seedValues[iSeedOR].eta); // eta
@@ -591,12 +601,12 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             //std::cout << " ----------------- SEED POS OPT -----------------" << "\n";
             for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){ // loop through and calculate deltaR between leading, subleading & 3rd - 6th highest Et JFEX SRJ
                 for (unsigned int iPreSeed = 0; iPreSeed < (nProtoSeeds_ - nSeedsOutput_); iPreSeed++){ // Loop through the number of considered
-                    std::cout << "iPreSeed: " << iPreSeed << "\n";
-                    std::cout << "-----------------------------------" << "\n";
-                    std::cout << "iSeed (seed opt): " << iSeed << "\n";
-                    std::cout << "iPreSeed (seed opt): " << iPreSeed << "\n";
-                    std::cout << "seed eta: " << seedValues[iSeed].eta << " , seed phi: " << seedValues[iSeed].phi << "\n";
-                    std::cout << "iPreSeed eta: " << seedValues[iPreSeed + nSeedsOutput_].eta << " , iPreSeed phi: " << seedValues[iPreSeed + nSeedsOutput_].phi << "\n";
+                    //std::cout << "iPreSeed: " << iPreSeed << "\n";
+                    //std::cout << "-----------------------------------" << "\n";
+                    //std::cout << "iSeed (seed opt): " << iSeed << "\n";
+                    //std::cout << "iPreSeed (seed opt): " << iPreSeed << "\n";
+                    //std::cout << "seed eta: " << seedValues[iSeed].eta << " , seed phi: " << seedValues[iSeed].phi << "\n";
+                    //std::cout << "iPreSeed eta: " << seedValues[iPreSeed + nSeedsOutput_].eta << " , iPreSeed phi: " << seedValues[iPreSeed + nSeedsOutput_].phi << "\n";
                     
                     // Don't consider zero Et pre-seeds
                     if(seedValues[iPreSeed + nSeedsOutput_].et == 0) continue; 
@@ -606,23 +616,17 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                         if(seedValues[iPreSeed + nSeedsOutput_].et <=  minEtSeedPosOptimizationCut / et_granularity_) continue;
                     }
 
-                    int deltaEta = seedValues[iSeed].eta - seedValues[iPreSeed + nSeedsOutput_].eta;
-                    int deltaPhi = seedValues[iSeed].phi - seedValues[iPreSeed + nSeedsOutput_].phi;
-                    // Use unsigned type for absolute values, and ensure both operands are of the same type
-                    unsigned int uDeltaEta = std::abs(deltaEta); 
-                    unsigned int uDeltaPhi = std::abs(deltaPhi);
-                    std::cout << "uDeltaPhi phi: " << uDeltaPhi << "\n";
-                    if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                    std::cout << "uDeltaPhi post wrap: " << uDeltaPhi << "\n";
-                    unsigned int deltaR2SeedPreSeed = uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi;
+                    //std::cout << "uDeltaPhi phi: " << uDeltaPhi << "\n";
+                    //std::cout << "uDeltaPhi post wrap: " << uDeltaPhi << "\n";
+                    unsigned int deltaR2SeedPreSeed = digitizedDeltaR2(seedValues[iSeed].eta, seedValues[iSeed].phi, seedValues[iPreSeed + nSeedsOutput_].eta, seedValues[iPreSeed + nSeedsOutput_].phi);
                     //std::cout << "deltaR2SeedPreSeed: " << deltaR2SeedPreSeed * 0.01 << "\n";
-                    std::cout << "deltaR2SeedPreSeed: " << deltaR2SeedPreSeed << " , digitized_d_search_squared_: " << digitized_d_search_squared_ << "\n";
+                    //std::cout << "deltaR2SeedPreSeed: " << deltaR2SeedPreSeed << " , digitized_d_search_squared_: " << digitized_d_search_squared_ << "\n";
                     if (deltaR2SeedPreSeed <= digitized_d_search_squared_){
-                        std::cout << "seed pos opt triggered" << "\n";
+                        //std::cout << "seed pos opt triggered" << "\n";
                         deltaRValuesLessThanSearchDistanceCounter[iSeed]++;
                         indicesofProtoSeeds[iSeed][iPreSeed] = true;
                         indices[iSeed] = iPreSeed;
-                        std::cout << "INDICES[iSEED] BEING SET TO : " << iPreSeed << "\n";
+                        //std::cout << "INDICES[iSEED] BEING SET TO : " << iPreSeed << "\n";
                     }
                 }
             }
@@ -631,7 +635,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             // Account for the case when multiple seeds are within deltaR customalizable value - use highest Et seed to compute halfway point
             // For seed 0 (leading seed)
             if (deltaRValuesLessThanSearchDistanceCounter[0] > 1) {
-                std::cout << "seed 0 why is this triggered" << "\n";
+                //std::cout << "seed 0 why is this triggered" << "\n";
                 unsigned int maxEt = 0;
                 for (unsigned int iPreSeed = 0; iPreSeed < (nProtoSeeds_ - nSeedsOutput_); iPreSeed++) {
                     if (indicesofProtoSeeds[0][iPreSeed]) {
@@ -647,7 +651,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
             // For seed 1
             if (deltaRValuesLessThanSearchDistanceCounter[1] > 1) {
-                std::cout << "seed 1 why is this triggered" << "\n";
+                //std::cout << "seed 1 why is this triggered" << "\n";
                 unsigned int maxEt = 0;
                 for (unsigned int iPreSeed = 0; iPreSeed < (nProtoSeeds_ - nSeedsOutput_); iPreSeed++) {
                     if (indicesofProtoSeeds[1][iPreSeed]) {
@@ -666,16 +670,16 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             // Account for the case when both original seeds would be shifted toward the same pre seeds, 
             // this would cause unnecessary overlap - this should be better thought out, 
             // but for now just prevent lower E_T seed from being shifted at all
-            std::cout << "indices[0]: " << indices[0] << "\n";
-            std::cout << "indices[1]: " << indices[1] << "\n";
+            //std::cout << "indices[0]: " << indices[0] << "\n";
+            //std::cout << "indices[1]: " << indices[1] << "\n";
             bool skipSecondSeed = false;
             if(indices[0] == indices[1] && indices[0] != -1){ 
                 skipSecondSeed = true;
             }
-            std::cout << "skipSecondSeed: " << skipSecondSeed << "\n";
+            //std::cout << "skipSecondSeed: " << skipSecondSeed << "\n";
             // next update leading, subleading seed positions (and energy?) to be in between closest other seed 
             for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; iSeed++){
-                std::cout << "iSeed: " << iSeed << " , skipSecondSeed: " << skipSecondSeed << "\n";
+                //std::cout << "iSeed: " << iSeed << " , skipSecondSeed: " << skipSecondSeed << "\n";
                 //std::cout << "indices[iSeed]: " << indices[iSeed] << "\n";
                 if(skipSecondSeed == true && iSeed == 1) continue; // case where don't want to shift 2nd seed since this would overlap with 1st seed
                 if(indices[iSeed] == -1) continue; // if didn't find proto seed within search distance
@@ -730,16 +734,18 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
         }
         
         inputObject subjets[(1 << num_subjets_length_) - 1]; // Store the Et, Eta, Phi of subjets for use in substructure calculations (massApprox, tau_2, tau_1)
+        inputObject subjetsSeedArray[nSeedsOutput_][(1 << num_subjets_length_) - 1] = {};
+        unsigned int numSubjetsSeedArray[nSeedsOutput_] = {};
         std::vector<unsigned int > jet1MergedIndices; // store indices of merged input objects for each seed
         std::vector<unsigned int > jet2MergedIndices;
 
         // Combinations of seeds and input objects for merging 
-        for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){ 
+        for (unsigned int iSeed = 0; iSeed < nSeedsOutput_; ++iSeed){
             std::vector<unsigned int > mergedInputObjectIndices; 
-            std::cout << "-----------------------------" << "\n";
-            std::cout << "iSeed: " << iSeed << "\n";
-            std::cout << "original seed eta: " << seedValuesOriginal[iSeed].eta << " , phi: " << seedValuesOriginal[iSeed].phi << " , et: " << seedValuesOriginal[iSeed].et << "\n";
-            std::cout << "seed eta: " << seedValues[iSeed].eta << " , seedphi: " << seedValues[iSeed].phi << " , et: " << seedValues[iSeed].et << "\n";
+            //std::cout << "-----------------------------" << "\n";
+            //std::cout << "iSeed: " << iSeed << "\n";
+            //std::cout << "original seed eta: " << seedValuesOriginal[iSeed].eta << " , phi: " << seedValuesOriginal[iSeed].phi << " , et: " << seedValuesOriginal[iSeed].et << "\n";
+            //std::cout << "seed eta: " << seedValues[iSeed].eta << " , seedphi: " << seedValues[iSeed].phi << " , et: " << seedValues[iSeed].et << "\n";
             unsigned int outputJetEt = 0;
             if(inputObjectType == "gepWTAConeCellsTowersJets") outputJetEt = seedValues[iSeed].et; // If clustering using jets, output jet E_T should start with seed E_T
             unsigned int numSubjets = 0; 
@@ -748,19 +754,6 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             unsigned int tau_2 = 0;
             unsigned int tau_1 = 0;
 
-            if(seedValues[iSeed].et == 0) continue; // don't process 0 Et seeds 
-
-            // Always consider the two seeds as potential subjets
-            // FIXME figure out way to map original two seeds which were used for seed optimization to being used for subjet finding, otherwise have to fully loop through 
-            // all seed possibilities and recompute deltaR, not optimal for HLS algorithm
-            /*if(seedValues[iSeed].et > subjetEtThreshold){
-                if(numSubjets < ((1 << num_subjets_length_) - 1)){
-                    std::cout << "found seed subjet" << "\n";
-                    subjets[numSubjets] = seedValues[iSeed]; // Assign subjet values from original seedValues 
-                    numSubjets++; // Clamp number of subjets to maximum value (max = 3 = 2^2 - 1) 
-                } 
-                else numSubjets = ((1 << num_subjets_length_) - 1); // Don't store for beyond 3 subjets - note assume the subjet input were sorted in Et (correct assumption at least for cone jets)
-            } */
             // Only do the main processing for non-zero seeds - otherwise end up reclustering input objects around 0,0 in eta-phi, and get non-zero output Et, other properties
             if(seedValues[iSeed].et != 0){
                 for (unsigned int iInput = 0; iInput < objectsProcessed; ++iInput){ // loop through input objects to consider merging
@@ -769,23 +762,19 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                     //std::cout << "iInput: " << iInput << "\n";
                     //std::cout << "input eta: " << inputObjectValues[iInput].eta << " , phi: " << inputObjectValues[iInput].phi << " , et: " << inputObjectValues[iInput].et << "\n";
 
-                    // Calculate signed differences (deltaEta and deltaPhi)
-                    int deltaEta = seedValues[iSeed].eta - inputObjectValues[iInput].eta;
-                    int deltaPhi = seedValues[iSeed].phi - inputObjectValues[iInput].phi;
-                    
-                    unsigned int uDeltaEta = std::abs(deltaEta);
-                    unsigned int uDeltaPhi = std::abs(deltaPhi);
+                    unsigned int uDeltaEta = static_cast<unsigned int>(std::abs(int(seedValues[iSeed].eta) - int(inputObjectValues[iInput].eta)));
+                    unsigned int uDeltaPhi = static_cast<unsigned int>(std::abs(int(seedValues[iSeed].phi) - int(inputObjectValues[iInput].phi)));
 
                     if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                    unsigned int deltaR2 = uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi; // FIXME this is repeated, make deltaR2 direct computation into a function
-                    //std::cout << "deltaR2: " << deltaR2 << " , digitized_delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
-                    if (deltaR2 <= digitized_delta_R2Cut_){ // only consider if lut index is smaller than max size (past max size, all values are False)
-                        //std::cout << "outputJetEt: " << outputJetEt << "\n";
+                    //std::cout << "deltaR2: " << uDeltaEta*uDeltaEta+uDeltaPhi*uDeltaPhi << " , digitized_delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
+                    if (uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi <= digitized_delta_R2Cut_){
+
                         if(outputJetEt + inputObjectValues[iInput].et >= int(et_max_/et_granularity_ - 1)) outputJetEt = int(et_max_/et_granularity_ - 1);
                         else outputJetEt += inputObjectValues[iInput].et; // add input object Et to seed Et for resultant output jet Et
+                        //std::cout << "outputJetEt after sum: " << outputJetEt << "\n";
                         mergedInputObjectIndices.push_back(iInput);
-                        // Compute psi_R using 8b 0,1 deltaR LUT - need to use a LUT since need deltaR rather than deltaR^2, would take too much latency to do sqrt computation directly! 
-                        unsigned int lutIndex = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + uDeltaPhi;
+                        // Compute psi_R using 8b 0,1 deltaR LUT - need to use a LUT since need deltaR rather than deltaR^2, would take too much latency to do sqrt computation directly!
+                        unsigned int lutIndex = calcLutIndex(uDeltaEta, uDeltaPhi);
                         //std::cout << "inputObjectValues[iInput].et (psi_R): " << inputObjectValues[iInput].et << " , lutR_8b_[lutIndex]: " << lutR_8b_[lutIndex] << "\n";
                         jet_psi_R += inputObjectValues[iInput].et * lutR_8b_[lutIndex];
 
@@ -810,15 +799,7 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                 if(inputObjectType == "gepWTAConeCellsTowersJets"){
                     for(unsigned int iSubjet = 0; iSubjet < nSeedsOutput_; iSubjet++){ // check whether ORIGINAL seeds are subjets
                         if(seedValuesOriginal[iSubjet].et > subjetEtThreshold/et_granularity_){
-                            int deltaEta = seedValues[iSeed].eta - seedValuesOriginal[iSubjet].eta;
-                            int deltaPhi = seedValues[iSeed].phi - seedValuesOriginal[iSubjet].phi;
-
-                            unsigned int uDeltaEta = std::abs(deltaEta);
-                            unsigned int uDeltaPhi = std::abs(deltaPhi);
-
-                            if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                            unsigned int deltaR2 = uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi;
-                            if(deltaR2 <= digitized_delta_R2Cut_){
+                            if(digitizedDeltaR2(seedValues[iSeed].eta, seedValues[iSeed].phi, seedValuesOriginal[iSubjet].eta, seedValuesOriginal[iSubjet].phi) <= digitized_delta_R2Cut_){
                                 if(numSubjets < ((1 << num_subjets_length_) - 1)){
                                     //std::cout << "found seed subjet" << "\n";
                                     subjets[numSubjets] = seedValuesOriginal[iSubjet]; // Assign subjet values from original seedValues
@@ -832,28 +813,20 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
 
                 if(inputObjectType == "gepBasicClusters" || inputObjectType == "gepCellsTowers"){
                     for (unsigned int iSubjet = 0; iSubjet < nSeedsInput_ ; iSubjet++){ 
-                        std::cout << "iSubjet: " << iSubjet << "\n";
-                        std::cout << "seedValuesOriginal[iSubjet].et: " << seedValuesOriginal[iSubjet].et << "\n";
-                        std::cout << "subjetEtThreshold/et_granularity_: " << subjetEtThreshold/et_granularity_ << "\n";
+                        //std::cout << "iSubjet: " << iSubjet << "\n";
+                        //std::cout << "seedValuesOriginal[iSubjet].et: " << seedValuesOriginal[iSubjet].et << "\n";
+                        //std::cout << "subjetEtThreshold/et_granularity_: " << subjetEtThreshold/et_granularity_ << "\n";
                         if(seedValuesOriginal[iSubjet].et > subjetEtThreshold/et_granularity_){
-                            std::cout << " passes et threshold" << "\n";
-                            std::cout << "seedValues[iSeed].eta: " << undigitize_eta(seedValues[iSeed].eta)  << " ,seedValues[iSeed].phi: " << undigitize_phi(seedValues[iSeed].phi) << "\n";
-                            std::cout << "seedValuesOriginal[iSubjet].eta: " << undigitize_eta(seedValuesOriginal[iSubjet].eta)  << " ,seedValuesOriginal[iSubjet].phi: " << undigitize_phi(seedValuesOriginal[iSubjet].phi) << "\n";
-                            int deltaEta = seedValues[iSeed].eta - seedValuesOriginal[iSubjet].eta;
-                            int deltaPhi = seedValues[iSeed].phi - seedValuesOriginal[iSubjet].phi;
-
-                            unsigned int uDeltaEta = std::abs(deltaEta);
-                            unsigned int uDeltaPhi = std::abs(deltaPhi);
-
-                            if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                            unsigned int deltaR2 = uDeltaEta * uDeltaEta + uDeltaPhi * uDeltaPhi;
-                            std::cout << "deltaR2: " << deltaR2 << " , delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
-                            if(deltaR2 <= digitized_delta_R2Cut_){
-                                std::cout << "FOUND SUBJET" << "\n";
+                            //std::cout << " passes et threshold" << "\n";
+                            //std::cout << "seedValues[iSeed].eta: " << undigitize_eta(seedValues[iSeed].eta)  << " ,seedValues[iSeed].phi: " << undigitize_phi(seedValues[iSeed].phi) << "\n";
+                            //std::cout << "seedValuesOriginal[iSubjet].eta: " << undigitize_eta(seedValuesOriginal[iSubjet].eta)  << " ,seedValuesOriginal[iSubjet].phi: " << undigitize_phi(seedValuesOriginal[iSubjet].phi) << "\n";
+                            //std::cout << "deltaR2: " << digitizedDeltaR2(...) << " , delta_R2Cut_: " << digitized_delta_R2Cut_ << "\n";
+                            if(digitizedDeltaR2(seedValues[iSeed].eta, seedValues[iSeed].phi, seedValuesOriginal[iSubjet].eta, seedValuesOriginal[iSubjet].phi) <= digitized_delta_R2Cut_){
+                                //std::cout << "FOUND SUBJET" << "\n";
                                 if(numSubjets < ((1 << num_subjets_length_) - 1)){
-                                    subjets[numSubjets] = seedValuesOriginal[iSubjet]; // Assign subjet values from original seedValues 
-                                    numSubjets++; // Clamp number of subjets to maximum value (max = 3 = 2^2 - 1) 
-                                } 
+                                    subjets[numSubjets] = seedValuesOriginal[iSubjet]; // Assign subjet values from original seedValues
+                                    numSubjets++; // Clamp number of subjets to maximum value (max = 3 = 2^2 - 1)
+                                }
                                 else numSubjets = ((1 << num_subjets_length_) - 1); // Don't store for beyond 3 subjets - note assume the subjet input were sorted in Et (correct assumption at least for cone jets)
                             }
                         } // If passes subjet Et threshold
@@ -875,24 +848,13 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                     // Compute distance between input objects and leading, subleading subjets for N-subjetiness
                     for (auto iInput : mergedInputObjectIndices){
                         //std::cout << "iInput subjets == 1: " << iInput << "\n";
-                        // Compute deltaR using 
-                        int deltaEta = subjets[0].eta - inputObjectValues[iInput].eta;
-                        int deltaPhi = subjets[0].phi - inputObjectValues[iInput].phi;
-
                         //std::cout << "subjets[0].eta : " << undigitize_eta(subjets[0].eta) << " ,subjets[0].phi: " << undigitize_phi(subjets[0].phi) << "\n";
                         //std::cout << "inputObjectValues[iInput].eta : " << undigitize_eta(inputObjectValues[iInput].eta) << " , inputObjectValues[iInput].phi: " << undigitize_phi(inputObjectValues[iInput].phi) << "\n";
-                        //std::cout << "deltaEta: " << deltaEta << " , deltaPhi: " << deltaPhi << "\n";
-                        unsigned int uDeltaEta = std::abs(deltaEta);
-                        unsigned int uDeltaPhi = std::abs(deltaPhi);
-                        //std::cout << "uDeltaPhi before wrap: " << uDeltaPhi << "\n";
+                        unsigned int uDeltaEta = static_cast<unsigned int>(std::abs(int(subjets[0].eta) - int(inputObjectValues[iInput].eta)));
+                        unsigned int uDeltaPhi = static_cast<unsigned int>(std::abs(int(subjets[0].phi) - int(inputObjectValues[iInput].phi)));
                         if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                        //std::cout << "uDeltaPhi after wrap: " << uDeltaPhi << "\n";
-                        //std::cout << "uDeltaEta: " << uDeltaEta << "\n";
-                        unsigned int lutIndex = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + uDeltaPhi;
-                        //std::cout << "lut_index: " << lutIndex << "\n";
-                        unsigned int deltaR = lutR_8b_[lutIndex];
-                        //std::cout << "deltaR: " << deltaR * deltaR_granularity_ << " , inputObjectValues[iInput].et: " << undigitize_et(inputObjectValues[iInput].et) << "\n";
-                        tau_1 += deltaR * inputObjectValues[iInput].et;
+                        //std::cout << "deltaR: " << lutR_8b_[calcLutIndex(uDeltaEta,uDeltaPhi)] * deltaR_granularity_ << " , inputObjectValues[iInput].et: " << undigitize_et(inputObjectValues[iInput].et) << "\n";
+                        tau_1 += lutR_8b_[calcLutIndex(uDeltaEta, uDeltaPhi)] * inputObjectValues[iInput].et;
                         //std::cout << "tau_1: " << tau_1 << "\n";
                     }
                 }
@@ -900,63 +862,38 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
                     unsigned int subjetTotalEt = subjets[0].et + subjets[1].et;
                     //std::cout << "subjets[0].et: " << subjets[0].et << " , subjets[1].et: " << subjets[1].et << "\n";
                     //std::cout << "COMPUTING MASS APPROX subjet total et: " << subjetTotalEt << "\n";
-                    // Compute deltaR directly between subjets to compute approximation of mass
                     //std::cout << "subjets[0].eta: " << subjets[0].eta << " , subjets[1].eta: " << subjets[1].eta << "\n";
                     //std::cout << "subjets[0].phi: " << subjets[0].phi << " , subjets[1].phi: " << subjets[1].phi << "\n";
-                    int deltaEta = subjets[0].eta - subjets[1].eta;
-                    int deltaPhi = subjets[0].phi - subjets[1].phi;
-                    //std::cout << "deltaEta: " << deltaEta << " , deltaPhi: " << deltaPhi << "\n";
-                    unsigned int uDeltaEta = std::abs(deltaEta);
-                    unsigned int uDeltaPhi = std::abs(deltaPhi);
-
-                    if (uDeltaPhi >= pi_digitized_in_phi_) uDeltaPhi = (2 * pi_digitized_in_phi_) - uDeltaPhi;
-                    
-                    unsigned int lutIndex = uDeltaEta * (1 << (phi_bit_length_ - 1) ) + uDeltaPhi;
-                    //std::cout << "lutIndex : " << lutIndex << "\n";
-                    //std::cout << "subjetTotalEt: " << subjetTotalEt << " , lutR_8b_[lutIndex]: " << lutR_8b_[lutIndex] << "\n";
-                    unsigned int massApproxRaw = subjetTotalEt * lutR_8b_[lutIndex];
+                    // Compute deltaR between subjets for mass approximation
+                    unsigned int uDeltaEta_sub = static_cast<unsigned int>(std::abs(int(subjets[0].eta) - int(subjets[1].eta)));
+                    unsigned int uDeltaPhi_sub = static_cast<unsigned int>(std::abs(int(subjets[0].phi) - int(subjets[1].phi)));
+                    if (uDeltaPhi_sub >= pi_digitized_in_phi_) uDeltaPhi_sub = (2 * pi_digitized_in_phi_) - uDeltaPhi_sub;
+                    //std::cout << "subjetTotalEt: " << subjetTotalEt << " , lutR_8b_[calcLutIndex(...)]: " << lutR_8b_[calcLutIndex(uDeltaEta_sub,uDeltaPhi_sub)] << "\n";
+                    unsigned int massApproxRaw = subjetTotalEt * lutR_8b_[calcLutIndex(uDeltaEta_sub, uDeltaPhi_sub)];
                     //std::cout << "massApproxRaw: " << massApproxRaw << "\n";
                     unsigned int massApproxTmp = massApproxRaw / massApproxDivisor_;
-                    //std::cout << "massApproxRawLSB_GeV_: " << massApproxRawLSB_GeV_ << "\n";
-                    //std::cout << "massApproxNewLSB_GeV_: " << massApproxNewLSB_GeV_ << "\n";
-                    //std::cout << "massApproxScaleFactor_: " << massApproxScaleFactor_ << "\n";
-                    //std::cout << "massapproxdivisor: " << massApproxDivisor_ << "\n";
                     //std::cout << "massApproxTmp: " << massApproxTmp << "\n";
                     massApprox = (massApproxTmp > massApprox_max_) ? massApprox_max_ : massApproxTmp;
                     //std::cout << "massApprox: " << massApprox << "\n";
-                    // Convert this original (raw) mass value to new digitization scheme (8 bits, up to 512 GeV)
-                    
 
-                    // Compute distance between input objects and leading, subleading subjets for N-subjetiness
+                    // Compute N-subjetiness: min distance from each constituent to the two subjets
                     for (auto iInput : mergedInputObjectIndices){
                         //std::cout << "iInput subjets >= 2: " << iInput << "\n";
-                        // Compute deltaR using 
-                        int deltaEta_Subjet0 = subjets[0].eta - inputObjectValues[iInput].eta;
-                        int deltaPhi_Subjet0 = subjets[0].phi - inputObjectValues[iInput].phi;
                         //std::cout << "input eta; " << undigitize_eta(inputObjectValues[iInput].eta) << " , input phi : " << undigitize_phi(inputObjectValues[iInput].phi) << "\n";
-                        
-                        unsigned int uDeltaEta_Subjet0 = std::abs(deltaEta_Subjet0);
-                        unsigned int uDeltaPhi_Subjet0 = std::abs(deltaPhi_Subjet0);
-                        //std::cout << "pi_digitized_in_phi: " << pi_digitized_in_phi_ << "\n";
+                        unsigned int uDeltaEta_Subjet0 = static_cast<unsigned int>(std::abs(int(subjets[0].eta) - int(inputObjectValues[iInput].eta)));
+                        unsigned int uDeltaPhi_Subjet0 = static_cast<unsigned int>(std::abs(int(subjets[0].phi) - int(inputObjectValues[iInput].phi)));
                         if (uDeltaPhi_Subjet0 >= pi_digitized_in_phi_) uDeltaPhi_Subjet0 = (2 * pi_digitized_in_phi_) - uDeltaPhi_Subjet0;
-                        unsigned int lutIndex_Subjet0 = uDeltaEta_Subjet0 * (1 << (phi_bit_length_ - 1) ) + uDeltaPhi_Subjet0;
-                        unsigned int deltaR_Subjet0 = lutR_8b_[lutIndex_Subjet0];
+                        unsigned int deltaR_Subjet0 = lutR_8b_[calcLutIndex(uDeltaEta_Subjet0, uDeltaPhi_Subjet0)];
                         //std::cout << "subjet 0 eta; " << undigitize_eta(subjets[0].eta) << " , subjet 0 phi : " << undigitize_phi(subjets[0].phi) << "\n";
                         //std::cout << "deltaR_Subjet0: " << deltaR_Subjet0 * deltaR_granularity_ << "\n";
                         //std::cout << "inputObjectValues[iInput].et: " << undigitize_et(inputObjectValues[iInput].et) << "\n";
                         tau_1 += deltaR_Subjet0 * inputObjectValues[iInput].et;
                         //std::cout << "tau1 2 subjets: " << tau_1 << "\n";
-                        // Compute deltaR using 
-                        int deltaEta_Subjet1 = subjets[1].eta - inputObjectValues[iInput].eta;
-                        int deltaPhi_Subjet1 = subjets[1].phi - inputObjectValues[iInput].phi;
-                        //std::cout << "subjet 1 eta; " << undigitize_eta(subjets[1].eta) << " , subjet 1 phi : " << undigitize_phi(subjets[1].phi) << "\n";
-                        unsigned int uDeltaEta_Subjet1 = std::abs(deltaEta_Subjet1);
-                        unsigned int uDeltaPhi_Subjet1 = std::abs(deltaPhi_Subjet1);
-
+                        unsigned int uDeltaEta_Subjet1 = static_cast<unsigned int>(std::abs(int(subjets[1].eta) - int(inputObjectValues[iInput].eta)));
+                        unsigned int uDeltaPhi_Subjet1 = static_cast<unsigned int>(std::abs(int(subjets[1].phi) - int(inputObjectValues[iInput].phi)));
                         if (uDeltaPhi_Subjet1 >= pi_digitized_in_phi_) uDeltaPhi_Subjet1 = (2 * pi_digitized_in_phi_) - uDeltaPhi_Subjet1;
-                        unsigned int lutIndex_Subjet1 = uDeltaEta_Subjet1 * (1 << (phi_bit_length_ - 1) ) + uDeltaPhi_Subjet1;
-                        //std::cout << "lutIndex_Subjet1: " << lutIndex_Subjet1 << " and max lut size: " <<  max_R_8b_lut_size_ << "\n";
-                        unsigned int deltaR_Subjet1 = lutR_8b_[lutIndex_Subjet1];
+                        //std::cout << "subjet 1 eta; " << undigitize_eta(subjets[1].eta) << " , subjet 1 phi : " << undigitize_phi(subjets[1].phi) << "\n";
+                        unsigned int deltaR_Subjet1 = lutR_8b_[calcLutIndex(uDeltaEta_Subjet1, uDeltaPhi_Subjet1)];
                         //std::cout << "deltaR_Subjet1: " << deltaR_Subjet1 * deltaR_granularity_ << "\n";
                         unsigned int min_deltaR = std::min(deltaR_Subjet0, deltaR_Subjet1);
                         //std::cout << "tau 2 min deltaR: " << min_deltaR * deltaR_granularity_  << "\n";
@@ -1082,71 +1019,58 @@ void eventLoop(std::string inputNTuplePath, std::string outputNTuplePath,std::st
             jetTaggerLRJEtValues->push_back(undigitize_et(et_bitset));
             jetTaggerLRJEtaValues->push_back(undigitize_eta(eta_bitset));
             jetTaggerLRJPhiValues->push_back(undigitize_phi(phi_bitset));
+
+            numSubjetsSeedArray[iSeed] = numSubjets;
+            for(unsigned int iSubj = 0; iSubj < numSubjets; iSubj++){
+                subjetsSeedArray[iSeed][iSubj] = subjets[iSubj];
+            }
         } // Loop through seeds 
 
-        // Write data to leading, subleading jet branches
-        if(outputJetValues[0].et >= outputJetValues[1].et){ // to ensure leading, subleading sorted correctly
-            jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[0]));
-            jetTaggerLeadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[0].to_ulong());
-            
-            //std::cout << "leading num subjets post sort: " << num_subjets_bitset_array[0].to_ulong() << "\n";
-            jetTaggerLeadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[0]));
-            jetTaggerLeadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[0]));
-            jetTaggerLeadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[0]));
-            jetTaggerLeadingLRJTau_21Values->push_back(tau_21_array[0]);
-            //std::cout << "et_bitset_array[0]: " << et_bitset_array[0] << "\n";
-            //std::cout << "undigitize_et(et_bitset_array[0]): " << undigitize_et(et_bitset_array[0]) << "\n";
-            jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
-            jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
-            jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
+        // Write data to leading, subleading jet branches sorted by Et
+        // jet1MergedIndices/jet2MergedIndices always correspond to iSeed==0 and iSeed==1 respectively
+        const unsigned int leadIdx = (outputJetValues[0].et >= outputJetValues[1].et) ? 0 : 1;
+        const unsigned int sublIdx = 1 - leadIdx;
+        const auto& leadMergedIndices = (leadIdx == 0) ? jet1MergedIndices : jet2MergedIndices;
+        const auto& sublMergedIndices = (leadIdx == 0) ? jet2MergedIndices : jet1MergedIndices;
 
-            for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
-                jetTaggerLeadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
-            }
-            for(unsigned int j = 0; j < jet2MergedIndices.size(); j++){
-                jetTaggerSubleadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
-            }
+        //std::cout << "leading num subjets post sort: " << num_subjets_bitset_array[leadIdx].to_ulong() << "\n";
+        //std::cout << "subleading num subjets post sort: " << num_subjets_bitset_array[sublIdx].to_ulong() << "\n";
+        jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[leadIdx].to_ulong());
+        jetTaggerLeadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJTau_21Values->push_back(tau_21_array[leadIdx]);
+        //std::cout << "et_bitset_array[leadIdx]: " << et_bitset_array[leadIdx] << "\n";
+        //std::cout << "undigitize_et(et_bitset_array[leadIdx]): " << undigitize_et(et_bitset_array[leadIdx]) << "\n";
+        jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[leadIdx]));
+        jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[leadIdx]));
 
-            jetTaggerSubleadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[1]));
-            jetTaggerSubleadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[1]));
-            jetTaggerSubleadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[1].to_ulong());
-            //std::cout << "subleading num subjets post sort: " << num_subjets_bitset_array[1].to_ulong() << "\n";
-            jetTaggerSubleadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[1]));
-            jetTaggerSubleadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[1]));
-            jetTaggerSubleadingLRJTau_21Values->push_back(tau_21_array[1]);
-            jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[1]));
-            jetTaggerSubleadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[1]));
-            jetTaggerSubleadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[1]));
+        for(unsigned int iSubj = 0; iSubj < numSubjetsSeedArray[leadIdx]; iSubj++){
+            jetTaggerLeadingLRJSubjetEtValues->push_back(undigitize_et(subjetsSeedArray[leadIdx][iSubj].et));
+            jetTaggerLeadingLRJSubjetEtaValues->push_back(undigitize_eta(subjetsSeedArray[leadIdx][iSubj].eta));
+            jetTaggerLeadingLRJSubjetPhiValues->push_back(undigitize_phi(subjetsSeedArray[leadIdx][iSubj].phi));
         }
-        else{
-            jetTaggerLeadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[1]));
-            jetTaggerLeadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[1].to_ulong());
-            //std::cout << "leading num subjets post sort: " << num_subjets_bitset_array[1].to_ulong() << "\n";
-            jetTaggerLeadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[1]));
-            jetTaggerLeadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[1]));
-            jetTaggerLeadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[1]));
-            jetTaggerLeadingLRJTau_21Values->push_back(tau_21_array[1]);
-            jetTaggerLeadingLRJEtValues->push_back(undigitize_et(et_bitset_array[1]));
-            jetTaggerLeadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[1]));
-            jetTaggerLeadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[1]));
 
-            for(unsigned int i = 0; i < jet1MergedIndices.size(); i++){ // necessary to ensure merged indices match to leading, subleading correctly
-                jetTaggerSubleadingLRJMergedIndicesValues->push_back(jet1MergedIndices[i]);
-            }
-            for(unsigned int j = 0; j < jet2MergedIndices.size(); j++){
-                jetTaggerLeadingLRJMergedIndicesValues->push_back(jet2MergedIndices[j]);
-            }
+        // necessary to ensure merged indices match to leading, subleading correctly
+        for(auto idx : leadMergedIndices) jetTaggerLeadingLRJMergedIndicesValues->push_back(idx);
+        for(auto idx : sublMergedIndices) jetTaggerSubleadingLRJMergedIndicesValues->push_back(idx);
 
-            jetTaggerSubleadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[0]));
-            jetTaggerSubleadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[0].to_ulong());
-            //std::cout << "subleading num subjets post sort: " << num_subjets_bitset_array[0].to_ulong() << "\n";
-            jetTaggerSubleadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[0]));
-            jetTaggerSubleadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[0]));
-            jetTaggerSubleadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[0]));
-            jetTaggerSubleadingLRJTau_21Values->push_back(tau_21_array[0]);
-            jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[0]));
-            jetTaggerSubleadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[0]));
-            jetTaggerSubleadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[0]));
+        jetTaggerSubleadingLRJPsi_RValues->push_back(undigitize_psi_R(psi_R_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJSubjetMultiplicityValues->push_back(num_subjets_bitset_array[sublIdx].to_ulong());
+        jetTaggerSubleadingLRJMassApproxValues->push_back(undigitize_mass_approx(massApprox_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJTau_1Values->push_back(undigitize_N_subjetiness(tau_1_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJTau_2Values->push_back(undigitize_N_subjetiness(tau_2_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJTau_21Values->push_back(tau_21_array[sublIdx]);
+        jetTaggerSubleadingLRJEtValues->push_back(undigitize_et(et_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJEtaValues->push_back(undigitize_eta(eta_bitset_array[sublIdx]));
+        jetTaggerSubleadingLRJPhiValues->push_back(undigitize_phi(phi_bitset_array[sublIdx]));
+
+        for(unsigned int iSubj = 0; iSubj < numSubjetsSeedArray[sublIdx]; iSubj++){
+            jetTaggerSubleadingLRJSubjetEtValues->push_back(undigitize_et(subjetsSeedArray[sublIdx][iSubj].et));
+            jetTaggerSubleadingLRJSubjetEtaValues->push_back(undigitize_eta(subjetsSeedArray[sublIdx][iSubj].eta));
+            jetTaggerSubleadingLRJSubjetPhiValues->push_back(undigitize_phi(subjetsSeedArray[sublIdx][iSubj].phi));
         }
         // Fill branch to output ntuple with 
         jetTaggerLRJs->Fill();
@@ -1173,17 +1097,21 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
                         unsigned int numberIOs, // number of input objects (clusters or towers) considered for merging to seeds
                         unsigned int nSeeds, // Number of seeds and consequently number of output jets
                         double RSquaredCut, // radius squared of output jets
-                        bool signalBool,  // whether processing a signal or background process // FIXME add additional signal types for later
+                        bool signalBool,  // whether processing a signal or background process
                         bool condorBool, // whether running using condor batch job submission (requires change in filepaths)
                         bool useSKObjects, // Whether to use PU-suppressed (with SoftKiller) objects 
                         std::string signalString, // Which signal sample being used (functionality for: VBF_hh_bbbb, ggF_hh_bbbb, ZvvHbb, ttbar_had, Zprime_ttbar)
                         std::string inputObjectType = "gepCellsTowers", // Possibilities: "gepCellsTowers", "gepWTAConeCellsTowersJets", "gepTopoTowers", "gepBasicClusters"
-                        std::string seedObjectType = "gepWTAConeCellsTowersJets" // Possibilities: "gepWTAConeCellsTowersJets" or "jFEXSRJ"  // FIXME allow this to be changed in executable
-                        ){ 
+                        std::string seedObjectType = "gepWTAConeCellsTowersJets", // Possibilities: "gepWTAConeCellsTowersJets" or "jFEXSRJ"  // FIXME allow this to be changed in executable
+                        double subjetEtThreshold = 25.0, // Nominally 25 GeV for gepWTAConeCellsTowersJets, 50 GeV for jFEX SRJ, 35 GeV for gFEX SRJ based on their respective energy scales, not fully optimized
+                        bool enableEtWeightedMidpoint = false, // Whether use E_T weighted midpoint calculation for seed optimization
+                        bool minEtSeedPosOptimization = false, // Whether require a minimum E_T to allow a proto-seed to be considered for seed optimization
+                        double minEtSeedPosOptimizationCut = 25.0 // Minimum E_T (in GeV) if minEtSeedPosOptimization is enabled for a proto-seed to be considered for seed optimization
+                        ){
     if(signalBool) std::cout << "Processing signal of: " << signalString  << "\n";
     // Construct input and output ntuple, LUT paths based on configuration type
     auto infile = makeInputFileName(signalBool, signalString); // FIXME update this when running with condor.
-    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, signalString, inputObjectType, seedObjectType, useSKObjects, algoVersion_);
+    auto outntuplefile = makeOutputFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, signalString, inputObjectType, seedObjectType, useSKObjects, algoVersion_, subjetEtThreshold, enableEtWeightedMidpoint, minEtSeedPosOptimization, minEtSeedPosOptimizationCut);
     auto outtextfile = makeOutputTextFileName(rMergeCut, numberIOs, nSeeds, RSquaredCut, signalBool, signalString, inputObjectType, seedObjectType, useSKObjects, algoVersion_);
     std::cout << "infile: " << infile << "\n";
     std::cout << "outntuplefile: " << outntuplefile << "\n"; 
@@ -1197,11 +1125,8 @@ void jetTaggerEmulation(double rMergeCut, // Distance in r-phi plane to look for
         std::cerr << "Copy failed: " << e.what() << '\n';
     }     
 
-    bool enableEtWeightedMidpoint = false;
-    bool minEtSeedPosOptimization = false;
-    double minEtSeedPosOptimizationCut = 15.0;
-    double subjetEtThreshold = 25.0;
-    gSystem->RedirectOutput("debuglog.log", "w");
+    //gSystem->RedirectOutput("debuglog.log", "w");
+    std::cout << "calling event loop: " << "\n";
     eventLoop(infile, outntuplefile, outtextfile, inputObjectType, seedObjectType, useSKObjects, 
         enableEtWeightedMidpoint, minEtSeedPosOptimization,
         minEtSeedPosOptimizationCut, subjetEtThreshold);

@@ -43,7 +43,7 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
     }
     
    
-    TString modifiedOutputFileDir = "eventDisplays/" + signalString + "_" + algorithmConfigurations[0] + "_" + subjetType + "subjets/";
+    TString modifiedOutputFileDir = "eventDisplays/" + signalString + "_" + algorithmConfigurations[0] + "_seed" + seedObjectType + "_" + subjetType + "subjets/";
     gSystem->mkdir(modifiedOutputFileDir);
 
     std::vector<double>* mcEventWeightsValues = nullptr;
@@ -509,6 +509,7 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
             }
             
         }
+        std::cout << "seedObjectType: " << seedObjectType << "\n";
         if(seedObjectType == "jFEXSRJ"){
             seedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(0), jFexSRJPhiValues->at(0)));
             seedJetPositions.push_back(std::make_pair(jFexSRJEtaValues->at(1), jFexSRJPhiValues->at(1)));
@@ -527,16 +528,13 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
             additionalSeedJetPositions.push_back(std::make_pair(gFexSRJEtaValues->at(5), gFexSRJPhiValues->at(5)));
         }
         
-        else if(seedObjectType == "gepWTAConeCellsTowersJets_NoSK" || seedObjectType == "gepWTAConeCellsTowersJets_SK"){
+        else if(seedObjectType == "ConeJet"){
             if(skBool){
-                std::cout << "gepWTAConeCellsTowersSKJetsEtaValues->size(): " << gepWTAConeCellsTowersSKJetsEtaValues->size() << "\n";
                 for(unsigned int iWTACone = 0; iWTACone < gepWTAConeCellsTowersSKJetsEtaValues->size(); iWTACone++){
-                    std::cout << "iWTACone: " << iWTACone << "\n";
                     if(iWTACone <= 1){
                         seedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
                     }
                     else if(iWTACone <= 5){
-                        std::cout << "why is this not triggering" << "\n";
                         additionalSeedJetPositions.push_back(std::make_pair(gepWTAConeCellsTowersSKJetsEtaValues->at(iWTACone), gepWTAConeCellsTowersSKJetsPhiValues->at(iWTACone)));
                     }
                     else break;
@@ -769,7 +767,7 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
             //std::cout << "seedJetPositions.size(): " << seedJetPositions.size() << "\n";
             //std::cout << "additionalSeedJetPositions.size(): " << additionalSeedJetPositions.size() << "\n";
             for(unsigned int iSeedOriginal = 0; iSeedOriginal < seedJetPositions.size(); iSeedOriginal++){
-                TEllipse *circle0 = new TEllipse(seedJetPositions[iSeedOriginal].first, seedJetPositions[iSeedOriginal].second, 1.1, 1.1); // R in both x and y
+                TEllipse *circle0 = new TEllipse(seedJetPositions[iSeedOriginal].first, seedJetPositions[iSeedOriginal].second, jetRadius, jetRadius); // R in both x and y
                 circle0->SetLineColor(kRed);
                 circle0->SetLineWidth(2);
                 circle0->SetFillStyle(0); // no fill
@@ -777,7 +775,7 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
                 circle0->Draw("same");    // overlay on the existing plot
             }
             for(unsigned int iSeedAdditional = 0; iSeedAdditional < additionalSeedJetPositions.size(); iSeedAdditional++){
-                TEllipse *circle2 = new TEllipse(additionalSeedJetPositions[iSeedAdditional].first, additionalSeedJetPositions[iSeedAdditional].second, 1.1, 1.1); // R in both x and y
+                TEllipse *circle2 = new TEllipse(additionalSeedJetPositions[iSeedAdditional].first, additionalSeedJetPositions[iSeedAdditional].second, jetRadius, jetRadius); // R in both x and y
                 circle2->SetLineColor(kAzure+2);
                 circle2->SetLineWidth(2);
                 circle2->SetFillStyle(0); // no fill
@@ -786,14 +784,14 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
             }
             
             // NOTE there will always be 2 jet tagger jets.
-            TEllipse *circle6 = new TEllipse(newSeedPositions[0].first, newSeedPositions[0].second, 1.1, 1.1); // R in both x and y
+            TEllipse *circle6 = new TEllipse(newSeedPositions[0].first, newSeedPositions[0].second, jetRadius, jetRadius); // R in both x and y
             circle6->SetLineColor(kGreen+2);
             circle6->SetLineWidth(2);
             circle6->SetFillStyle(0); // no fill
             circle6->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
             circle6->Draw("same");    // overlay on the existing plot
 
-            TEllipse *circle7 = new TEllipse(newSeedPositions[1].first, newSeedPositions[1].second, 1.1, 1.1); // R in both x and y
+            TEllipse *circle7 = new TEllipse(newSeedPositions[1].first, newSeedPositions[1].second, jetRadius, jetRadius); // R in both x and y
             circle7->SetLineColor(kGreen+2);
             circle7->SetLineWidth(2);
             circle7->SetFillStyle(0); // no fill
@@ -870,14 +868,14 @@ void callMakeEventDisplays(std::string inputFile, unsigned int desiredJZSlice, b
             cellsTowersHighestEtTruthAndPileupJets->GetZaxis()->SetTitle("E_{T} [GeV]");
             cellsTowersHighestEtTruthAndPileupJets->Draw("COLZ");
 
-            TEllipse *circle0 = new TEllipse(newSeedPositions[0].first, newSeedPositions[0].second, 1.1, 1.1); // R in both x and y
+            TEllipse *circle0 = new TEllipse(newSeedPositions[0].first, newSeedPositions[0].second, jetRadius, jetRadius); // R in both x and y
             circle0->SetLineColor(kBlue);
             circle0->SetLineWidth(2);
             circle0->SetFillStyle(0); // no fill
             circle0->SetLineStyle(1);  // dashed (1=solid, 2=dashed, 3=dotted, etc.)
             circle0->Draw("same");    // overlay on the existing plot
 
-            TEllipse *circle1 = new TEllipse(newSeedPositions[1].first, newSeedPositions[1].second, 1.1, 1.1); // R in both x and y
+            TEllipse *circle1 = new TEllipse(newSeedPositions[1].first, newSeedPositions[1].second, jetRadius, jetRadius); // R in both x and y
             circle1->SetLineColor(kBlue);
             circle1->SetLineWidth(2);
             circle1->SetFillStyle(0); // no fill
@@ -1123,8 +1121,20 @@ void makeEventDisplays(){
     //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
     //    -1, true, "ggF_hh_4b", "WTACone", true);
 
-    callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_v3.root", 
+    callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_subjetEt25GeV_v3.root", 
         -1, true, "ggF_hh_4b", "WTACone", true);
+
+    callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.44_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_subjetEt25GeV_v3.root", 
+        -1, true, "ggF_hh_4b", "WTACone", true);
+
+    callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_1.75_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_subjetEt25GeV_v3.root", 
+        -1, true, "ggF_hh_4b", "WTACone", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gFEXSRJ_SK_subjetEt35GeV_v3.root", 
+    //    -1, true, "ggF_hh_4b", "gFEXSRJ", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_jFEXSRJ_SK_subjetEt50GeV_v3.root", 
+    //    -1, true, "ggF_hh_4b", "jFEXSRJ", true);
 
     //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_HHbbbb_HLLHC_e8564_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
     //   -1, true, "ggF_hh_4b", "jFEXSRJ", true);
@@ -1152,8 +1162,14 @@ void makeEventDisplays(){
     //    2, false, "jj_2", "WTACone", false);
 
     // JZ2 background PU suppressed (Cone subjets)
-    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_GlobalTriggerMeeting_02092026/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK.root", 
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_SK_subjetEt25GeV_v3.root", 
     //    2, false, "jj_2", "WTACone", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gFEXSRJ_SK_subjetEt35GeV_v3.root", 
+    //    2, false, "jj_2", "gFEXSRJ", true);
+
+    //callMakeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_HLSSynchronization/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_jFEXSRJ_SK_subjetEt50GeV_v3.root", 
+    //    2, false, "jj_2", "jFEXSRJ", true);
 
     // JZ3 background (Cone subjets)
     //makeEventDisplays("/data/larsonma/LargeRadiusJets/outputNTuplesDev_VBFSM/mc21_14TeV_jj_JZ_e8557_s4422_r16130_rMerge_2_IOs_128_Seeds_2_R2_1.21_IO_gepCellsTowers_Seed_gepWTAConeCellsTowersJets_NoSK.root", 
